@@ -12,6 +12,7 @@ export default new Command({
     category: 'economy',
     users: ['all'],
     cooldown: 3000,
+    pmAccepted: true,
 
     async handler(bot, message, args) {
         try {
@@ -26,15 +27,41 @@ export default new Command({
             
             const economy = await bot.heistManager.getUserBalance(targetUser);
             
-            // Format response
-            const responses = [
-                `-${targetUser}'s got $${economy.balance} (${economy.trustLevel.title})`,
-                `-${targetUser}: $${economy.balance} | Trust: ${economy.trust} (${economy.trustLevel.title})`,
-                `balance for -${targetUser}: $${economy.balance}, trust level: ${economy.trustLevel.title}`,
-                `-${targetUser}'s sittin on $${economy.balance}, ${economy.trustLevel.title} status`
+            // Public acknowledgment responses
+            const publicResponses = [
+                `Checkin' the books for ya -${message.username}...`,
+                `PMing ya the balance details -${message.username}`,
+                `Slidin' into ya DMs with the financial report -${message.username}`,
+                `Check ya messages -${message.username}`,
+                `Sendin' the deets privately -${message.username}`
             ];
             
-            bot.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+            // Send public acknowledgment
+            bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
+            
+            // Format private message with balance details
+            let pmMessage;
+            if (targetUser.toLowerCase() === message.username.toLowerCase()) {
+                // Checking own balance
+                pmMessage = `Your balance: $${economy.balance}\nTrust: ${economy.trust} (${economy.trustLevel.title})`;
+            } else {
+                // Checking someone else's balance
+                pmMessage = `-${targetUser}'s balance: $${economy.balance}\nTrust: ${economy.trust} (${economy.trustLevel.title})`;
+            }
+            
+            // Get video stats if available
+            if (bot.videoPayoutManager) {
+                const videoStats = await bot.videoPayoutManager.getUserStats(targetUser);
+                if (videoStats && videoStats.videos_watched > 0) {
+                    pmMessage += `\n\nVideo earnings: $${videoStats.total_earned || 0} from ${videoStats.videos_watched} videos`;
+                    if (videoStats.lucky_rewards > 0) {
+                        pmMessage += ` (${videoStats.lucky_rewards} lucky payouts!)`;
+                    }
+                }
+            }
+            
+            // Send PM with balance info
+            bot.sendPrivateMessage(message.username, pmMessage);
             
             return { success: true };
         } catch (error) {
