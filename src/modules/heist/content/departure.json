@@ -1,0 +1,87 @@
+{
+  "departure": {
+    "standard": [
+      "righto, {crime} it is... back in a bit",
+      "{crime}? easy money, brb",
+      "off to do a {crime}, hold me beer",
+      "wish me luck cunts, {crime} time",
+      "{crime} here we go... if I'm not back in 20, leg it",
+      "aight, {crime} won the vote... see ya in a bit",
+      "fuck it, {crime} sounds good... back soon",
+      "{crime}? too easy mate, watch this",
+      "time to earn... {crime} mission is go",
+      "keep an eye out for cops while I do this {crime}"
+    ],
+    "confident": [
+      "{crime}? piece of piss, back in 5",
+      "done {crime} a hundred times, easy as",
+      "watch and learn boys... {crime} masterclass incoming",
+      "{crime} is child's play, guaranteed success",
+      "this {crime}'s gonna be textbook perfect"
+    ],
+    "nervous": [
+      "fuck... alright {crime} it is then",
+      "not sure about this {crime} but here goes...",
+      "{crime}? shit, hope this works out",
+      "if this {crime} goes wrong, tell shazza I tried",
+      "last time I did a {crime} didn't end well but... fuck it"
+    ],
+    "rushed": [
+      "no time to waste, {crime} let's fuckin go",
+      "quick quick, {crime} before they notice",
+      "gotta be fast with this {crime}",
+      "speed run this {crime}, in and out",
+      "blitzkrieg {crime} tactics, brb"
+    ],
+    "sneaky": [
+      "{crime} requires stealth... keep it down eh",
+      "ninja mode activated for this {crime}",
+      "gonna be sneaky as fuck with this {crime}",
+      "they'll never see this {crime} coming",
+      "activating stealth mode... {crime} initiated"
+    ],
+    "with_mates": [
+      "bringing me cousin for this {crime}",
+      "got backup for the {crime}, we're sorted",
+      "me and the boys heading out for {crime}",
+      "crew's assembled, {crime} is a go",
+      "squad's ready for this {crime}"
+    ],
+    "solo": [
+      "fuckin useless cunts... guess I'll do the {crime} meself",
+      "lazy bastards, fine I'll handle this {crime} solo",
+      "no one wants to help? fuck yas, {crime} solo mission",
+      "typical, gotta do the {crime} on me own as usual",
+      "bunch of soft cocks... I'll show ya how {crime} is done",
+      "sitting on ya arses while I do all the work... {crime} time",
+      "ya know what? don't need any of yas for this {crime}",
+      "fuck it, more money for me then... solo {crime} run",
+      "lazy cunts can't even be bothered voting... {crime} it is then",
+      "all talk no action... watch how a real man does {crime}"
+    ],
+    "crude": [
+      "gonna rub one out for luck then do this {crime}",
+      "balls deep in this {crime} plan, here goes",
+      "swingin me dick all the way to this {crime}",
+      "time to show em the old one-eyed trouser snake... {crime} style",
+      "harder than a priest at a playground... {crime} time",
+      "gonna teabag this {crime} into submission",
+      "dick out confidence for this {crime}",
+      "bout to fuck this {crime} harder than shazza on payday",
+      "gonna raw dog this {crime}, no protection needed",
+      "time to whip out the meat and two veg for this {crime}"
+    ],
+    "toilet_humor": [
+      "hold up, gotta drop the kids at the pool first... then {crime}",
+      "prairie doggin but {crime} waits for no one",
+      "gonna pinch this loaf then pinch from the {crime}",
+      "shitting meself with excitement for this {crime}",
+      "guts are bubbling but {crime} comes first",
+      "if I don't make it back, I've shat meself during the {crime}",
+      "taking me lucky pre-{crime} dump, brb",
+      "sphincter's tighter than a fish's arse... perfect for {crime}",
+      "hope I don't follow through during this {crime}",
+      "clenching harder than a virgin at schoolies... {crime} time"
+    ]
+  }
+}

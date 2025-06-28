@@ -1,0 +1,75 @@
+{
+  "announcements": {
+    "standard": [
+      "oi cunts, thinkin about doin some crime... what sounds good: {crimes}?",
+      "need some quick cash, should we do a {crimes}?",
+      "right, time for crime... {crimes}? what ya reckon?",
+      "broke as fuck again... {crimes}? speak up cunts",
+      "shazza's on me case about rent... {crimes}?",
+      "ran out of durries, time for a {crimes}?",
+      "centrelink's not till tuesday... {crimes}?",
+      "who's keen for a quick {crimes}?",
+      "bored as fuck, let's do a {crimes}?",
+      "pub's callin but I'm skint... {crimes}?"
+    ],
+    "desperate": [
+      "fuck me dead, completely broke... {crimes}? need cash NOW",
+      "shazza's gonna kill me if I don't get some cash... {crimes}?",
+      "last chance before the rent's due... {crimes}?",
+      "dealer's breathin down me neck... quick {crimes}?",
+      "haven't eaten in days... {crimes}? please cunts"
+    ],
+    "confident": [
+      "easy money time boys... {crimes}? can't fail",
+      "done this a million times... {crimes}? who's in?",
+      "got inside info on a sweet {crimes} opportunity... who's in?",
+      "trust me on this one... {crimes}? guaranteed payday",
+      "me cousin reckons {crimes} is easy pickings right now... what ya reckon?"
+    ],
+    "drunk": [
+      "fukn... lessdo a... {crimes}? yeahhh",
+      "oi oi oi... {crimes}? im not even drunk",
+      "had a few tinnies and got an idea... {crimes}?",
+      "watch this cunts... {crimes}?",
+      "hold me beer while I plan this {crimes}... anyone coming?"
+    ],
+    "morning": [
+      "mornin cunts, breakfast money? {crimes}?",
+      "rise and shine ya lazy bastards... {crimes}?",
+      "need coffee money... quick {crimes}?",
+      "early bird gets the... {crimes}? eh?",
+      "before the shops get busy... {crimes}?"
+    ],
+    "night": [
+      "perfect time for crime... {crimes}? it's dark as",
+      "security's probably asleep... {crimes}?",
+      "late night mission... {crimes}? who's awake?",
+      "can't sleep, might as well... {crimes}?",
+      "cover of darkness perfect for {crimes}... who's keen?"
+    ],
+    "crude": [
+      "me balls are itchin for some action... {crimes}?",
+      "harder than a cat's head right now... {crimes} to blow off steam?",
+      "shazza won't put out till I get cash... {crimes}?",
+      "need money for the rub n tug... {crimes}?",
+      "hornier than a three-balled tomcat... {crimes} for post-nut clarity?",
+      "dick's so hard I can't think straight... {crimes}?",
+      "balls bluer than a smurf's arse... {crimes} for relief money?",
+      "need cash for me favourite titty bar... {crimes}?",
+      "so backed up I could paint the ceiling... {crimes} to distract meself?",
+      "harder than chinese algebra... {crimes} while the blood's elsewhere?"
+    ],
+    "toilet": [
+      "just dropped a massive log, feelin lucky... {crimes}?",
+      "took a shit that'd choke a donkey, time for {crimes}?",
+      "prairie doggin here but need cash... quick {crimes}?",
+      "turtle's pokin out but bills need payin... {crimes}?",
+      "just clogged the dunny, might as well do a {crimes}?",
+      "farted so hard I followed through... {crimes} for new undies?",
+      "shittin like a wombat (square and painful)... {crimes} after?",
+      "stomach's gurgling like a blocked drain... {crimes} before I explode?",
+      "arse is like a japanese flag... {crimes} for bog roll money?",
+      "just painted the bowl... feeling lighter for a {crimes}?"
+    ]
+  }
+}

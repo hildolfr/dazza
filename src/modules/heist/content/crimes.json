@@ -1,0 +1,310 @@
+{
+  "crimes": [
+    {
+      "id": "servo",
+      "name": "servo run",
+      "min_payout": 50,
+      "max_payout": 150,
+      "success_rate": 0.9,
+      "description": "Quick dash into the servo for some durries and a cheeky pie",
+      "difficulty": "easy"
+    },
+    {
+      "id": "bottleo",
+      "name": "bottle-o raid",
+      "min_payout": 100,
+      "max_payout": 300,
+      "success_rate": 0.8,
+      "description": "Grab a few slabs from the bottle shop when old mate's not looking",
+      "difficulty": "easy"
+    },
+    {
+      "id": "snags",
+      "name": "bunnings snag theft",
+      "min_payout": 20,
+      "max_payout": 80,
+      "success_rate": 0.95,
+      "description": "Nick some snags from the Bunnings BBQ",
+      "difficulty": "trivial"
+    },
+    {
+      "id": "pokies",
+      "name": "pokie scam",
+      "min_payout": 200,
+      "max_payout": 500,
+      "success_rate": 0.7,
+      "description": "Dodgy coin on a string trick at the RSL",
+      "difficulty": "medium"
+    },
+    {
+      "id": "centrelink",
+      "name": "centrelink fraud",
+      "min_payout": 300,
+      "max_payout": 800,
+      "success_rate": 0.6,
+      "description": "Tell centrelink you've got 10 kids and a bad back",
+      "difficulty": "medium"
+    },
+    {
+      "id": "maccas",
+      "name": "maccas dumpster dive",
+      "min_payout": 10,
+      "max_payout": 50,
+      "success_rate": 0.98,
+      "description": "Check the bins out back for perfectly good nuggets",
+      "difficulty": "trivial"
+    },
+    {
+      "id": "chemist",
+      "name": "chemist warehouse heist",
+      "min_payout": 150,
+      "max_payout": 400,
+      "success_rate": 0.75,
+      "description": "Grab some pseudoephedrine for... allergies",
+      "difficulty": "medium"
+    },
+    {
+      "id": "woolies",
+      "name": "woolies trolley dash",
+      "min_payout": 100,
+      "max_payout": 350,
+      "success_rate": 0.7,
+      "description": "Self-checkout scam with the old 'everything's bananas' trick",
+      "difficulty": "medium"
+    },
+    {
+      "id": "traino",
+      "name": "train fare dodge",
+      "min_payout": 5,
+      "max_payout": 30,
+      "success_rate": 0.85,
+      "description": "Jump the barriers at the station",
+      "difficulty": "easy"
+    },
+    {
+      "id": "coles",
+      "name": "coles meat swap",
+      "min_payout": 80,
+      "max_payout": 250,
+      "success_rate": 0.8,
+      "description": "Swap expensive steak labels with mince labels",
+      "difficulty": "easy"
+    },
+    {
+      "id": "cashies",
+      "name": "cashies job",
+      "min_payout": 150,
+      "max_payout": 500,
+      "success_rate": 0.9,
+      "description": "Do a dodgy cash job and not declare it",
+      "difficulty": "easy"
+    },
+    {
+      "id": "pub",
+      "name": "pub till raid",
+      "min_payout": 200,
+      "max_payout": 600,
+      "success_rate": 0.65,
+      "description": "Jump the bar while the bartender's having a dart",
+      "difficulty": "hard"
+    },
+    {
+      "id": "bikies",
+      "name": "bikie clubhouse hit",
+      "min_payout": 500,
+      "max_payout": 1500,
+      "success_rate": 0.4,
+      "description": "Nick some gear from the local bikie chapter",
+      "difficulty": "extreme"
+    },
+    {
+      "id": "cop_shop",
+      "name": "cop shop prank",
+      "min_payout": 50,
+      "max_payout": 200,
+      "success_rate": 0.3,
+      "description": "Steal the donut box from the police station",
+      "difficulty": "extreme"
+    },
+    {
+      "id": "ute",
+      "name": "ute theft",
+      "min_payout": 300,
+      "max_payout": 800,
+      "success_rate": 0.7,
+      "description": "Borrow someone's ute for a quick job",
+      "difficulty": "medium"
+    },
+    {
+      "id": "copper",
+      "name": "copper wire strip",
+      "min_payout": 250,
+      "max_payout": 700,
+      "success_rate": 0.6,
+      "description": "Strip some copper from a building site",
+      "difficulty": "hard"
+    },
+    {
+      "id": "grog",
+      "name": "grog run",
+      "min_payout": 80,
+      "max_payout": 200,
+      "success_rate": 0.85,
+      "description": "Nick a few bottles from dan murphy's loading dock",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tools",
+      "name": "tool shed raid",
+      "min_payout": 200,
+      "max_payout": 500,
+      "success_rate": 0.75,
+      "description": "Clean out someone's shed while they're at work",
+      "difficulty": "medium"
+    },
+    {
+      "id": "bins",
+      "name": "wheelie bin scheme",
+      "min_payout": 30,
+      "max_payout": 100,
+      "success_rate": 0.9,
+      "description": "Nick bottles from everyone's recycling bins",
+      "difficulty": "trivial"
+    },
+    {
+      "id": "sausage",
+      "name": "sausage sizzle sabotage",
+      "min_payout": 40,
+      "max_payout": 120,
+      "success_rate": 0.85,
+      "description": "Cause a distraction and grab the donation tin",
+      "difficulty": "easy"
+    },
+    {
+      "id": "dildo",
+      "name": "adult shop five finger discount",
+      "min_payout": 150,
+      "max_payout": 400,
+      "success_rate": 0.75,
+      "description": "Nick some rubber dicks and vibrators for resale",
+      "difficulty": "medium"
+    },
+    {
+      "id": "panties",
+      "name": "panty raid",
+      "min_payout": 80,
+      "max_payout": 250,
+      "success_rate": 0.8,
+      "description": "Steal underwear from washing lines to sell to perverts",
+      "difficulty": "easy"
+    },
+    {
+      "id": "brothel",
+      "name": "brothel till tap",
+      "min_payout": 300,
+      "max_payout": 800,
+      "success_rate": 0.6,
+      "description": "Sneak into the rub n tug and empty the register",
+      "difficulty": "hard"
+    },
+    {
+      "id": "viagra",
+      "name": "viagra heist",
+      "min_payout": 200,
+      "max_payout": 500,
+      "success_rate": 0.7,
+      "description": "Nick the little blue pills from the chemist",
+      "difficulty": "medium"
+    },
+    {
+      "id": "toilet",
+      "name": "public dunny coin harvest",
+      "min_payout": 30,
+      "max_payout": 100,
+      "success_rate": 0.9,
+      "description": "Break into paid toilet coin boxes",
+      "difficulty": "trivial"
+    },
+    {
+      "id": "sperm",
+      "name": "sperm bank identity theft",
+      "min_payout": 250,
+      "max_payout": 600,
+      "success_rate": 0.65,
+      "description": "Pretend to be a donor and raid the payment jar",
+      "difficulty": "medium"
+    },
+    {
+      "id": "stripper",
+      "name": "strip club tip jar grab",
+      "min_payout": 150,
+      "max_payout": 450,
+      "success_rate": 0.7,
+      "description": "Grab the dancers' tips during a lap dance distraction",
+      "difficulty": "medium"
+    },
+    {
+      "id": "porno",
+      "name": "porno mag shoplifting spree",
+      "min_payout": 60,
+      "max_payout": 180,
+      "success_rate": 0.85,
+      "description": "Nick the top shelf mags while the clerk's distracted",
+      "difficulty": "easy"
+    },
+    {
+      "id": "condom",
+      "name": "condom machine bust",
+      "min_payout": 40,
+      "max_payout": 120,
+      "success_rate": 0.9,
+      "description": "Break into pub toilet rubber johnny machines",
+      "difficulty": "trivial"
+    },
+    {
+      "id": "peepshow",
+      "name": "peep show coin heist",
+      "min_payout": 100,
+      "max_payout": 300,
+      "success_rate": 0.8,
+      "description": "Empty the coin slots at the adult video booths",
+      "difficulty": "easy"
+    },
+    {
+      "id": "gloryhole",
+      "name": "glory hole blackmail scheme",
+      "min_payout": 400,
+      "max_payout": 1000,
+      "success_rate": 0.5,
+      "description": "Take photos at the truck stop toilets for 'insurance'",
+      "difficulty": "extreme"
+    },
+    {
+      "id": "meth_piss",
+      "name": "meth head piss collection",
+      "min_payout": 100,
+      "max_payout": 350,
+      "success_rate": 0.75,
+      "description": "Collect junkie piss to sell for drug tests",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ball_grab",
+      "name": "footy club ball bag heist",
+      "min_payout": 80,
+      "max_payout": 200,
+      "success_rate": 0.85,
+      "description": "Nick the sports equipment for resale",
+      "difficulty": "easy"
+    },
+    {
+      "id": "tit_pic",
+      "name": "topless waitress photo scam",
+      "min_payout": 150,
+      "max_payout": 400,
+      "success_rate": 0.7,
+      "description": "Sneaky pics at the titty bar to sell online",
+      "difficulty": "medium"
+    }
+  ]
+}
