@@ -328,31 +328,168 @@ Respond directly to what they said. Keep it short but coherent. Stay on topic:`;
     }
     
     /**
+     * Generate a summary of chat messages
+     * @param {string} chatLog - The chat messages to summarize
+     * @param {number} hours - Number of hours being summarized
+     * @returns {Promise<string[]|null>} Array of summary messages or null if failed
+     */
+    async generateSummary(chatLog, hours) {
+        try {
+            const summarySystemPrompt = `You are a chat summarizer. CRITICAL: Output ONE message only, max 240 chars total.
+
+TASK: Summarize the main topics from the chat log below in a single concise paragraph.
+
+RULES:
+- Use real usernames (e.g., "hildolfr discussed...")
+- Focus on most important topics only
+- Be extremely concise - every word counts
+- If sparse chat: "Not much conversation"
+- NEVER make up content not in the log`;
+
+            const summaryPrompt = `Below is a ${hours}-hour chat log. Summarize what these specific users discussed:`;
+
+            // Log what we're sending to Ollama
+            const fullPrompt = `${summarySystemPrompt}\n\n${summaryPrompt}\n\n${chatLog}`;
+            logger.debug('Sending to Ollama for summary:', {
+                promptLength: fullPrompt.length,
+                chatLogLines: chatLog.split('\n').length,
+                firstLine: chatLog.split('\n')[0],
+                lastLine: chatLog.split('\n').slice(-1)[0]
+            });
+
+            const controller = new AbortController();
+            const summaryTimeout = 30000; // 30 seconds for summaries
+            const timeout = setTimeout(() => controller.abort(), summaryTimeout);
+            
+            const response = await fetch(`${this.baseUrl}/api/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    prompt: fullPrompt,  // Use the full prompt with chat log!
+                    stream: false,
+                    options: {
+                        temperature: 0.1,      // Very low for maximum accuracy
+                        top_p: 0.5,           // Lower to reduce creativity
+                        num_predict: 300,      // Enough tokens to think and craft a good summary
+                        repeat_penalty: 1.2,   // Higher to prevent repetition
+                        stop: ['\n\n\n', 'User:', 'Assistant:', '```', 'Human:', 'AI:'],
+                        num_thread: 8,
+                        num_ctx: 8192,        // Even larger context window
+                        seed: 42,             // Fixed seed for consistency
+                        top_k: 10,            // Much lower for factual responses
+                        mirostat: 2,          // Enable mirostat for better coherence
+                        mirostat_tau: 2.0,    // Lower perplexity target
+                        mirostat_eta: 0.05    // Conservative learning rate
+                    }
+                }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeout);
+            
+            if (!response.ok) {
+                logger.error('Ollama summary API error:', response.status);
+                return null;
+            }
+            
+            const data = await response.json();
+            
+            if (!data.response || data.response.trim() === '') {
+                logger.error('Empty summary response from Ollama');
+                return null;
+            }
+            
+            // Clean the response
+            let summary = data.response.trim();
+            
+            // If the summary is too long for one message, split it into two
+            if (summary.length > 240) {
+                const messages = [];
+                
+                // Find a good split point around the middle
+                const midPoint = Math.floor(summary.length / 2);
+                let splitIndex = -1;
+                
+                // Look for sentence end near midpoint (. ! ?)
+                for (let i = midPoint; i < summary.length && i < midPoint + 100; i++) {
+                    if (summary[i] === '.' || summary[i] === '!' || summary[i] === '?') {
+                        splitIndex = i + 1;
+                        break;
+                    }
+                }
+                
+                // If no sentence end found, look backwards
+                if (splitIndex === -1) {
+                    for (let i = midPoint; i > 0 && i > midPoint - 100; i--) {
+                        if (summary[i] === '.' || summary[i] === '!' || summary[i] === '?') {
+                            splitIndex = i + 1;
+                            break;
+                        }
+                    }
+                }
+                
+                // If still no sentence end, just split at space near middle
+                if (splitIndex === -1) {
+                    splitIndex = summary.lastIndexOf(' ', midPoint + 50);
+                    if (splitIndex === -1) splitIndex = summary.indexOf(' ', midPoint);
+                }
+                
+                if (splitIndex > 0 && splitIndex < summary.length) {
+                    messages.push(summary.substring(0, splitIndex).trim());
+                    messages.push(summary.substring(splitIndex).trim());
+                } else {
+                    // Fallback: just truncate
+                    messages.push(summary.substring(0, 240));
+                    if (summary.length > 240) {
+                        messages.push(summary.substring(240, 480));
+                    }
+                }
+                
+                // Ensure each message is within limit
+                return messages.map(msg => {
+                    if (msg.length > 240) {
+                        const truncated = msg.substring(0, 237) + '...';
+                        const lastSpace = truncated.lastIndexOf(' ');
+                        if (lastSpace > 200) {
+                            return truncated.substring(0, lastSpace) + '...';
+                        }
+                        return truncated;
+                    }
+                    return msg;
+                }).filter(msg => msg.length > 0).slice(0, 2);
+            }
+            
+            return [summary]; // Single message if already short enough
+            
+        } catch (error) {
+            logger.error('Summary generation error:', error.message);
+            return null;
+        }
+    }
+    
+    /**
      * Get fallback response when Ollama is unavailable
      * @returns {string}
      */
     getFallbackResponse() {
         const responses = [
             "zzz... wha? fuck off im sleepin",
-            "*too cooked to respond*",
-            "*passed out on the couch*",
-            "mmmmph... *snoring sounds*",
-            "*drooling on the keyboard*",
+            "mmmph cant talk right now",
+            "mmmmph... zzzzz...",
             "cant talk... room spinnin...",
-            "*face down in a pizza box*",
-            "...*bong bubbling sounds*...",
-            "*incoherent mumbling*",
             "nghhhh... five more minutes mum...",
-            "*sounds of vomiting*",
-            "*completely munted*",
-            "*spills beer on keyboard*",
-            "*drops phone in the dunny*",
-            "*accidentally calls his ex*",
-            "*fumbling with lighter for 10 minutes*",
-            "*staring at the wall*",
-            "*forgot what he was doing*",
-            "*eating cold maccas from yesterday*",
-            "*watching the same youtube video for the 8th time*"
+            "fuckin cooked mate gimme a sec",
+            "too munted to chat right now",
+            "mate im watchin the footy piss off",
+            "not now im havin a dart",
+            "cant hear ya over the bong water",
+            "shazzas yellin at me hold on",
+            "dropped me phone in the dunny again",
+            "cant see straight gimme a minute",
+            "fuck me dead im too pissed for this"
         ];
         
         return responses[Math.floor(Math.random() * responses.length)];
