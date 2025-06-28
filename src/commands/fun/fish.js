@@ -147,17 +147,17 @@ export default new Command({
             
             let caught = null;
             let value = 0;
-            let message = "";
+            let responseMessage = "";
             
             if (catchRoll < 0.15) {
                 // Caught trash
                 caught = trashItems[Math.floor(Math.random() * trashItems.length)];
-                message = `💩 -${message.username} reels in a ${caught.name}! ${caught.comment}`;
+                responseMessage = `💩 -${message.username} reels in a ${caught.name}! ${caught.comment}`;
                 
                 // Small chance to find money in trash
                 if (Math.random() < 0.1) {
                     value = Math.floor(Math.random() * 5) + 1;
-                    message += ` ...wait, there's $${value} stuck to it!`;
+                    responseMessage += ` ...wait, there's $${value} stuck to it!`;
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
                 }
                 
@@ -170,7 +170,7 @@ export default new Command({
                     `❌ -${message.username} falls asleep and misses the bite`,
                     `❌ -${message.username} was too busy on the cones to notice the fish`
                 ];
-                message = nothingMessages[Math.floor(Math.random() * nothingMessages.length)];
+                responseMessage = nothingMessages[Math.floor(Math.random() * nothingMessages.length)];
                 
             } else {
                 // Caught a fish!
@@ -206,17 +206,17 @@ export default new Command({
                     legendary: "🐋"
                 };
                 
-                message = `${rarityEmojis[fishRarity]} `;
+                responseMessage = `${rarityEmojis[fishRarity]} `;
                 
                 if (fishRarity === 'legendary') {
-                    message += `HOLY FUCKIN' SHIT! -${message.username} caught a ${weight}kg ${fishName}! `;
-                    message += `That's worth $${value}! BIGGEST CATCH OF THE YEAR!`;
+                    responseMessage += `HOLY FUCKIN' SHIT! -${message.username} caught a ${weight}kg ${fishName}! `;
+                    responseMessage += `That's worth $${value}! BIGGEST CATCH OF THE YEAR!`;
                     
                     // Trust bonus for legendary
                     await bot.heistManager.updateUserEconomy(message.username, value, 2);
                 } else if (fishRarity === 'rare') {
-                    message += `Fuckin' ripper! -${message.username} lands a ${weight}kg ${fishName}! `;
-                    message += `Worth $${value}! That's a keeper!`;
+                    responseMessage += `Fuckin' ripper! -${message.username} lands a ${weight}kg ${fishName}! `;
+                    responseMessage += `Worth $${value}! That's a keeper!`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 1);
                 } else {
@@ -226,7 +226,7 @@ export default new Command({
                         `lands a decent ${weight}kg ${fishName}! $${value} in the pocket`,
                         `hooks a ${weight}kg ${fishName}! Fish and chips money: $${value}`
                     ];
-                    message += `-${message.username} ${catchMessages[Math.floor(Math.random() * catchMessages.length)]}`;
+                    responseMessage += `-${message.username} ${catchMessages[Math.floor(Math.random() * catchMessages.length)]}`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
                 }
@@ -247,7 +247,7 @@ export default new Command({
                 }
             }
             
-            bot.sendMessage(message);
+            bot.sendMessage(responseMessage);
             
             return { success: true };
             
