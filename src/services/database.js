@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
 import { heistSchema } from '../modules/heist/schema.js';
+import { videoPayoutSchema } from '../modules/video_payout/schema.js';
 
 class Database {
     constructor(dbPath, botUsername = 'dazza') {
@@ -182,6 +183,9 @@ class Database {
 
         // Initialize heist schema
         await heistSchema.initialize(this);
+
+        // Initialize video payout schema
+        await videoPayoutSchema.initialize(this);
 
         console.log('Database tables created successfully');
     }

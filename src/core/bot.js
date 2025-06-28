@@ -13,6 +13,7 @@ import { OllamaService } from '../services/ollama.js';
 import Database from '../services/database.js';
 import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
+import { VideoPayoutManager } from '../modules/video_payout/index.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -70,6 +71,9 @@ export class CyTubeBot extends EventEmitter {
         // Heist economy system
         this.heistManager = null;
         
+        // Video payout system
+        this.videoPayoutManager = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -93,6 +97,11 @@ export class CyTubeBot extends EventEmitter {
             this.heistManager = new HeistManager(this.db, this);
             this.setupHeistHandlers();
             await this.heistManager.init();
+            
+            // Initialize VideoPayoutManager
+            this.videoPayoutManager = new VideoPayoutManager(this.db, this);
+            this.setupVideoPayoutHandlers();
+            await this.videoPayoutManager.init();
             
             // Log initial connection attempt
             await this.db.logConnectionEvent('connect', { type: 'initial' });
@@ -149,6 +158,10 @@ export class CyTubeBot extends EventEmitter {
         
         // Channel events
         this.connection.on('rank', (rank) => this.handleRankUpdate(rank));
+        
+        // Media events
+        this.connection.on('changeMedia', (data) => this.handleMediaChange(data));
+        this.connection.on('mediaUpdate', (data) => this.handleMediaUpdate(data));
     }
     
     setupHeistHandlers() {
@@ -194,6 +207,11 @@ export class CyTubeBot extends EventEmitter {
         this.heistManager.on('resume_progress', (data) => {
             this.sendMessage(data.message);
         });
+    }
+    
+    setupVideoPayoutHandlers() {
+        // Nothing to set up here - video payout works silently
+        // All event handling is done through the existing handlers
     }
 
     async handleChatMessage(data) {
@@ -489,6 +507,13 @@ export class CyTubeBot extends EventEmitter {
 
         // No need to notify heist manager of joins - it tracks activity through messages
 
+        // Track for video payout
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserJoin(user.name).catch(err =>
+                this.logger.error('Failed to track user join for video payout', { error: err.message, user: user.name })
+            );
+        }
+
         // Check for tells after a short delay (to let them settle in)
         // Use a unique timeout key to prevent duplicate checks
         const tellCheckKey = `tellCheck_${user.name}_${Date.now()}`;
@@ -530,10 +555,36 @@ export class CyTubeBot extends EventEmitter {
         );
         
         this.logger.userEvent(user.name, 'leave');
+        
+        // Track for video payout
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserLeave(user.name).catch(err =>
+                this.logger.error('Failed to track user leave for video payout', { error: err.message, user: user.name })
+            );
+        }
     }
 
     handleRankUpdate(rank) {
         this.logger.info(`Bot rank updated to: ${rank}`);
+    }
+    
+    async handleMediaChange(data) {
+        this.logger.info(`Media changed: ${data.title || 'Unknown'} (ID: ${data.id || 'unknown'})`);
+        
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleMediaChange(data).catch(err =>
+                this.logger.error('Failed to handle media change for video payout', { error: err.message })
+            );
+        }
+    }
+    
+    handleMediaUpdate(data) {
+        // Media updates happen frequently (time updates), only log if needed for debugging
+        // this.logger.debug('Media update', data);
+    }
+    
+    getUserlist() {
+        return this.userlist;
     }
     
     handleAFKUpdate(data) {
@@ -1281,6 +1332,11 @@ export class CyTubeBot extends EventEmitter {
         // Shutdown heist manager
         if (this.heistManager) {
             await this.heistManager.shutdown();
+        }
+        
+        // Shutdown video payout manager
+        if (this.videoPayoutManager) {
+            await this.videoPayoutManager.shutdown();
         }
         
         // Disconnect from server
