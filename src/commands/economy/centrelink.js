@@ -101,7 +101,7 @@ export default new Command({
             }
             
             // Public acknowledgment only (skip if PM)
-            if (!message.pm) {
+            if (!message.isPM) {
                 const publicAcknowledgments = [
                     `Processing centrelink claim for -${message.username}...`,
                     `Checking -${message.username}'s eligibility, check ya PMs mate`,

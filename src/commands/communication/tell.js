@@ -11,7 +11,7 @@ export default new Command({
     async handler(bot, message, args) {
         if (args.length < 2) {
             const msg = 'usage: !tell <username> <message>';
-            if (message.pm) {
+            if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
                 bot.sendMessage(msg);
@@ -25,7 +25,7 @@ export default new Command({
         // Check if user is trying to tell themselves
         if (targetUser.toLowerCase() === message.username.toLowerCase()) {
             const msg = 'just talk to yourself in your head mate';
-            if (message.pm) {
+            if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
                 bot.sendMessage(msg);
@@ -36,7 +36,7 @@ export default new Command({
         // Check if user is trying to tell the bot
         if (targetUser.toLowerCase() === bot.config.bot.username.toLowerCase()) {
             const msg = 'mate I\'m not gonna talk to meself, that\'s cooked';
-            if (message.pm) {
+            if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
                 bot.sendMessage(msg);
@@ -70,7 +70,7 @@ export default new Command({
                     `-${targetUser}'s right here ya muppet`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.pm) {
+                if (message.isPM) {
                     bot.sendPrivateMessage(message.username, msg.replace('-', '')); // Remove - prefix in PMs
                 } else {
                     bot.sendMessage(msg);
@@ -94,7 +94,7 @@ export default new Command({
                     `can't do it mate, -${targetUser}'s inbox is full with one from -${existingFrom}`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.pm) {
+                if (message.isPM) {
                     bot.sendPrivateMessage(message.username, msg.replace(/-/g, '')); // Remove all - prefixes in PMs
                 } else {
                     bot.sendMessage(msg);
@@ -103,10 +103,10 @@ export default new Command({
             }
             
             // Store tell with PM flag if sent via PM
-            await bot.db.addTell(message.username, targetUser, tellMessage, message.pm || false);
+            await bot.db.addTell(message.username, targetUser, tellMessage, message.isPM || false);
             
             // Only send public confirmation if not initiated via PM
-            if (!message.pm) {
+            if (!message.isPM) {
                 // Use appropriate confirmation based on whether user is AFK or not
                 if (onlineUser && bot.isUserAFK(targetUser)) {
                     const afkResponses = [
@@ -136,7 +136,7 @@ export default new Command({
         } catch (error) {
             console.error('Tell command error:', error);
             const errorMsg = bot.personality.getResponse('error');
-            if (message.pm) {
+            if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
                 bot.sendMessage(errorMsg);

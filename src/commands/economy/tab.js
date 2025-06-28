@@ -138,7 +138,7 @@ export default new Command({
             const raceNumber = Math.floor(Math.random() * 8) + 1;
 
             // Public acknowledgment only (skip if PM)
-            if (!message.pm) {
+            if (!message.isPM) {
                 const publicAcknowledgments = [
                     `🏇 -${message.username} placed $${amount} on the ${raceType}s at ${track}, race ${raceNumber} - check ya PMs for the race!`,
                     `🎰 -${message.username} is punting $${amount} at the TAB, PMing the race results`,
