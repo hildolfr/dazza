@@ -69,6 +69,7 @@ export default new Command({
     examples: ['!centrelink - Attempt to collect your government payment'],
     category: 'economy',
     cooldown: 5000, // 5 second command cooldown (actual payment is 24hr)
+    pmAccepted: true,
     
     async handler(bot, message, args) {
         try {
@@ -103,32 +104,21 @@ export default new Command({
                 }
             }
             
-            // Announce checking eligibility
-            const checkingMessages = [
-                `📋 -${message.username} rocks up to Centrelink in their finest trackie dacks...`,
-                `📋 -${message.username} joins the queue behind 50 other bludgers...`,
-                `📋 -${message.username} hands over their crumpled forms...`,
-                `📋 -${message.username} tries to look disabled enough for payments...`
+            // Public acknowledgment only
+            const publicAcknowledgments = [
+                `Processing centrelink claim for -${message.username}...`,
+                `Checking -${message.username}'s eligibility, check ya PMs mate`,
+                `-${message.username} is at the centrelink office, results coming via PM`,
+                `Running -${message.username} through the system, PMing the outcome`
             ];
             
-            bot.sendMessage(checkingMessages[Math.floor(Math.random() * checkingMessages.length)]);
-            
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Processing messages
-            const processingMessages = [
-                "👩‍💼 *Karen from Centrelink reviews your case*",
-                "🖥️ *Ancient government computer processes your claim*",
-                "☎️ *They're calling your references (hope Davo's sober)*",
-                "📊 *Checking if you've been a good little dole bludger*"
-            ];
-            
-            bot.sendMessage(processingMessages[Math.floor(Math.random() * processingMessages.length)]);
-            
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             
             // 40-60% chance of payment
             const paymentChance = Math.random();
+            
+            // Build PM message with all the details
+            let pmMessage = "";
             
             if (paymentChance < 0.50) {
                 // SUCCESS - Payment approved!
@@ -142,30 +132,22 @@ export default new Command({
                 // Give money
                 await bot.heistManager.updateUserEconomy(message.username, amount, 0);
                 
-                const successMessages = [
-                    `✅ APPROVED! -${message.username} gets $${amount} ${benefit.name} payment!`,
-                    `✅ Beauty! -${message.username} scores $${amount} from ${benefit.name}!`,
-                    `✅ Ripper! -${message.username}'s ${benefit.name} payment of $${amount} came through!`,
-                    `✅ Fuckin' oath! -${message.username} gets their $${amount} ${benefit.name} payment!`
+                pmMessage = `✅ APPROVED! You got $${amount} from ${benefit.name}!\n`;
+                pmMessage += `📄 Reason: "${reason}"\n\n`;
+                
+                // Add commentary
+                const extraComments = [
+                    "First stop: bottle-o!",
+                    "That's a carton and a pack of Winnie Blues sorted",
+                    "Pokies here I come!",
+                    "Time to pay Shazza that child support... nah fuck it",
+                    "Straight to the TAB with this one"
                 ];
+                pmMessage += extraComments[Math.floor(Math.random() * extraComments.length)];
                 
-                bot.sendMessage(successMessages[Math.floor(Math.random() * successMessages.length)]);
-                
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                bot.sendMessage(`📄 Reason: "${reason}"`);
-                
-                // Sometimes add extra commentary
-                if (Math.random() < 0.3) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    const extraComments = [
-                        "First stop: bottle-o!",
-                        "That's a carton and a pack of Winnie Blues sorted",
-                        "Pokies here I come!",
-                        "Time to pay Shazza that child support... nah fuck it",
-                        "Straight to the TAB with this one"
-                    ];
-                    bot.sendMessage(extraComments[Math.floor(Math.random() * extraComments.length)]);
-                }
+                // Get updated balance
+                const newBalance = await bot.heistManager.getUserBalance(message.username);
+                pmMessage += `\n\nNew balance: $${newBalance.balance}`;
                 
             } else {
                 // FAILED - Payment rejected
@@ -174,31 +156,23 @@ export default new Command({
                 // Still update collection time so they can't spam
                 lastCollection.set(userId, now);
                 
-                const failMessages = [
-                    `❌ REJECTED! -${message.username} gets fuck all today!`,
-                    `❌ DENIED! -${message.username} leaves empty handed!`,
-                    `❌ Computer says NO for -${message.username}!`,
-                    `❌ Bad luck -${message.username}, no payment today!`
+                pmMessage = `❌ REJECTED! No payment today mate.\n`;
+                pmMessage += `📄 Reason: "${reason}"\n\n`;
+                
+                // Add suggestions
+                const suggestions = [
+                    "Maybe try getting a job? ...nah who am I kidding",
+                    "There's always the salvos mate",
+                    "Time to check the couch cushions for change",
+                    "Shazza's mum might lend ya a twenty",
+                    "Guess it's 2-minute noodles again this week",
+                    "Could always try the fishing or TAB for some quick cash"
                 ];
-                
-                bot.sendMessage(failMessages[Math.floor(Math.random() * failMessages.length)]);
-                
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                bot.sendMessage(`📄 Reason: "${reason}"`);
-                
-                // Sometimes suggest alternatives
-                if (Math.random() < 0.3) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    const suggestions = [
-                        "Maybe try getting a job? ...nah who am I kidding",
-                        "There's always the salvos mate",
-                        "Time to check the couch cushions for change",
-                        "Shazza's mum might lend ya a twenty",
-                        "Guess it's 2-minute noodles again this week"
-                    ];
-                    bot.sendMessage(suggestions[Math.floor(Math.random() * suggestions.length)]);
-                }
+                pmMessage += suggestions[Math.floor(Math.random() * suggestions.length)];
             }
+            
+            // Send the PM with all details
+            bot.sendPrivateMessage(message.username, pmMessage);
             
             return { success: true };
             
