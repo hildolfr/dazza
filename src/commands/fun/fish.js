@@ -132,7 +132,7 @@ export default new Command({
             const spot = fishingSpots[Math.floor(Math.random() * fishingSpots.length)];
             
             // Public acknowledgment only (skip if PM)
-            if (!message.pm) {
+            if (!message.isPM) {
                 const publicAcknowledgments = [
                     `🎣 -${message.username} grabs the rod and heads to ${spot.name}, check ya PMs for results`,
                     `🎣 -${message.username} is gone fishin' at ${spot.name}, PMing the catch details`,
