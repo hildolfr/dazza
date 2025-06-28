@@ -82,6 +82,7 @@ export default new Command({
     ],
     category: 'fun',
     cooldown: 7200000, // 2 hour cooldown
+    pmAccepted: true,
     
     async handler(bot, message, args) {
         try {
@@ -116,61 +117,49 @@ export default new Command({
             // Choose random fishing spot
             const spot = fishingSpots[Math.floor(Math.random() * fishingSpots.length)];
             
-            // Announce fishing start
-            const startMessages = [
-                `🎣 -${message.username} cracks a tinnie and casts a line at ${spot.name} ${spot.description}...`,
-                `🎣 -${message.username} lights up a durry and throws in a line at ${spot.name} ${spot.description}...`,
-                `🎣 -${message.username} takes a swig of VB and casts out at ${spot.name} ${spot.description}...`,
-                `🎣 -${message.username} checks for cops then starts fishing at ${spot.name} ${spot.description}...`
+            // Public acknowledgment only
+            const publicAcknowledgments = [
+                `🎣 -${message.username} grabs the rod and heads to ${spot.name}, check ya PMs for results`,
+                `🎣 -${message.username} is gone fishin' at ${spot.name}, PMing the catch details`,
+                `🎣 Casting a line for -${message.username}, results coming via PM`,
+                `🎣 -${message.username} throws in a line, I'll PM ya what bites`
             ];
             
-            bot.sendMessage(startMessages[Math.floor(Math.random() * startMessages.length)]);
-            
-            // Fishing animation
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            const waitingMessages = [
-                "...somethin's nibblin'...",
-                "...feels like a bite...",
-                "...line's twitchin'...",
-                "...wait for it...",
-                "...nearly got somethin'...",
-                "...come on ya bastard..."
-            ];
-            
-            bot.sendMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
-            
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             
             // Determine catch
             const catchRoll = Math.random() * spot.quality * bait.bonus;
             
+            // Build PM message with fishing story
+            let pmMessage = `🎣 **Fishing at ${spot.name} ${spot.description}**\n\n`;
+            pmMessage += `Using ${baitChoice} as bait...\n`;
+            pmMessage += `*casts line and waits*\n\n`;
+            
             let caught = null;
             let value = 0;
-            let responseMessage = "";
             
             if (catchRoll < 0.15) {
                 // Caught trash
                 caught = trashItems[Math.floor(Math.random() * trashItems.length)];
-                responseMessage = `💩 -${message.username} reels in a ${caught.name}! ${caught.comment}`;
+                pmMessage += `💩 You reeled in a ${caught.name}! ${caught.comment}\n`;
                 
                 // Small chance to find money in trash
                 if (Math.random() < 0.1) {
                     value = Math.floor(Math.random() * 5) + 1;
-                    responseMessage += ` ...wait, there's $${value} stuck to it!`;
+                    pmMessage += `\n...wait, there's $${value} stuck to it!\n`;
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
                 }
                 
             } else if (catchRoll < 0.25) {
                 // Nothing
                 const nothingMessages = [
-                    `❌ -${message.username} caught fuck all. story of ya life`,
-                    `❌ -${message.username}'s bait got nicked. crafty little bastards`,
-                    `❌ the fish are smarter than -${message.username} today`,
-                    `❌ -${message.username} falls asleep and misses the bite`,
-                    `❌ -${message.username} was too busy on the cones to notice the fish`
+                    "❌ You caught fuck all. Story of your life",
+                    "❌ Your bait got nicked. Crafty little bastards",
+                    "❌ The fish are smarter than you today",
+                    "❌ You fell asleep and missed the bite",
+                    "❌ You were too busy on the cones to notice the fish"
                 ];
-                responseMessage = nothingMessages[Math.floor(Math.random() * nothingMessages.length)];
+                pmMessage += nothingMessages[Math.floor(Math.random() * nothingMessages.length)] + "\n";
                 
             } else {
                 // Caught a fish!
@@ -206,48 +195,54 @@ export default new Command({
                     legendary: "🐋"
                 };
                 
-                responseMessage = `${rarityEmojis[fishRarity]} `;
-                
                 if (fishRarity === 'legendary') {
-                    responseMessage += `HOLY FUCKIN' SHIT! -${message.username} caught a ${weight}kg ${fishName}! `;
-                    responseMessage += `That's worth $${value}! BIGGEST CATCH OF THE YEAR!`;
+                    pmMessage += `${rarityEmojis[fishRarity]} HOLY FUCKIN' SHIT! You caught a ${weight}kg ${fishName}!\n`;
+                    pmMessage += `That's worth $${value}! BIGGEST CATCH OF THE YEAR!\n`;
+                    pmMessage += `\n🏆 **LEGENDARY CATCH! +2 Trust bonus!**\n`;
                     
                     // Trust bonus for legendary
                     await bot.heistManager.updateUserEconomy(message.username, value, 2);
                 } else if (fishRarity === 'rare') {
-                    responseMessage += `Fuckin' ripper! -${message.username} lands a ${weight}kg ${fishName}! `;
-                    responseMessage += `Worth $${value}! That's a keeper!`;
+                    pmMessage += `${rarityEmojis[fishRarity]} Fuckin' ripper! You landed a ${weight}kg ${fishName}!\n`;
+                    pmMessage += `Worth $${value}! That's a keeper!\n`;
+                    pmMessage += `\n⭐ **RARE CATCH! +1 Trust bonus!**\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 1);
                 } else {
                     const catchMessages = [
                         `caught a ${weight}kg ${fishName}! Worth $${value}`,
-                        `reels in a ${weight}kg ${fishName}! That's $${value} at the co-op`,
-                        `lands a decent ${weight}kg ${fishName}! $${value} in the pocket`,
-                        `hooks a ${weight}kg ${fishName}! Fish and chips money: $${value}`
+                        `reeled in a ${weight}kg ${fishName}! That's $${value} at the co-op`,
+                        `landed a decent ${weight}kg ${fishName}! $${value} in the pocket`,
+                        `hooked a ${weight}kg ${fishName}! Fish and chips money: $${value}`
                     ];
-                    responseMessage += `-${message.username} ${catchMessages[Math.floor(Math.random() * catchMessages.length)]}`;
+                    pmMessage += `${rarityEmojis[fishRarity]} You ${catchMessages[Math.floor(Math.random() * catchMessages.length)]}\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
                 }
                 
                 // Random fishing stories
-                if (Math.random() < 0.1) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                if (Math.random() < 0.2) {
                     const stories = [
-                        "nearly lost me stubby in the struggle!",
-                        "that's bigger than the one Davo caught last week!",
-                        "gonna tell everyone it was twice this size",
-                        "Shazza's gonna be impressed with this one",
-                        "better than sittin' at home with the missus",
-                        "worth missin' the footy for this",
-                        "cops nearly caught me but it was worth it"
+                        "\n*Nearly lost your stubby in the struggle!*",
+                        "\n*That's bigger than the one Davo caught last week!*",
+                        "\n*Gonna tell everyone it was twice this size*",
+                        "\n*Shazza's gonna be impressed with this one*",
+                        "\n*Better than sittin' at home with the missus*",
+                        "\n*Worth missin' the footy for this*",
+                        "\n*Cops nearly caught you but it was worth it*"
                     ];
-                    bot.sendMessage(stories[Math.floor(Math.random() * stories.length)]);
+                    pmMessage += stories[Math.floor(Math.random() * stories.length)];
                 }
             }
             
-            bot.sendMessage(responseMessage);
+            // Add balance info if any money was earned
+            if (value > 0) {
+                const newBalance = await bot.heistManager.getUserBalance(message.username);
+                pmMessage += `\n\n💰 **New balance: $${newBalance.balance}**`;
+            }
+            
+            // Send PM with fishing results
+            bot.sendPrivateMessage(message.username, pmMessage);
             
             return { success: true };
             
