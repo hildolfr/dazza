@@ -52,6 +52,9 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 ## Naming Conventions
 - When mentioning user names we will always prepend a - to them in order to avoid triggering a mention unless we explicitly want to do so. ex: Bob becomes -Bob.
 
-
 ## Modularity
 - We will always make an effort to keep components modular and compartmentalized. Specifically all new commands should be a specific singular modular within the proper folder.
+
+## Documentation Management
+- Keep the help document up to date when adding new commands
+- If a new command is implemented, remember to document it in the help resources

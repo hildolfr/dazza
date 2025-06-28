@@ -8,6 +8,7 @@ export default new Command({
     category: 'basic',
     users: ['all'],
     cooldown: 5000,
+    pmAccepted: true,
     
     async handler(bot, message, args) {
         const commandName = args[0];
@@ -30,7 +31,20 @@ export default new Command({
             // Link to the GitHub-hosted command manual
             const manualUrl = 'https://hildolfr.github.io/dazza/commands.html';
             
-            bot.sendMessage(`Oi mate! Check out me full command manual here: ${manualUrl} 🍺`);
+            // Send public message with variations
+            const publicResponses = [
+                `Oi -${message.username}, check ya PMs mate!`,
+                `Alright -${message.username}, slidin' into ya DMs with the good stuff`,
+                `-${message.username} check your private messages ya drongo`,
+                `Sendin' ya the deets privately -${message.username}`,
+                `PMing ya the command list -${message.username}`
+            ];
+            
+            const response = publicResponses[Math.floor(Math.random() * publicResponses.length)];
+            bot.sendMessage(response);
+            
+            // Send PM with the manual link
+            bot.sendPrivateMessage(message.username, `G'day mate! Here's me full command manual: ${manualUrl} 🍺`);
         }
         
         return { success: true };
