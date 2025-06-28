@@ -137,6 +137,17 @@ class Database {
             )
         `);
 
+        // Create connection_log table for tracking connection attempts
+        await this.run(`
+            CREATE TABLE IF NOT EXISTS connection_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                details TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Create posted_urls table for tracking URLs
         await this.run(`
             CREATE TABLE IF NOT EXISTS posted_urls (
@@ -510,6 +521,29 @@ class Database {
             topDomains,
             topPosters
         };
+    }
+
+    async logConnectionEvent(eventType, details = null) {
+        await this.run(
+            'INSERT INTO connection_log (event_type, timestamp, details) VALUES (?, ?, ?)',
+            [eventType, Date.now(), details ? JSON.stringify(details) : null]
+        );
+    }
+
+    async getLastConnectionTime(eventType = 'connect') {
+        const result = await this.get(
+            'SELECT timestamp FROM connection_log WHERE event_type = ? ORDER BY timestamp DESC LIMIT 1',
+            [eventType]
+        );
+        return result ? result.timestamp : null;
+    }
+
+    async canConnect(minDelayMs = 30000) {
+        const lastConnect = await this.getLastConnectionTime('connect');
+        if (!lastConnect) return true;
+        
+        const timeSinceLastConnect = Date.now() - lastConnect;
+        return timeSinceLastConnect >= minDelayMs;
     }
 
     close() {

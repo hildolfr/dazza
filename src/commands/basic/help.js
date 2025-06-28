@@ -27,26 +27,10 @@ export default new Command({
             
             bot.sendMessage(helpText);
         } else {
-            // Show condensed help with actual available commands
-            const categories = bot.commands.getCategories();
-            const commandList = [];
+            // Link to the GitHub-hosted command manual
+            const manualUrl = 'https://hildolfr.github.io/dazza/docs/commands.html';
             
-            // Get all enabled commands accessible to this user
-            categories.forEach(category => {
-                const commands = bot.commands.getByCategory(category);
-                commands.forEach(cmd => {
-                    if (cmd.enabled && (!cmd.adminOnly || bot.isAdmin(message.username))) {
-                        commandList.push(cmd.name);
-                    }
-                });
-            });
-            
-            // Sort alphabetically for consistency
-            commandList.sort();
-            
-            const helpText = commandList.join(', ');
-            
-            bot.sendMessage(helpText);
+            bot.sendMessage(`Oi mate! Check out me full command manual here: ${manualUrl} 🍺`);
         }
         
         return { success: true };

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dazza Bot - Command Manual</title>
+    <style>
+        :root {
+            --aussie-green: #00843D;
+            --aussie-gold: #FFCD00;
+            --dark-green: #005A2B;
+            --light-gold: #FFE066;
+            --text-dark: #1a1a1a;
+            --text-light: #f0f0f0;
+            --bg-light: #f5f5f5;
+            --admin-red: #C8102E;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--aussie-green) 0%, var(--dark-green) 100%);
+            color: var(--text-light);
+            padding: 3rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .header::before {
+            content: '🍺';
+            position: absolute;
+            font-size: 200px;
+            opacity: 0.05;
+            left: -50px;
+            top: -50px;
+            transform: rotate(-15deg);
+        }
+
+        .header::after {
+            content: '🚬';
+            position: absolute;
+            font-size: 200px;
+            opacity: 0.05;
+            right: -50px;
+            bottom: -50px;
+            transform: rotate(15deg);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--aussie-gold);
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--aussie-gold);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .nav-button {
+            background: var(--aussie-green);
+            color: var(--text-light);
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-button:hover {
+            background: var(--dark-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, var(--aussie-gold) 0%, var(--light-gold) 100%);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-box::before {
+            content: '🦘';
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.1;
+            right: 20px;
+            bottom: -20px;
+        }
+
+        .info-box h2 {
+            color: var(--dark-green);
+            margin-bottom: 1rem;
+        }
+
+        /* Command Categories */
+        .category {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .category:hover {
+            border-color: var(--aussie-green);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .category h2 {
+            color: var(--aussie-green);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Commands Grid */
+        .commands-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        /* Command Card */
+        .command {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .command:hover {
+            border-color: var(--aussie-gold);
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .command-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .command-name {
+            font-weight: bold;
+            color: var(--dark-green);
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-aliases {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .command-description {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .command-usage {
+            background: #333;
+            color: #0f0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .command-example {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .tag-admin {
+            background: var(--admin-red);
+            color: white;
+        }
+
+        .tag-cooldown {
+            background: #2196F3;
+            color: white;
+        }
+
+        .tag-pm {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .tag-restricted {
+            background: #FF9800;
+            color: white;
+        }
+
+        /* Admin Section */
+        .admin-section {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 2px solid var(--admin-red);
+        }
+
+        .admin-section h2 {
+            color: var(--admin-red);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark-green);
+            color: var(--text-light);
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer a {
+            color: var(--aussie-gold);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .commands-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Fun Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .emoji-bounce {
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>🍺 DAZZA BOT COMMAND MANUAL 🚬</h1>
+        <p class="tagline">The All-Australian Bogan Bot for CyTube</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#basic" class="nav-button">Basic</a>
+            <a href="#communication" class="nav-button">Communication</a>
+            <a href="#economy" class="nav-button">Economy</a>
+            <a href="#fun" class="nav-button">Fun</a>
+            <a href="#stats" class="nav-button">Stats</a>
+            <a href="#utility" class="nav-button">Utility</a>
+            <a href="#admin" class="nav-button" style="background: var(--admin-red);">Admin/Dev</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Info Box -->
+        <div class="info-box">
+            <h2>G'day Mate! Welcome to Dazza's Command Manual</h2>
+            <p>Dazza's your typical Aussie bogan - loves his ciggies, rips fat cones, hassles the missus, and gets into all sorts of dodgy business. He's here to make your CyTube experience a ripper time!</p>
+            <p><strong>Usage:</strong> All commands start with <code>!</code> (e.g., <code>!bong</code>)</p>
+            <p><strong>Note:</strong> Some commands have cooldowns or restrictions. Admin commands are marked in <span class="tag tag-admin">RED</span>.</p>
+        </div>
+
+        <!-- Basic Commands -->
+        <section id="basic" class="category">
+            <h2><span class="category-icon">📋</span> Basic Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!help</span>
+                    </div>
+                    <p class="command-aliases">Aliases: commands, halp</p>
+                    <p class="command-description">Links to this command manual</p>
+                    <div class="command-usage">!help</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!ping</span>
+                        <span class="tag tag-restricted">hildolfr only</span>
+                    </div>
+                    <p class="command-description">Check if the bot is responsive</p>
+                    <div class="command-usage">!ping</div>
+                    <p class="command-example">Bot responds: "yeah nah yeah I'm here mate"</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!uptime</span>
+                        <span class="tag tag-restricted">hildolfr only</span>
+                    </div>
+                    <p class="command-description">Show how long the bot has been running</p>
+                    <div class="command-usage">!uptime</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Communication Commands -->
+        <section id="communication" class="category">
+            <h2><span class="category-icon">💬</span> Communication Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!quote</span>
+                        <span class="tag tag-cooldown">10min cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: q</p>
+                    <p class="command-description">Get a random quote from a specific user</p>
+                    <div class="command-usage">!quote &lt;username&gt;</div>
+                    <p class="command-example">Example: !quote Bob</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!rq</span>
+                        <span class="tag tag-cooldown">10min cooldown</span>
+                    </div>
+                    <p class="command-description">Get a random quote from anyone in chat</p>
+                    <div class="command-usage">!rq</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!tell</span>
+                    </div>
+                    <p class="command-description">Leave a message for someone when they're away</p>
+                    <div class="command-usage">!tell &lt;username&gt; &lt;message&gt;</div>
+                    <p class="command-example">Example: !tell Bob Don't forget the beers mate</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!remind</span>
+                    </div>
+                    <p class="command-aliases">Aliases: reminder, remindme</p>
+                    <p class="command-description">Set a reminder for yourself or others</p>
+                    <div class="command-usage">!remind &lt;time&gt; &lt;message&gt;</div>
+                    <p class="command-example">Examples: !remind 5m check the barbie, !remind Bob 1h meeting time</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Economy Commands -->
+        <section id="economy" class="category">
+            <h2><span class="category-icon">💰</span> Economy & Heist Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!balance</span>
+                    </div>
+                    <p class="command-aliases">Aliases: bal, money, $</p>
+                    <p class="command-description">Check your balance and trust level</p>
+                    <div class="command-usage">!balance [username]</div>
+                    <p class="command-example">Examples: !balance, !balance Bob</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!pokies</span>
+                    </div>
+                    <p class="command-aliases">Aliases: slots, slot, pokie</p>
+                    <p class="command-description">Try your luck on the pokies (slot machines)</p>
+                    <div class="command-usage">!pokies &lt;amount&gt;</div>
+                    <p class="command-example">Example: !pokies 10</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!scratchie</span>
+                    </div>
+                    <p class="command-aliases">Aliases: scratch, scratchies, lotto</p>
+                    <p class="command-description">Buy a scratch lottery ticket</p>
+                    <div class="command-usage">!scratchie [amount]</div>
+                    <p class="command-example">Examples: !scratchie (buys $5 ticket), !scratchie 20 (buys $20 Golden Nugget)</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!criminal</span>
+                    </div>
+                    <p class="command-aliases">Aliases: record, rapsheet, crimes</p>
+                    <p class="command-description">Check criminal record from heist activities</p>
+                    <div class="command-usage">!criminal [username]</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!trust</span>
+                        <span class="tag tag-restricted">hildolfr only</span>
+                        <span class="tag tag-cooldown">1min cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: rep, vouch</p>
+                    <p class="command-description">Give trust points to another user</p>
+                    <div class="command-usage">!trust &lt;username&gt; &lt;amount&gt;</div>
+                    <p class="command-example">Example: !trust Bob 5</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fun Commands -->
+        <section id="fun" class="category">
+            <h2><span class="category-icon">🎉</span> Fun Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!bong</span>
+                        <span class="tag tag-cooldown">5min cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: rip, cone, billy</p>
+                    <p class="command-description">Rip a fat cone with Dazza <span class="emoji-bounce">🚬</span></p>
+                    <div class="command-usage">!bong</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!8ball</span>
+                    </div>
+                    <p class="command-aliases">Aliases: eightball</p>
+                    <p class="command-description">Ask the magic 8 ball a question</p>
+                    <div class="command-usage">!8ball &lt;question&gt;</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!insult</span>
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: roast, burn</p>
+                    <p class="command-description">Get a classic Aussie roast</p>
+                    <div class="command-usage">!insult [username]</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!compliment</span>
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: praise, nice</p>
+                    <p class="command-description">Get an Aussie-style compliment</p>
+                    <div class="command-usage">!compliment [username]</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!translate</span>
+                    </div>
+                    <p class="command-aliases">Aliases: trans, aussie</p>
+                    <p class="command-description">Translate text to Australian slang</p>
+                    <div class="command-usage">!translate &lt;text&gt;</div>
+                    <p class="command-example">Example: !translate hello friend → g'day mate</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!clap</span>
+                    </div>
+                    <p class="command-aliases">Aliases: clapback, 👏</p>
+                    <p class="command-description">Add 👏 clap 👏 emojis 👏 between 👏 words</p>
+                    <div class="command-usage">!clap &lt;text&gt;</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!goth</span>
+                    </div>
+                    <p class="command-aliases">Aliases: gothic, fraktur</p>
+                    <p class="command-description">Convert text to gothic/fraktur style</p>
+                    <div class="command-usage">!goth &lt;text&gt;</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!yeah</span>
+                    </div>
+                    <p class="command-aliases">Aliases: yea, yeahnah, nahyeah</p>
+                    <p class="command-description">yeah nah yeah nah mate</p>
+                    <div class="command-usage">!yeah [username]</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!roll</span>
+                    </div>
+                    <p class="command-aliases">Aliases: dice</p>
+                    <p class="command-description">Roll dice</p>
+                    <div class="command-usage">!roll [XdY]</div>
+                    <p class="command-example">Example: !roll 2d6 (rolls 2 six-sided dice)</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!fact</span>
+                        <span class="tag tag-cooldown">30s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: randomfact, didyouknow</p>
+                    <p class="command-description">Get a random Aussie fact</p>
+                    <div class="command-usage">!fact</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!mood</span>
+                        <span class="tag tag-cooldown">30s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: vibe, feeling</p>
+                    <p class="command-description">Check Dazza's current mood</p>
+                    <div class="command-usage">!mood</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Commands -->
+        <section id="stats" class="category">
+            <h2><span class="category-icon">📊</span> Stats Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!stats</span>
+                    </div>
+                    <p class="command-aliases">Aliases: userstats</p>
+                    <p class="command-description">Show user statistics</p>
+                    <div class="command-usage">!stats [username]</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!seen</span>
+                    </div>
+                    <p class="command-description">Check when a user was last seen</p>
+                    <div class="command-usage">!seen &lt;username&gt;</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!top</span>
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
+                    <p class="command-description">Show leaderboards</p>
+                    <div class="command-usage">!top [talkers|bongs|quoted]</div>
+                    <p class="command-example">Examples: !top, !top bongs, !top talkers</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!channelstats</span>
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: channelstat, chanstats</p>
+                    <p class="command-description">View channel statistics</p>
+                    <div class="command-usage">!channelstats</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!afk</span>
+                    </div>
+                    <p class="command-aliases">Aliases: afklist, whoafk</p>
+                    <p class="command-description">Show who is currently AFK</p>
+                    <div class="command-usage">!afk</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!urls</span>
+                    </div>
+                    <p class="command-aliases">Aliases: url, links</p>
+                    <p class="command-description">Show recent URLs or URL statistics</p>
+                    <div class="command-usage">!urls [username|stats|domain &lt;domain&gt;]</div>
+                    <p class="command-example">Examples: !urls, !urls stats, !urls Bob</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Utility Commands -->
+        <section id="utility" class="category">
+            <h2><span class="category-icon">🔧</span> Utility Commands</h2>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!calc</span>
+                    </div>
+                    <p class="command-aliases">Aliases: calculate, math</p>
+                    <p class="command-description">Simple calculator</p>
+                    <div class="command-usage">!calc &lt;expression&gt;</div>
+                    <p class="command-example">Example: !calc 2 + 2</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!convert</span>
+                    </div>
+                    <p class="command-aliases">Aliases: conv</p>
+                    <p class="command-description">Convert between units</p>
+                    <div class="command-usage">!convert &lt;value&gt; &lt;from&gt; to &lt;to&gt;</div>
+                    <p class="command-example">Example: !convert 10 km to miles</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!weather</span>
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
+                    <p class="command-aliases">Aliases: w</p>
+                    <p class="command-description">Check the weather</p>
+                    <div class="command-usage">!weather &lt;location&gt;</div>
+                    <p class="command-example">Example: !weather Sydney</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!define</span>
+                    </div>
+                    <p class="command-aliases">Aliases: def, urban</p>
+                    <p class="command-description">Get Urban Dictionary definition</p>
+                    <div class="command-usage">!define &lt;word&gt;</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!summary</span>
+                        <span class="tag tag-cooldown">30s cooldown</span>
+                        <span class="tag tag-pm">PM response</span>
+                    </div>
+                    <p class="command-description">Get a summary of recent chat via PM</p>
+                    <div class="command-usage">!summary &lt;hours&gt;</div>
+                    <p class="command-example">Example: !summary 2 (summarizes last 2 hours)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Commands -->
+        <section id="admin" class="category admin-section">
+            <h2><span class="category-icon">🔒</span> Admin & Developer Commands</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--admin-red);"><strong>⚠️ These commands are restricted to authorized users only (hildolfr)</strong></p>
+            <div class="commands-grid">
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!dazza</span>
+                        <span class="tag tag-admin">ADMIN</span>
+                    </div>
+                    <p class="command-aliases">Aliases: dazzamoney, dazzabalance</p>
+                    <p class="command-description">Check Dazza's criminal earnings</p>
+                    <div class="command-usage">!dazza</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!forceheist</span>
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <p class="command-aliases">Aliases: triggerheist, testheist</p>
+                    <p class="command-description">Force trigger a heist (testing)</p>
+                    <div class="command-usage">!forceheist</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!heistadvance</span>
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <p class="command-aliases">Aliases: heistskip, heistnext</p>
+                    <p class="command-description">Force advance heist phase</p>
+                    <div class="command-usage">!heistadvance</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!heiststatus</span>
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <p class="command-aliases">Aliases: heistinfo, heiststate</p>
+                    <p class="command-description">View current heist state and timers</p>
+                    <div class="command-usage">!heiststatus</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
+                        <span class="command-name">!nextheist</span>
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <p class="command-aliases">Aliases: heisttime, heisttimer</p>
+                    <p class="command-description">Check next heist schedule</p>
+                    <div class="command-usage">!nextheist</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Special Features -->
+        <div class="info-box" style="margin-top: 3rem;">
+            <h2>🌟 Special Features</h2>
+            <ul style="list-style: none; padding-left: 0;">
+                <li>🎰 <strong>Heist System:</strong> Dazza randomly organizes criminal activities. Vote on crimes and earn money!</li>
+                <li>💬 <strong>AI Chat:</strong> Mention Dazza in chat and he might respond (when he's not too cooked)</li>
+                <li>🔗 <strong>URL Comments:</strong> Dazza occasionally comments on links posted in chat</li>
+                <li>👋 <strong>Greetings:</strong> Dazza greets users when they join (when he feels like it)</li>
+                <li>📊 <strong>Comprehensive Stats:</strong> Track everything from bong rips to criminal records</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Dazza Bot - Made with 🍺 and 🚬 in Australia</p>
+        <p><a href="https://github.com/anthropics/claude-code">Generated with Claude Code</a></p>
+        <p>© 2025 - No wuckin' furries mate!</p>
+    </footer>
+</body>
+</html>
