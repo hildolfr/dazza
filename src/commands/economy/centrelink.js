@@ -100,15 +100,17 @@ export default new Command({
                 }
             }
             
-            // Public acknowledgment only
-            const publicAcknowledgments = [
-                `Processing centrelink claim for -${message.username}...`,
-                `Checking -${message.username}'s eligibility, check ya PMs mate`,
-                `-${message.username} is at the centrelink office, results coming via PM`,
-                `Running -${message.username} through the system, PMing the outcome`
-            ];
-            
-            bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            // Public acknowledgment only (skip if PM)
+            if (!message.pm) {
+                const publicAcknowledgments = [
+                    `Processing centrelink claim for -${message.username}...`,
+                    `Checking -${message.username}'s eligibility, check ya PMs mate`,
+                    `-${message.username} is at the centrelink office, results coming via PM`,
+                    `Running -${message.username} through the system, PMing the outcome`
+                ];
+                
+                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            }
             
             // 40-60% chance of payment
             const paymentChance = Math.random();

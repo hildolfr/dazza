@@ -820,7 +820,24 @@ export class CyTubeBot extends EventEmitter {
                 
                 // Delay messages slightly to avoid spam
                 setTimeout(() => {
-                    this.sendMessage(deliveryMessages[Math.floor(Math.random() * deliveryMessages.length)]);
+                    if (tell.via_pm) {
+                        // Tell was sent via PM, deliver privately
+                        const publicNotifications = [
+                            `oi ${username}, check ya PMs mate!`,
+                            `${username}, ya got a private message waiting`,
+                            `psst ${username}, slide into ya DMs for a message`,
+                            `${username} mate, check ya inbox`
+                        ];
+                        
+                        this.sendMessage(publicNotifications[Math.floor(Math.random() * publicNotifications.length)]);
+                        
+                        // Send the actual message via PM
+                        const pmMessage = `Private message from ${tell.from_user} (${timeAgo}): "${tell.message}"`;
+                        this.sendPrivateMessage(username, pmMessage);
+                    } else {
+                        // Regular public tell
+                        this.sendMessage(deliveryMessages[Math.floor(Math.random() * deliveryMessages.length)]);
+                    }
                 }, 1500 + (i * 2000));
                 
                 await this.db.markTellDelivered(tell.id);

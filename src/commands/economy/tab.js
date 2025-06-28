@@ -137,15 +137,17 @@ export default new Command({
             const track = tracks[raceType][Math.floor(Math.random() * tracks[raceType].length)];
             const raceNumber = Math.floor(Math.random() * 8) + 1;
 
-            // Public acknowledgment only
-            const publicAcknowledgments = [
-                `🏇 -${message.username} placed $${amount} on the ${raceType}s at ${track}, race ${raceNumber} - check ya PMs for the race!`,
-                `🎰 -${message.username} is punting $${amount} at the TAB, PMing the race results`,
-                `📢 Bet placed for -${message.username}! $${amount} on race ${raceNumber}, results via PM`,
-                `🏁 -${message.username} backs the ${raceType}s with $${amount}, I'll PM ya the action`
-            ];
-            
-            bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            // Public acknowledgment only (skip if PM)
+            if (!message.pm) {
+                const publicAcknowledgments = [
+                    `🏇 -${message.username} placed $${amount} on the ${raceType}s at ${track}, race ${raceNumber} - check ya PMs for the race!`,
+                    `🎰 -${message.username} is punting $${amount} at the TAB, PMing the race results`,
+                    `📢 Bet placed for -${message.username}! $${amount} on race ${raceNumber}, results via PM`,
+                    `🏁 -${message.username} backs the ${raceType}s with $${amount}, I'll PM ya the action`
+                ];
+                
+                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            }
 
             // User's selection (random)
             const userPick = Math.floor(Math.random() * 6);
