@@ -12,6 +12,7 @@ export default new Command({
     category: 'economy',
     users: ['all'],
     cooldown: 5000,
+    cooldownMessage: 'still scratchin\' the last one with me car keys mate, gimme {time}s',
 
     async handler(bot, message, args) {
         try {

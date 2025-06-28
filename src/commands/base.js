@@ -5,6 +5,7 @@ export class Command {
         this.description = options.description;
         this.usage = options.usage;
         this.cooldown = options.cooldown || 5000;
+        this.cooldownMessage = options.cooldownMessage || null; // Custom cooldown message
         this.category = options.category || 'misc';
         this.enabled = options.enabled !== false;
         this.adminOnly = options.adminOnly || false;

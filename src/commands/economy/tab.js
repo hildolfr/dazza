@@ -60,6 +60,7 @@ export default new Command({
     ],
     category: 'economy',
     cooldown: 7200000, // 2 hour cooldown
+    cooldownMessage: 'mate the stewards are still draggin\' the dead horse off the track, come back in {time}s',
     pmAccepted: true,
     
     async handler(bot, message, args) {

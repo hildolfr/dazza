@@ -7,6 +7,7 @@ export default new Command({
     usage: '!bong',
     category: 'fun',
     cooldown: 300000, // 5 minutes
+    cooldownMessage: 'easy on the cones mate, ya lungs need {time}s to recover from that last rip',
     
     async handler(bot, message, args) {
         // Update bong counter first
