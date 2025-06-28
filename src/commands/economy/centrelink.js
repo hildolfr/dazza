@@ -113,7 +113,12 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (!bot.heistManager) {
-                bot.sendMessage('Centrelink system is down for maintenance (surprise surprise)');
+                const errorMsg = 'Centrelink system is down for maintenance (surprise surprise)';
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg);
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
@@ -134,7 +139,12 @@ export default new Command({
                         `patience -${message.username}! Next payment in ${hours}h ${minutes}m. Go have a cone`
                     ];
                     
-                    bot.sendMessage(waitMessages[Math.floor(Math.random() * waitMessages.length)]);
+                    const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
+                    if (message.isPM) {
+                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, '')); // Remove - prefixes in PMs
+                    } else {
+                        bot.sendMessage(selectedMsg);
+                    }
                     return { success: false };
                 }
             }
@@ -288,7 +298,12 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Centrelink command error:', error);
-            bot.sendMessage('Centrelink computer crashed. Standard Monday really.');
+            const errorMsg = 'Centrelink computer crashed. Standard Monday really.';
+            if (message.isPM) {
+                bot.sendPrivateMessage(message.username, errorMsg);
+            } else {
+                bot.sendMessage(errorMsg);
+            }
             return { success: false };
         }
     }
