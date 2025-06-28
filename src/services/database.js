@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import path from 'path';
 import { heistSchema } from '../modules/heist/schema.js';
 import { videoPayoutSchema } from '../modules/video_payout/schema.js';
+import { cooldownSchema } from '../utils/cooldownSchema.js';
 
 class Database {
     constructor(dbPath, botUsername = 'dazza') {
@@ -186,6 +187,9 @@ class Database {
 
         // Initialize video payout schema
         await videoPayoutSchema.initialize(this);
+
+        // Initialize cooldown schema
+        await cooldownSchema.initialize(this);
 
         console.log('Database tables created successfully');
     }

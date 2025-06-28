@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
 
 // Fish types with different rarities and values
 const fishTypes = {
@@ -84,9 +85,21 @@ export default new Command({
     cooldown: 7200000, // 2 hour cooldown
     cooldownMessage: 'nah mate the cops are still at the pond checkin\' fishing licences, try again in {time}s',
     pmAccepted: true,
+    persistentCooldown: true, // Enable persistent cooldown
     
     async handler(bot, message, args) {
         try {
+            // Check persistent cooldown if database is available
+            if (bot.db && this.persistentCooldown) {
+                const cooldownManager = new PersistentCooldownManager(bot.db);
+                const cooldownCheck = await cooldownManager.check(this.name, message.username, this.cooldown);
+                
+                if (!cooldownCheck.allowed) {
+                    const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
+                    bot.sendMessage(cooldownMsg);
+                    return { success: false };
+                }
+            }
             if (!bot.heistManager) {
                 bot.sendMessage('fishing licence machine is fucked, try again later');
                 return { success: false };

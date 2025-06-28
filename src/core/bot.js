@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import { CyTubeConnection } from './connection.js';
 import { DazzaPersonality } from './character.js';
 import { CooldownManager } from '../utils/cooldowns.js';
+import { PersistentCooldownManager } from '../utils/persistentCooldowns.js';
 import { MemoryManager } from '../utils/memoryManager.js';
 import { RateLimiter } from '../utils/rateLimiter.js';
 import { formatDuration, formatTimestamp } from '../utils/formatting.js';
@@ -925,6 +926,17 @@ export class CyTubeBot extends EventEmitter {
         
         // Start rate limiter cleanup
         this.rateLimiter.startAutoCleanup();
+        
+        // Clean up old persistent cooldowns daily
+        this.cooldownCleanupInterval = setInterval(async () => {
+            try {
+                const cooldownManager = new PersistentCooldownManager(this.db);
+                await cooldownManager.cleanupOldCooldowns();
+                this.logger.info('Cleaned up old cooldowns');
+            } catch (error) {
+                this.logger.error('Failed to clean up cooldowns', { error: error.message });
+            }
+        }, 24 * 60 * 60 * 1000); // Every 24 hours
     }
 
     getRandomGreetingCooldown() {
@@ -1313,6 +1325,7 @@ export class CyTubeBot extends EventEmitter {
         // Stop periodic tasks
         if (this.reminderInterval) clearInterval(this.reminderInterval);
         if (this.statsInterval) clearInterval(this.statsInterval);
+        if (this.cooldownCleanupInterval) clearInterval(this.cooldownCleanupInterval);
         
         // Cancel pending greeting
         if (this.pendingGreeting) {

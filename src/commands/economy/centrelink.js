@@ -1,7 +1,5 @@
 import { Command } from '../base.js';
-
-// Track last collection time per user (24 hour cooldown)
-const lastCollection = new Map();
+import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
 
 // Dole payment excuses/reasons when you get paid
 const paymentReasons = [
@@ -68,8 +66,10 @@ export default new Command({
     usage: '!centrelink',
     examples: ['!centrelink - Attempt to collect your government payment'],
     category: 'economy',
-    cooldown: 5000, // 5 second command cooldown (actual payment is 24hr)
+    cooldown: 86400000, // 24 hour cooldown for actual payment
+    cooldownMessage: 'oi -${username}, ya already collected today! Come back in {time}s',
     pmAccepted: true,
+    persistentCooldown: true, // Enable persistent cooldown
     
     async handler(bot, message, args) {
         try {
@@ -78,18 +78,14 @@ export default new Command({
                 return { success: false };
             }
 
-            const now = Date.now();
-            const userId = message.username.toLowerCase();
-            const lastTime = lastCollection.get(userId);
-            
-            // Check 24 hour cooldown
-            if (lastTime) {
-                const timeSince = now - lastTime;
-                const timeLeft = (24 * 60 * 60 * 1000) - timeSince;
+            // Check persistent cooldown if database is available
+            if (bot.db && this.persistentCooldown) {
+                const cooldownManager = new PersistentCooldownManager(bot.db);
+                const cooldownCheck = await cooldownManager.check(this.name, message.username, this.cooldown);
                 
-                if (timeLeft > 0) {
-                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                if (!cooldownCheck.allowed) {
+                    const hours = Math.floor(cooldownCheck.remaining / 3600);
+                    const minutes = Math.floor((cooldownCheck.remaining % 3600) / 60);
                     
                     const waitMessages = [
                         `oi -${message.username}, ya already collected today! Come back in ${hours}h ${minutes}m`,
@@ -126,9 +122,6 @@ export default new Command({
                 const amount = Math.floor(Math.random() * (benefit.max - benefit.min + 1)) + benefit.min;
                 const reason = paymentReasons[Math.floor(Math.random() * paymentReasons.length)];
                 
-                // Update last collection time
-                lastCollection.set(userId, now);
-                
                 // Give money
                 await bot.heistManager.updateUserEconomy(message.username, amount, 0);
                 
@@ -152,9 +145,6 @@ export default new Command({
             } else {
                 // FAILED - Payment rejected
                 const reason = rejectionReasons[Math.floor(Math.random() * rejectionReasons.length)];
-                
-                // Still update collection time so they can't spam
-                lastCollection.set(userId, now);
                 
                 pmMessage = `❌ REJECTED! No payment today mate.\n`;
                 pmMessage += `📄 Reason: "${reason}"\n\n`;
