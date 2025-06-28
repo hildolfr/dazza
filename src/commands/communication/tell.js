@@ -135,7 +135,12 @@ export default new Command({
             return { success: true };
         } catch (error) {
             console.error('Tell command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            const errorMsg = bot.personality.getResponse('error');
+            if (message.pm) {
+                bot.sendPrivateMessage(message.username, errorMsg);
+            } else {
+                bot.sendMessage(errorMsg);
+            }
             return { success: false };
         }
     }
