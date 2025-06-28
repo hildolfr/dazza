@@ -172,6 +172,8 @@ export default new Command({
             
             // Build concise result message
             let resultMessage = "";
+            let publicAnnouncement = null;
+            let forcedShare = false;
             
             // 20% chance to win, 30% chance to place (2nd/3rd), 50% chance to lose
             if (outcome < 0.20) {
@@ -184,6 +186,16 @@ export default new Command({
                 const newBalance = await bot.heistManager.getUserBalance(message.username);
                 
                 resultMessage = `${winMsg} | 💰 WON $${winnings}! | Balance: $${newBalance.balance}`;
+                
+                // Announce big wins (10x or more)
+                if (userOdds >= 10) {
+                    publicAnnouncement = `🎆 BIG WIN AT THE TAB! ${message.username} just won $${winnings} on ${userAnimal} at ${userOdds}:1 odds!`;
+                    
+                    if (winnings >= 300) {
+                        forcedShare = true;
+                        publicAnnouncement += ` Dazza's takin' a cut for everyone!`;
+                    }
+                }
                 
             } else if (outcome < 0.50) {
                 // PLACE (2nd or 3rd)
@@ -210,6 +222,60 @@ export default new Command({
             
             // Send second PM with race result
             bot.sendPrivateMessage(message.username, resultMessage);
+            
+            // Handle public announcements
+            if (publicAnnouncement) {
+                setTimeout(() => {
+                    bot.sendMessage(publicAnnouncement);
+                }, 2000);
+            }
+            
+            // Handle forced sharing for wins over $300
+            if (forcedShare && winnings >= 300) {
+                setTimeout(async () => {
+                    try {
+                        // Get all online users (excluding the winner and bots)
+                        const onlineUsers = Array.from(bot.userlist.values())
+                            .filter(u => !u.meta.afk && 
+                                    u.name.toLowerCase() !== message.username.toLowerCase() &&
+                                    u.name.toLowerCase() !== bot.username.toLowerCase() &&
+                                    !u.name.startsWith('['));
+                        
+                        if (onlineUsers.length > 0) {
+                            // Calculate shares - winner keeps 50%, rest split among others + dazza
+                            const winnerShare = Math.floor(winnings * 0.5);
+                            const remainingAmount = winnings - winnerShare;
+                            const sharePerUser = Math.floor(remainingAmount / (onlineUsers.length + 1)); // +1 for dazza
+                            const dazzaShare = remainingAmount - (sharePerUser * onlineUsers.length);
+                            
+                            // Deduct the shared amount from winner (they already got the full amount)
+                            await bot.heistManager.updateUserEconomy(message.username, -remainingAmount, 0);
+                            
+                            // Give each user their share
+                            for (const user of onlineUsers) {
+                                await bot.heistManager.updateUserEconomy(user.name, sharePerUser, 0);
+                            }
+                            
+                            // Dazza gets his cut
+                            await bot.heistManager.updateDazzaBalance(dazzaShare);
+                            
+                            // Announce the sharing
+                            const shareMessages = [
+                                `everyone gets $${sharePerUser} from ${message.username}'s massive TAB win! I'm pocketin' $${dazzaShare} as the bookie's cut`,
+                                `splittin' the winnings! $${sharePerUser} each from ${message.username}'s punt, $${dazzaShare} for me troubles`,
+                                `TAB payout time! everyone scores $${sharePerUser}, I take $${dazzaShare} for runnin' the numbers`,
+                                `sharing is caring! $${sharePerUser} each from ${message.username}'s lucky streak, plus $${dazzaShare} for Dazza`
+                            ];
+                            
+                            setTimeout(() => {
+                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        bot.logger.error('Error sharing TAB winnings:', error);
+                    }
+                }, 4000);
+            }
             
             return { success: true };
             

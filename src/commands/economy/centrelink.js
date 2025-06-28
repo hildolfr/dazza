@@ -59,6 +59,45 @@ const benefitTypes = [
     { name: "Special Benefit", min: 10, max: 25 }
 ];
 
+// Rare high-reward payments (0.5-1% chance)
+const rarePayments = [
+    { 
+        name: "Back Payment Error", 
+        min: 300, 
+        max: 500, 
+        reason: "Computer glitch paid you 6 months of back payments!",
+        publicMsg: "scored a back payment error"
+    },
+    { 
+        name: "Disability Reassessment Bonus", 
+        min: 400, 
+        max: 700, 
+        reason: "They finally admitted your chronic cone dependency is a disability!",
+        publicMsg: "got disability for being too cooked"
+    },
+    { 
+        name: "Dead Relative's Pension", 
+        min: 500, 
+        max: 800, 
+        reason: "Uncle Bruce's pension kept coming after he carked it!",
+        publicMsg: "inherited dead Uncle Bruce's pension"
+    },
+    { 
+        name: "COVID Disaster Payment", 
+        min: 600, 
+        max: 1000, 
+        reason: "Found an old COVID payment they forgot to give ya!",
+        publicMsg: "found forgotten COVID money"
+    },
+    { 
+        name: "System Malfunction Jackpot", 
+        min: 800, 
+        max: 1000, 
+        reason: "The mainframe shit itself and gave you EVERYTHING!",
+        publicMsg: "broke the Centrelink mainframe"
+    }
+];
+
 export default new Command({
     name: 'centrelink',
     aliases: ['dole', 'welfare', 'centerlink', 'payments'],
@@ -112,13 +151,38 @@ export default new Command({
                 bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
             
-            // 40-60% chance of payment
+            // Check for rare payments first (0.5-1% chance)
+            const rareRoll = Math.random();
             const paymentChance = Math.random();
             
             // Build PM message with all the details
             let pmMessage = "";
+            let publicAnnouncement = null;
+            let forcedShare = false;
+            let amount = 0;
             
-            if (paymentChance < 0.50) {
+            if (rareRoll < 0.01) {
+                // RARE PAYMENT! (1% chance)
+                const rarePayment = rarePayments[Math.floor(Math.random() * rarePayments.length)];
+                amount = Math.floor(Math.random() * (rarePayment.max - rarePayment.min + 1)) + rarePayment.min;
+                
+                pmMessage = `🎰 HOLY FUCKIN' JACKPOT! ${rarePayment.name}!\n`;
+                pmMessage += `📄 ${rarePayment.reason}\n\n`;
+                pmMessage += `💰 **YOU GOT $${amount}!!!**\n\n`;
+                pmMessage += `Better cash this before they realize their mistake!`;
+                
+                // Always announce rare payments
+                publicAnnouncement = `🚨 CENTRELINK JACKPOT! ${message.username} just ${rarePayment.publicMsg} worth $${amount}!`;
+                
+                if (amount >= 300) {
+                    forcedShare = true;
+                    publicAnnouncement += ` Dazza's dobbin' to make sure everyone gets their cut!`;
+                }
+                
+                // Give money
+                await bot.heistManager.updateUserEconomy(message.username, amount, 0);
+                
+            } else if (paymentChance < 0.50) {
                 // SUCCESS - Payment approved!
                 const benefit = benefitTypes[Math.floor(Math.random() * benefitTypes.length)];
                 const amount = Math.floor(Math.random() * (benefit.max - benefit.min + 1)) + benefit.min;
@@ -165,6 +229,60 @@ export default new Command({
             
             // Send the PM with all details
             bot.sendPrivateMessage(message.username, pmMessage);
+            
+            // Handle public announcements
+            if (publicAnnouncement) {
+                setTimeout(() => {
+                    bot.sendMessage(publicAnnouncement);
+                }, 2000);
+            }
+            
+            // Handle forced sharing for payments over $300
+            if (forcedShare && amount >= 300) {
+                setTimeout(async () => {
+                    try {
+                        // Get all online users (excluding the recipient and bots)
+                        const onlineUsers = Array.from(bot.userlist.values())
+                            .filter(u => !u.meta.afk && 
+                                    u.name.toLowerCase() !== message.username.toLowerCase() &&
+                                    u.name.toLowerCase() !== bot.username.toLowerCase() &&
+                                    !u.name.startsWith('['));
+                        
+                        if (onlineUsers.length > 0) {
+                            // Calculate shares - recipient keeps 50%, rest split among others + dazza
+                            const recipientShare = Math.floor(amount * 0.5);
+                            const remainingAmount = amount - recipientShare;
+                            const sharePerUser = Math.floor(remainingAmount / (onlineUsers.length + 1)); // +1 for dazza
+                            const dazzaShare = remainingAmount - (sharePerUser * onlineUsers.length);
+                            
+                            // Deduct the shared amount from recipient (they already got the full amount)
+                            await bot.heistManager.updateUserEconomy(message.username, -remainingAmount, 0);
+                            
+                            // Give each user their share
+                            for (const user of onlineUsers) {
+                                await bot.heistManager.updateUserEconomy(user.name, sharePerUser, 0);
+                            }
+                            
+                            // Dazza gets his cut
+                            await bot.heistManager.updateDazzaBalance(dazzaShare);
+                            
+                            // Announce the sharing
+                            const shareMessages = [
+                                `everyone gets $${sharePerUser} from ${message.username}'s dodgy centrelink payout! I'm takin' $${dazzaShare} for snitchin'`,
+                                `wealth redistribution! $${sharePerUser} each from ${message.username}'s government windfall, $${dazzaShare} for me dobbin' fee`,
+                                `socialism in action! everyone scores $${sharePerUser}, I pocket $${dazzaShare} for alertin' the authorities`,
+                                `${message.username}'s tax dollars at work! $${sharePerUser} each, plus $${dazzaShare} for ya boy Dazza`
+                            ];
+                            
+                            setTimeout(() => {
+                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        bot.logger.error('Error sharing centrelink rewards:', error);
+                    }
+                }, 4000);
+            }
             
             return { success: true };
             

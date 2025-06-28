@@ -6,7 +6,8 @@ const fishTypes = {
     common: {
         names: [
             "Bream", "Flathead", "Whiting", "Mullet", "Catfish", 
-            "Leather Jacket", "Toadfish", "Puffer Fish", "Garfish"
+            "Leather Jacket", "Toadfish", "Puffer Fish", "Garfish",
+            "Dart", "Luderick", "Yellowtail", "Pike", "Flounder"
         ],
         value: { min: 1, max: 5 },
         weight: { min: 0.2, max: 2 }
@@ -14,26 +15,37 @@ const fishTypes = {
     uncommon: {
         names: [
             "Snapper", "Tailor", "Salmon", "Kingfish", "Trevally",
-            "Mackerel", "Morwong", "Pearl Perch"
+            "Mackerel", "Morwong", "Pearl Perch", "Flathead (big)",
+            "John Dory", "Red Emperor", "Coral Trout"
         ],
         value: { min: 5, max: 15 },
         weight: { min: 1, max: 5 }
     },
+    epic: {
+        names: [
+            "Giant Snapper", "King Salmon", "Trophy Barramundi", 
+            "Monster Flathead", "Prize Jewfish", "Golden Perch",
+            "Massive Mulloway"
+        ],
+        value: { min: 20, max: 50 },
+        weight: { min: 5, max: 20 }
+    },
     rare: {
         names: [
             "Barramundi", "Murray Cod", "Jewfish", "Spanish Mackerel",
-            "Mahi Mahi", "Wahoo", "Yellowfin Tuna"
+            "Mahi Mahi", "Wahoo", "Yellowfin Tuna", "Cobia",
+            "Amberjack", "Dogtooth Tuna"
         ],
-        value: { min: 15, max: 30 },
-        weight: { min: 3, max: 15 }
+        value: { min: 40, max: 80 },
+        weight: { min: 8, max: 30 }
     },
     legendary: {
         names: [
-            "Marlin", "Great White", "Hammerhead", "Giant Trevally",
-            "Bluefin Tuna", "Sailfish"
+            "Black Marlin", "Great White", "Tiger Shark", "Giant Trevally",
+            "Bluefin Tuna", "Sailfish", "Swordfish", "Mako Shark"
         ],
-        value: { min: 50, max: 100 },
-        weight: { min: 10, max: 50 }
+        value: { min: 100, max: 200 },
+        weight: { min: 20, max: 100 }
     }
 };
 
@@ -48,8 +60,32 @@ const trashItems = [
     { name: "Traffic Cone", comment: "how the fuck?" },
     { name: "Servo Pie Wrapper", comment: "probably still edible" },
     { name: "Empty VB Can", comment: "at least they drank the good stuff" },
-    { name: "Thong", comment: "just the one, size 11" }
+    { name: "Thong", comment: "just the one, size 11" },
+    { name: "Stolen Number Plate", comment: "QLD 420-BLZ" },
+    { name: "Rusty BBQ Plate", comment: "still got snag residue" },
+    { name: "Lost Phone", comment: "Nokia 3310, still works!" }
 ];
+
+// Special events and treasures
+const specialCatches = {
+    treasure: [
+        { name: "Sunken Esky Full of Cash", value: { min: 200, max: 500 }, comment: "holy shit! someone's drug money!" },
+        { name: "Gold Watch", value: { min: 100, max: 300 }, comment: "probably fell off some rich cunt's yacht" },
+        { name: "Antique Bottle Collection", value: { min: 150, max: 400 }, comment: "these are worth a fortune to collectors!" },
+        { name: "Lost Poker Machine", value: { min: 300, max: 800 }, comment: "still got coins in it! JACKPOT!" },
+        { name: "Buried Drug Stash", value: { min: 400, max: 1000 }, comment: "better not tell the cops about this one..." }
+    ],
+    multiCatch: [
+        { name: "School of Whiting", multiplier: 5, comment: "caught 5 at once!" },
+        { name: "Bream Bonanza", multiplier: 7, comment: "7 fish on one line!" },
+        { name: "Flathead Frenzy", multiplier: 4, comment: "4 flatties in one go!" }
+    ],
+    rareBait: [
+        { name: "Magic Berley", comment: "attracts everything!", effect: "nextCatchBonus" },
+        { name: "Golden Hook", comment: "legendary fishing gear!", effect: "doubleMoney" },
+        { name: "Ancient Lure", comment: "the fish can't resist!", effect: "guaranteedRare" }
+    ]
+};
 
 // Fishing spots with different catch rates
 const fishingSpots = [
@@ -58,7 +94,10 @@ const fishingSpots = [
     { name: "River", quality: 0.8, description: "under the bridge" },
     { name: "Beach", quality: 0.9, description: "near the surf club" },
     { name: "Jetty", quality: 0.85, description: "at the boat ramp" },
-    { name: "Rock Pool", quality: 0.75, description: "down by the point" }
+    { name: "Rock Pool", quality: 0.75, description: "down by the point" },
+    { name: "Storm Drain", quality: 0.5, description: "dodgy but sometimes lucky" },
+    { name: "Harbor", quality: 0.95, description: "where the big boats are" },
+    { name: "Secret Spot", quality: 1.0, description: "Davo's special place" }
 ];
 
 // Bait types affect catch chances
@@ -145,6 +184,7 @@ export default new Command({
             
             // Determine catch
             const catchRoll = Math.random() * spot.quality * bait.bonus;
+            const specialRoll = Math.random();
             
             // Build PM message with fishing story
             let pmMessage = `🎣 **Fishing at ${spot.name} ${spot.description}**\n\n`;
@@ -153,8 +193,38 @@ export default new Command({
             
             let caught = null;
             let value = 0;
+            let publicAnnouncement = null;
+            let forcedShare = false;
             
-            if (catchRoll < 0.15) {
+            // Check for special events first (1% chance)
+            if (specialRoll < 0.01) {
+                // TREASURE! (0.5% chance)
+                if (specialRoll < 0.005) {
+                    const treasure = specialCatches.treasure[Math.floor(Math.random() * specialCatches.treasure.length)];
+                    value = Math.floor(Math.random() * (treasure.value.max - treasure.value.min + 1)) + treasure.value.min;
+                    pmMessage += `💎 HOLY FUCKIN' SHIT! You found a ${treasure.name}!\n`;
+                    pmMessage += `${treasure.comment}\n`;
+                    pmMessage += `💰 **TREASURE WORTH $${value}!**\n`;
+                    
+                    if (value >= 300) {
+                        forcedShare = true;
+                        publicAnnouncement = `🚨 OI EVERYONE! ${message.username} just found a ${treasure.name} worth $${value}! Time to share the wealth ya greedy bastard!`;
+                    }
+                    
+                    await bot.heistManager.updateUserEconomy(message.username, value, 3);
+                } else {
+                    // Multi-catch event (0.5% chance)
+                    const multiCatch = specialCatches.multiCatch[Math.floor(Math.random() * specialCatches.multiCatch.length)];
+                    const baseFish = fishTypes.common.names[Math.floor(Math.random() * fishTypes.common.names.length)];
+                    const baseValue = Math.floor(Math.random() * 5) + 1;
+                    value = baseValue * multiCatch.multiplier;
+                    
+                    pmMessage += `🎉 MULTI-CATCH! ${multiCatch.name} - ${multiCatch.comment}\n`;
+                    pmMessage += `Total value: $${value}!\n`;
+                    
+                    await bot.heistManager.updateUserEconomy(message.username, value, 0);
+                }
+            } else if (catchRoll < 0.15) {
                 // Caught trash
                 caught = trashItems[Math.floor(Math.random() * trashItems.length)];
                 pmMessage += `💩 You reeled in a ${caught.name}! ${caught.comment}\n`;
@@ -181,13 +251,17 @@ export default new Command({
                 // Caught a fish!
                 let fishRarity, fishList;
                 
-                if (catchRoll < 0.6) {
+                // Adjusted percentages for new tiers
+                if (catchRoll < 0.55) {
                     fishRarity = 'common';
                     fishList = fishTypes.common;
-                } else if (catchRoll < 0.85) {
+                } else if (catchRoll < 0.80) {
                     fishRarity = 'uncommon';
                     fishList = fishTypes.uncommon;
-                } else if (catchRoll < 0.95) {
+                } else if (catchRoll < 0.925) {
+                    fishRarity = 'epic';
+                    fishList = fishTypes.epic;
+                } else if (catchRoll < 0.975) {
                     fishRarity = 'rare';
                     fishList = fishTypes.rare;
                 } else {
@@ -207,6 +281,7 @@ export default new Command({
                 const rarityEmojis = {
                     common: "🐟",
                     uncommon: "🐠",
+                    epic: "🌟",
                     rare: "🦈",
                     legendary: "🐋"
                 };
@@ -214,14 +289,35 @@ export default new Command({
                 if (fishRarity === 'legendary') {
                     pmMessage += `${rarityEmojis[fishRarity]} HOLY FUCKIN' SHIT! You caught a ${weight}kg ${fishName}!\n`;
                     pmMessage += `That's worth $${value}! BIGGEST CATCH OF THE YEAR!\n`;
-                    pmMessage += `\n🏆 **LEGENDARY CATCH! +2 Trust bonus!**\n`;
+                    pmMessage += `\n🏆 **LEGENDARY CATCH! +3 Trust bonus!**\n`;
                     
-                    // Trust bonus for legendary
-                    await bot.heistManager.updateUserEconomy(message.username, value, 2);
+                    // Always announce legendary catches
+                    publicAnnouncement = `🐋 LEGENDARY CATCH! ${message.username} just landed a ${weight}kg ${fishName}! What a fuckin' legend!`;
+                    
+                    if (value >= 300) {
+                        forcedShare = true;
+                        publicAnnouncement += ` Worth $${value} - time to share the wealth!`;
+                    }
+                    
+                    await bot.heistManager.updateUserEconomy(message.username, value, 3);
                 } else if (fishRarity === 'rare') {
                     pmMessage += `${rarityEmojis[fishRarity]} Fuckin' ripper! You landed a ${weight}kg ${fishName}!\n`;
                     pmMessage += `Worth $${value}! That's a keeper!\n`;
-                    pmMessage += `\n⭐ **RARE CATCH! +1 Trust bonus!**\n`;
+                    pmMessage += `\n⭐ **RARE CATCH! +2 Trust bonus!**\n`;
+                    
+                    // Announce rare catches
+                    publicAnnouncement = `🦈 RARE CATCH! ${message.username} just reeled in a ${weight}kg ${fishName}! Bloody beauty!`;
+                    
+                    if (value >= 300) {
+                        forcedShare = true;
+                        publicAnnouncement += ` Worth $${value} - sharing time!`;
+                    }
+                    
+                    await bot.heistManager.updateUserEconomy(message.username, value, 2);
+                } else if (fishRarity === 'epic') {
+                    pmMessage += `${rarityEmojis[fishRarity]} Bloody oath! Epic catch - ${weight}kg ${fishName}!\n`;
+                    pmMessage += `Worth $${value}! That's a ripper!\n`;
+                    pmMessage += `\n⭐ **EPIC CATCH! +1 Trust bonus!**\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 1);
                 } else {
@@ -259,6 +355,60 @@ export default new Command({
             
             // Send PM with fishing results
             bot.sendPrivateMessage(message.username, pmMessage);
+            
+            // Handle public announcements and forced sharing
+            if (publicAnnouncement) {
+                setTimeout(() => {
+                    bot.sendMessage(publicAnnouncement);
+                }, 2000);
+            }
+            
+            // Handle forced sharing for catches over $300
+            if (forcedShare && value >= 300) {
+                setTimeout(async () => {
+                    try {
+                        // Get all online users (excluding the fisher and bots)
+                        const onlineUsers = Array.from(bot.userlist.values())
+                            .filter(u => !u.meta.afk && 
+                                    u.name.toLowerCase() !== message.username.toLowerCase() &&
+                                    u.name.toLowerCase() !== bot.username.toLowerCase() &&
+                                    !u.name.startsWith('['));
+                        
+                        if (onlineUsers.length > 0) {
+                            // Calculate shares - fisher keeps 50%, rest split among others + dazza
+                            const fisherShare = Math.floor(value * 0.5);
+                            const remainingAmount = value - fisherShare;
+                            const sharePerUser = Math.floor(remainingAmount / (onlineUsers.length + 1)); // +1 for dazza
+                            const dazzaShare = remainingAmount - (sharePerUser * onlineUsers.length);
+                            
+                            // Deduct the shared amount from fisher (they already got the full amount)
+                            await bot.heistManager.updateUserEconomy(message.username, -remainingAmount, 0);
+                            
+                            // Give each user their share
+                            for (const user of onlineUsers) {
+                                await bot.heistManager.updateUserEconomy(user.name, sharePerUser, 0);
+                            }
+                            
+                            // Dazza gets his cut
+                            await bot.heistManager.updateDazzaBalance(dazzaShare);
+                            
+                            // Announce the sharing
+                            const shareMessages = [
+                                `everyone gets $${sharePerUser} from ${message.username}'s massive catch! I'm keepin' $${dazzaShare} for tattlin' fees`,
+                                `splittin' the loot! $${sharePerUser} each for you lot, $${dazzaShare} for me dobbin' fee`,
+                                `wealth redistribution time! everyone scores $${sharePerUser}, I pocket $${dazzaShare} for me troubles`,
+                                `communism at work! $${sharePerUser} each, plus $${dazzaShare} for ya boy Dazza`
+                            ];
+                            
+                            setTimeout(() => {
+                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        bot.logger.error('Error sharing fishing rewards:', error);
+                    }
+                }, 4000);
+            }
             
             return { success: true };
             
