@@ -11,8 +11,14 @@ export default new Command({
     category: 'economy',
     users: ['hildolfr'],
     cooldown: 1000,
+    pmAccepted: true,
+    pmResponses: true,
 
     async handler(bot, message, args) {
+        // Reject if not from PM
+        if (!message.isPM) {
+            return { success: false };
+        }
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {

@@ -94,6 +94,9 @@ export class CyTubeBot extends EventEmitter {
             this.setupHeistHandlers();
             await this.heistManager.init();
             
+            // Log initial connection attempt
+            await this.db.logConnectionEvent('connect', { type: 'initial' });
+            
             // Connect to CyTube
             await this.connection.connect();
             
@@ -580,6 +583,22 @@ export class CyTubeBot extends EventEmitter {
     async handleReconnect() {
         this.logger.connection('reconnecting');
         
+        // Check if we can reconnect (30 second minimum delay)
+        const canConnect = await this.db.canConnect(30000);
+        if (!canConnect) {
+            const lastConnect = await this.db.getLastConnectionTime('connect');
+            const timeSince = Date.now() - lastConnect;
+            const waitTime = Math.ceil((30000 - timeSince) / 1000);
+            
+            this.logger.info(`Connection throttled - waiting ${waitTime}s before reconnecting (good neighbor policy)`);
+            
+            // Schedule reconnect after the required delay
+            setTimeout(() => {
+                this.handleReconnect();
+            }, waitTime * 1000);
+            return;
+        }
+        
         // Clear all pending mention timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
@@ -595,6 +614,9 @@ export class CyTubeBot extends EventEmitter {
         this.recentMentions.clear();
         
         try {
+            // Log connection attempt
+            await this.db.logConnectionEvent('connect', { type: 'reconnect' });
+            
             // Don't call init() again - just reconnect
             await this.connection.connect();
             await this.connection.joinChannel(this.config.cytube.channel);
@@ -606,6 +628,9 @@ export class CyTubeBot extends EventEmitter {
             this.logger.info('Reconnection successful');
         } catch (error) {
             this.logger.error('Reconnection failed', { error: error.message });
+            
+            // Log failed attempt
+            await this.db.logConnectionEvent('connect_failed', { error: error.message });
             
             // If it's a rate limit error, the connection handler already increased the delay
             // Otherwise, schedule another reconnect
@@ -1173,20 +1198,19 @@ export class CyTubeBot extends EventEmitter {
                 };
                 
                 // Create a wrapped bot object that intercepts sendMessage calls
-                const wrappedBot = {
-                    ...this,
-                    sendMessage: (message) => {
-                        if (command.pmResponses) {
-                            // Send via PM
-                            this.sendPrivateMessage(data.username, message);
-                        } else {
-                            // Send to chat
-                            this.sendMessage(message);
-                        }
-                    },
-                    // Expose PM sender info
-                    pmContext: pmContext
+                // We need to bind methods properly when spreading
+                const wrappedBot = Object.create(this);
+                wrappedBot.sendMessage = (message) => {
+                    if (command.pmResponses) {
+                        // Send via PM
+                        this.sendPrivateMessage(data.username, message);
+                    } else {
+                        // Send to chat
+                        this.sendMessage(message);
+                    }
                 };
+                // Expose PM sender info
+                wrappedBot.pmContext = pmContext;
                 
                 // Execute command with wrapped bot
                 const result = await command.execute(wrappedBot, pmContext, args);

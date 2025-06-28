@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
+    "start": "./start-bot.sh",
+    "start:simple": "./start.sh",
+    "start:direct": "node index.js",
     "dev": "node --watch index.js"
   },
   "keywords": [
