@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
 
 // Australian race horses and dogs with bogan names
 const horseNames = [
@@ -62,9 +63,21 @@ export default new Command({
     cooldown: 7200000, // 2 hour cooldown
     cooldownMessage: 'mate the stewards are still draggin\' the dead horse off the track, come back in {time}s',
     pmAccepted: true,
+    persistentCooldown: true, // Enable persistent cooldown
     
     async handler(bot, message, args) {
         try {
+            // Check persistent cooldown if database is available
+            if (bot.db && this.persistentCooldown) {
+                const cooldownManager = new PersistentCooldownManager(bot.db);
+                const cooldownCheck = await cooldownManager.check(this.name, message.username, this.cooldown);
+                
+                if (!cooldownCheck.allowed) {
+                    const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
+                    bot.sendMessage(cooldownMsg);
+                    return { success: false };
+                }
+            }
             if (!bot.heistManager) {
                 bot.sendMessage('TAB machine\'s fucked mate, try again later');
                 return { success: false };
@@ -134,101 +147,67 @@ export default new Command({
             
             bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
 
-            // Build PM with full race experience
-            let pmMessage = `🏇 **RACE ${raceNumber} AT ${track.toUpperCase()}**\n\n`;
-            pmMessage += `**Field:**\n`;
-            
-            // Show the field with odds
-            const fieldWithOdds = selectedAnimals.map((animal, i) => {
-                const odds = Math.floor(Math.random() * 15) + 2; // 2:1 to 16:1
-                return `${i + 1}. ${animal} (${odds}:1)`;
-            });
-            
-            fieldWithOdds.forEach(entry => {
-                pmMessage += `${entry}\n`;
-            });
-            
             // User's selection (random)
             const userPick = Math.floor(Math.random() * 6);
             const userAnimal = selectedAnimals[userPick];
+            const userOdds = Math.floor(Math.random() * 15) + 2;
             
-            pmMessage += `\n**You backed:** #${userPick + 1} ${userAnimal} with $${amount}\n\n`;
-            pmMessage += `*They're loading into the gates...*\n\n`;
+            // Send first PM: Race info and selection
+            const fieldShort = selectedAnimals.map((animal, i) => 
+                `${i + 1}. ${animal}${i === userPick ? ' ← YOUR BET' : ''}`
+            ).join(' | ');
             
-            // Race start
-            const raceStarts = [
-                "AND THEY'RE OFF! 🏃",
-                "THEY'RE RACING! 🏁",
-                "AND AWAY THEY GO! 💨",
-                "BUNDY'S HAD THE GUN AND THEY'RE OFF! 🔫"
-            ];
-            pmMessage += raceStarts[Math.floor(Math.random() * raceStarts.length)] + "\n\n";
+            bot.sendPrivateMessage(message.username, 
+                `🏇 Race ${raceNumber} at ${track} | You backed #${userPick + 1} ${userAnimal} ($${amount} @ ${userOdds}:1)`
+            );
             
-            // Mid-race commentary
-            const midRaceComments = [
-                `${selectedAnimals[0]} leads by a length! ${selectedAnimals[1]} chasing hard!`,
-                `It's neck and neck between ${selectedAnimals[2]} and ${selectedAnimals[3]}!`,
-                `${selectedAnimals[4]} making a move on the outside!`,
-                `OH! ${selectedAnimals[5]} nearly trips over! Still in it though!`,
-                `${userAnimal} running like they stole something!`
-            ];
-            pmMessage += midRaceComments[Math.floor(Math.random() * midRaceComments.length)] + "\n\n";
+            // Small delay before race result
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Determine race outcome
             const outcome = Math.random();
             let winnings = 0;
             
+            // Build concise result message
+            let resultMessage = "";
+            
             // 20% chance to win, 30% chance to place (2nd/3rd), 50% chance to lose
             if (outcome < 0.20) {
                 // WIN!
-                const odds = Math.floor(Math.random() * 8) + 3; // 3:1 to 10:1
-                winnings = amount * odds;
-                const resultMessage = raceOutcomes.win[Math.floor(Math.random() * raceOutcomes.win.length)]
+                winnings = amount * userOdds;
+                const winMsg = raceOutcomes.win[Math.floor(Math.random() * raceOutcomes.win.length)]
                     .replace('{animal}', userAnimal);
                 
-                pmMessage += resultMessage + "\n\n";
-                pmMessage += `💰 **YOU WIN $${winnings}!** (${odds}:1 odds)\n`;
-                pmMessage += `Not bad for a degenerate gambler!\n`;
-                
                 await bot.heistManager.updateUserEconomy(message.username, winnings, 1);
+                const newBalance = await bot.heistManager.getUserBalance(message.username);
+                
+                resultMessage = `${winMsg} | 💰 WON $${winnings}! | Balance: $${newBalance.balance}`;
                 
             } else if (outcome < 0.50) {
                 // PLACE (2nd or 3rd)
                 const position = outcome < 0.35 ? "2nd" : "3rd";
                 winnings = Math.floor(amount * 0.5); // Get half back
-                const resultMessage = raceOutcomes.place[Math.floor(Math.random() * raceOutcomes.place.length)]
+                const placeMsg = raceOutcomes.place[Math.floor(Math.random() * raceOutcomes.place.length)]
                     .replace('{animal}', userAnimal)
                     .replace('{position}', position);
                 
-                pmMessage += resultMessage + "\n\n";
-                pmMessage += `🥈 **PLACED ${position.toUpperCase()}!** You get $${winnings} back.\n`;
-                pmMessage += `Better than nothin!\n`;
-                
                 await bot.heistManager.updateUserEconomy(message.username, winnings, 0);
+                const newBalance = await bot.heistManager.getUserBalance(message.username);
+                
+                resultMessage = `${placeMsg} | 🥈 Got $${winnings} back | Balance: $${newBalance.balance}`;
                 
             } else {
                 // LOSE
-                const resultMessage = raceOutcomes.lose[Math.floor(Math.random() * raceOutcomes.lose.length)]
+                const loseMsg = raceOutcomes.lose[Math.floor(Math.random() * raceOutcomes.lose.length)]
                     .replace('{animal}', userAnimal);
                 
-                pmMessage += resultMessage + "\n\n";
+                const newBalance = await bot.heistManager.getUserBalance(message.username);
                 
-                const loseInsults = [
-                    `There goes your $${amount}, straight into the bookie's pocket!`,
-                    `You lost $${amount}! Should've spent it on tinnies instead`,
-                    `Unlucky mate, that's $${amount} down the shitter!`,
-                    `Kiss your $${amount} goodbye! The house always wins`,
-                    `Your $${amount} is gone faster than a six-pack at a barbie`
-                ];
-                pmMessage += `❌ **LOST!** ${loseInsults[Math.floor(Math.random() * loseInsults.length)]}\n`;
+                resultMessage = `${loseMsg} | ❌ Lost $${amount} | Balance: $${newBalance.balance}`;
             }
             
-            // Add balance info
-            const newBalance = await bot.heistManager.getUserBalance(message.username);
-            pmMessage += `\n💵 **Balance: $${newBalance.balance}**`;
-            
-            // Send PM with full race experience
-            bot.sendPrivateMessage(message.username, pmMessage);
+            // Send second PM with race result
+            bot.sendPrivateMessage(message.username, resultMessage);
             
             return { success: true };
             
