@@ -64,7 +64,7 @@ const benefitTypes = [
 export default new Command({
     name: 'centrelink',
     aliases: ['dole', 'welfare', 'centerlink', 'payments'],
-    description: 'Try to collect your Centrelink payment (once per 24 hours)',
+    description: 'Try to collect your Centrelink payment (once per 24 hours, 50% chance)',
     usage: '!centrelink',
     examples: ['!centrelink - Attempt to collect your government payment'],
     category: 'economy',
@@ -127,10 +127,10 @@ export default new Command({
             
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // 10-15% chance of payment as requested
+            // 40-60% chance of payment
             const paymentChance = Math.random();
             
-            if (paymentChance < 0.15) {
+            if (paymentChance < 0.50) {
                 // SUCCESS - Payment approved!
                 const benefit = benefitTypes[Math.floor(Math.random() * benefitTypes.length)];
                 const amount = Math.floor(Math.random() * (benefit.max - benefit.min + 1)) + benefit.min;
