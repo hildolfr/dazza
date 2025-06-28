@@ -18,7 +18,8 @@ export class PersistentCooldownManager {
                 return { allowed: false, remaining };
             }
             
-            // Update or insert the cooldown
+            // Only update the cooldown if the command is allowed
+            // This prevents resetting the cooldown when users spam commands
             await this.database.run(`
                 INSERT INTO cooldowns (command_name, username, last_used)
                 VALUES (?, ?, ?)

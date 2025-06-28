@@ -12,6 +12,7 @@ export class Command {
         this.users = options.users || null; // Array of allowed usernames or null for all
         this.pmAccepted = options.pmAccepted || false; // Can this command be invoked via PM
         this.pmResponses = options.pmResponses || false; // Should responses go to PM instead of chat
+        this.persistentCooldown = options.persistentCooldown || false; // Use persistent cooldown storage
         this.handler = options.handler;
     }
 
