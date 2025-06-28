@@ -74,26 +74,45 @@ export default new Command({
                 
                 if (!cooldownCheck.allowed) {
                     const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
-                    bot.sendMessage(cooldownMsg);
+                    if (message.isPM) {
+                        bot.sendPrivateMessage(message.username, cooldownMsg);
+                    } else {
+                        bot.sendMessage(cooldownMsg);
+                    }
                     return { success: false };
                 }
             }
             if (!bot.heistManager) {
-                bot.sendMessage('TAB machine\'s fucked mate, try again later');
+                const errorMsg = 'TAB machine\'s fucked mate, try again later';
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg);
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
             // Check if user has provided amount
             const amount = parseInt(args[0]);
             if (!amount || amount < 1) {
-                bot.sendMessage(`oi -${message.username}, gotta tell me how much to bet ya drongo! Like: !tab 20`);
+                const errorMsg = `oi -${message.username}, gotta tell me how much to bet ya drongo! Like: !tab 20`;
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
             // Determine race type
             const raceType = args[1]?.toLowerCase() || 'horse';
             if (!['horse', 'dog'].includes(raceType)) {
-                bot.sendMessage(`-${message.username} mate, it's either 'horse' or 'dog', not whatever the fuck "${args[1]}" is`);
+                const errorMsg = `-${message.username} mate, it's either 'horse' or 'dog', not whatever the fuck "${args[1]}" is`;
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
@@ -106,14 +125,24 @@ export default new Command({
                     `mate -${message.username}, check ya pockets - only $${userEcon.balance} in there`,
                     `fuckin' dreamin -${message.username}! ya need $${amount - userEcon.balance} more`
                 ];
-                bot.sendMessage(insults[Math.floor(Math.random() * insults.length)]);
+                const selectedInsult = insults[Math.floor(Math.random() * insults.length)];
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, selectedInsult.replace(/-/g, '')); // Remove all - prefixes in PMs
+                } else {
+                    bot.sendMessage(selectedInsult);
+                }
                 return { success: false };
             }
 
             // Maximum bet check
             const maxBet = Math.min(500, userEcon.balance);
             if (amount > maxBet) {
-                bot.sendMessage(`steady on -${message.username}, max bet is $${maxBet} - this ain't Crown Casino`);
+                const errorMsg = `steady on -${message.username}, max bet is $${maxBet} - this ain't Crown Casino`;
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
@@ -281,7 +310,12 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('TAB command error:', error);
-            bot.sendMessage('TAB machine just ate ya money and caught fire. typical.');
+            const errorMsg = 'TAB machine just ate ya money and caught fire. typical.';
+            if (message.isPM) {
+                bot.sendPrivateMessage(message.username, errorMsg);
+            } else {
+                bot.sendMessage(errorMsg);
+            }
             return { success: false };
         }
     }

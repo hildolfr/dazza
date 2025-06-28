@@ -135,12 +135,21 @@ export default new Command({
                 
                 if (!cooldownCheck.allowed) {
                     const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
-                    bot.sendMessage(cooldownMsg);
+                    if (message.isPM) {
+                        bot.sendPrivateMessage(message.username, cooldownMsg);
+                    } else {
+                        bot.sendMessage(cooldownMsg);
+                    }
                     return { success: false };
                 }
             }
             if (!bot.heistManager) {
-                bot.sendMessage('fishing licence machine is fucked, try again later');
+                const errorMsg = 'fishing licence machine is fucked, try again later';
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg);
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
 
@@ -152,13 +161,23 @@ export default new Command({
             const bait = baitTypes[baitChoice];
             
             if (!bait) {
-                bot.sendMessage(`oi -${message.username}, dunno what "${args[0]}" is but it ain't bait. Try: worm, prawn, squid, lure, servo_pie, or ciggie_butt`);
+                const errorMsg = `oi -${message.username}, dunno what "${args[0]}" is but it ain't bait. Try: worm, prawn, squid, lure, servo_pie, or ciggie_butt`;
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
             
             // Check if user can afford bait
             if (bait.cost > 0 && userEcon.balance < bait.cost) {
-                bot.sendMessage(`-${message.username} ya need $${bait.cost} for ${baitChoice} bait but ya only got $${userEcon.balance}. Use a worm ya cheapskate`);
+                const errorMsg = `-${message.username} ya need $${bait.cost} for ${baitChoice} bait but ya only got $${userEcon.balance}. Use a worm ya cheapskate`;
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
             
@@ -414,7 +433,12 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Fish command error:', error);
-            bot.sendMessage('fishing rod snapped. bloody cheap Kmart shit.');
+            const errorMsg = 'fishing rod snapped. bloody cheap Kmart shit.';
+            if (message.isPM) {
+                bot.sendPrivateMessage(message.username, errorMsg);
+            } else {
+                bot.sendMessage(errorMsg);
+            }
             return { success: false };
         }
     }
