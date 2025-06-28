@@ -67,9 +67,14 @@ export class CommandRegistry {
         const cooldownCheck = bot.cooldowns.check(cooldownKey, command.cooldown);
         
         if (!cooldownCheck.allowed) {
+            // Use custom cooldown message if provided, otherwise use default
+            const message = command.cooldownMessage 
+                ? command.cooldownMessage.replace('{time}', cooldownCheck.remaining)
+                : `fuckin hell mate that command's still coolin down, ${cooldownCheck.remaining}s left`;
+            
             return { 
                 success: false, 
-                error: `fuckin hell mate that command's still coolin down, ${cooldownCheck.remaining}s left` 
+                error: message
             };
         }
 

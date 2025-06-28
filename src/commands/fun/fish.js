@@ -82,6 +82,7 @@ export default new Command({
     ],
     category: 'fun',
     cooldown: 7200000, // 2 hour cooldown
+    cooldownMessage: 'nah mate the cops are still at the pond checkin\' fishing licences, try again in {time}s',
     pmAccepted: true,
     
     async handler(bot, message, args) {

@@ -7,6 +7,7 @@ export default new Command({
     usage: '!insult [username]',
     category: 'fun',
     cooldown: 10000,
+    cooldownMessage: 'give us {time}s to think of another insult ya impatient prick',
     
     async handler(bot, message, args) {
         const target = args[0] || message.username;

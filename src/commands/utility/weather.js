@@ -87,6 +87,7 @@ export default new Command({
     usage: '!weather <location>',
     category: 'utility',
     cooldown: 10000,
+    cooldownMessage: 'still lookin\' out the window mate, check back in {time}s',
     
     async handler(bot, message, args) {
         if (!args.length) {

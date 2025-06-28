@@ -12,6 +12,7 @@ export default new Command({
     category: 'economy',
     users: ['all'],
     cooldown: 3000,
+    cooldownMessage: 'the pokies are still spinnin\' from ya last go mate, wait {time}s',
 
     async handler(bot, message, args) {
         try {
