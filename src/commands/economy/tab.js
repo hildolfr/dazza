@@ -59,7 +59,7 @@ export default new Command({
         '!tab 50 horse - Bet $50 on the horses'
     ],
     category: 'economy',
-    cooldown: 30000, // 30 second cooldown
+    cooldown: 7200000, // 2 hour cooldown
     
     async handler(bot, message, args) {
         try {

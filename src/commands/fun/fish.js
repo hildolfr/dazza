@@ -81,7 +81,7 @@ export default new Command({
         '!fish squid - Use squid bait ($3)'
     ],
     category: 'fun',
-    cooldown: 60000, // 1 minute cooldown
+    cooldown: 7200000, // 2 hour cooldown
     
     async handler(bot, message, args) {
         try {
