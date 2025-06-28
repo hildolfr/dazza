@@ -1,0 +1,165 @@
+{
+  "outcomes": {
+    "success": {
+      "standard": [
+        "fuckin beauty! scored ${haul} from that {crime}",
+        "easy as, made ${haul} from the {crime}",
+        "back with ${haul}, told ya the {crime} would work",
+        "boom! ${haul} richer from that {crime}",
+        "{crime} went perfect, ${haul} in the bag",
+        "textbook {crime}, walked away with ${haul}",
+        "too easy! {crime} netted us ${haul}",
+        "${haul} from the {crime}, drinks are on me",
+        "smooth as silk, {crime} got us ${haul}",
+        "ka-ching! {crime} = ${haul} profit"
+      ],
+      "big_haul": [
+        "HOLY FUCK! ${haul} from that {crime}! we're rich cunts!",
+        "absolute scenes! {crime} scored us ${haul}!",
+        "get fucked! ${haul}?! best {crime} ever!",
+        "we're in the money! ${haul} from one {crime}!",
+        "shazza's gonna flip! ${haul} from the {crime}!"
+      ],
+      "small_haul": [
+        "only ${haul} from the {crime} but better than nothin",
+        "{crime} was slim pickings, just ${haul}",
+        "meh, ${haul} from the {crime}... least we didn't get caught",
+        "${haul} ain't much but the {crime} was easy",
+        "bit disappointing, {crime} only got ${haul}"
+      ],
+      "lucky": [
+        "fuck me that was close! still got ${haul} from the {crime}",
+        "nearly copped it but escaped with ${haul}",
+        "security almost had me but still scored ${haul}",
+        "that {crime} was sketchy as but got ${haul}",
+        "dunno how but that {crime} worked! ${haul} richer"
+      ],
+      "perfect": [
+        "executed that {crime} perfectly! ${haul} secured",
+        "couldn't have gone better! {crime} = ${haul}",
+        "flawless {crime} execution, ${haul} profit",
+        "they didn't suspect a thing! ${haul} from the {crime}",
+        "went exactly to plan, {crime} scored ${haul}"
+      ],
+      "solo_success": [
+        "see? didn't need any of ya lazy cunts! ${haul} from that {crime}",
+        "solo {crime} success! ${haul} all for me, should do this more often",
+        "that's how it's done! ${haul} from the {crime} and I didn't have to share",
+        "you mob missed out! easy ${haul} from that {crime}",
+        "next time maybe get off ya arses? scored ${haul} on me own",
+        "all me baby! ${haul} from the {crime}, no help needed",
+        "lazy cunts loss is my gain! ${haul} from solo {crime}"
+      ],
+      "crude_success": [
+        "harder than me dick this morning! {crime} scored ${haul}!",
+        "just came buckets! oh and made ${haul} from the {crime} too",
+        "balls emptier than me wallet WAS! now got ${haul} from that {crime}",
+        "that {crime} was easier than shazza after a few wines! ${haul} richer!",
+        "just fucked that {crime} six ways from sunday! ${haul} baby!",
+        "came, saw, conquered, came again! ${haul} from the {crime}",
+        "me dick's still throbbing from that rush! ${haul} secured!",
+        "better than a wank! {crime} netted ${haul}!",
+        "just busted the fattest nut and scored ${haul} from the {crime}!",
+        "that {crime} got me harder than arithmetic! ${haul} in the bank!"
+      ],
+      "toilet_success": [
+        "nearly shat meself but held it in! ${haul} from the {crime}!",
+        "prairie dogged the whole {crime} but scored ${haul}!",
+        "clenched me cheeks through that {crime}, worth it for ${haul}!",
+        "left skid marks fleeing the {crime} but got ${haul}!",
+        "that {crime} was smoother than me morning shit! ${haul} earned!",
+        "dropped a deuce and ${haul} from that {crime}!",
+        "turtle headed through the entire {crime}, still got ${haul}!",
+        "farted so loud during the {crime} but no one noticed! ${haul}!",
+        "stomach was gurgling but pushed through! {crime} = ${haul}!",
+        "held in the mother of all shits for this ${haul} {crime} score!"
+      ]
+    },
+    "failure": {
+      "standard": [
+        "fuck me dead, the {crime} went tits up... got nothin",
+        "cops showed up at the {crime}, had to leg it",
+        "{crime} was a bust, security everywhere",
+        "abandoned the {crime}, too risky",
+        "{crime} failed, came back empty handed",
+        "that {crime} was fucked from the start",
+        "no dice on the {crime}, place was crawling with cops",
+        "{crime} went sideways, lucky to get out",
+        "should've known that {crime} was too good to be true",
+        "well that {crime} was a complete shitshow"
+      ],
+      "caught": [
+        "almost got nabbed doing the {crime}! close call",
+        "security chased me from the {crime} for 3 blocks!",
+        "cops were waiting! {crime} was a setup!",
+        "got spotted during the {crime}, had to bolt",
+        "they were ready for that {crime}, barely escaped"
+      ],
+      "bad_luck": [
+        "worst timing ever for that {crime}",
+        "everything that could go wrong with the {crime} did",
+        "murphy's law in full effect on that {crime}",
+        "picked the worst possible day for a {crime}",
+        "that {crime} was cursed from the beginning"
+      ],
+      "comedic": [
+        "tripped over me own feet during the {crime}",
+        "forgot me glasses, couldn't see shit during the {crime}",
+        "accidentally locked meself IN during the {crime}",
+        "dog started barking, whole {crime} ruined",
+        "sharted myself during the {crime}, had to abort"
+      ],
+      "equipment_failure": [
+        "tools broke halfway through the {crime}",
+        "getaway car wouldn't start after the {crime}",
+        "me cousin fucked up his part of the {crime}",
+        "plan for the {crime} was shit, nothing worked",
+        "everything we needed for the {crime} failed"
+      ],
+      "solo_failure": [
+        "see what happens when you cunts don't help? {crime} failed",
+        "could've used some backup on that {crime}... fuckin failed",
+        "that's what I get for going solo... {crime} went to shit",
+        "maybe if someone helped the {crime} would've worked",
+        "fuck all of yas, {crime} failed but at least I tried"
+      ],
+      "crude_failure": [
+        "went in balls out, came out dick tucked... {crime} failed",
+        "that {crime} fucked me harder than me uncle at christmas",
+        "got blue balled by that {crime}... nothing to show for it",
+        "limp dicked that {crime} completely... total failure",
+        "that {crime} left me drier than shazza's personality",
+        "pulled out of that {crime} faster than I do with shazza",
+        "cock blocked by security during the {crime}",
+        "that {crime} gave me the worst case of shrinkage",
+        "bent over and took it up the arse from that {crime}",
+        "dick shriveled up like a frightened turtle during that {crime}"
+      ],
+      "toilet_failure": [
+        "literally shat meself during the {crime}... had to abort",
+        "followed through mid-{crime}... cleanup on aisle me",
+        "that {crime} scared the shit outta me... literally",
+        "explosive diarrhea hit during the {crime}... game over",
+        "left a trail of nuggets fleeing that failed {crime}",
+        "sharted so hard the {crime} target heard it",
+        "code brown situation ruined the {crime}",
+        "prairie dogged so hard I gave away me position during {crime}",
+        "stomach chose violence during that {crime}... had to bail",
+        "that {crime} made me shit like a wombat - cubic and painful"
+      ]
+    },
+    "special": {
+      "snake_eyes": [
+        "oi get fucked! hit the jackpot on that {crime}! ${haul}!!!",
+        "HOLY FUCKING SHIT! {crime} scored ${haul}! WE'RE SET FOR LIFE!",
+        "I CAN'T BELIEVE IT! ${haul} FROM ONE {crime}! SHAZZA'S GETTING A NEW CAR!"
+      ],
+      "total_disaster": [
+        "not only did the {crime} fail, I lost me wallet running away",
+        "failed the {crime} AND got a $200 fine... fuck me life",
+        "{crime} failed so bad I owe THEM money now",
+        "that {crime} backfired spectacularly... hiding for a while"
+      ]
+    }
+  }
+}

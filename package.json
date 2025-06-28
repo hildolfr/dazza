@@ -1,0 +1,26 @@
+{
+  "name": "cytube-bot",
+  "version": "1.0.0",
+  "description": "A chatbot for CyTube chatroom at cytu.be/r/fatpizza",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "cytube",
+    "bot",
+    "chatbot",
+    "websocket"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.1.0",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2",
+    "socket.io-client": "^4.7.5",
+    "sqlite3": "^5.1.7"
+  }
+}

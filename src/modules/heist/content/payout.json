@@ -1,0 +1,100 @@
+{
+  "payout": {
+    "standard": [
+      "payin out: {distributions}",
+      "here's ya cut: {distributions}",
+      "divvying up the loot: {distributions}",
+      "spread the wealth: {distributions}",
+      "everyone gets a piece: {distributions}"
+    ],
+    "big_payout": [
+      "MASSIVE PAYOUT! {distributions}",
+      "everyone's eating good tonight: {distributions}",
+      "christmas came early! {distributions}",
+      "get in here cunts! {distributions}",
+      "JACKPOT DISTRIBUTION: {distributions}"
+    ],
+    "small_payout": [
+      "not much but here ya go: {distributions}",
+      "slim pickings: {distributions}",
+      "better than nothing: {distributions}",
+      "every little bit helps: {distributions}",
+      "small but honest work: {distributions}"
+    ],
+    "trust_bonus": [
+      "trust pays off! {distributions}",
+      "loyalty bonus included: {distributions}",
+      "extra for the trusted crew: {distributions}",
+      "veteran's share: {distributions}",
+      "good cunts get more: {distributions}"
+    ],
+    "failure_payout": [
+      "least ya tried, here's trust points: {distributions}",
+      "no cash but respect earned: {distributions}",
+      "failed but not forgotten: {distributions}",
+      "participation trophy: {distributions}",
+      "you win some, you lose some: {distributions}"
+    ],
+    "solo_payout": [
+      "all mine! no sharing needed when you lazy cunts don't help",
+      "that's what happens when I work alone - more for me!",
+      "dazza takes it all since no one else bothered",
+      "solo work = solo pay, shoulda voted cunts",
+      "100% profit when you're too lazy to participate"
+    ],
+    "with_dazza_cut": [
+      "dazza nicked a bit for himself, rest: {distributions}",
+      "after dazza's beer money: {distributions}",
+      "dazza took his share for organizing, {distributions}",
+      "minus dazza's cut for doing all the planning: {distributions}",
+      "dazza's already pocketed some, here's yours: {distributions}"
+    ],
+    "with_offline_penalty": [
+      "some cunts logged out before payout - their loss! {distributions}",
+      "lazy bastards who left early got penalized: {distributions}",
+      "if ya ain't here for payout, ya get less: {distributions}",
+      "offline tax applied to the deserters: {distributions}",
+      "should've stuck around for the money! {distributions}"
+    ]
+  },
+  "payout_comments": {
+    "big_earner": [
+      "fuckin hell -{username} made bank!",
+      "-{username} can shout the next round",
+      "oi -{username} remember ya mates when you're rich",
+      "-{username}'s laughing all the way to the bottle-o",
+      "someone check -{username} for a horseshoe up their arse"
+    ],
+    "first_timer": [
+      "welcome to the crew -{username}!",
+      "good first run -{username}",
+      "-{username} popped their crime cherry",
+      "not bad for a first timer -{username}",
+      "-{username} showing promise"
+    ],
+    "trusted_veteran": [
+      "-{username} knows how it's done",
+      "reliable as always -{username}",
+      "-{username} the legend strikes again",
+      "that's why we keep -{username} around",
+      "-{username} earning that trust level"
+    ],
+    "dazza_profit": [
+      "dazza scrapes together his share",
+      "another few bucks for the beer fund",
+      "dazza's cut'll keep shazza off his back for a day",
+      "that's going straight to the bottle-o",
+      "dazza's rent money... or is it bong money?",
+      "few more dollarydoos for old dazza",
+      "that'll buy a pack of winnie blues",
+      "dazza's feeling like a big shot with his cut"
+    ],
+    "dazza_offline_bonus": [
+      "dazza's laughing - got all the money from the cunts who logged out!",
+      "cheers for leaving early ya lazy bastards, more for dazza!",
+      "dazza pockets the offline tax - shoulda stuck around!",
+      "that's what happens when ya leave early - dazza gets your share!",
+      "dazza's rich off the deserters' penalty fees!"
+    ]
+  }
+}

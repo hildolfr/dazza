@@ -1,0 +1,8 @@
+node_modules/
+.env
+login.txt
+*.db
+cytube_bot.log
+logs/
+*.log
+.DS_Store
