@@ -191,6 +191,17 @@ class Database {
         // Initialize cooldown schema
         await cooldownSchema.initialize(this);
 
+        // Add migration for tells table via_pm column
+        try {
+            await this.run('ALTER TABLE tells ADD COLUMN via_pm INTEGER DEFAULT 0');
+            console.log('Added via_pm column to tells table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            if (!error.message.includes('duplicate column name')) {
+                console.error('Error adding via_pm column:', error.message);
+            }
+        }
+
         console.log('Database tables created successfully');
     }
 
@@ -442,18 +453,18 @@ class Database {
     }
 
     // Tell methods
-    async addTell(fromUser, toUser, message) {
+    async addTell(fromUser, toUser, message, viaPm = false) {
         const createdAt = Date.now();
         
         await this.run(
-            'INSERT INTO tells (from_user, to_user, message, created_at) VALUES (?, ?, ?, ?)',
-            [fromUser, toUser, message, createdAt]
+            'INSERT INTO tells (from_user, to_user, message, created_at, via_pm) VALUES (?, ?, ?, ?, ?)',
+            [fromUser, toUser, message, createdAt, viaPm ? 1 : 0]
         );
     }
 
     async getTellsForUser(username) {
         return await this.all(
-            'SELECT * FROM tells WHERE LOWER(to_user) = LOWER(?) AND delivered = 0',
+            'SELECT *, CASE WHEN via_pm IS NULL THEN 0 ELSE via_pm END as via_pm FROM tells WHERE LOWER(to_user) = LOWER(?) AND delivered = 0',
             [username]
         );
     }

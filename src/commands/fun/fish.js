@@ -131,15 +131,17 @@ export default new Command({
             // Choose random fishing spot
             const spot = fishingSpots[Math.floor(Math.random() * fishingSpots.length)];
             
-            // Public acknowledgment only
-            const publicAcknowledgments = [
-                `🎣 -${message.username} grabs the rod and heads to ${spot.name}, check ya PMs for results`,
-                `🎣 -${message.username} is gone fishin' at ${spot.name}, PMing the catch details`,
-                `🎣 Casting a line for -${message.username}, results coming via PM`,
-                `🎣 -${message.username} throws in a line, I'll PM ya what bites`
-            ];
-            
-            bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            // Public acknowledgment only (skip if PM)
+            if (!message.pm) {
+                const publicAcknowledgments = [
+                    `🎣 -${message.username} grabs the rod and heads to ${spot.name}, check ya PMs for results`,
+                    `🎣 -${message.username} is gone fishin' at ${spot.name}, PMing the catch details`,
+                    `🎣 Casting a line for -${message.username}, results coming via PM`,
+                    `🎣 -${message.username} throws in a line, I'll PM ya what bites`
+                ];
+                
+                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+            }
             
             // Determine catch
             const catchRoll = Math.random() * spot.quality * bait.bonus;
