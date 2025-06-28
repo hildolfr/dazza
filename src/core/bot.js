@@ -47,6 +47,7 @@ export class CyTubeBot extends EventEmitter {
         this.greetingCooldown = this.getRandomGreetingCooldown(); // 5-15 minutes
         this.recentJoins = []; // Track recent joins to avoid spam
         this.pendingGreeting = null; // Track pending greeting timeout
+        this.userDepartureTimes = new Map(); // Track when users left to implement 2-minute cooldown
         
         // URL comment cooldown - random between 2-15 minutes (Dazza's drunk and unreliable)
         this.lastUrlCommentTime = 0;
@@ -340,13 +341,14 @@ export class CyTubeBot extends EventEmitter {
                 await this.heistManager.handleMessage(data.username, data.msg);
             }
             
-            // Check for mentions of Dazza (but not from the bot itself)
+            // Check for mentions of Dazza (but not from the bot itself or server messages)
             if (this.ollama && this.hasMention(data.msg)) {
-                // Double-check we're not responding to ourselves
+                // Double-check we're not responding to ourselves or server messages
                 const senderLower = data.username.toLowerCase();
                 if (senderLower === this.config.bot.username.toLowerCase() || 
-                    senderLower === this.username.toLowerCase()) {
-                    this.logger.debug('Ignoring mention from bot itself', { 
+                    senderLower === this.username.toLowerCase() ||
+                    senderLower === '[server]') {
+                    this.logger.debug('Ignoring mention from bot/server', { 
                         username: data.username,
                         message: data.msg.substring(0, 50)
                     });
@@ -507,6 +509,17 @@ export class CyTubeBot extends EventEmitter {
 
     handleUserLeave(user) {
         this.userlist.delete(user.name.toLowerCase());
+        
+        // Track departure time for greeting cooldown
+        this.userDepartureTimes.set(user.name.toLowerCase(), Date.now());
+        
+        // Clean up old departure times (older than 1 hour)
+        const oneHourAgo = Date.now() - 3600000;
+        for (const [username, time] of this.userDepartureTimes) {
+            if (time < oneHourAgo) {
+                this.userDepartureTimes.delete(username);
+            }
+        }
         
         // Log leave event
         this.db.logUserEvent(user.name, 'leave').catch(err => 
@@ -859,6 +872,19 @@ export class CyTubeBot extends EventEmitter {
         
         // Don't greet ourselves
         if (username.toLowerCase() === this.config.bot.username.toLowerCase()) return false;
+        
+        // Check if user recently left (within 2 minutes)
+        const userLower = username.toLowerCase();
+        const departureTime = this.userDepartureTimes.get(userLower);
+        if (departureTime) {
+            const timeSinceDeparture = Date.now() - departureTime;
+            if (timeSinceDeparture < 120000) { // 2 minutes in milliseconds
+                this.logger.debug(`Not greeting ${username} - only gone for ${Math.round(timeSinceDeparture / 1000)}s`);
+                return false;
+            }
+            // Remove from tracking since they've been gone long enough
+            this.userDepartureTimes.delete(userLower);
+        }
         
         // Check if enough time has passed since last greeting
         const now = Date.now();

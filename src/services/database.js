@@ -249,6 +249,13 @@ class Database {
         );
     }
 
+    async getMessagesSince(timestamp) {
+        return await this.all(
+            'SELECT * FROM messages WHERE timestamp >= ? ORDER BY timestamp ASC',
+            [timestamp]
+        );
+    }
+
     async getRandomMessage() {
         // Get a random message that's not a bot command and not from bot or system
         const message = await this.get(`
