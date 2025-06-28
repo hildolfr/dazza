@@ -28,7 +28,7 @@ export default new Command({
             bot.sendMessage(helpText);
         } else {
             // Link to the GitHub-hosted command manual
-            const manualUrl = 'https://hildolfr.github.io/dazza/docs/commands.html';
+            const manualUrl = 'https://hildolfr.github.io/dazza/commands.html';
             
             bot.sendMessage(`Oi mate! Check out me full command manual here: ${manualUrl} 🍺`);
         }
