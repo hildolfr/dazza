@@ -3,7 +3,7 @@ import { Command } from '../base.js';
 export default new Command({
     name: 'top',
     description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]',
+    usage: '!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]',
     category: 'stats',
     cooldown: 2000,
     
@@ -13,7 +13,7 @@ export default new Command({
         try {
             // If no category specified, list options
             if (!category) {
-                bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
+                bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]');
                 return { success: true };
             }
             
@@ -93,8 +93,16 @@ export default new Command({
                     title = '🪧 PROFESSIONAL SIGN SPINNERS 🪧\nMasters of roadside advertising:';
                     break;
                     
+                case 'pissers':
+                case 'pisser':
+                case 'piss':
+                case 'pissing':
+                    results = await bot.db.getTopPissers(5);
+                    title = '🏆 TOP PISSERS 🏆\nDominant dick-slingers:';
+                    break;
+                    
                 default:
-                    bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
+                    bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]');
                     return { success: true };
             }
             
@@ -150,6 +158,26 @@ export default new Command({
                     if (r.perfect_days > 0) extra = ` ${r.perfect_days} perfect days 🌟`;
                     else if (r.best_shift >= 100) extra = ' 💪';
                     else if (r.cops_called > 0) extra = ` (${r.cops_called}x cop trouble)`;
+                } else if (category === 'pissers' || category === 'pisser' || category === 'piss' || category === 'pissing') {
+                    const winRate = r.win_rate ? r.win_rate.toFixed(1) : '0';
+                    value = `${r.wins}W/${r.losses}L (${winRate}%)`;
+                    
+                    // Add their specialty based on best stats
+                    if (r.best_distance >= 4.5) {
+                        extra = ` 📏${r.best_distance.toFixed(1)}m "Fire Hose"`;
+                    } else if (r.best_aim >= 95) {
+                        extra = ` 🎯${Math.round(r.best_aim)}% "Sniper"`;
+                    } else if (r.best_duration >= 25) {
+                        extra = ` ⏱️${Math.round(r.best_duration)}s "Marathon Man"`;
+                    } else if (r.best_volume >= 1800) {
+                        extra = ` 💧${Math.round(r.best_volume)}mL "The Camel"`;
+                    } else if (r.money_won >= 1000) {
+                        extra = ` 💰$${r.money_won} won`;
+                    }
+                    
+                    // Add legendary status
+                    if (r.wins >= 50) extra += ' 👑';
+                    else if (r.wins >= 25) extra += ' ⭐';
                 } else {
                     value = `${r.message_count} messages`;
                 }

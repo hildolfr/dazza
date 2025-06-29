@@ -777,6 +777,95 @@ class Database {
         return timeSinceLastConnect >= minDelayMs;
     }
 
+    // Bladder management for pissing contest
+    async updateBladder(username, drinkAmount = 1) {
+        const timestamp = Date.now();
+        
+        await this.run(`
+            INSERT INTO user_bladder (username, current_amount, last_drink_time, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                current_amount = current_amount + ?,
+                last_drink_time = ?,
+                updated_at = ?
+        `, [username, drinkAmount, timestamp, timestamp, drinkAmount, timestamp, timestamp]);
+    }
+
+    async getBladderState(username) {
+        const result = await this.get(
+            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?)',
+            [username]
+        );
+        
+        return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
+    }
+
+    async resetBladder(username) {
+        const timestamp = Date.now();
+        
+        await this.run(`
+            UPDATE user_bladder
+            SET current_amount = 0, last_piss_time = ?, updated_at = ?
+            WHERE LOWER(username) = LOWER(?)
+        `, [timestamp, timestamp, username]);
+    }
+
+    // Pissing contest stats
+    async getTopPissers(limit = 10) {
+        return await this.all(`
+            SELECT 
+                username,
+                total_matches,
+                wins,
+                losses,
+                money_won,
+                money_lost,
+                best_distance,
+                best_volume,
+                best_aim,
+                best_duration,
+                rarest_characteristic,
+                CAST(wins AS REAL) / NULLIF(total_matches, 0) * 100 as win_rate
+            FROM pissing_contest_stats
+            WHERE total_matches > 0
+            ORDER BY wins DESC, win_rate DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getPissingRecords() {
+        return await this.all(`
+            SELECT * FROM pissing_contest_records
+            ORDER BY 
+                CASE record_type
+                    WHEN 'distance' THEN 1
+                    WHEN 'volume' THEN 2
+                    WHEN 'aim' THEN 3
+                    WHEN 'duration' THEN 4
+                    ELSE 5
+                END
+        `);
+    }
+
+    async updatePissingRecord(recordType, username, value, characteristic, location) {
+        const timestamp = Date.now();
+        
+        await this.run(`
+            INSERT INTO pissing_contest_records (record_type, username, value, characteristic, location, achieved_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(record_type) DO UPDATE SET
+                username = ?,
+                value = ?,
+                characteristic = ?,
+                location = ?,
+                achieved_at = ?
+            WHERE value < ?
+        `, [
+            recordType, username, value, characteristic, location, timestamp,
+            username, value, characteristic, location, timestamp, value
+        ]);
+    }
+
     close() {
         if (this.db) {
             this.db.close();

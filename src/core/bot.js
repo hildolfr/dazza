@@ -15,6 +15,7 @@ import Database from '../services/database.js';
 import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
 import { VideoPayoutManager } from '../modules/video_payout/index.js';
+import { PissingContestManager } from '../modules/pissing_contest/index.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 import { CashMonitor } from '../utils/cashMonitor.js';
 
@@ -114,6 +115,9 @@ export class CyTubeBot extends EventEmitter {
             this.setupVideoPayoutHandlers();
             await this.videoPayoutManager.init();
             
+            // Initialize PissingContestManager
+            this.pissingContestManager = new PissingContestManager(this);
+            
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
             
@@ -147,12 +151,11 @@ export class CyTubeBot extends EventEmitter {
             
             // Request playlist data after joining channel
             setTimeout(() => {
-                this.logger.info('Attempting to request playlist data');
+                this.logger.debug('Setting up playlist handlers');
                 if (this.connection && this.connection.socket) {
-                    // Add debug logging for events
+                    // Setup playlist event handlers once
                     if (!this.eventLoggingSetup) {
                         this.eventLoggingSetup = true;
-                        this.logger.info('Setting up event logging and playlist handlers');
                         
                         // Setup playlist event handlers directly on socket
                         this.connection.socket.on('playlist', (data) => this.handlePlaylist(data));
@@ -160,20 +163,20 @@ export class CyTubeBot extends EventEmitter {
                         this.connection.socket.on('delete', (data) => this.handleDelete(data));
                         this.connection.socket.on('moveVideo', (data) => this.handleMoveVideo(data));
                         this.connection.socket.on('setPlaylistMeta', (data) => {
-                            this.logger.info('Playlist metadata received', data);
+                            this.logger.debug('Playlist metadata received', data);
                         });
                         
+                        // Only log non-spammy events for debugging
                         this.connection.socket.onAny((eventName, ...args) => {
-                            // Log ALL events temporarily to see what's available
-                            this.logger.info(`CyTube event: ${eventName}`, { 
-                                argsCount: args.length
-                            });
+                            if (!['chatMsg', 'mediaUpdate', 'usercount'].includes(eventName)) {
+                                this.logger.debug(`CyTube event: ${eventName}`, { 
+                                    argsCount: args.length
+                                });
+                            }
                         });
                     }
                     
-                    // CyTube might not have a requestPlaylist event
-                    // Try different approaches
-                    this.logger.info('Emitting playlist request');
+                    // Request playlist from CyTube
                     this.connection.socket.emit('requestPlaylist');
                 } else {
                     this.logger.warn('No socket available for playlist request');
@@ -740,20 +743,7 @@ export class CyTubeBot extends EventEmitter {
         this.playlist = data || [];
         this.logger.info(`Playlist updated: ${this.playlist.length} videos`);
         
-        // Log first few videos for debugging
-        if (this.playlist.length > 0) {
-            // Log the structure of the first video
-            const firstVideo = this.playlist[0];
-            this.logger.info('First video structure:', {
-                hasTitle: !!firstVideo.title,
-                hasMedia: !!firstVideo.media,
-                keys: Object.keys(firstVideo).slice(0, 10)
-            });
-            
-            // Try to get title from different possible locations
-            const title = firstVideo.title || (firstVideo.media && firstVideo.media.title) || 'Unknown';
-            this.logger.info(`First video: "${title}"`);
-        }
+        // Debug logging removed - playlist structure confirmed
     }
     
     handleSetCurrent(data) {
