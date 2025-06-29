@@ -6,3 +6,13 @@ cytube_bot.log
 logs/
 *.log
 .DS_Store
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+*~
+
+# Archive directory (if you want to exclude it from git)
+# archive/
