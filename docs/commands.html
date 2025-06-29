@@ -2264,11 +2264,38 @@
             
             // Get button and tip positions
             const wrapper = event.target.closest('.dicktionary-wrapper');
+            const button = event.target.closest('.dicktionary-btn');
+            
+            // Prevent multiple clicks during animation
+            if (button.dataset.animating === 'true') {
+                return;
+            }
+            button.dataset.animating = 'true';
+            button.style.pointerEvents = 'none';
+            
             const tip = wrapper.querySelector('.dick-tip');
             const tipRect = tip.getBoundingClientRect();
             
             console.log('Tip position:', tipRect);
             
+            // 50/50 chance for power piss vs pathetic dribble
+            const isPowerPiss = Math.random() < 0.5;
+            
+            if (isPowerPiss) {
+                // Original power piss
+                createPowerPiss(tipRect, wrapper);
+            } else {
+                // Pathetic dribble
+                createPatheticDribble(tipRect, wrapper);
+            }
+            
+            // Reset the animating flag after animations complete
+            setTimeout(() => {
+                button.dataset.animating = 'false';
+            }, 4000);
+        }
+        
+        function createPowerPiss(tipRect, wrapper) {
             // Create piss stream container
             const pissStream = document.createElement('div');
             pissStream.className = 'piss-stream';
@@ -2310,8 +2337,8 @@
             
             document.body.appendChild(pissStream);
             
-            // Add shaking animation during pissing
-            wrapper.style.animation = 'pissingShake 0.1s ease-in-out 25';
+            // Add shaking animation during pissing - rhythmic whipping motion
+            wrapper.style.animation = 'pissingShake 0.25s ease-out 10';
             
             // Create splash effect much sooner - this guy is going HARD
             setTimeout(() => {
@@ -2392,21 +2419,480 @@
             setTimeout(() => {
                 window.open('dicktionary/index.html', '_blank');
                 
-                // Clean up
+                // Clean up and reset everything
                 setTimeout(() => {
+                    // Remove all piss elements
                     pissStream.remove();
+                    
+                    // Remove any remaining splash or drop elements
+                    document.querySelectorAll('.piss-splash, .ricochet-drop, .ballistic-tracer').forEach(el => el.remove());
+                    
+                    // Reset wrapper animation and styles
                     wrapper.style.animation = '';
+                    wrapper.style.transform = '';
+                    
+                    // Reset button state
+                    const button = wrapper.querySelector('.dicktionary-btn');
+                    if (button) {
+                        button.style.pointerEvents = 'auto';
+                    }
                 }, 500);
             }, 2500);
+        }
+        
+        function createPatheticDribble(tipRect, wrapper) {
+            // Track all timeouts for cleanup
+            const timeouts = [];
+            const intervals = [];
+            
+            // Helper to add timeouts
+            const addTimeout = (fn, delay) => {
+                const id = setTimeout(fn, delay);
+                timeouts.push(id);
+                return id;
+            };
+            
+            // Create main container for all piss elements
+            const pissContainer = document.createElement('div');
+            pissContainer.className = 'pathetic-piss-container';
+            pissContainer.style.position = 'fixed';
+            pissContainer.style.top = '0';
+            pissContainer.style.left = '0';
+            pissContainer.style.width = '100%';
+            pissContainer.style.height = '100%';
+            pissContainer.style.pointerEvents = 'none';
+            pissContainer.style.zIndex = '999999';
+            
+            // Create pool at bottom
+            const pool = document.createElement('div');
+            pool.className = 'piss-pool';
+            pool.style.position = 'fixed';
+            pool.style.bottom = '0';
+            pool.style.left = '0';
+            pool.style.width = '100%';
+            pool.style.height = '0';
+            pool.style.background = 'linear-gradient(180deg, rgba(255, 230, 0, 0.7) 0%, rgba(255, 200, 0, 0.5) 100%)';
+            pool.style.transition = 'height 3s ease-out';
+            pool.style.zIndex = '999998';
+            
+            // Add wave effect to pool
+            const poolWaves = document.createElement('div');
+            poolWaves.className = 'pool-waves';
+            poolWaves.style.position = 'absolute';
+            poolWaves.style.top = '0';
+            poolWaves.style.left = '0';
+            poolWaves.style.width = '100%';
+            poolWaves.style.height = '100%';
+            poolWaves.style.background = `repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 50px,
+                rgba(255, 255, 255, 0.1) 50px,
+                rgba(255, 255, 255, 0.1) 100px
+            )`;
+            poolWaves.style.animation = 'poolWave 2s linear infinite';
+            pool.appendChild(poolWaves);
+            
+            document.body.appendChild(pool);
+            
+            // Start growing pool after delay
+            setTimeout(() => {
+                pool.style.height = '60px';
+            }, 500);
+            
+            // Add sad shaking to the dick - weak whipping motion
+            wrapper.style.animation = 'sadShake 0.3s ease-out 12';
+            
+            // Create spurting stream segments (prostate problem style)
+            const startX = tipRect.right - 10;
+            const startY = tipRect.top + tipRect.height/2;
+            const bottomY = window.innerHeight;
+            const streamHeight = bottomY - startY;
+            
+            let currentHeight = 0;
+            const spurtSegments = [];
+            
+            // Create intermittent spurts
+            const createSpurt = (index) => {
+                if (index >= 8) return; // 8 spurts total
+                
+                const spurt = document.createElement('div');
+                spurt.className = 'spurt-segment';
+                spurt.style.position = 'fixed';
+                spurt.style.left = startX + 'px';
+                spurt.style.top = (startY + currentHeight) + 'px';
+                spurt.style.width = (2 + Math.random() * 3) + 'px';
+                spurt.style.height = '0';
+                spurt.style.background = 'linear-gradient(180deg, rgba(255, 230, 0, 0.9) 0%, rgba(255, 200, 0, 0.7) 100%)';
+                spurt.style.borderRadius = '0 0 2px 2px';
+                spurt.style.boxShadow = '0 0 6px rgba(255, 215, 0, 0.5)';
+                spurt.style.zIndex = '999999';
+                spurt.style.transition = 'none';
+                
+                pissContainer.appendChild(spurt);
+                spurtSegments.push(spurt);
+                
+                // Animate spurt growth
+                const spurtHeight = 40 + Math.random() * 80;
+                let growing = true;
+                let currentSpurtHeight = 0;
+                
+                const growInterval = setInterval(() => {
+                    if (growing) {
+                        currentSpurtHeight += 5;
+                        if (currentSpurtHeight >= spurtHeight) {
+                            growing = false;
+                        }
+                    } else {
+                        // Pause at max height
+                        setTimeout(() => {
+                            clearInterval(growInterval);
+                            currentHeight += currentSpurtHeight;
+                            
+                            // Add struggle shake to wrapper during pause - desperate whipping
+                            wrapper.style.animation = 'struggleShake 0.35s ease-out 3';
+                            
+                            // Next spurt after pause
+                            setTimeout(() => {
+                                wrapper.style.animation = '';
+                                createSpurt(index + 1);
+                            }, 300 + Math.random() * 400);
+                        }, 100);
+                        return;
+                    }
+                    
+                    spurt.style.height = currentSpurtHeight + 'px';
+                }, 20);
+            };
+            
+            // Start spurting
+            createSpurt(0);
+            
+            // Create branching streams
+            const branches = [];
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const branch = document.createElement('div');
+                    branch.className = 'branch-stream';
+                    const branchStartY = startY + (streamHeight * (0.3 + i * 0.2));
+                    const angle = (Math.random() - 0.5) * 30;
+                    
+                    branch.style.position = 'fixed';
+                    branch.style.left = startX + 'px';
+                    branch.style.top = branchStartY + 'px';
+                    branch.style.width = '2px';
+                    branch.style.height = (bottomY - branchStartY) + 'px';
+                    branch.style.background = 'linear-gradient(180deg, rgba(255, 230, 0, 0.6) 0%, rgba(255, 200, 0, 0.4) 100%)';
+                    branch.style.transformOrigin = 'top center';
+                    branch.style.transform = `rotate(${angle}deg)`;
+                    branch.style.opacity = '0';
+                    branch.style.transition = 'opacity 0.5s ease-in';
+                    branch.style.zIndex = '999998';
+                    
+                    pissContainer.appendChild(branch);
+                    branches.push(branch);
+                    
+                    setTimeout(() => {
+                        branch.style.opacity = '1';
+                    }, 50);
+                }, 800 + i * 400);
+            }
+            
+            // Create multiple droplets with physics
+            let dropletCount = 0;
+            const maxDroplets = 15;
+            
+            // Open page after fixed time regardless of droplets
+            addTimeout(() => {
+                window.open('dicktionary/index.html', '_blank');
+                
+                // Start cleanup and reset everything
+                addTimeout(() => {
+                    // Clear ALL timeouts and intervals
+                    timeouts.forEach(id => clearTimeout(id));
+                    intervals.forEach(id => clearInterval(id));
+                    clearInterval(dropletInterval);
+                    
+                    // Animate pool away
+                    pool.style.height = '0';
+                    pool.style.transition = 'height 1s ease-in';
+                    
+                    addTimeout(() => {
+                        // Remove all elements
+                        pissContainer.remove();
+                        pool.remove();
+                        
+                        // Remove any stray elements by class
+                        document.querySelectorAll('.pathetic-piss-container, .piss-pool, .gravity-droplet, .droplet-splash, .stream-drip, .pool-foam, .spurt-segment, .branch-stream, .false-start-spurt, .main-dribble-stream').forEach(el => el.remove());
+                        
+                        // Reset wrapper animation and styles
+                        wrapper.style.animation = '';
+                        wrapper.style.transform = '';
+                        wrapper.style.transformOrigin = '';
+                        
+                        // Reset button state and data
+                        const button = wrapper.querySelector('.dicktionary-btn');
+                        if (button) {
+                            button.style.pointerEvents = 'auto';
+                            button.dataset.animating = 'false';
+                        }
+                    }, 1000);
+                }, 500);
+            }, 2500); // Opens at 2.5 seconds, same as power piss
+            
+            const dropletInterval = setInterval(() => {
+                if (dropletCount >= maxDroplets) {
+                    clearInterval(dropletInterval);
+                    return;
+                }
+                
+                // Create droplet with gravity physics
+                const droplet = document.createElement('div');
+                droplet.className = 'gravity-droplet';
+                const size = 6 + Math.random() * 6;
+                droplet.style.width = size + 'px';
+                droplet.style.height = size + 'px';
+                droplet.style.position = 'fixed';
+                droplet.style.left = (startX + (Math.random() - 0.5) * 10) + 'px';
+                droplet.style.top = startY + 'px';
+                
+                const fallTime = 1.5 + Math.random() * 0.5;
+                droplet.style.animation = `gravityFall ${fallTime}s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`;
+                
+                pissContainer.appendChild(droplet);
+                
+                // Create splash when droplet hits pool
+                setTimeout(() => {
+                    const splash = document.createElement('div');
+                    splash.className = 'droplet-splash';
+                    splash.style.position = 'fixed';
+                    splash.style.bottom = pool.offsetHeight + 'px';
+                    splash.style.left = droplet.style.left;
+                    splash.style.animation = 'dropletSplash 0.5s ease-out forwards';
+                    pissContainer.appendChild(splash);
+                    
+                    droplet.remove();
+                    setTimeout(() => splash.remove(), 500);
+                }, fallTime * 1000 - 100);
+                
+                dropletCount++;
+            }, 100 + Math.random() * 150);
+            intervals.push(dropletInterval);
+            
+            // Create drips along the main stream
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const drip = document.createElement('div');
+                    drip.className = 'stream-drip';
+                    const dripY = startY + (streamHeight * Math.random() * 0.7);
+                    
+                    drip.style.position = 'fixed';
+                    drip.style.left = (startX + (Math.random() - 0.5) * 4) + 'px';
+                    drip.style.top = dripY + 'px';
+                    drip.style.animation = 'dripSlide 2s ease-in forwards';
+                    
+                    pissContainer.appendChild(drip);
+                    setTimeout(() => drip.remove(), 2000);
+                }, 500 + i * 300);
+            }
+            
+            // Add foam bubbles to pool
+            const createFoam = () => {
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        const foam = document.createElement('div');
+                        foam.className = 'pool-foam';
+                        foam.style.position = 'fixed';
+                        foam.style.bottom = (Math.random() * 40) + 'px';
+                        foam.style.left = (Math.random() * window.innerWidth) + 'px';
+                        foam.style.animation = 'foamFloat 3s ease-out forwards';
+                        
+                        pissContainer.appendChild(foam);
+                        setTimeout(() => foam.remove(), 3000);
+                    }, i * 100);
+                }
+            };
+            
+            addTimeout(createFoam, 1000);
+            addTimeout(createFoam, 2500);
+            
+            document.body.appendChild(pissContainer);
         }
         
         // Add pissing shake animation
         const style = document.createElement('style');
         style.textContent = `
             @keyframes pissingShake {
-                0%, 100% { transform: translateX(0) rotate(-5deg); }
-                25% { transform: translateX(-2px) rotate(-5deg); }
-                75% { transform: translateX(2px) rotate(-5deg); }
+                0% { transform: translateX(0) rotate(-5deg); }
+                30% { transform: translateX(-8px) rotate(-12deg); }
+                50% { transform: translateX(0) rotate(-5deg); }
+                80% { transform: translateX(6px) rotate(2deg); }
+                100% { transform: translateX(0) rotate(-5deg); }
+            }
+            
+            @keyframes sadShake {
+                0% { transform: translateX(0) rotate(-5deg) scale(1); }
+                25% { transform: translateX(-5px) rotate(-10deg) scale(0.98); }
+                50% { transform: translateX(0) rotate(-5deg) scale(1); }
+                75% { transform: translateX(4px) rotate(0deg) scale(0.99); }
+                100% { transform: translateX(0) rotate(-5deg) scale(1); }
+            }
+            
+            @keyframes struggleShake {
+                0% { transform: translateX(0) rotate(-5deg) scale(1); }
+                15% { transform: translateX(-6px) rotate(-10deg) scale(0.97); }
+                30% { transform: translateX(0) rotate(-5deg) scale(1); }
+                45% { transform: translateX(5px) rotate(-1deg) scale(0.98); }
+                60% { transform: translateX(0) rotate(-5deg) scale(1); }
+                75% { transform: translateX(-4px) rotate(-8deg) scale(0.99); }
+                90% { transform: translateX(0) rotate(-5deg) scale(1); }
+                100% { transform: translateX(3px) rotate(-2deg) scale(1); }
+            }
+            
+            .pathetic-droplet {
+                position: absolute;
+                background: radial-gradient(circle, rgba(255, 230, 0, 0.8) 0%, rgba(255, 200, 0, 0.6) 100%);
+                border-radius: 50%;
+                box-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+                pointer-events: none;
+            }
+            
+            @keyframes patheticDrip {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 0.9;
+                }
+                10% {
+                    transform: translateY(2px) scale(1.1);
+                    opacity: 1;
+                }
+                30% {
+                    transform: translateY(15px) scale(0.9);
+                }
+                100% {
+                    transform: translateY(80px) scale(0.6);
+                    opacity: 0;
+                }
+            }
+            
+            .false-start-spurt {
+                position: absolute;
+                width: 25px;
+                height: 6px;
+                background: linear-gradient(90deg, 
+                    rgba(255, 230, 0, 0.7) 0%, 
+                    rgba(255, 215, 0, 0.5) 50%,
+                    transparent 100%);
+                border-radius: 3px;
+                transform-origin: left center;
+                filter: blur(0.5px);
+            }
+            
+            @keyframes falseStart {
+                0% {
+                    transform: scaleX(0) translateX(0);
+                    opacity: 0.8;
+                }
+                30% {
+                    transform: scaleX(1.5) translateX(5px);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scaleX(0.3) translateX(8px);
+                    opacity: 0;
+                }
+            }
+            
+            .gravity-droplet {
+                position: absolute;
+                background: radial-gradient(circle, rgba(255, 230, 0, 0.9) 0%, rgba(255, 200, 0, 0.7) 100%);
+                border-radius: 50%;
+                box-shadow: 0 0 6px rgba(255, 215, 0, 0.6), inset 0 -2px 4px rgba(255, 180, 0, 0.8);
+                pointer-events: none;
+            }
+            
+            @keyframes gravityFall {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(calc(100vh - 100px)) scale(0.8);
+                    opacity: 0.8;
+                }
+            }
+            
+            @keyframes poolWave {
+                0% {
+                    transform: translateX(0);
+                }
+                100% {
+                    transform: translateX(100px);
+                }
+            }
+            
+            .droplet-splash {
+                position: absolute;
+                width: 20px;
+                height: 15px;
+                background: radial-gradient(ellipse, rgba(255, 230, 0, 0.6) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            }
+            
+            @keyframes dropletSplash {
+                0% {
+                    transform: scaleX(0.5) scaleY(0.2);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scaleX(2) scaleY(0.1) translateY(-10px);
+                    opacity: 0;
+                }
+            }
+            
+            .stream-drip {
+                position: absolute;
+                width: 4px;
+                height: 8px;
+                background: radial-gradient(ellipse, rgba(255, 230, 0, 0.8) 0%, rgba(255, 200, 0, 0.6) 100%);
+                border-radius: 50% 50% 80% 80%;
+                pointer-events: none;
+            }
+            
+            @keyframes dripSlide {
+                0% {
+                    transform: translateY(0) scaleY(1);
+                    opacity: 0.8;
+                }
+                50% {
+                    transform: translateY(20px) scaleY(1.5);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(200px) scaleY(0.5);
+                    opacity: 0;
+                }
+            }
+            
+            .pool-foam {
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            }
+            
+            @keyframes foamFloat {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 0.6;
+                }
+                100% {
+                    transform: translateY(-30px) translateX(20px) scale(0.5);
+                    opacity: 0;
+                }
             }
         `;
         document.head.appendChild(style);
