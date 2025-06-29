@@ -152,6 +152,94 @@ h3 {
     color: var(--text-dim);
 }
 
+/* Game Flow Diagram */
+.game-flow {
+    margin: 30px 0;
+}
+
+.flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.flow-item {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--aussie-gold);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    min-width: 200px;
+    max-width: 250px;
+    margin: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.flow-item::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 205, 0, 0.1) 0%, transparent 70%);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    opacity: 0;
+}
+
+.flow-item:hover::before {
+    opacity: 1;
+    transform: rotate(45deg) scale(1.2);
+}
+
+.flow-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 205, 0, 0.3);
+    border-color: var(--light-gold);
+}
+
+.flow-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px rgba(255, 205, 0, 0.5));
+}
+
+.flow-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--aussie-gold);
+    margin-bottom: 10px;
+}
+
+.flow-desc {
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+.flow-arrow {
+    font-size: 2rem;
+    color: var(--aussie-gold);
+    margin: 0 10px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+.command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
 /* Command Examples */
 .command-examples {
     display: grid;

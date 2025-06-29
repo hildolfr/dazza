@@ -119,6 +119,71 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
+        /* Dick-tionary Button */
+        .dicktionary-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #FFD700 100%);
+            color: #fff;
+            border: 3px solid #FFD700;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dicktionary-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+
+        .dicktionary-btn:hover::before {
+            animation: shine 0.6s ease-in-out;
+        }
+
+        .dicktionary-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6), inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #A0522D 0%, #DAA520 50%, #FFE55C 100%);
+            border-color: #FFE55C;
+        }
+
+        .dicktionary-btn:active {
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes shine {
+            0% {
+                opacity: 0;
+                transform: rotate(45deg) translateX(-100%);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: rotate(45deg) translateX(100%);
+            }
+        }
+
         /* Main Container */
         .container {
             max-width: 1200px;
@@ -650,7 +715,7 @@
                         <li>5 minute cooldown between matches</li>
                         <li>Drink beers to fill your bladder for better performance!</li>
                     </ul>
-                    <button class="dicktionary-btn" onclick="window.open('dicktionary/index.html', '_blank')">🍆 Dick-tionary</button>
+                    <button class="dicktionary-btn" onclick="window.open('dicktionary/index.html', '_blank')">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
                 </div>
 
                 <div class="command">
