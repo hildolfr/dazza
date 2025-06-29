@@ -161,6 +161,49 @@
             z-index: 1;
         }
         
+        /* Left ball hair */
+        .left-ball::before,
+        .left-ball::after {
+            content: '';
+            position: absolute;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.4) 2px,
+                rgba(0, 0, 0, 0.4) 3px
+            );
+            pointer-events: none;
+        }
+        
+        .left-ball::before {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            border-radius: inherit;
+            opacity: 0.3;
+            transform: rotate(25deg);
+            filter: blur(0.5px);
+        }
+        
+        .left-ball::after {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-radius: inherit;
+            opacity: 0.2;
+            transform: rotate(-15deg);
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 3px,
+                rgba(0, 0, 0, 0.3) 3px,
+                rgba(0, 0, 0, 0.3) 4px
+            );
+        }
+        
         /* Right testicle - hangs lower */
         .right-ball {
             position: absolute;
@@ -174,6 +217,540 @@
             box-shadow: -2px 6px 15px rgba(0, 0, 0, 0.35), inset 3px -3px 10px rgba(255, 255, 255, 0.08);
             transform: rotate(-10deg);
             z-index: 1;
+        }
+        
+        /* Right ball hair - more unkempt */
+        .right-ball::before,
+        .right-ball::after {
+            content: '';
+            position: absolute;
+            background: repeating-linear-gradient(
+                80deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.5) 2px,
+                rgba(0, 0, 0, 0.5) 3px
+            );
+            pointer-events: none;
+        }
+        
+        .right-ball::before {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            border-radius: inherit;
+            opacity: 0.35;
+            transform: rotate(-20deg);
+            filter: blur(0.6px);
+        }
+        
+        .right-ball::after {
+            width: 90%;
+            height: 90%;
+            top: 5%;
+            left: 5%;
+            border-radius: inherit;
+            opacity: 0.25;
+            transform: rotate(30deg);
+            background: repeating-linear-gradient(
+                135deg,
+                transparent,
+                transparent 2.5px,
+                rgba(0, 0, 0, 0.4) 2.5px,
+                rgba(0, 0, 0, 0.4) 3.5px
+            );
+        }
+        
+        /* Curly pubes for left ball */
+        .left-ball [class^="pube-"] {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            transform-origin: bottom;
+        }
+        
+        .left-ball .pube-1 {
+            bottom: 5px;
+            left: 2px;
+            --base-rotation: -35deg;
+            transform: rotate(-35deg);
+            height: 25px;
+            box-shadow: 2px 0 0 rgba(0, 0, 0, 0.4), 4px 2px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-2 {
+            bottom: 25px;
+            left: 0px;
+            --base-rotation: -55deg;
+            transform: rotate(-55deg);
+            height: 30px;
+            box-shadow: 3px 1px 0 rgba(0, 0, 0, 0.5), 5px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-3 {
+            top: 5px;
+            left: 10px;
+            --base-rotation: -115deg;
+            transform: rotate(-115deg);
+            height: 22px;
+            box-shadow: 2px -1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-4 {
+            bottom: 10px;
+            right: 2px;
+            --base-rotation: 30deg;
+            transform: rotate(30deg);
+            height: 28px;
+            box-shadow: -2px 1px 0 rgba(0, 0, 0, 0.5), -4px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-5 {
+            top: 15px;
+            right: 5px;
+            --base-rotation: 125deg;
+            transform: rotate(125deg);
+            height: 24px;
+            box-shadow: -3px 0 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        /* More pubes scattered across left ball */
+        .left-ball .pube-6 {
+            bottom: 15px;
+            left: 15px;
+            --base-rotation: -25deg;
+            transform: rotate(-25deg);
+            height: 18px;
+            box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-7 {
+            bottom: 35px;
+            left: 25px;
+            --base-rotation: -75deg;
+            transform: rotate(-75deg);
+            height: 22px;
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .left-ball .pube-8 {
+            top: 25px;
+            left: 20px;
+            --base-rotation: -100deg;
+            transform: rotate(-100deg);
+            height: 20px;
+            box-shadow: 1px -1px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-9 {
+            bottom: 20px;
+            right: 15px;
+            --base-rotation: 55deg;
+            transform: rotate(55deg);
+            height: 19px;
+            box-shadow: -2px 1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-10 {
+            top: 30px;
+            right: 20px;
+            --base-rotation: 105deg;
+            transform: rotate(105deg);
+            height: 21px;
+            box-shadow: -1px -2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .left-ball .pube-11 {
+            bottom: 40px;
+            left: 10px;
+            --base-rotation: -85deg;
+            transform: rotate(-85deg);
+            height: 17px;
+            box-shadow: 3px 0 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-12 {
+            top: 20px;
+            left: 30px;
+            --base-rotation: -140deg;
+            transform: rotate(-140deg);
+            height: 23px;
+            box-shadow: 2px -3px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-13 {
+            bottom: 25px;
+            right: 25px;
+            --base-rotation: 70deg;
+            transform: rotate(70deg);
+            height: 16px;
+            box-shadow: -3px 2px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-14 {
+            top: 35px;
+            left: 15px;
+            --base-rotation: -95deg;
+            transform: rotate(-95deg);
+            height: 20px;
+            box-shadow: 1px -1px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .left-ball .pube-15 {
+            bottom: 30px;
+            left: 35px;
+            --base-rotation: -45deg;
+            transform: rotate(-45deg);
+            height: 18px;
+            box-shadow: 2px 1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Extra coverage for left ball - focusing on right side */
+        .left-ball .pube-16 {
+            bottom: 8px;
+            right: 8px;
+            --base-rotation: 45deg;
+            transform: rotate(45deg);
+            height: 26px;
+            box-shadow: -3px 2px 0 rgba(0, 0, 0, 0.5), -5px 4px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-17 {
+            bottom: 22px;
+            right: 18px;
+            --base-rotation: 65deg;
+            transform: rotate(65deg);
+            height: 23px;
+            box-shadow: -2px 3px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-18 {
+            top: 10px;
+            right: 12px;
+            --base-rotation: 140deg;
+            transform: rotate(140deg);
+            height: 21px;
+            box-shadow: -4px -1px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .left-ball .pube-19 {
+            bottom: 35px;
+            right: 10px;
+            --base-rotation: 80deg;
+            transform: rotate(80deg);
+            height: 19px;
+            box-shadow: -3px 1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-20 {
+            top: 25px;
+            right: 25px;
+            --base-rotation: 115deg;
+            transform: rotate(115deg);
+            height: 24px;
+            box-shadow: -2px -2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .left-ball .pube-21 {
+            bottom: 45px;
+            right: 15px;
+            --base-rotation: 90deg;
+            transform: rotate(90deg);
+            height: 22px;
+            box-shadow: -5px 0 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-22 {
+            top: 18px;
+            right: 0px;
+            --base-rotation: 155deg;
+            transform: rotate(155deg);
+            height: 20px;
+            box-shadow: -3px -3px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .left-ball .pube-23 {
+            bottom: 28px;
+            right: 30px;
+            --base-rotation: 55deg;
+            transform: rotate(55deg);
+            height: 25px;
+            box-shadow: -4px 3px 0 rgba(0, 0, 0, 0.5), -6px 5px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .left-ball .pube-24 {
+            top: 5px;
+            right: 18px;
+            --base-rotation: 165deg;
+            transform: rotate(165deg);
+            height: 18px;
+            box-shadow: -2px -1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-ball .pube-25 {
+            bottom: 50px;
+            right: 5px;
+            --base-rotation: 100deg;
+            transform: rotate(100deg);
+            height: 23px;
+            box-shadow: -4px -2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Curly pubes for right ball - more wild */
+        .right-ball [class^="pube-"] {
+            position: absolute;
+            width: 2px;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            transform-origin: bottom;
+        }
+        
+        .right-ball .pube-1 {
+            bottom: 8px;
+            left: 3px;
+            --base-rotation: -40deg;
+            transform: rotate(-40deg);
+            height: 32px;
+            box-shadow: 3px 1px 0 rgba(0, 0, 0, 0.5), 5px 4px 0 rgba(0, 0, 0, 0.3), 7px 6px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .right-ball .pube-2 {
+            bottom: 30px;
+            left: 0px;
+            --base-rotation: -65deg;
+            transform: rotate(-65deg);
+            height: 35px;
+            box-shadow: 4px 2px 0 rgba(0, 0, 0, 0.6), 6px 5px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .right-ball .pube-3 {
+            top: 10px;
+            left: 8px;
+            --base-rotation: -120deg;
+            transform: rotate(-120deg);
+            height: 28px;
+            box-shadow: 2px -2px 0 rgba(0, 0, 0, 0.5), 4px -1px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .right-ball .pube-4 {
+            bottom: 15px;
+            right: 0px;
+            --base-rotation: 40deg;
+            transform: rotate(40deg);
+            height: 33px;
+            box-shadow: -3px 2px 0 rgba(0, 0, 0, 0.6), -5px 4px 0 rgba(0, 0, 0, 0.4), -7px 7px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .right-ball .pube-5 {
+            top: 5px;
+            right: 8px;
+            --base-rotation: 135deg;
+            transform: rotate(135deg);
+            height: 30px;
+            box-shadow: -4px 1px 0 rgba(0, 0, 0, 0.5), -6px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .right-ball .pube-6 {
+            bottom: 5px;
+            right: 5px;
+            --base-rotation: 25deg;
+            transform: rotate(25deg);
+            height: 26px;
+            box-shadow: -2px -1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        /* More wild pubes on right ball */
+        .right-ball .pube-7 {
+            bottom: 20px;
+            left: 20px;
+            --base-rotation: -50deg;
+            transform: rotate(-50deg);
+            height: 28px;
+            box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6), 5px 5px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .right-ball .pube-8 {
+            top: 15px;
+            left: 25px;
+            --base-rotation: -110deg;
+            transform: rotate(-110deg);
+            height: 31px;
+            box-shadow: 2px -2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-9 {
+            bottom: 35px;
+            right: 10px;
+            --base-rotation: 60deg;
+            transform: rotate(60deg);
+            height: 27px;
+            box-shadow: -4px 2px 0 rgba(0, 0, 0, 0.6);
+        }
+        
+        .right-ball .pube-10 {
+            top: 25px;
+            right: 15px;
+            --base-rotation: 115deg;
+            transform: rotate(115deg);
+            height: 29px;
+            box-shadow: -3px -3px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-11 {
+            bottom: 25px;
+            left: 35px;
+            --base-rotation: -30deg;
+            transform: rotate(-30deg);
+            height: 24px;
+            box-shadow: 4px 1px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .right-ball .pube-12 {
+            top: 30px;
+            left: 10px;
+            --base-rotation: -130deg;
+            transform: rotate(-130deg);
+            height: 32px;
+            box-shadow: 1px -4px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-13 {
+            bottom: 40px;
+            right: 20px;
+            --base-rotation: 75deg;
+            transform: rotate(75deg);
+            height: 25px;
+            box-shadow: -5px 3px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .right-ball .pube-14 {
+            top: 20px;
+            left: 40px;
+            --base-rotation: -90deg;
+            transform: rotate(-90deg);
+            height: 30px;
+            box-shadow: 3px -2px 0 rgba(0, 0, 0, 0.6);
+        }
+        
+        .right-ball .pube-15 {
+            bottom: 12px;
+            right: 25px;
+            --base-rotation: 50deg;
+            transform: rotate(50deg);
+            height: 28px;
+            box-shadow: -3px 4px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-16 {
+            top: 35px;
+            right: 30px;
+            --base-rotation: 95deg;
+            transform: rotate(95deg);
+            height: 26px;
+            box-shadow: -2px -3px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .right-ball .pube-17 {
+            bottom: 18px;
+            left: 12px;
+            --base-rotation: -60deg;
+            transform: rotate(-60deg);
+            height: 33px;
+            box-shadow: 5px 2px 0 rgba(0, 0, 0, 0.7), 7px 4px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .right-ball .pube-18 {
+            top: 8px;
+            left: 30px;
+            --base-rotation: -105deg;
+            transform: rotate(-105deg);
+            height: 29px;
+            box-shadow: 2px -1px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Extra wild coverage for right ball */
+        .right-ball .pube-19 {
+            bottom: 45px;
+            left: 15px;
+            --base-rotation: -70deg;
+            transform: rotate(-70deg);
+            height: 35px;
+            box-shadow: 4px 3px 0 rgba(0, 0, 0, 0.6), 6px 6px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .right-ball .pube-20 {
+            top: 5px;
+            right: 5px;
+            --base-rotation: 145deg;
+            transform: rotate(145deg);
+            height: 31px;
+            box-shadow: -5px -2px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-21 {
+            bottom: 30px;
+            right: 35px;
+            --base-rotation: 85deg;
+            transform: rotate(85deg);
+            height: 27px;
+            box-shadow: -6px 4px 0 rgba(0, 0, 0, 0.6), -8px 6px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .right-ball .pube-22 {
+            top: 40px;
+            left: 20px;
+            --base-rotation: -95deg;
+            transform: rotate(-95deg);
+            height: 30px;
+            box-shadow: 3px -4px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        .right-ball .pube-23 {
+            bottom: 10px;
+            left: 45px;
+            --base-rotation: -15deg;
+            transform: rotate(-15deg);
+            height: 28px;
+            box-shadow: 5px 1px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Animate pubes on hover */
+        .dicktionary-wrapper:hover .pube-1,
+        .dicktionary-wrapper:hover .pube-3,
+        .dicktionary-wrapper:hover .pube-5,
+        .dicktionary-wrapper:hover .pube-7,
+        .dicktionary-wrapper:hover .pube-9,
+        .dicktionary-wrapper:hover .pube-11,
+        .dicktionary-wrapper:hover .pube-13,
+        .dicktionary-wrapper:hover .pube-15,
+        .dicktionary-wrapper:hover .pube-17 {
+            animation: pubeSway1 2s ease-in-out infinite;
+        }
+        
+        .dicktionary-wrapper:hover .pube-2,
+        .dicktionary-wrapper:hover .pube-4,
+        .dicktionary-wrapper:hover .pube-6,
+        .dicktionary-wrapper:hover .pube-8,
+        .dicktionary-wrapper:hover .pube-10,
+        .dicktionary-wrapper:hover .pube-12,
+        .dicktionary-wrapper:hover .pube-14,
+        .dicktionary-wrapper:hover .pube-16,
+        .dicktionary-wrapper:hover .pube-18 {
+            animation: pubeSway2 2s ease-in-out infinite 0.5s;
+        }
+        
+        @keyframes pubeSway1 {
+            0%, 100% { transform: rotate(var(--base-rotation)) translateX(0); }
+            50% { transform: rotate(calc(var(--base-rotation) + 10deg)) translateX(2px); }
+        }
+        
+        @keyframes pubeSway2 {
+            0%, 100% { transform: rotate(var(--base-rotation)) translateX(0); }
+            50% { transform: rotate(calc(var(--base-rotation) - 10deg)) translateX(-2px); }
         }
         
         /* Dick-tionary wrapper */
@@ -1122,11 +1699,60 @@
                         <li>!pissing_contest rival - Bragging rights match (no money)</li>
                         <li>yes/no - Accept or decline a challenge</li>
                         <li>5 minute cooldown between matches</li>
-                        <li>Drink beers to fill your bladder for better performance!</li>
                     </ul>
                     <div class="dicktionary-wrapper">
-                        <span class="left-ball"></span>
-                        <span class="right-ball"></span>
+                        <span class="left-ball">
+                            <span class="pube-1"></span>
+                            <span class="pube-2"></span>
+                            <span class="pube-3"></span>
+                            <span class="pube-4"></span>
+                            <span class="pube-5"></span>
+                            <span class="pube-6"></span>
+                            <span class="pube-7"></span>
+                            <span class="pube-8"></span>
+                            <span class="pube-9"></span>
+                            <span class="pube-10"></span>
+                            <span class="pube-11"></span>
+                            <span class="pube-12"></span>
+                            <span class="pube-13"></span>
+                            <span class="pube-14"></span>
+                            <span class="pube-15"></span>
+                            <span class="pube-16"></span>
+                            <span class="pube-17"></span>
+                            <span class="pube-18"></span>
+                            <span class="pube-19"></span>
+                            <span class="pube-20"></span>
+                            <span class="pube-21"></span>
+                            <span class="pube-22"></span>
+                            <span class="pube-23"></span>
+                            <span class="pube-24"></span>
+                            <span class="pube-25"></span>
+                        </span>
+                        <span class="right-ball">
+                            <span class="pube-1"></span>
+                            <span class="pube-2"></span>
+                            <span class="pube-3"></span>
+                            <span class="pube-4"></span>
+                            <span class="pube-5"></span>
+                            <span class="pube-6"></span>
+                            <span class="pube-7"></span>
+                            <span class="pube-8"></span>
+                            <span class="pube-9"></span>
+                            <span class="pube-10"></span>
+                            <span class="pube-11"></span>
+                            <span class="pube-12"></span>
+                            <span class="pube-13"></span>
+                            <span class="pube-14"></span>
+                            <span class="pube-15"></span>
+                            <span class="pube-16"></span>
+                            <span class="pube-17"></span>
+                            <span class="pube-18"></span>
+                            <span class="pube-19"></span>
+                            <span class="pube-20"></span>
+                            <span class="pube-21"></span>
+                            <span class="pube-22"></span>
+                            <span class="pube-23"></span>
+                        </span>
                         <button class="dicktionary-btn" onclick="ejaculateAndOpen(event)">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
                         <span class="dick-tip">
                             <span class="urethra"></span>
