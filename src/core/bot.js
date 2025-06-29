@@ -461,6 +461,34 @@ export class CyTubeBot extends EventEmitter {
             }
 
             // Check if it's a command
+            // Check for pissing contest responses (yes/no)
+            const lowerMsg = data.msg.toLowerCase().trim();
+            if (this.pissingContestManager) {
+                const challenge = this.pissingContestManager.findChallengeForUser(data.username);
+                if (challenge) {
+                    // Check if it's an accept/decline phrase
+                    const acceptPhrases = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay',
+                        'bring it on', 'you\'re on', 'let\'s go', 'fuck yeah',
+                        'whip it out', 'dicks out', 'let\'s piss',
+                        'prepare to lose', 'easy money', 'bet'];
+                    const declinePhrases = ['no', 'nah', 'nope', 'pass',
+                        'fuck off', 'piss off', 'not now',
+                        'maybe later', 'busy', 'can\'t'];
+                    
+                    if (acceptPhrases.includes(lowerMsg)) {
+                        const result = await this.pissingContestManager.acceptChallenge(data.username);
+                        if (!result.success) {
+                            this.sendMessage(result.message);
+                        }
+                        return;
+                    } else if (declinePhrases.includes(lowerMsg)) {
+                        const result = await this.pissingContestManager.declineChallenge(data.username);
+                        this.sendMessage(result.message);
+                        return;
+                    }
+                }
+            }
+
             // Check for coin flip responses
             if ((data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') && this.db) {
                 this.logger.info('Checking for coin flip response', {

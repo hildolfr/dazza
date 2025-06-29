@@ -36,7 +36,7 @@ export const CONDITIONS = {
             name: "Froze Solid",
             type: "failure",
             description: "too cold, turtle mode",
-            message: "went full turtle mode"
+            message: "'s ween went full turtle mode - everything retracted"
         },
         {
             name: "Pulled a Muscle",
@@ -116,11 +116,11 @@ export const CONDITIONS = {
     // BUFF CONDITIONS
     buff: [
         {
-            name: "Perfect Pressure",
+            name: "Full Tank",
             type: "buff",
             effects: { distance: 30 },
-            description: "ideal bladder pressure",
-            message: "achieved perfect pressure"
+            description: "bladder's about to burst",
+            message: "got a full tank ready to go"
         },
         {
             name: "Morning Glory",

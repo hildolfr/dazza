@@ -317,7 +317,7 @@ export const CHARACTERISTICS = {
         {
             name: "Steady Hands",
             effects: { aim: 60, distance: -20, immune_shakes: true },
-            description: "perfect control",
+            description: "sick control",
             rarity: "uncommon"
         },
         {
@@ -371,7 +371,7 @@ export const CHARACTERISTICS = {
         {
             name: "GPS Guided",
             effects: { aim: 90, duration: -40 },
-            description: "perfect accuracy",
+            description: "can hit a fly at 10 paces",
             rarity: "rare"
         },
         {
@@ -419,7 +419,7 @@ export const CHARACTERISTICS = {
         {
             name: "Laser Dick",
             effects: { aim: 100, all: -50 },
-            description: "perfect aim, weak stream",
+            description: "dead-on aim but pisses like a girl",
             rarity: "legendary"
         },
         {
@@ -797,7 +797,7 @@ export const CHARACTERISTICS = {
         },
         {
             name: "Zen Master",
-            effects: { self_condition: "Perfect Pressure" },
+            effects: { self_condition: "Full Tank" },
             description: "can't be intimidated",
             rarity: "legendary"
         },
