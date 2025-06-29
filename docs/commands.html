@@ -127,39 +127,122 @@
             background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #FFD700 100%);
             color: #fff;
             border: 2px solid #FFD700;
-            padding: 0.6rem 1.2rem 0.6rem 2rem;
+            padding: 0.6rem 1.2rem 0.6rem 2.5rem;
             font-size: 1rem;
             font-weight: bold;
-            border-radius: 25px 50px 50px 25px;
+            border-radius: 30px 40px 40px 30px;
             cursor: pointer;
             text-decoration: none;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+            margin-left: 2rem;
+            margin-bottom: 0.5rem;
             transition: all 0.3s ease;
             box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: visible;
             padding-right: 2.5rem;
+            transform: rotate(-5deg);
+            z-index: 15;
         }
         
-        /* Penis tip */
-        .dicktionary-btn::after {
+        /* Left testicle - hangs higher */
+        .left-ball {
+            position: absolute;
+            left: 25px;
+            bottom: -25px;
+            width: 45px;
+            height: 55px;
+            background: linear-gradient(145deg, #7A3F0F 0%, #A0522D 40%, #D2691E 100%);
+            border-radius: 55% 45% 60% 40% / 70% 60% 40% 30%;
+            border: 2px solid #FFD700;
+            box-shadow: -3px 4px 12px rgba(0, 0, 0, 0.3), inset 2px -2px 8px rgba(255, 255, 255, 0.1);
+            transform: rotate(15deg);
+            z-index: 1;
+        }
+        
+        /* Right testicle - hangs lower */
+        .right-ball {
+            position: absolute;
+            left: 35px;
+            bottom: -45px;
+            width: 48px;
+            height: 58px;
+            background: linear-gradient(145deg, #6B350C 0%, #8B4513 40%, #C8691E 100%);
+            border-radius: 45% 55% 50% 50% / 65% 70% 30% 35%;
+            border: 2px solid #FFD700;
+            box-shadow: -2px 6px 15px rgba(0, 0, 0, 0.35), inset 3px -3px 10px rgba(255, 255, 255, 0.08);
+            transform: rotate(-10deg);
+            z-index: 1;
+        }
+        
+        /* Dick-tionary wrapper */
+        .dicktionary-wrapper {
+            display: inline-block;
+            position: relative;
+            margin: 2rem 0 4rem 1rem;
+        }
+        
+        /* Penis tip/foreskin */
+        .dick-tip {
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-5deg);
+            width: 34px;
+            height: 27px;
+            background: linear-gradient(135deg, #C8691E 0%, #E6AC44 50%, #FFD700 100%);
+            border: 2px solid #FFD700;
+            border-radius: 45% 55% 55% 45% / 50% 65% 65% 50%;
+            box-shadow: 3px -1px 10px rgba(255, 215, 0, 0.3), inset -2px 0 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            z-index: 20;
+        }
+        
+        /* Glans (pink head) visible behind foreskin */
+        .dick-tip::before {
             content: '';
             position: absolute;
-            right: -12px;
             top: 50%;
+            left: -8px;
             transform: translateY(-50%);
             width: 25px;
-            height: 70%;
-            background: linear-gradient(135deg, #D2691E 0%, #FFD700 100%);
-            border-radius: 50%;
-            border: 2px solid #FFD700;
-            border-left: none;
-            box-shadow: 3px 0 10px rgba(255, 215, 0, 0.3);
+            height: 23px;
+            background: radial-gradient(ellipse at 30% 50%, #E88B8B 0%, #D67373 40%, #C46060 100%);
+            border-radius: 50% 60% 60% 50% / 55% 60% 60% 55%;
+            box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.2);
+            z-index: -1;
         }
-
-        .dicktionary-btn::before {
+        
+        /* Foreskin ridge/corona detail */
+        .dick-tip::after {
             content: '';
+            position: absolute;
+            top: 50%;
+            left: 30%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 70%;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+        
+        /* Urethral opening */
+        .dick-tip .urethra {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 8px;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.4) 100%);
+            border-radius: 50% / 80%;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Shine effect for button */
+        .dicktionary-btn-shine {
             position: absolute;
             top: -50%;
             left: -50%;
@@ -169,26 +252,57 @@
             transform: rotate(45deg);
             transition: all 0.6s;
             opacity: 0;
+            pointer-events: none;
         }
 
-        .dicktionary-btn:hover::before {
+        .dicktionary-btn:hover ~ .dicktionary-btn-shine {
             animation: shine 0.6s ease-in-out;
         }
 
         .dicktionary-btn:hover {
-            transform: translateY(-2px) scale(1.02);
+            animation: throb 1.2s ease-in-out infinite;
             box-shadow: 0 5px 15px rgba(255, 215, 0, 0.5), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
             background: linear-gradient(135deg, #A0522D 0%, #DAA520 50%, #FFE55C 100%);
             border-color: #FFE55C;
         }
         
+        .dicktionary-btn:hover::before,
         .dicktionary-btn:hover::after {
+            background: linear-gradient(135deg, #A0522D 0%, #DAA520 100%);
+            border-color: #FFE55C;
+        }
+        
+        .dicktionary-btn:hover ~ .dick-tip {
             background: linear-gradient(135deg, #DAA520 0%, #FFE55C 100%);
             border-color: #FFE55C;
+            animation: tipThrob 1.2s ease-in-out infinite;
+        }
+        
+        @keyframes tipThrob {
+            0%, 100% {
+                transform: translateY(-50%) rotate(-5deg) scale(1);
+            }
+            25% {
+                transform: translateY(-50%) rotate(-5deg) scale(1.06);
+            }
+            50% {
+                transform: translateY(-50%) rotate(-5deg) scale(1.02);
+            }
+            75% {
+                transform: translateY(-50%) rotate(-5deg) scale(1.08);
+            }
+        }
+        
+        .dicktionary-wrapper:hover .left-ball {
+            animation: ballThrob 1.4s ease-in-out infinite;
+        }
+        
+        .dicktionary-wrapper:hover .right-ball {
+            animation: ballThrobLower 1.4s ease-in-out infinite 0.2s;
         }
 
         .dicktionary-btn:active {
-            transform: translateY(-1px) scale(1);
+            transform: rotate(-5deg) translateY(-1px) scale(1);
             box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
         }
 
@@ -203,6 +317,39 @@
             100% {
                 opacity: 0;
                 transform: rotate(45deg) translateX(100%);
+            }
+        }
+        
+        @keyframes throb {
+            0%, 100% {
+                transform: rotate(-5deg) scale(1);
+            }
+            25% {
+                transform: rotate(-5deg) scale(1.03);
+            }
+            50% {
+                transform: rotate(-5deg) scale(1.01);
+            }
+            75% {
+                transform: rotate(-5deg) scale(1.04);
+            }
+        }
+        
+        @keyframes ballThrob {
+            0%, 100% {
+                transform: rotate(15deg) scale(1);
+            }
+            50% {
+                transform: rotate(15deg) scale(1.05);
+            }
+        }
+        
+        @keyframes ballThrobLower {
+            0%, 100% {
+                transform: rotate(-10deg) scale(1);
+            }
+            50% {
+                transform: rotate(-10deg) scale(1.05);
             }
         }
 
@@ -737,7 +884,14 @@
                         <li>5 minute cooldown between matches</li>
                         <li>Drink beers to fill your bladder for better performance!</li>
                     </ul>
-                    <button class="dicktionary-btn" onclick="window.open('dicktionary/index.html', '_blank')">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
+                    <div class="dicktionary-wrapper">
+                        <span class="left-ball"></span>
+                        <span class="right-ball"></span>
+                        <button class="dicktionary-btn" onclick="window.open('dicktionary/index.html', '_blank')">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
+                        <span class="dick-tip">
+                            <span class="urethra"></span>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="command">
