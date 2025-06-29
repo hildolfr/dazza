@@ -16,6 +16,7 @@ import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
 import { VideoPayoutManager } from '../modules/video_payout/index.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
+import { CashMonitor } from '../utils/cashMonitor.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -76,6 +77,9 @@ export class CyTubeBot extends EventEmitter {
         // Video payout system
         this.videoPayoutManager = null;
         
+        // Cash monitoring system
+        this.cashMonitor = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -105,6 +109,9 @@ export class CyTubeBot extends EventEmitter {
             this.setupVideoPayoutHandlers();
             await this.videoPayoutManager.init();
             
+            // Initialize CashMonitor (10 second interval)
+            this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
+            
             // Log initial connection attempt
             await this.db.logConnectionEvent('connect', { type: 'initial' });
             
@@ -127,6 +134,9 @@ export class CyTubeBot extends EventEmitter {
             
             // Mark bot as ready to process commands
             this.ready = true;
+            
+            // Start cash monitoring now that bot is ready
+            await this.cashMonitor.start();
             
             this.logger.info('Bot initialized successfully');
         } catch (error) {
@@ -303,7 +313,25 @@ export class CyTubeBot extends EventEmitter {
             return;
         }
 
+        // Debug log for heads/tails messages
+        if (data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') {
+            this.logger.info('Heads/tails message received', {
+                username: data.username,
+                message: data.msg,
+                ready: this.ready,
+                hasDb: !!this.db
+            });
+        }
+
         try {
+            // Log entry into try block for heads/tails
+            if (data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') {
+                this.logger.info('Processing heads/tails in try block', {
+                    username: data.username,
+                    message: data.msg
+                });
+            }
+            
             // Log message to database with normalized username and get the message ID
             const canonicalUsername = await normalizeUsernameForDb(this, data.username);
             const messageId = await this.db.logMessage(canonicalUsername, data.msg);
@@ -389,25 +417,64 @@ export class CyTubeBot extends EventEmitter {
             // Check if it's a command
             // Check for coin flip responses
             if ((data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') && this.db) {
-                // Check if this user has a pending coin flip challenge
-                const pendingChallenge = await this.db.get(
-                    'SELECT * FROM coin_flip_challenges WHERE challenged = ? AND status = ?',
-                    [data.username.toLowerCase(), 'pending']
+                this.logger.info('Checking for coin flip response', {
+                    username: data.username,
+                    message: data.msg,
+                    hasDb: !!this.db
+                });
+                
+                // Debug: Check all pending challenges
+                const allPendingChallenges = await this.db.all(
+                    'SELECT * FROM coin_flip_challenges WHERE status = ?',
+                    ['pending']
                 );
                 
+                this.logger.info('All pending challenges', {
+                    count: allPendingChallenges.length,
+                    challenges: allPendingChallenges
+                });
+                
+                // Check if this user has a pending coin flip challenge
+                const pendingChallenge = await this.db.get(
+                    'SELECT * FROM coin_flip_challenges WHERE LOWER(challenged) = LOWER(?) AND status = ?',
+                    [data.username, 'pending']
+                );
+                
+                this.logger.info('Coin flip challenge query result', {
+                    username: data.username,
+                    usernameLower: data.username.toLowerCase(),
+                    foundChallenge: !!pendingChallenge,
+                    challenge: pendingChallenge
+                });
+                
                 if (pendingChallenge) {
+                    this.logger.info('Found pending challenge, looking for coin flip command');
+                    
                     // Process the coin flip response
                     const coinFlipCommand = this.commands.commands.get('coin_flip') || 
                                           this.commands.commands.get('coinflip') ||
                                           this.commands.commands.get('cf');
                     
-                    if (coinFlipCommand && coinFlipCommand.command.handleChallengeResponse) {
-                        await coinFlipCommand.command.handleChallengeResponse(
+                    this.logger.info('Coin flip command lookup', {
+                        found: !!coinFlipCommand,
+                        hasHandler: !!(coinFlipCommand && coinFlipCommand.handleChallengeResponse),
+                        commandKeys: Array.from(this.commands.commands.keys()).slice(0, 10)
+                    });
+                    
+                    if (coinFlipCommand && coinFlipCommand.handleChallengeResponse) {
+                        this.logger.info('Calling handleChallengeResponse');
+                        await coinFlipCommand.handleChallengeResponse(
                             this, 
                             { username: data.username, isPM: false }, 
                             data.msg.toLowerCase()
                         );
+                        this.logger.info('handleChallengeResponse completed');
                         return;
+                    } else {
+                        this.logger.error('Cannot process coin flip response', {
+                            commandFound: !!coinFlipCommand,
+                            hasHandler: !!(coinFlipCommand && coinFlipCommand.handleChallengeResponse)
+                        });
                     }
                 }
             }
@@ -648,6 +715,11 @@ export class CyTubeBot extends EventEmitter {
 
     async handleDisconnect() {
         this.logger.connection('disconnected');
+        
+        // Stop cash monitoring
+        if (this.cashMonitor) {
+            this.cashMonitor.stop();
+        }
         
         // Clear all pending mention timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));

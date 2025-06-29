@@ -173,6 +173,14 @@ const coinFlipCommand = {
                 
                 challengeId = result.lastID;
                 
+                bot.logger.info('Coin flip challenge created', {
+                    id: challengeId,
+                    challenger: message.username,
+                    challenged: challengedUser,
+                    amount: amount,
+                    expiresAt: new Date(expiresAt).toISOString()
+                });
+                
                 // Commit the transaction
                 await bot.db.run('COMMIT');
 
@@ -229,7 +237,7 @@ const coinFlipCommand = {
                             await bot.db.run('ROLLBACK');
                         } catch {}
                     }
-                }, 20000); // 20 seconds
+                }, 30000); // 30 seconds
 
                 return { success: true };
 
@@ -254,7 +262,7 @@ const coinFlipCommand = {
                 const updateResult = await bot.db.run(
                     `UPDATE coin_flip_challenges 
                     SET status = 'accepting', challenged_choice = ?
-                    WHERE challenged = ? AND status = 'pending' AND expires_at > ?`,
+                    WHERE LOWER(challenged) = LOWER(?) AND status = 'pending' AND expires_at > ?`,
                     [choice, message.username, Date.now()]
                 );
 
@@ -263,7 +271,7 @@ const coinFlipCommand = {
                 if (updateResult.changes > 0) {
                     challenge = await bot.db.get(
                         `SELECT * FROM coin_flip_challenges 
-                        WHERE challenged = ? AND status = 'accepting' AND challenged_choice = ?`,
+                        WHERE LOWER(challenged) = LOWER(?) AND status = 'accepting' AND challenged_choice = ?`,
                         [message.username, choice]
                     );
                 }
