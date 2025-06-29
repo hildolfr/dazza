@@ -21,23 +21,31 @@ export default new Command({
             
             // Get balance from HeistManager
             if (!bot.heistManager) {
-                bot.sendMessage('economy system not ready yet mate');
+                const errorMsg = 'economy system not ready yet mate';
+                if (message.isPM) {
+                    bot.sendPrivateMessage(message.username, errorMsg);
+                } else {
+                    bot.sendMessage(errorMsg);
+                }
                 return { success: false };
             }
             
             const economy = await bot.heistManager.getUserBalance(targetUser);
             
-            // Public acknowledgment responses
-            const publicResponses = [
-                `Checkin' the books for ya -${message.username}...`,
-                `PMing ya the balance details -${message.username}`,
-                `Slidin' into ya DMs with the financial report -${message.username}`,
-                `Check ya messages -${message.username}`,
-                `Sendin' the deets privately -${message.username}`
-            ];
-            
-            // Send public acknowledgment
-            bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
+            // Only send public acknowledgment if NOT a PM
+            if (!message.isPM) {
+                // Public acknowledgment responses
+                const publicResponses = [
+                    `Checkin' the books for ya -${message.username}...`,
+                    `PMing ya the balance details -${message.username}`,
+                    `Slidin' into ya DMs with the financial report -${message.username}`,
+                    `Check ya messages -${message.username}`,
+                    `Sendin' the deets privately -${message.username}`
+                ];
+                
+                // Send public acknowledgment
+                bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
+            }
             
             // Format private message with balance details
             let pmMessage;
@@ -66,7 +74,12 @@ export default new Command({
             return { success: true };
         } catch (error) {
             bot.logger.error('Balance command error:', error);
-            bot.sendMessage('somethin went wrong checkin the balance');
+            const errorMsg = 'somethin went wrong checkin the balance';
+            if (message.isPM) {
+                bot.sendPrivateMessage(message.username, errorMsg);
+            } else {
+                bot.sendMessage(errorMsg);
+            }
             return { success: false };
         }
     }

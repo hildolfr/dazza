@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
 
 export default new Command({
     name: 'tell',
@@ -102,8 +103,10 @@ export default new Command({
                 return { success: true };
             }
             
-            // Store tell with PM flag if sent via PM
-            await bot.db.addTell(message.username, targetUser, tellMessage, message.isPM || false);
+            // Store tell with normalized usernames and PM flag if sent via PM
+            const canonicalFrom = await getCanonicalUsername(bot, message.username);
+            const canonicalTo = await getCanonicalUsername(bot, targetUser);
+            await bot.db.addTell(canonicalFrom, canonicalTo, tellMessage, message.isPM || false);
             
             // Only send public confirmation if not initiated via PM
             if (!message.isPM) {

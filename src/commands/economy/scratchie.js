@@ -73,11 +73,8 @@ export default new Command({
                 };
             }
 
-            // Deduct the cost
-            await bot.db.run(
-                'UPDATE user_economy SET balance = balance - ? WHERE username = ?',
-                [amount, message.username]
-            );
+            // Deduct the cost using HeistManager for proper username handling
+            await bot.heistManager.updateUserEconomy(message.username, -amount, 0);
 
             // Scratch animation
             bot.sendMessage(`-${message.username} bought a $${amount} "${ticketType}" scratchie... *scratch scratch*`);
@@ -122,16 +119,19 @@ export default new Command({
 
             // Add winnings if any
             if (winnings > 0) {
-                await bot.db.run(
-                    'UPDATE user_economy SET balance = balance + ? WHERE username = ?',
-                    [winnings, message.username]
-                );
+                // Use HeistManager for proper username handling
+                await bot.heistManager.updateUserEconomy(message.username, winnings, 0);
 
-                // Track in transactions
-                await bot.db.run(
-                    'INSERT INTO economy_transactions (username, amount, transaction_type, created_at) VALUES (?, ?, ?, ?)',
-                    [message.username, winnings - amount, 'scratchie', Date.now()]
-                );
+                // Track in transactions with error handling
+                try {
+                    await bot.db.run(
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, created_at) VALUES (?, ?, ?, ?)',
+                        [message.username, winnings - amount, 'scratchie', Date.now()]
+                    );
+                } catch (error) {
+                    bot.logger.error('Failed to log scratchie transaction:', error);
+                    // Don't fail the command just because logging failed
+                }
             }
 
             // Announce result with delay

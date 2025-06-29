@@ -13,6 +13,7 @@ export default new Command({
     users: ['all'],
     cooldown: 3000,
     cooldownMessage: 'the pokies are still spinnin\' from ya last go mate, wait {time}s',
+    pmAccepted: true,
 
     async handler(bot, message, args) {
         try {
@@ -44,11 +45,20 @@ export default new Command({
                 return { success: false };
             }
 
-            // Deduct the bet
-            await bot.db.run(
-                'UPDATE user_economy SET balance = balance - ? WHERE username = ?',
-                [amount, message.username]
-            );
+            // Public acknowledgment (only if not PM)
+            if (!message.isPM) {
+                const publicMessages = [
+                    `-${message.username} chucks $${amount} into the pokies...`,
+                    `oi -${message.username}'s havin a punt on the slots ($${amount})`,
+                    `-${message.username} feeds $${amount} to the hungry machine`,
+                    `another $${amount} from -${message.username} into the pokies`,
+                    `-${message.username}'s riskin $${amount} on the one-armed bandit`
+                ];
+                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+            }
+            
+            // Deduct the bet using HeistManager for proper username handling
+            await bot.heistManager.updateUserEconomy(message.username, -amount, 0);
 
             // Pokies symbols (adjusted for ~40% RTP / 60% house edge)
             const symbols = ['🍒', '🍺', '💰', '🔔', '7️⃣', '💎', '🎰'];
@@ -74,21 +84,24 @@ export default new Command({
 
             // Calculate winnings
             let winnings = 0;
-            let message_text = `${reel1} | ${reel2} | ${reel3}`;
+            let resultLine = `${reel1} | ${reel2} | ${reel3}`;
+            let outcome = '';
+            let isWin = false;
 
             // Check for wins (reduced payouts for harsh house edge)
             if (reel1 === reel2 && reel2 === reel3) {
                 // Three of a kind (reduced multipliers)
+                isWin = true;
                 const symbolIndex = symbols.indexOf(reel1);
                 const multipliers = [2, 3, 5, 10, 25, 50, 100]; // Significantly reduced
                 winnings = amount * multipliers[symbolIndex];
                 
                 if (reel1 === '🎰') {
-                    message_text += ` - MEGA JACKPOT!!! $${winnings}`;
+                    outcome = `\n\n🎉 MEGA JACKPOT!!! 🎉\nYou won $${winnings}!\nProfit: +$${winnings - amount}`;
                 } else if (reel1 === '💎' || reel1 === '7️⃣') {
-                    message_text += ` - JACKPOT! $${winnings}`;
+                    outcome = `\n\n💰 JACKPOT! 💰\nYou won $${winnings}!\nProfit: +$${winnings - amount}`;
                 } else {
-                    message_text += ` - Winner! $${winnings}`;
+                    outcome = `\n\n✅ WINNER! ✅\nThree ${reel1}s pays $${winnings}!\nProfit: +$${winnings - amount}`;
                 }
             } else if (reel1 === reel2 || reel2 === reel3) {
                 // Two of a kind - only on first two or last two reels
@@ -99,62 +112,88 @@ export default new Command({
                 winnings = Math.floor(amount * multipliers[symbolIndex]);
                 // Only pay if winning more than bet
                 if (winnings > amount) {
-                    message_text += ` - Two ${matchedSymbol} - $${winnings}`;
+                    isWin = true;
+                    outcome = `\n\n✅ Small Win!\nTwo ${matchedSymbol}s pays $${winnings}!\nProfit: +$${winnings - amount}`;
                 } else {
                     winnings = 0;
-                    message_text += ` - Two ${matchedSymbol} - not enough to win`;
+                    outcome = `\n\n❌ YOU LOST $${amount}! ❌\nTwo ${matchedSymbol}s doesn't pay enough\nBetter luck next time mate`;
                 }
             } else {
-                // Loss
+                // Loss - make it very clear
+                winnings = 0;
                 const lossMessages = [
-                    ' - bugger all mate',
-                    ' - house wins again',
-                    ' - into the pokies fund',
-                    ' - better luck next spin',
-                    ' - bloody rigged'
+                    `\n\n❌ YOU LOST $${amount}! ❌\nNo matching symbols\nHouse wins again!`,
+                    `\n\n❌ YOU LOST $${amount}! ❌\nBugger all mate\nThe pokies are hungry today`,
+                    `\n\n❌ YOU LOST $${amount}! ❌\nInto the machine it goes\nBetter luck next spin`,
+                    `\n\n❌ YOU LOST $${amount}! ❌\nNothing! Zip! Nada!\nThe house always wins`,
+                    `\n\n❌ YOU LOST $${amount}! ❌\nBloody rigged machines\nTry again... if ya dare`
                 ];
-                message_text += lossMessages[Math.floor(Math.random() * lossMessages.length)];
+                outcome = lossMessages[Math.floor(Math.random() * lossMessages.length)];
             }
 
-            // Send the result
-            bot.sendMessage(message_text);
+            // Get updated balance
+            const newBalance = await bot.heistManager.getUserBalance(message.username);
+            
+            // Send PM with results
+            const pmMessage = `🎰 POKIES RESULT 🎰\n\n${resultLine}${outcome}\n\nYour balance: $${newBalance.balance}`;
+            
+            bot.sendPrivateMessage(message.username, pmMessage);
 
             // Update balance if won
             if (winnings > 0) {
-                await bot.db.run(
-                    'UPDATE user_economy SET balance = balance + ? WHERE username = ?',
-                    [winnings, message.username]
-                );
+                // Use HeistManager for proper username handling
+                await bot.heistManager.updateUserEconomy(message.username, winnings, 0);
 
-                // Track in transactions
-                await bot.db.run(
-                    'INSERT INTO economy_transactions (username, amount, transaction_type, created_at) VALUES (?, ?, ?, ?)',
-                    [message.username, winnings - amount, 'pokies', Date.now()]
-                );
+                // Track in transactions with error handling
+                try {
+                    await bot.db.run(
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, created_at) VALUES (?, ?, ?, ?)',
+                        [message.username, winnings - amount, 'pokies', Date.now()]
+                    );
+                } catch (error) {
+                    bot.logger.error('Failed to log pokies transaction:', error);
+                    // Don't fail the command just because logging failed
+                }
 
-                // Announce big wins
-                if (winnings >= amount * 50) {
-                    setTimeout(() => {
-                        bot.sendMessage(`HOLY FUCK -${message.username} JUST HIT THE JACKPOT!`);
-                    }, 1000);
-                } else if (winnings >= amount * 10) {
-                    setTimeout(() => {
-                        bot.sendMessage(`big win! -${message.username} is laughin all the way to the bottle-o`);
-                    }, 1000);
+                // Announce big wins publicly (only if not PM)
+                if (!message.isPM) {
+                    if (winnings >= amount * 50) {
+                        setTimeout(() => {
+                            bot.sendMessage(`🎰💰 HOLY FUCK -${message.username} JUST HIT THE JACKPOT! $${winnings}! 💰🎰`);
+                        }, 2500);
+                    } else if (winnings >= amount * 10) {
+                        setTimeout(() => {
+                            bot.sendMessage(`🎉 big win! -${message.username} just won $${winnings} on the pokies!`);
+                        }, 2500);
+                    }
                 }
             } else {
-                // Addiction messages for losses
-                if (Math.random() < 0.2) {
-                    const addictionMessages = [
-                        'just one more spin mate...',
-                        'i can feel a big win coming',
-                        'the machine\'s about to pay out, i can tell',
-                        'double or nothing next spin?',
-                        'shoulda played the one next to it'
-                    ];
+                // Loss messages - sometimes add public comments (only if not PM)
+                if (!message.isPM && Math.random() < 0.3) {
                     setTimeout(() => {
-                        bot.sendMessage(addictionMessages[Math.floor(Math.random() * addictionMessages.length)]);
-                    }, 2000);
+                        const lossReactions = [
+                            `another victim of the pokies...`,
+                            `the house always wins in the end`,
+                            `-${message.username}'s donation to the RSL appreciated`,
+                            `that's how they afford the fancy carpets`,
+                            `pokies: 1, -${message.username}: 0`
+                        ];
+                        bot.sendMessage(lossReactions[Math.floor(Math.random() * lossReactions.length)]);
+                    }, 3000);
+                }
+                
+                // Original addiction messages for big losses (only if not PM)
+                if (!message.isPM && amount >= 50 && Math.random() < 0.5) {
+                    setTimeout(() => {
+                        const bigLossMessages = [
+                            'just one more spin mate...',
+                            'i can feel a big win coming',
+                            'the machine\'s about to pay out, i can tell',
+                            'double or nothing next spin?',
+                            'shoulda played the one next to it'
+                        ];
+                        bot.sendMessage(bigLossMessages[Math.floor(Math.random() * bigLossMessages.length)]);
+                    }, 4500);
                 }
             }
 
