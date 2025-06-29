@@ -3,7 +3,7 @@ import { Command } from '../base.js';
 export default new Command({
     name: 'top',
     description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]',
+    usage: '!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]',
     category: 'stats',
     cooldown: 2000,
     
@@ -13,7 +13,7 @@ export default new Command({
         try {
             // If no category specified, list options
             if (!category) {
-                bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
+                bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
                 return { success: true };
             }
             
@@ -24,13 +24,23 @@ export default new Command({
                 case 'talkers':
                 case 'talker':
                     results = await bot.db.getTopTalkers(5);
-                    title = '🏆 BIGGEST GOBS IN THE JOINT 🏆\nThese cunts never shut up:';
+                    title = 'Top yappers:';
                     break;
                     
                 case 'bongs':
                 case 'bong':
                     results = await bot.db.getTopBongUsers(5);
-                    title = '🌿 MOST COOKED CUNTS 🌿\nPunchin\' cones like it\'s their job:';
+                    title = '🌿 Most cooked cunts:';
+                    break;
+                    
+                case 'drinkers':
+                case 'drinker':
+                case 'drinks':
+                case 'drink':
+                case 'pissheads':
+                case 'alcoholics':
+                    results = await bot.db.getTopDrinkers(5);
+                    title = '🍺 Top Piss-heads:';
                     break;
                     
                 case 'quoted':
@@ -84,7 +94,7 @@ export default new Command({
                     break;
                     
                 default:
-                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
+                    bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
                     return { success: true };
             }
             
@@ -111,6 +121,10 @@ export default new Command({
                 } else if (category === 'bongs' || category === 'bong') {
                     value = `${r.bong_count} cones`;
                     if (r.bong_count >= 100) extra = ' 💀';
+                } else if (category === 'drinkers' || category === 'drinker' || category === 'drinks' || category === 'drink' || category === 'pissheads' || category === 'alcoholics') {
+                    value = `${r.drink_count} drinks`;
+                    if (r.drink_count >= 500) extra = ' 💀';
+                    else if (r.drink_count >= 100) extra = ' 🍺';
                 } else if (category === 'quoted' || category === 'quotes') {
                     value = `${r.quotable_messages} bangers`;
                 } else if (category === 'bottles' || category === 'bottle' || category === 'recycling') {

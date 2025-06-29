@@ -27,53 +27,44 @@ export default new Command({
             `, [oneWeekAgo]);
             
             if (hourlyActivity.length === 0) {
-                bot.sendMessage('not enough data to show peak times mate');
+                bot.sendMessage(`not enough data to show peak times -${message.username}`);
                 return { success: true };
             }
             
-            // Get top 5 peak times
-            const topPeaks = hourlyActivity.slice(0, 5);
+            // Get top 3 peak times (more concise)
+            const topPeaks = hourlyActivity.slice(0, 3);
             
-            // Day names
-            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            // Day names (abbreviated)
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             
-            // Format peak times
-            let response = "📊 **Peak Activity Times (AEST):**\n";
+            // Format peak times concisely
+            let response = "Peak times (AEST): ";
             
             topPeaks.forEach((peak, index) => {
                 const dayName = dayNames[parseInt(peak.day_of_week)];
                 const hour = parseInt(peak.hour);
-                const timeRange = `${hour}:00-${hour + 1}:00`;
                 
-                response += `${index + 1}. ${dayName} ${timeRange} - ${peak.unique_users} users active\n`;
+                if (index > 0) response += ", ";
+                response += `${dayName} ${hour}:00 (${peak.unique_users} users)`;
             });
             
-            // Add overall stats
-            const totalUsers = await bot.db.get(`
-                SELECT COUNT(DISTINCT username) as total
-                FROM messages
-                WHERE timestamp >= ?
-            `, [oneWeekAgo]);
-            
-            response += `\nTotal unique users this week: ${totalUsers.total}`;
-            
-            // Add Dazza's commentary
-            const commentary = [
-                "\n\nBusiest when everyone's avoidin' work",
-                "\n\nPeak bludgin' hours right there",
-                "\n\nThat's when the real degenerates show up",
-                "\n\nPrime shitpostin' hours",
-                "\n\nWhen all the legends are online"
+            // Send acknowledgment in public
+            const publicResponses = [
+                `Checkin' the peak times for ya -${message.username}, PMing the results`,
+                `Alright -${message.username}, sending ya the busy hours privately`,
+                `-${message.username} check your PMs for the peak times mate`,
+                `Slidin' into ya DMs with the peak hours -${message.username}`
             ];
             
-            response += commentary[Math.floor(Math.random() * commentary.length)];
+            bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
             
-            bot.sendMessage(response);
+            // Send actual results via PM
+            bot.sendPrivateMessage(message.username, response);
             return { success: true };
             
         } catch (error) {
             bot.logger.error('Error in peak command:', error);
-            bot.sendMessage('fucked up checkin' the peak times');
+            bot.sendMessage("fucked up checkin' the peak times");
             return { success: false };
         }
     }

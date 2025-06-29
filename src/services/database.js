@@ -106,6 +106,25 @@ class Database {
             )
         `);
 
+        // Create drink_counter table
+        await this.run(`
+            CREATE TABLE IF NOT EXISTS drink_counter (
+                date TEXT PRIMARY KEY,
+                count INTEGER DEFAULT 0,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create user_drinks table for per-user drink tracking
+        await this.run(`
+            CREATE TABLE IF NOT EXISTS user_drinks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Create reminders table
         await this.run(`
             CREATE TABLE IF NOT EXISTS reminders (
@@ -177,6 +196,8 @@ class Database {
         await this.run('CREATE INDEX IF NOT EXISTS idx_user_events_timestamp ON user_events(timestamp)');
         await this.run('CREATE INDEX IF NOT EXISTS idx_user_bongs_username ON user_bongs(username)');
         await this.run('CREATE INDEX IF NOT EXISTS idx_user_bongs_timestamp ON user_bongs(timestamp)');
+        await this.run('CREATE INDEX IF NOT EXISTS idx_user_drinks_username ON user_drinks(username)');
+        await this.run('CREATE INDEX IF NOT EXISTS idx_user_drinks_timestamp ON user_drinks(timestamp)');
         await this.run('CREATE INDEX IF NOT EXISTS idx_reminders_remind_at ON reminders(remind_at)');
         await this.run('CREATE INDEX IF NOT EXISTS idx_tells_to_user ON tells(to_user)');
         await this.run('CREATE INDEX IF NOT EXISTS idx_posted_urls_username ON posted_urls(username)');
@@ -371,6 +392,46 @@ class Database {
         return result ? result.count : 0;
     }
 
+    async getDrinkCount(date) {
+        const result = await this.get(
+            'SELECT count FROM drink_counter WHERE date = ?',
+            [date]
+        );
+        
+        return result ? result.count : 0;
+    }
+
+    async incrementDrinkCount(date) {
+        await this.run(`
+            INSERT INTO drink_counter (date, count)
+            VALUES (?, 1)
+            ON CONFLICT(date) DO UPDATE SET
+                count = count + 1,
+                updated_at = CURRENT_TIMESTAMP
+        `, [date]);
+        
+        // Return the new count
+        return await this.getDrinkCount(date);
+    }
+
+    async logUserDrink(username) {
+        const timestamp = Date.now();
+        
+        await this.run(
+            'INSERT INTO user_drinks (username, timestamp) VALUES (?, ?)',
+            [username, timestamp]
+        );
+    }
+
+    async getUserDrinkCount(username) {
+        const result = await this.get(
+            'SELECT COUNT(*) as count FROM user_drinks WHERE LOWER(username) = LOWER(?)',
+            [username]
+        );
+        
+        return result ? result.count : 0;
+    }
+
     async getTopTalkers(limit = 10) {
         return await this.all(`
             SELECT username, COUNT(*) as message_count
@@ -390,6 +451,17 @@ class Database {
             FROM user_bongs
             GROUP BY LOWER(username)
             ORDER BY bong_count DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopDrinkers(limit = 10) {
+        // Get users who used !drink the most from dedicated table
+        return await this.all(`
+            SELECT username, COUNT(*) as drink_count
+            FROM user_drinks
+            GROUP BY LOWER(username)
+            ORDER BY drink_count DESC
             LIMIT ?
         `, [limit]);
     }
