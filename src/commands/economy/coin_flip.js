@@ -19,8 +19,21 @@ export default new Command({
 
     async handler(bot, message, args) {
         try {
+            // Validate required objects exist
+            if (!bot || !message || !message.username) {
+                bot.logger.error('Coin flip: Invalid bot or message object');
+                return { success: false };
+            }
+
             if (!bot.heistManager) {
                 const msg = 'coin flip table\'s broken mate';
+                bot.sendMessage(msg, message.isPM ? message.username : null);
+                return { success: false };
+            }
+
+            if (!bot.db) {
+                bot.logger.error('Coin flip: Database not available');
+                const msg = 'database is cooked mate, try again later';
                 bot.sendMessage(msg, message.isPM ? message.username : null);
                 return { success: false };
             }
@@ -44,7 +57,18 @@ export default new Command({
                 return { success: false };
             }
 
-            const userBalance = await bot.heistManager.getUserBalance(message.username);
+            let userBalance;
+            try {
+                userBalance = await bot.heistManager.getUserBalance(message.username);
+            } catch (balanceError) {
+                bot.logger.error('Coin flip: Failed to get user balance', {
+                    error: balanceError.message,
+                    username: message.username
+                });
+                const msg = 'couldn\'t check ya balance mate, try again';
+                bot.sendMessage(msg, message.isPM ? message.username : null);
+                return { success: false };
+            }
             
             if (userBalance.balance < amount) {
                 const msg = `ya need $${amount} to flip mate, you've only got $${userBalance.balance}`;
@@ -78,7 +102,13 @@ export default new Command({
             }
 
         } catch (error) {
-            bot.logger.error('Coin flip command error:', error);
+            bot.logger.error('Coin flip command error:', {
+                error: error.message,
+                stack: error.stack,
+                username: message?.username,
+                args: args,
+                isPM: message?.isPM
+            });
             bot.sendMessage('coin dropped down a drain mate');
             return { success: false };
         }
