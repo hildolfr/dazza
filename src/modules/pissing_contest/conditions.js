@@ -176,11 +176,13 @@ export const CONDITIONS = {
             message: "ghost piss - where'd it go?"
         },
         {
-            name: "The Infinite Stream",
+            name: "Pissin' Blood",
             type: "weird",
-            effects: { duration: 999 },
-            description: "won't stop pissing",
-            message: "can't stop pissing (medical emergency)"
+            effects: { all: -20, duration: 999 },
+            description: "medical emergency - blood in piss",
+            message: "pissin' blood! Medical emergency!",
+            fine: 50,
+            fineMessage: "Ambulance called! $50 medical bill"
         },
         {
             name: "Piss Shivers",

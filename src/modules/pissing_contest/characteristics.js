@@ -297,6 +297,22 @@ export const CHARACTERISTICS = {
             effects: { all: 40, perfect_aim: true, intimidates_all: true },
             description: "godlike abilities",
             rarity: "legendary"
+        },
+        {
+            name: "Pierced Python",
+            effects: { 
+                distance: 55, 
+                opponent_aim: -35, 
+                opponent_confidence: -25, 
+                opponent_duration: -15,
+                aim: -40,
+                split_stream: true,
+                intimidates_all: true,
+                volume: 30
+            },
+            description: "jewelry causes havoc",
+            rarity: "legendary",
+            forceComment: true
         }
     ],
 
