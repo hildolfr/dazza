@@ -5,7 +5,7 @@ const coinFlipCommand = {
     name: 'coin_flip',
     aliases: ['coinflip', 'flip', 'cf'],
     description: 'Flip a coin against another user or the house',
-    usage: '!coin_flip <amount> [@user] OR respond to a challenge with heads/tails',
+    usage: '!coin_flip <amount> [username] OR respond to a challenge with heads/tails',
     examples: [
         '!coin_flip 50 - Flip against Dazza for $50',
         '!coin_flip 100 @mate - Challenge mate to a $100 coin flip',
@@ -39,10 +39,7 @@ const coinFlipCommand = {
                 return { success: false };
             }
 
-            // Check if this is a response to a challenge (just "heads" or "tails")
-            if (args.length === 1 && ['heads', 'tails'].includes(args[0].toLowerCase())) {
-                return await coinFlipCommand.handleChallengeResponse(bot, message, args[0].toLowerCase());
-            }
+            // Note: Challenge responses (heads/tails) are now handled directly in bot.js
 
             // Otherwise it's a new flip
             if (args.length === 0) {
@@ -232,7 +229,7 @@ const coinFlipCommand = {
                             await bot.db.run('ROLLBACK');
                         } catch {}
                     }
-                }, 30000);
+                }, 20000); // 20 seconds
 
                 return { success: true };
 

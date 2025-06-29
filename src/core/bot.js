@@ -387,6 +387,31 @@ export class CyTubeBot extends EventEmitter {
             }
 
             // Check if it's a command
+            // Check for coin flip responses
+            if ((data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') && this.db) {
+                // Check if this user has a pending coin flip challenge
+                const pendingChallenge = await this.db.get(
+                    'SELECT * FROM coin_flip_challenges WHERE challenged = ? AND status = ?',
+                    [data.username.toLowerCase(), 'pending']
+                );
+                
+                if (pendingChallenge) {
+                    // Process the coin flip response
+                    const coinFlipCommand = this.commands.commands.get('coin_flip') || 
+                                          this.commands.commands.get('coinflip') ||
+                                          this.commands.commands.get('cf');
+                    
+                    if (coinFlipCommand && coinFlipCommand.command.handleChallengeResponse) {
+                        await coinFlipCommand.command.handleChallengeResponse(
+                            this, 
+                            { username: data.username, isPM: false }, 
+                            data.msg.toLowerCase()
+                        );
+                        return;
+                    }
+                }
+            }
+            
             if (data.msg.startsWith('!')) {
                 await this.handleCommand(data);
             }
