@@ -330,7 +330,7 @@ export class PissingContestManager {
         
         // Announce weather after brief delay
         setTimeout(() => {
-            this.bot.sendMessage(`Weather: ${formatWeather(weather)} - ${weather.special ? weather.special.message : location.description}`);
+            this.bot.sendMessage(`${formatWeather(weather)} - ${weather.special ? weather.special.message : location.description}`);
         }, bothHaveConditions ? 2000 : 1500);
         
         // Force commentary for certain matchups
@@ -488,11 +488,11 @@ export class PissingContestManager {
         // Winner announcement
         const winnerChar = winner === charA.name ? charA : charB;
         this.bot.sendMessage(`${formatStats(winnerStats)} **[${winnerScore}]**`);
-        this.bot.sendMessage(`🏆 -${winner}, '${winnerChar.name}', is the WINNER at ${winnerScore} points!`);
+        this.bot.sendMessage(`🏆 -${winner} '${winnerChar.name}' fuckin WINS with ${winnerScore} points!`);
         
         // Loser stats
         setTimeout(() => {
-            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} loses!`);
+            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} got smashed!`);
         }, 1500);
         
         // Add contextual commentary
@@ -525,9 +525,27 @@ export class PissingContestManager {
         
         if (amount > 0) {
             await this.bot.heistManager.transferMoney(loser, winner, amount);
-            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} wins $${amount}!`);
+            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS $${amount}!`);
         } else {
-            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! What a fuckin pussy!`);
+            const bragMessages = [
+                "What a fuckin pussy!",
+                "Absolute embarrassment!",
+                "Couldn't even get it out!",
+                "Performance anxiety at its finest!",
+                "That's just sad to watch!",
+                "Better luck next time... maybe",
+                "Should've stayed home!",
+                "Epic fail right there!",
+                "That's gonna hurt the reputation!",
+                "Walk of shame incoming!",
+                "Bottled it completely!",
+                "Choked harder than a virgin!",
+                "That's one for the history books!",
+                "Legendary failure!",
+                "Couldn't handle the pressure!"
+            ];
+            const bragMessage = bragMessages[Math.floor(Math.random() * bragMessages.length)];
+            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS by default! ${bragMessage}`);
         }
         
         // Update stats
@@ -689,12 +707,12 @@ export class PissingContestManager {
         
         // Size mismatches
         if (winnerStats.distance > loserStats.distance * 2) {
-            comments.push("Absolutely destroyed em with that distance!");
+            comments.push("Fuckin demolished em! Not even close!");
         }
         
         // Performance based
         if (winnerStats.distance > 4 && winnerStats.volume < 500) {
-            comments.push("All pressure, no juice there mate");
+            comments.push("All show, fuck all flow");
         }
         
         if (winnerStats.duration > 25 && winnerStats.distance < 1) {
@@ -702,7 +720,7 @@ export class PissingContestManager {
         }
         
         if (winnerStats.aim > 90 && winnerStats.distance < 1) {
-            comments.push("Perfect aim but might as well have sat down");
+            comments.push("Great aim but pisses like a sheila");
         }
         
         // Close match
@@ -712,7 +730,7 @@ export class PissingContestManager {
         
         // Domination
         if (winnerScore > loserScore * 2) {
-            comments.push("Absolute domination! Not even a contest!");
+            comments.push("Total fuckin massacre! Embarrassing!");
         }
         
         if (comments.length > 0) {

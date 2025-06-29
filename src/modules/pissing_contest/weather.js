@@ -47,10 +47,10 @@ export const WEATHER = {
             description: "slight shrinkage"
         },
         {
-            name: "Perfect Pissing Weather",
+            name: "Not Too Shabby",
             temp: "15-25°C",
             effects: {},
-            description: "ideal conditions"
+            description: "decent enough"
         },
         {
             name: "Bloody Hot",

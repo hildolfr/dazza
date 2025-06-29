@@ -11,7 +11,7 @@ export const LOCATIONS = {
         {
             name: "Bunnings Bog",
             effects: { aim: 40, volume: -40 },
-            description: "proper trough, might be clogged",
+            description: "crusty old trough, probably blocked with puke",
             cloggedChance: 0.3
         },
         {
@@ -200,7 +200,7 @@ export const LOCATIONS = {
         {
             name: "Fishing Spot Rock",
             effects: { distance: 60 },
-            description: "perfect elevation",
+            description: "high ground advantage",
             tinnieHitChance: 0.1
         },
         {

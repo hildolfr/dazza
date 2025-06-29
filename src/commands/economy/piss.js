@@ -15,14 +15,14 @@ const DECLINE_PHRASES = [
 ];
 
 export default new Command({
-    name: 'piss',
-    aliases: ['pissing_contest'],
+    name: 'pissing_contest',
+    aliases: ['piss'],
     description: 'Challenge someone to a pissing contest',
-    usage: '!piss <amount> [username] OR !piss [username] for bragging rights',
+    usage: '!pissing_contest <amount> [username] OR !pissing_contest [username] for bragging rights',
     examples: [
-        '!piss 100 - Challenge Dazza for $100',
-        '!piss 50 @mate - Challenge mate to a $50 contest',
-        '!piss @rival - Bragging rights match (no money)'
+        '!pissing_contest 100 - Challenge Dazza for $100',
+        '!pissing_contest 50 mate - Challenge mate to a $50 contest',
+        '!pissing_contest rival - Bragging rights match (no money)'
     ],
     category: 'economy',
     cooldown: 3000,
@@ -37,25 +37,7 @@ export default new Command({
             };
         }
         
-        // Check if this is a response to an existing challenge
-        const lowerMsg = message.msg.toLowerCase().trim();
-        if (ACCEPT_PHRASES.includes(lowerMsg) || DECLINE_PHRASES.includes(lowerMsg)) {
-            // Check if user has a pending challenge
-            const challenge = bot.pissingContestManager.findChallengeForUser(message.username);
-            if (challenge) {
-                if (ACCEPT_PHRASES.includes(lowerMsg)) {
-                    const result = await bot.pissingContestManager.acceptChallenge(message.username);
-                    if (!result.success) {
-                        bot.sendMessage(result.message);
-                    }
-                    return { success: true };
-                } else {
-                    const result = await bot.pissingContestManager.declineChallenge(message.username);
-                    bot.sendMessage(result.message);
-                    return { success: true };
-                }
-            }
-        }
+        // Note: Challenge responses (yes/no) are now handled directly in bot.js
         
         // Parse new challenge
         if (args.length === 0) {
