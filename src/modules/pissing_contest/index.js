@@ -408,7 +408,7 @@ export class PissingContestManager {
         await this.handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore);
         
         // Check for special events
-        this.checkSpecialEvents(location, weather, challengerStats, challengedStats);
+        this.checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged);
     }
 
     // Calculate base stats from bladder
@@ -837,7 +837,7 @@ export class PissingContestManager {
     }
 
     // Check for special events
-    checkSpecialEvents(location, weather, challengerStats, challengedStats) {
+    checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged) {
         // Location events
         const locationEvents = checkLocationEvents(location);
         for (const event of locationEvents) {
@@ -856,6 +856,21 @@ export class PissingContestManager {
                     this.bot.sendMessage(event.message);
                 }, 5000);
             }
+        }
+        
+        // Condition fines
+        if (challengerCondition && challengerCondition.fine) {
+            setTimeout(async () => {
+                await this.bot.heistManager.deductMoney(challenger, challengerCondition.fine);
+                this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`);
+            }, 6000);
+        }
+        
+        if (challengedCondition && challengedCondition.fine) {
+            setTimeout(async () => {
+                await this.bot.heistManager.deductMoney(challenged, challengedCondition.fine);
+                this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`);
+            }, 6500);
         }
     }
 }
