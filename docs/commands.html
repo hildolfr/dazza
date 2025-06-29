@@ -149,10 +149,10 @@
         /* Left testicle - hangs higher */
         .left-ball {
             position: absolute;
-            left: 25px;
-            bottom: -25px;
-            width: 45px;
-            height: 55px;
+            left: 85px;
+            bottom: -60px;
+            width: 65px;
+            height: 79px;
             background: linear-gradient(145deg, #7A3F0F 0%, #A0522D 40%, #D2691E 100%);
             border-radius: 55% 45% 60% 40% / 70% 60% 40% 30%;
             border: 2px solid #FFD700;
@@ -166,8 +166,8 @@
             position: absolute;
             left: 35px;
             bottom: -45px;
-            width: 48px;
-            height: 58px;
+            width: 70px;
+            height: 84px;
             background: linear-gradient(145deg, #6B350C 0%, #8B4513 40%, #C8691E 100%);
             border-radius: 45% 55% 50% 50% / 65% 70% 30% 35%;
             border: 2px solid #FFD700;
@@ -351,6 +351,246 @@
             50% {
                 transform: rotate(-10deg) scale(1.05);
             }
+        }
+        
+        /* Pissing effect */
+        .piss-stream {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999999;
+            overflow: visible;
+        }
+        
+        .piss-arc {
+            position: absolute;
+            width: 100px;
+            height: 12px;
+            background: linear-gradient(90deg, 
+                rgba(255, 230, 0, 0.9) 0%, 
+                rgba(255, 215, 0, 0.8) 20%,
+                rgba(255, 200, 0, 0.7) 50%,
+                rgba(255, 180, 0, 0.5) 100%);
+            border-radius: 6px;
+            transform-origin: left center;
+            animation: pissing 1.2s ease-out forwards, streamWobble 0.1s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3);
+            filter: blur(1px);
+        }
+        
+        @keyframes streamWobble {
+            0%, 100% { transform: translateY(0) scaleY(1); }
+            25% { transform: translateY(-2px) scaleY(1.2); }
+            75% { transform: translateY(2px) scaleY(0.8); }
+        }
+        
+        @keyframes pissing {
+            0% {
+                transform: rotate(0deg) scaleX(0);
+                opacity: 0.9;
+            }
+            15% {
+                transform: rotate(0deg) scaleX(5);
+                opacity: 1;
+            }
+            30% {
+                transform: rotate(0deg) scaleX(15);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(0deg) scaleX(20);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes splash {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(3) translateY(50px);
+                opacity: 0;
+            }
+        }
+        
+        .piss-splash {
+            position: fixed;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255, 230, 0, 0.8) 0%, rgba(255, 215, 0, 0.6) 40%, transparent 70%);
+            border-radius: 50%;
+            animation: splash 0.8s ease-out forwards;
+            z-index: 999999;
+        }
+        
+        .ricochet-drop {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, rgba(255, 230, 0, 0.9) 0%, rgba(255, 200, 0, 0.7) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+            z-index: 999999;
+        }
+        
+        .ballistic-tracer {
+            position: fixed;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 240, 0, 0.2) 20%,
+                rgba(255, 230, 0, 0.8) 50%,
+                rgba(255, 215, 0, 1) 90%,
+                rgba(255, 255, 255, 1) 100%);
+            border-radius: 2px;
+            transform-origin: left center;
+            z-index: 999998;
+            filter: blur(0.5px);
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.9);
+        }
+        
+        @keyframes tracer1 {
+            0% {
+                transform: rotate(160deg) scaleX(0);
+                opacity: 1;
+            }
+            50% {
+                transform: rotate(160deg) scaleX(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(160deg) scaleX(0) translateX(-300px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes tracer2 {
+            0% {
+                transform: rotate(180deg) scaleX(0);
+                opacity: 1;
+            }
+            50% {
+                transform: rotate(180deg) scaleX(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(180deg) scaleX(0) translateX(-400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes tracer3 {
+            0% {
+                transform: rotate(200deg) scaleX(0);
+                opacity: 1;
+            }
+            50% {
+                transform: rotate(200deg) scaleX(1);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(200deg) scaleX(0) translateX(-350px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ricochet1 {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-300px, 150px) scale(0.3);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ricochet2 {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-250px, -100px) scale(0.4);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ricochet3 {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-400px, 50px) scale(0.2);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ricochet4 {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-150px, -150px) scale(0.5);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ricochet5 {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-350px, 200px) scale(0.3);
+                opacity: 0;
+            }
+        }
+        
+        .piss-drops {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            animation: drops 2s ease-out forwards;
+        }
+        
+        @keyframes drops {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(120px, 150px);
+                opacity: 0;
+            }
+        }
+        
+        .piss-drops:nth-child(2) {
+            animation-delay: 0.2s;
+            width: 3px;
+            height: 3px;
+        }
+        
+        .piss-drops:nth-child(3) {
+            animation-delay: 0.4s;
+            transform: translateY(-5px);
+        }
+        
+        .piss-drops:nth-child(4) {
+            animation-delay: 0.6s;
+            width: 5px;
+            height: 5px;
+            transform: translateY(5px);
         }
 
         /* Main Container */
@@ -887,7 +1127,7 @@
                     <div class="dicktionary-wrapper">
                         <span class="left-ball"></span>
                         <span class="right-ball"></span>
-                        <button class="dicktionary-btn" onclick="window.open('dicktionary/index.html', '_blank')">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
+                        <button class="dicktionary-btn" onclick="ejaculateAndOpen(event)">🍆💦 Dick-tionary (Tutorial) 💦🍆</button>
                         <span class="dick-tip">
                             <span class="urethra"></span>
                         </span>
@@ -2017,5 +2257,159 @@
         }
     </script>
 
+    <script>
+        function ejaculateAndOpen(event) {
+            event.preventDefault();
+            console.log('Piss effect triggered!');
+            
+            // Get button and tip positions
+            const wrapper = event.target.closest('.dicktionary-wrapper');
+            const tip = wrapper.querySelector('.dick-tip');
+            const tipRect = tip.getBoundingClientRect();
+            
+            console.log('Tip position:', tipRect);
+            
+            // Create piss stream container
+            const pissStream = document.createElement('div');
+            pissStream.className = 'piss-stream';
+            pissStream.style.left = (tipRect.right - 10) + 'px';
+            pissStream.style.top = (tipRect.top + tipRect.height/2 - 3) + 'px';
+            
+            // Create main arc
+            const arc = document.createElement('div');
+            arc.className = 'piss-arc';
+            // Calculate width to reach screen edge
+            const screenWidth = window.innerWidth;
+            const startX = tipRect.right - 10;
+            const streamWidth = screenWidth - startX + 50; // Extra to ensure it reaches
+            arc.style.width = streamWidth + 'px';
+            pissStream.appendChild(arc);
+            
+            // Create multiple stream layers for chaos
+            for (let i = 0; i < 3; i++) {
+                const subStream = document.createElement('div');
+                subStream.className = 'piss-arc';
+                subStream.style.width = streamWidth + 'px';
+                subStream.style.height = (8 + Math.random() * 6) + 'px';
+                subStream.style.top = (Math.random() * 4 - 2) + 'px';
+                subStream.style.opacity = 0.6;
+                subStream.style.animationDelay = (i * 0.05) + 's';
+                pissStream.appendChild(subStream);
+            }
+            
+            // Create chaotic drops
+            for (let i = 0; i < 8; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'piss-drops';
+                drop.style.left = Math.random() * 50 + 'px';
+                drop.style.top = (Math.random() - 0.5) * 20 + 'px';
+                drop.style.width = (3 + Math.random() * 4) + 'px';
+                drop.style.height = drop.style.width;
+                pissStream.appendChild(drop);
+            }
+            
+            document.body.appendChild(pissStream);
+            
+            // Add shaking animation during pissing
+            wrapper.style.animation = 'pissingShake 0.1s ease-in-out 25';
+            
+            // Create splash effect much sooner - this guy is going HARD
+            setTimeout(() => {
+                const splash = document.createElement('div');
+                splash.className = 'piss-splash';
+                splash.style.top = (tipRect.top + tipRect.height/2 - 50) + 'px';
+                document.body.appendChild(splash);
+                
+                // Create ricochet drops
+                const windowWidth = window.innerWidth;
+                const splashY = tipRect.top + tipRect.height/2;
+                
+                // Create ballistic tracers first - these are the high-speed ricochets
+                for (let i = 0; i < 5; i++) {
+                    const tracer = document.createElement('div');
+                    tracer.className = 'ballistic-tracer';
+                    tracer.style.right = '10px';
+                    tracer.style.top = (splashY + (Math.random() - 0.5) * 30) + 'px';
+                    tracer.style.animation = `tracer${(i % 3) + 1} 0.6s ease-out forwards`;
+                    tracer.style.animationDelay = (i * 0.05) + 's';
+                    document.body.appendChild(tracer);
+                    
+                    // Remove tracer after animation
+                    setTimeout(() => tracer.remove(), 800);
+                }
+                
+                // Create multiple ricochet drops
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => {
+                        const drop = document.createElement('div');
+                        drop.className = 'ricochet-drop';
+                        drop.style.right = '10px';
+                        drop.style.top = (splashY + (Math.random() - 0.5) * 50) + 'px';
+                        drop.style.width = (8 + Math.random() * 8) + 'px';
+                        drop.style.height = drop.style.width;
+                        drop.style.animation = `ricochet${(i % 5) + 1} ${0.8 + Math.random() * 0.4}s ease-out forwards`;
+                        document.body.appendChild(drop);
+                        
+                        // Create mini explosion at impact point
+                        if (i < 3) {
+                            const explosion = document.createElement('div');
+                            explosion.className = 'piss-splash';
+                            explosion.style.right = '0px';
+                            explosion.style.top = (splashY + (Math.random() - 0.5) * 40) + 'px';
+                            explosion.style.width = '60px';
+                            explosion.style.height = '60px';
+                            explosion.style.animationDuration = '0.4s';
+                            document.body.appendChild(explosion);
+                            setTimeout(() => explosion.remove(), 400);
+                        }
+                        
+                        // Remove drop after animation
+                        setTimeout(() => drop.remove(), 1200);
+                    }, i * 30);
+                }
+                
+                // Create secondary splashes where drops land
+                setTimeout(() => {
+                    for (let i = 0; i < 3; i++) {
+                        const secondarySplash = document.createElement('div');
+                        secondarySplash.className = 'ricochet-drop';
+                        secondarySplash.style.right = (200 + Math.random() * 300) + 'px';
+                        secondarySplash.style.top = (splashY + 100 + Math.random() * 100) + 'px';
+                        secondarySplash.style.width = '40px';
+                        secondarySplash.style.height = '40px';
+                        secondarySplash.style.animation = 'splash 0.6s ease-out forwards';
+                        document.body.appendChild(secondarySplash);
+                        
+                        setTimeout(() => secondarySplash.remove(), 600);
+                    }
+                }, 600);
+                
+                // Remove main splash after animation
+                setTimeout(() => splash.remove(), 800);
+            }, 400);  // EXTREME impact - almost instant!
+            
+            // Open page after dramatic piss
+            setTimeout(() => {
+                window.open('dicktionary/index.html', '_blank');
+                
+                // Clean up
+                setTimeout(() => {
+                    pissStream.remove();
+                    wrapper.style.animation = '';
+                }, 500);
+            }, 2500);
+        }
+        
+        // Add pissing shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pissingShake {
+                0%, 100% { transform: translateX(0) rotate(-5deg); }
+                25% { transform: translateX(-2px) rotate(-5deg); }
+                75% { transform: translateX(2px) rotate(-5deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
