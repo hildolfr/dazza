@@ -32,7 +32,7 @@ export default new Command({
 
             // Otherwise it's a new flip
             if (args.length === 0) {
-                const msg = 'gotta bet somethin mate - !coin_flip <amount> [@user]';
+                const msg = 'gotta bet somethin mate - !coin_flip <amount> [username]';
                 bot.sendMessage(msg, message.isPM ? message.username : null);
                 return { success: false };
             }
