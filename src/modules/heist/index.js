@@ -1,6 +1,7 @@
 import { createLogger } from '../../utils/logger.js';
 import EventEmitter from 'events';
 import { contentLoader } from './contentLoader.js';
+import { normalizeUsernameForDb, getCanonicalUsername } from '../../utils/usernameNormalizer.js';
 
 /**
  * Self-contained heist economy system
@@ -634,9 +635,10 @@ export class HeistManager extends EventEmitter {
     }
 
     async recordParticipant(heistId, username, vote) {
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         await this.db.run(
             'INSERT OR REPLACE INTO heist_participants (heist_id, username, vote, participated_at) VALUES (?, ?, ?, ?)',
-            [heistId, username, vote, Date.now()]
+            [heistId, canonicalUsername, vote, Date.now()]
         );
     }
 
@@ -648,15 +650,18 @@ export class HeistManager extends EventEmitter {
                 return { username, balance: 0, trust: 0, total_earned: 0, total_lost: 0 };
             }
             
+            // Normalize username to canonical form
+            const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
+            
             // Use INSERT OR IGNORE to handle race conditions
             await this.db.run(
                 'INSERT OR IGNORE INTO user_economy (username, balance, trust, created_at, updated_at) VALUES (?, 0, 0, ?, ?)',
-                [username, Date.now(), Date.now()]
+                [canonicalUsername, Date.now(), Date.now()]
             );
             
             // Now safely get the user
-            const user = await this.db.get('SELECT * FROM user_economy WHERE username = ?', [username]);
-            return user || { username, balance: 0, trust: 0, total_earned: 0, total_lost: 0 };
+            const user = await this.db.get('SELECT * FROM user_economy WHERE LOWER(username) = LOWER(?)', [canonicalUsername]);
+            return user || { username: canonicalUsername, balance: 0, trust: 0, total_earned: 0, total_lost: 0 };
         } catch (error) {
             this.logger.error('Failed to get/create user:', error);
             // Return a default user object to prevent crashes
@@ -665,6 +670,7 @@ export class HeistManager extends EventEmitter {
     }
 
     async updateUserEconomy(username, amount, trustChange) {
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         await this.db.run(`
             UPDATE user_economy 
             SET balance = balance + ?, 
@@ -672,16 +678,17 @@ export class HeistManager extends EventEmitter {
                 total_earned = total_earned + ?,
                 heists_participated = heists_participated + 1,
                 updated_at = ?
-            WHERE username = ?
-        `, [amount, trustChange, Math.max(0, amount), Date.now(), username]);
+            WHERE LOWER(username) = LOWER(?)
+        `, [amount, trustChange, Math.max(0, amount), Date.now(), canonicalUsername]);
     }
 
     async recordTransaction(username, amount, trustChange, type, heistId) {
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         await this.db.run(`
             INSERT INTO economy_transactions 
             (username, amount, trust_change, transaction_type, heist_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
-        `, [username, amount, trustChange, type, heistId, Date.now()]);
+        `, [canonicalUsername, amount, trustChange, type, heistId, Date.now()]);
     }
 
     async getAvailableCrimes() {
@@ -690,7 +697,8 @@ export class HeistManager extends EventEmitter {
     }
 
     async getUserBalance(username) {
-        const user = await this.getOrCreateUser(username);
+        const canonicalUsername = await getCanonicalUsername(this.bot, username);
+        const user = await this.getOrCreateUser(canonicalUsername);
         return {
             balance: user.balance,
             trust: user.trust,

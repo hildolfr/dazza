@@ -1,5 +1,6 @@
 import { createLogger } from '../../utils/logger.js';
 import EventEmitter from 'events';
+import { normalizeUsernameForDb } from '../../utils/usernameNormalizer.js';
 
 export class VideoPayoutManager extends EventEmitter {
     constructor(db, bot) {
@@ -12,6 +13,12 @@ export class VideoPayoutManager extends EventEmitter {
         this.currentSession = null;
         this.currentWatchers = new Map(); // username -> join_time
         this.firstMediaChangeIgnored = false;
+        
+        // Reconciliation tracking
+        this.reconciliationTimeout = null;
+        this.reconciliationAttempts = 0;
+        this.maxReconciliationAttempts = 3;
+        this.lastUserlistUpdate = Date.now();
         
         // Configuration
         this.config = {
@@ -133,22 +140,26 @@ export class VideoPayoutManager extends EventEmitter {
             mediaInfo: mediaInfo
         };
 
-        // Track all current users
+        // Clear existing watchers for new session
         this.currentWatchers.clear();
-        const userlist = this.bot.getUserlist();
         
-        for (const [username, userInfo] of userlist) {
-            if (!this.isSystemUser(username)) {
-                this.currentWatchers.set(username, startTime);
-                await this.addWatcher(username, startTime);
-            }
-        }
+        // Initial reconciliation (might be incomplete due to race condition)
+        await this.reconcileWatchers('initial');
+        
+        // Schedule additional reconciliation attempts
+        this.scheduleReconciliation();
 
-        this.logger.info(`Started new video session: ${mediaInfo.title || 'Untitled'} with ${this.currentWatchers.size} watchers`);
+        this.logger.info(`Started new video session: ${mediaInfo.title || 'Untitled'} with ${this.currentWatchers.size} watchers (reconciliation pending)`);
     }
 
     async endSession() {
         if (!this.currentSession) return;
+
+        // Clear any pending reconciliation
+        if (this.reconciliationTimeout) {
+            clearTimeout(this.reconciliationTimeout);
+            this.reconciliationTimeout = null;
+        }
 
         const endTime = Date.now();
         const duration = endTime - this.currentSession.startTime;
@@ -185,9 +196,10 @@ export class VideoPayoutManager extends EventEmitter {
     async addWatcher(username, joinTime) {
         if (!this.currentSession || this.isSystemUser(username)) return;
 
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         await this.db.run(
             'INSERT INTO video_watchers (session_id, username, join_time) VALUES (?, ?, ?)',
-            [this.currentSession.id, username, joinTime]
+            [this.currentSession.id, canonicalUsername, joinTime]
         );
 
         this.currentWatchers.set(username, joinTime);
@@ -197,10 +209,11 @@ export class VideoPayoutManager extends EventEmitter {
         if (!this.currentSession || !this.currentWatchers.has(username)) return;
 
         const leaveTime = Date.now();
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         
         await this.db.run(
-            'UPDATE video_watchers SET leave_time = ? WHERE session_id = ? AND username = ? AND leave_time IS NULL',
-            [leaveTime, this.currentSession.id, username]
+            'UPDATE video_watchers SET leave_time = ? WHERE session_id = ? AND LOWER(username) = LOWER(?) AND leave_time IS NULL',
+            [leaveTime, this.currentSession.id, canonicalUsername]
         );
 
         this.currentWatchers.delete(username);
@@ -211,11 +224,13 @@ export class VideoPayoutManager extends EventEmitter {
         const isLucky = Math.random() < this.config.LUCKY_CHANCE;
         const rewardAmount = isLucky ? this.config.LUCKY_REWARD : this.config.NORMAL_REWARD;
 
+        const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
+        
         // Ensure user exists in economy system
-        await this.bot.heistManager.getOrCreateUser(username);
+        await this.bot.heistManager.getOrCreateUser(canonicalUsername);
         
         // Update user balance (no trust change for video watching)
-        await this.bot.heistManager.updateUserEconomy(username, rewardAmount, 0);
+        await this.bot.heistManager.updateUserEconomy(canonicalUsername, rewardAmount, 0);
 
         // Mark as rewarded
         await this.db.run(
@@ -230,20 +245,21 @@ export class VideoPayoutManager extends EventEmitter {
     async handleUserJoin(username) {
         if (!this.currentSession || this.isSystemUser(username)) return;
 
+        // Just add the watcher with current time
+        // The reconciliation process will handle race conditions
         const joinTime = Date.now();
-        const duration = joinTime - this.currentSession.startTime;
-        const halfwayMark = this.currentSession.startTime + (duration / 2);
-
-        // Only track if joining before current halfway mark
-        if (joinTime <= halfwayMark) {
+        if (!this.currentWatchers.has(username)) {
+            this.currentWatchers.set(username, joinTime);
             await this.addWatcher(username, joinTime);
             this.logger.debug(`${username} joined video session`);
         }
     }
 
     async handleUserLeave(username) {
-        await this.removeWatcher(username);
-        this.logger.debug(`${username} left video session`);
+        if (this.currentWatchers.has(username)) {
+            await this.removeWatcher(username);
+            this.logger.debug(`${username} left video session`);
+        }
     }
 
     // Get user's video watching stats
@@ -258,6 +274,86 @@ export class VideoPayoutManager extends EventEmitter {
         `, [this.config.LUCKY_REWARD, username]);
 
         return stats;
+    }
+    
+    async reconcileWatchers(source = 'reconciliation') {
+        if (!this.currentSession) return;
+
+        const userlist = this.bot.getUserlist();
+        const currentUsers = new Set();
+        let addedCount = 0;
+        let removedCount = 0;
+        
+        // Get current users from userlist
+        for (const [username, userInfo] of userlist) {
+            if (!this.isSystemUser(username)) {
+                currentUsers.add(username);
+            }
+        }
+
+        // Add new watchers who aren't tracked yet
+        for (const username of currentUsers) {
+            if (!this.currentWatchers.has(username)) {
+                // Use session start time for reconciled users to ensure they're eligible
+                // This handles the race condition where users were present but not tracked
+                const joinTime = this.currentSession.startTime;
+                this.currentWatchers.set(username, joinTime);
+                await this.addWatcher(username, joinTime);
+                addedCount++;
+                this.logger.debug(`Added watcher during ${source}: ${username}`);
+            }
+        }
+
+        // Remove watchers who left
+        for (const [username, joinTime] of this.currentWatchers) {
+            if (!currentUsers.has(username)) {
+                await this.removeWatcher(username);
+                removedCount++;
+                this.logger.debug(`Removed watcher during ${source}: ${username}`);
+            }
+        }
+
+        if (addedCount > 0 || removedCount > 0) {
+            this.logger.info(`Reconciliation (${source}): ${this.currentWatchers.size} watchers (+${addedCount}/-${removedCount})`);
+        }
+    }
+    
+    scheduleReconciliation() {
+        this.reconciliationAttempts = 0;
+        
+        const attemptReconciliation = async () => {
+            if (!this.currentSession || this.reconciliationAttempts >= this.maxReconciliationAttempts) {
+                return;
+            }
+
+            this.reconciliationAttempts++;
+            await this.reconcileWatchers(`attempt ${this.reconciliationAttempts}`);
+
+            // Schedule next attempt with exponential backoff
+            if (this.reconciliationAttempts < this.maxReconciliationAttempts) {
+                const delay = Math.pow(2, this.reconciliationAttempts) * 1000; // 2s, 4s, 8s
+                this.reconciliationTimeout = setTimeout(attemptReconciliation, delay);
+            }
+        };
+
+        // First reconciliation after 2 seconds
+        this.reconciliationTimeout = setTimeout(attemptReconciliation, 2000);
+    }
+    
+    async handleUserlistUpdate() {
+        this.lastUserlistUpdate = Date.now();
+        
+        // Reconcile whenever we get a userlist update
+        if (this.currentSession) {
+            await this.reconcileWatchers('userlist_update');
+            
+            // Cancel remaining scheduled reconciliations if we have watchers
+            if (this.currentWatchers.size > 0 && this.reconciliationTimeout) {
+                clearTimeout(this.reconciliationTimeout);
+                this.reconciliationTimeout = null;
+                this.logger.debug('Cancelled remaining reconciliation attempts - userlist updated');
+            }
+        }
     }
     
     // Clean shutdown - preserve state but don't reward yet

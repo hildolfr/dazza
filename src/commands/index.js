@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function loadCommands() {
     const registry = new CommandRegistry();
-    const categories = ['basic', 'fun', 'utility', 'stats', 'communication', 'economy'];
+    const categories = ['basic', 'fun', 'utility', 'stats', 'communication', 'economy', 'admin'];
     
     for (const category of categories) {
         const categoryPath = path.join(__dirname, category);

@@ -409,7 +409,7 @@ export default new Command({
                             }
                             
                             // Dazza gets his cut
-                            await bot.heistManager.updateDazzaBalance(dazzaShare);
+                            await bot.heistManager.updateUserEconomy('dazza', dazzaShare, 0);
                             
                             // Announce the sharing
                             const shareMessages = [

@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { normalizeUsernameForDb } from '../../utils/usernameNormalizer.js';
 
 export default new Command({
     name: 'bong',
@@ -15,8 +16,9 @@ export default new Command({
         let newCount = 0;
         
         try {
-            // Log user bong
-            await bot.db.logUserBong(message.username);
+            // Log user bong with normalized username
+            const canonicalUsername = await normalizeUsernameForDb(bot, message.username);
+            await bot.db.logUserBong(canonicalUsername);
             
             // Increment daily counter
             newCount = await bot.db.incrementBongCount(today);

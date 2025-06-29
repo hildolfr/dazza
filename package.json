@@ -8,7 +8,9 @@
     "start": "./start-bot.sh",
     "start:simple": "./start.sh",
     "start:direct": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "fix-duplicates": "node src/scripts/fixDuplicateUsers.js",
+    "normalize-usernames": "node src/scripts/normalizeUsernames.js"
   },
   "keywords": [
     "cytube",

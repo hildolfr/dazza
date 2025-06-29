@@ -15,6 +15,7 @@ import Database from '../services/database.js';
 import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
 import { VideoPayoutManager } from '../modules/video_payout/index.js';
+import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -303,8 +304,9 @@ export class CyTubeBot extends EventEmitter {
         }
 
         try {
-            // Log message to database and get the message ID
-            const messageId = await this.db.logMessage(data.username, data.msg);
+            // Log message to database with normalized username and get the message ID
+            const canonicalUsername = await normalizeUsernameForDb(this, data.username);
+            const messageId = await this.db.logMessage(canonicalUsername, data.msg);
 
             // Detect and log URLs in the message
             const urlDetection = detectUrls(data.msg);
@@ -449,6 +451,13 @@ export class CyTubeBot extends EventEmitter {
         
         this.logger.info(`Loaded ${users.length} users in channel (${afkCount} AFK)`);
         
+        // Notify video payout manager of userlist update
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserlistUpdate().catch(err =>
+                this.logger.error('Failed to handle userlist update for video payout', { error: err.message })
+            );
+        }
+        
         // Debug: Log complete user data for first few users
         if (users.length > 0) {
             this.logger.debug('First user full data:', JSON.stringify(users[0]));
@@ -490,11 +499,11 @@ export class CyTubeBot extends EventEmitter {
             // Random typing delay between 1-3 seconds
             const typingDelay = 1000 + Math.random() * 2000;
             
-            this.pendingGreeting = setTimeout(() => {
+            this.pendingGreeting = setTimeout(async () => {
                 // Double-check we haven't been cancelled
                 if (!this.pendingGreeting) return;
                 
-                const greeting = this.getRandomGreeting(user.name);
+                const greeting = await this.getRandomGreeting(user.name);
                 this.sendMessage(greeting);
                 
                 // Update greeting tracking
@@ -1005,7 +1014,50 @@ export class CyTubeBot extends EventEmitter {
         return Math.random() < 0.7;
     }
     
-    getRandomGreeting(username) {
+    async getRandomGreeting(username) {
+        // Check if this is a first-time user
+        try {
+            const userStats = await this.db.get(
+                'SELECT first_seen FROM user_stats WHERE username = ?',
+                [username]
+            );
+            
+            // If no stats exist, this is a first-time user
+            if (!userStats) {
+                const firstTimeGreetings = [
+                    `oi ${username}, I haven't seen you around here before!`,
+                    `who the fuck is ${username}? never seen ya before mate`,
+                    `${username}? new face! welcome to the shitshow`,
+                    `fuckin hell, fresh meat! welcome ${username}`,
+                    `${username}! first time? this place'll ruin ya`,
+                    `never seen ${username} before, you a cop?`,
+                    `${username}'s new! someone get 'em a beer`,
+                    `oi everyone, ${username}'s a virgin! first timer!`,
+                    `${username}? don't recognize ya mate, welcome aboard`,
+                    `new cunt alert! ${username}'s here for the first time`,
+                    `${username}! fresh face, prepare to be corrupted`,
+                    `who invited ${username}? kidding, welcome newbie`,
+                    `${username}'s cherry's about to be popped, first timer!`,
+                    `strewth, ${username}! never seen ya round these parts`,
+                    `${username}? you lost mate? welcome anyway`,
+                    `fresh blood! ${username}'s new to this circus`,
+                    `${username}! hope you're ready for this shitshow`,
+                    `never seen ${username} before, must be fresh off the boat`,
+                    `oi ${username}, first time? you're in for a treat`,
+                    `${username}'s new! quick, act normal everyone`,
+                    `welcome ${username}! we don't bite... much`,
+                    `${username}? new face! this your first rodeo?`,
+                    `fuckin oath, ${username}'s a first timer!`
+                ];
+                
+                return firstTimeGreetings[Math.floor(Math.random() * firstTimeGreetings.length)];
+            }
+        } catch (err) {
+            this.logger.error('Error checking if user is first-time:', err);
+            // Fall through to regular greetings on error
+        }
+        
+        // Regular greetings for returning users
         const greetings = [
             `oi ${username}, how's it goin mate`,
             `${username}! good to see ya cobber`,
@@ -1083,6 +1135,7 @@ export class CyTubeBot extends EventEmitter {
             /@(dazza|daz)\b/i,                                            // @ mention style
             /\b(dazza|daz)\s*\?/i,                                        // Question to Dazza
             /\b(dazza|daz)\s*!+$/i,                                       // Exclamation at end
+            /\b(dazza|daz)$/i,                                            // Dazza as last word
         ];
         
         // Check if any pattern matches

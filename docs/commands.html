@@ -201,10 +201,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .command-header {
+        .command-badges {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .command-header {
             margin-bottom: 0.5rem;
         }
 
@@ -346,7 +350,7 @@
             <a href="#fun" class="nav-button">Fun</a>
             <a href="#stats" class="nav-button">Stats</a>
             <a href="#utility" class="nav-button">Utility</a>
-            <a href="#admin" class="nav-button" style="background: var(--admin-red);">Admin/Dev</a>
+            <a href="#admin" class="nav-button" style="background: var(--admin-red);">Admin</a>
         </div>
     </nav>
 
@@ -394,9 +398,11 @@
             <h2><span class="category-icon">💬</span> Communication Commands</h2>
             <div class="commands-grid">
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10min cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!quote</span>
-                        <span class="tag tag-cooldown">10min cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: q</p>
                     <p class="command-description">Get a random quote from a specific user</p>
@@ -405,9 +411,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10min cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!rq</span>
-                        <span class="tag tag-cooldown">10min cooldown</span>
                     </div>
                     <p class="command-description">Get a random quote from anyone in chat</p>
                     <div class="command-usage">!rq</div>
@@ -450,6 +458,16 @@
 
                 <div class="command">
                     <div class="command-header">
+                        <span class="command-name">!give</span>
+                    </div>
+                    <p class="command-aliases">Aliases: transfer, send, pay</p>
+                    <p class="command-description">Give money to another user</p>
+                    <div class="command-usage">!give &lt;username&gt; &lt;amount&gt;</div>
+                    <p class="command-example">Examples: !give Bob 10, !give Shazza 50</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-header">
                         <span class="command-name">!pokies</span>
                     </div>
                     <p class="command-aliases">Aliases: slots, slot, pokie</p>
@@ -478,9 +496,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">2hr cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!tab</span>
-                        <span class="tag tag-cooldown">2hr cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: bet, punt, racing</p>
                     <p class="command-description">Bet on the horses or dogs at the TAB - Race via PM</p>
@@ -489,9 +509,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">24hr cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!centrelink</span>
-                        <span class="tag tag-cooldown">24hr cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: dole, welfare, centerlink, payments</p>
                     <p class="command-description">Try to collect your government payment (50% chance) - Results via PM</p>
@@ -500,9 +522,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">2hr cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!fish</span>
-                        <span class="tag tag-cooldown">2hr cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: fishing, cast</p>
                     <p class="command-description">Go fishing and see what you catch - Results via PM</p>
@@ -518,9 +542,11 @@
             <h2><span class="category-icon">🎉</span> Fun Commands</h2>
             <div class="commands-grid">
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">5min cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!bong</span>
-                        <span class="tag tag-cooldown">5min cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: rip, cone, billy</p>
                     <p class="command-description">Rip a fat cone with Dazza <span class="emoji-bounce">🚬</span></p>
@@ -537,9 +563,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!insult</span>
-                        <span class="tag tag-cooldown">10s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: roast, burn</p>
                     <p class="command-description">Get a classic Aussie roast</p>
@@ -547,9 +575,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!compliment</span>
-                        <span class="tag tag-cooldown">10s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: praise, nice</p>
                     <p class="command-description">Get an Aussie-style compliment</p>
@@ -604,9 +634,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">30s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!fact</span>
-                        <span class="tag tag-cooldown">30s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: randomfact, didyouknow</p>
                     <p class="command-description">Get a random Aussie fact</p>
@@ -614,9 +646,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">30s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!mood</span>
-                        <span class="tag tag-cooldown">30s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: vibe, feeling</p>
                     <p class="command-description">Check Dazza's current mood</p>
@@ -648,9 +682,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!top</span>
-                        <span class="tag tag-cooldown">10s cooldown</span>
                     </div>
                     <p class="command-description">Show leaderboards</p>
                     <div class="command-usage">!top [talkers|bongs|quoted]</div>
@@ -658,9 +694,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!channelstats</span>
-                        <span class="tag tag-cooldown">10s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: channelstat, chanstats</p>
                     <p class="command-description">View channel statistics</p>
@@ -713,9 +751,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">10s cooldown</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!weather</span>
-                        <span class="tag tag-cooldown">10s cooldown</span>
                     </div>
                     <p class="command-aliases">Aliases: w</p>
                     <p class="command-description">Check the weather</p>
@@ -733,10 +773,12 @@
                 </div>
 
                 <div class="command">
-                    <div class="command-header">
-                        <span class="command-name">!summary</span>
+                    <div class="command-badges">
                         <span class="tag tag-cooldown">30s cooldown</span>
                         <span class="tag tag-pm">PM response</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!summary</span>
                     </div>
                     <p class="command-description">Get a summary of recent chat via PM</p>
                     <div class="command-usage">!summary &lt;hours&gt;</div>
@@ -751,9 +793,11 @@
             <p style="margin-bottom: 1.5rem; color: var(--admin-red);"><strong>⚠️ These commands are restricted to authorized administrators only</strong></p>
             <div class="commands-grid">
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-admin">ADMIN</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!dazza</span>
-                        <span class="tag tag-admin">ADMIN</span>
                     </div>
                     <p class="command-aliases">Aliases: dazzamoney, dazzabalance</p>
                     <p class="command-description">Check Dazza's criminal earnings</p>
@@ -761,10 +805,12 @@
                 </div>
 
                 <div class="command">
-                    <div class="command-header">
-                        <span class="command-name">!forceheist</span>
+                    <div class="command-badges">
                         <span class="tag tag-admin">ADMIN</span>
                         <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!forceheist</span>
                     </div>
                     <p class="command-aliases">Aliases: triggerheist, testheist</p>
                     <p class="command-description">Force trigger a heist (testing)</p>
@@ -772,10 +818,12 @@
                 </div>
 
                 <div class="command">
-                    <div class="command-header">
-                        <span class="command-name">!heistadvance</span>
+                    <div class="command-badges">
                         <span class="tag tag-admin">ADMIN</span>
                         <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!heistadvance</span>
                     </div>
                     <p class="command-aliases">Aliases: heistskip, heistnext</p>
                     <p class="command-description">Force advance heist phase</p>
@@ -783,10 +831,12 @@
                 </div>
 
                 <div class="command">
-                    <div class="command-header">
-                        <span class="command-name">!heiststatus</span>
+                    <div class="command-badges">
                         <span class="tag tag-admin">ADMIN</span>
                         <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!heiststatus</span>
                     </div>
                     <p class="command-aliases">Aliases: heistinfo, heiststate</p>
                     <p class="command-description">View current heist state and timers</p>
@@ -794,10 +844,12 @@
                 </div>
 
                 <div class="command">
-                    <div class="command-header">
-                        <span class="command-name">!nextheist</span>
+                    <div class="command-badges">
                         <span class="tag tag-admin">ADMIN</span>
                         <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!nextheist</span>
                     </div>
                     <p class="command-aliases">Aliases: heisttime, heisttimer</p>
                     <p class="command-description">Check next heist schedule</p>
@@ -805,9 +857,11 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-admin">ADMIN</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!ping</span>
-                        <span class="tag tag-admin">ADMIN</span>
                     </div>
                     <p class="command-description">Check if the bot is responsive</p>
                     <div class="command-usage">!ping</div>
@@ -815,12 +869,27 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-admin">ADMIN</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!uptime</span>
-                        <span class="tag tag-admin">ADMIN</span>
                     </div>
                     <p class="command-description">Show how long the bot has been running</p>
                     <div class="command-usage">!uptime</div>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM only</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!award</span>
+                    </div>
+                    <p class="command-description">Award money to users for development/testing purposes</p>
+                    <div class="command-usage">!award &lt;username&gt; &lt;amount&gt; [reason]</div>
+                    <p class="command-example">Examples: !award Bob 100, !award dazza 50 testing</p>
                 </div>
             </div>
         </section>
