@@ -25,12 +25,7 @@ export default new Command({
             // Get current playlist from bot
             const playlist = bot.playlist || [];
             
-            // Always log playlist status
-            bot.logger.info('When command playlist check', { 
-                playlistLength: playlist.length,
-                hasPlaylist: !!bot.playlist,
-                currentMedia: bot.currentMedia ? bot.currentMedia.title : 'none'
-            });
+            // Debug logging removed
             
             if (playlist.length === 0) {
                 bot.sendMessage('playlist is empty mate, CyTube might not be sending playlist data');
@@ -68,15 +63,6 @@ export default new Command({
             let foundVideo = null;
             let foundIndex = -1;
             
-            // Debug first few videos
-            if (playlist.length > 0) {
-                bot.logger.info('Searching playlist', {
-                    searchTerm,
-                    currentIndex,
-                    totalVideos: playlist.length,
-                    startingFrom: currentIndex + 1
-                });
-            }
             
             // Start searching from the next video after current
             for (let i = currentIndex + 1; i < playlist.length; i++) {
@@ -85,10 +71,6 @@ export default new Command({
                 const title = ((video.media && video.media.title) || video.title || '').toLowerCase();
                 const queueby = (video.queueby || '').toLowerCase();
                 
-                // Log first few for debugging
-                if (i < 3) {
-                    bot.logger.debug(`Video ${i}: "${title}" by ${queueby}`);
-                }
                 
                 // Check if search term matches title or username
                 if (title.includes(searchTerm) || queueby.includes(searchTerm)) {

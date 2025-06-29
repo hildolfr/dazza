@@ -14,6 +14,7 @@ export default new Command({
         // Update drink counter first
         const today = new Date().toDateString();
         let newCount = 0;
+        let bladderAmount = 0;
         
         try {
             // Log user drink with normalized username
@@ -22,6 +23,11 @@ export default new Command({
             
             // Increment daily counter
             newCount = await bot.db.incrementDrinkCount(today);
+            
+            // Update bladder for pissing contest
+            await bot.db.updateBladder(canonicalUsername, 1);
+            const bladderState = await bot.db.getBladderState(canonicalUsername);
+            bladderAmount = bladderState.current_amount;
         } catch (error) {
             console.error('Failed to update drink counter:', error);
         }
@@ -193,6 +199,25 @@ export default new Command({
             setTimeout(() => {
                 bot.sendMessage(`ONE HUNDRED FUCKIN' DRINKS! CALL THE AMBOS, I'VE ACHIEVED IMMORTALITY! 🚑💀`);
             }, 2000);
+        }
+        
+        // Add bladder fullness messages
+        if (bladderAmount >= 5) {
+            setTimeout(() => {
+                let bladderMsg;
+                if (bladderAmount >= 31) {
+                    bladderMsg = "one sneeze away from pissin yaself mate";
+                } else if (bladderAmount >= 21) {
+                    bladderMsg = "bladder's fuller than a tick";
+                } else if (bladderAmount >= 16) {
+                    bladderMsg = "bout to piss meself if ya don't drain the snake soon";
+                } else if (bladderAmount >= 11) {
+                    bladderMsg = "gonna need to drain the snake soon";
+                } else {
+                    bladderMsg = "bladder's getting full mate";
+                }
+                bot.sendMessage(bladderMsg);
+            }, 3500);
         }
         
         return { success: true };
