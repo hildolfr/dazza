@@ -3,17 +3,17 @@ import { Command } from '../base.js';
 export default new Command({
     name: 'top',
     description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles]',
+    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]',
     category: 'stats',
-    cooldown: 10000,
+    cooldown: 2000,
     
     async handler(bot, message, args) {
         const category = args[0]?.toLowerCase();
         
         try {
-            // If no category specified, ask for one
+            // If no category specified, list options
             if (!category) {
-                bot.sendMessage('which leaderboard ya want mate? !top [talkers|bongs|quoted|gamblers|fishing|bottles]');
+                bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]');
                 return { success: true };
             }
             
@@ -60,8 +60,23 @@ export default new Command({
                     title = '♻️ ECO WARRIORS AT THE DEPOT ♻️\nTop bottle collectors (professional piss-heads):';
                     break;
                     
+                case 'cashie':
+                case 'cashies':
+                case 'cash':
+                    results = await bot.db.getTopCashieWorkers(5);
+                    title = '💪 HARDEST WORKING CASH-IN-HAND CREW 💪\nThese legends know how to hustle:';
+                    break;
+                    
+                case 'beggars':
+                case 'beggar':
+                case 'begging':
+                case 'beg':
+                    results = await bot.db.getTopBeggars(5);
+                    title = '🤲 SHAMELESS BEGGARS 🤲\nThese pathetic cunts have no dignity:';
+                    break;
+                    
                 default:
-                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles]');
+                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]');
                     return { success: true };
             }
             
@@ -91,9 +106,23 @@ export default new Command({
                 } else if (category === 'quoted' || category === 'quotes') {
                     value = `${r.quotable_messages} bangers`;
                 } else if (category === 'bottles' || category === 'bottle' || category === 'recycling') {
-                    value = `$${r.total_earnings.toFixed(2)} (${r.collection_count} runs, best: $${r.best_haul.toFixed(2)})`;
+                    value = `$${r.total_earnings} (${r.collection_count} runs)`;
                     if (r.total_earnings >= 1000) extra = ' 🏆';
                     else if (r.total_earnings >= 500) extra = ' 💰';
+                } else if (category === 'cashie' || category === 'cashies' || category === 'cash') {
+                    value = `$${r.total_earnings} (${r.job_count} jobs)`;
+                    if (r.total_earnings >= 3000) extra = ' 🤑';
+                    else if (r.total_earnings >= 1500) extra = ' 💸';
+                    else if (r.total_earnings >= 500) extra = ' 💰';
+                } else if (category === 'beggars' || category === 'beggar' || category === 'begging' || category === 'beg') {
+                    value = `${r.times_begged} begs, $${r.total_received} (${r.success_rate}% success)`;
+                    if (r.times_robbed > 0) {
+                        value = `${r.times_begged} begs, $${r.total_received} (robbed ${r.times_robbed}x)`;
+                    }
+                    // Add shaming emojis for frequent beggars
+                    if (r.times_begged >= 20) extra = ' 🤡💩';
+                    else if (r.times_begged >= 10) extra = ' 🤡';
+                    else if (r.times_begged >= 5) extra = ' 😔';
                 } else {
                     value = `${r.message_count} messages`;
                 }

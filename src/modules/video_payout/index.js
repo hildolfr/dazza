@@ -242,9 +242,9 @@ export class VideoPayoutManager extends EventEmitter {
         // Update user balance (no trust change for video watching)
         await this.bot.heistManager.updateUserEconomy(canonicalUsername, rewardAmount, 0);
 
-        // Mark as rewarded
+        // Mark as rewarded - only update the active record (without leave_time)
         await this.db.run(
-            'UPDATE video_watchers SET rewarded = 1, reward_amount = ? WHERE session_id = ? AND username = ?',
+            'UPDATE video_watchers SET rewarded = 1, reward_amount = ? WHERE session_id = ? AND username = ? AND leave_time IS NULL',
             [rewardAmount, sessionId, canonicalUsername]
         );
 
@@ -280,7 +280,7 @@ export class VideoPayoutManager extends EventEmitter {
             
             const stats = await this.db.get(`
                 SELECT 
-                    COUNT(*) as videos_watched,
+                    COUNT(DISTINCT session_id) as videos_watched,
                     COALESCE(SUM(reward_amount), 0) as total_earned,
                     COUNT(CASE WHEN reward_amount = ? THEN 1 END) as lucky_rewards
                 FROM video_watchers 

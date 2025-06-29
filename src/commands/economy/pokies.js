@@ -156,35 +156,40 @@ export default new Command({
                     // Don't fail the command just because logging failed
                 }
 
-                // Announce big wins publicly (only if not PM)
-                if (!message.isPM) {
-                    if (winnings >= amount * 50) {
-                        setTimeout(() => {
-                            bot.sendMessage(`🎰💰 HOLY FUCK -${message.username} JUST HIT THE JACKPOT! $${winnings}! 💰🎰`);
-                        }, 2500);
-                    } else if (winnings >= amount * 10) {
-                        setTimeout(() => {
-                            bot.sendMessage(`🎉 big win! -${message.username} just won $${winnings} on the pokies!`);
-                        }, 2500);
-                    }
+                // Always announce big wins publicly (even if initiated via PM - be a bit cruel)
+                if (winnings >= amount * 50) {
+                    setTimeout(() => {
+                        bot.sendMessage(`🎰💰 HOLY FUCK ${message.username} JUST HIT THE JACKPOT! $${winnings}! 💰🎰`);
+                    }, 2500);
+                } else if (winnings >= amount * 10) {
+                    setTimeout(() => {
+                        bot.sendMessage(`🎉 big win! ${message.username} just won $${winnings} on the pokies!`);
+                    }, 2500);
                 }
             } else {
-                // Loss messages - sometimes add public comments (only if not PM)
-                if (!message.isPM && Math.random() < 0.3) {
+                // Loss messages - add flavor comments
+                if (Math.random() < 0.3) {
                     setTimeout(() => {
                         const lossReactions = [
                             `another victim of the pokies...`,
                             `the house always wins in the end`,
-                            `-${message.username}'s donation to the RSL appreciated`,
+                            `${message.isPM ? '' : '-'}${message.username}'s donation to the RSL appreciated`,
                             `that's how they afford the fancy carpets`,
-                            `pokies: 1, -${message.username}: 0`
+                            `pokies: 1, ${message.isPM ? '' : '-'}${message.username}: 0`
                         ];
-                        bot.sendMessage(lossReactions[Math.floor(Math.random() * lossReactions.length)]);
+                        const reaction = lossReactions[Math.floor(Math.random() * lossReactions.length)];
+                        
+                        // Send to PM if initiated via PM, otherwise public
+                        if (message.isPM) {
+                            bot.sendPrivateMessage(message.username, reaction);
+                        } else {
+                            bot.sendMessage(reaction);
+                        }
                     }, 3000);
                 }
                 
-                // Original addiction messages for big losses (only if not PM)
-                if (!message.isPM && amount >= 50 && Math.random() < 0.5) {
+                // Addiction messages for big losses
+                if (amount >= 50 && Math.random() < 0.5) {
                     setTimeout(() => {
                         const bigLossMessages = [
                             'just one more spin mate...',
@@ -193,7 +198,14 @@ export default new Command({
                             'double or nothing next spin?',
                             'shoulda played the one next to it'
                         ];
-                        bot.sendMessage(bigLossMessages[Math.floor(Math.random() * bigLossMessages.length)]);
+                        const addictionMsg = bigLossMessages[Math.floor(Math.random() * bigLossMessages.length)];
+                        
+                        // Send to PM if initiated via PM, otherwise public
+                        if (message.isPM) {
+                            bot.sendPrivateMessage(message.username, addictionMsg);
+                        } else {
+                            bot.sendMessage(addictionMsg);
+                        }
                     }, 4500);
                 }
             }
