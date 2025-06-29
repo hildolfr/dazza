@@ -302,8 +302,9 @@ export default new Command({
                 if (roll > successChance) {
                     // Victim successfully defends
                     const fine = calculateFine();
+                    const defenseTrustGain = Math.floor(Math.random() * 3) + 1; // 1-3 trust gain
                     await bot.heistManager.updateUserEconomy(message.username, -fine, -3); // -3 trust severe penalty
-                    await bot.heistManager.updateUserEconomy(targetUsername, 0, 3); // +3 trust for defending
+                    await bot.heistManager.updateUserEconomy(targetUsername, 0, defenseTrustGain); // variable trust for defending
                     
                     const defendMsg = responseMessages.victimDefends[Math.floor(Math.random() * responseMessages.victimDefends.length)]
                         .replace('-victim', `-${targetUsername}`)
