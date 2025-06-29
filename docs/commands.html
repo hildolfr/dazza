@@ -481,7 +481,7 @@
                         <span class="command-name">!scratchie</span>
                     </div>
                     <p class="command-aliases">Aliases: scratch, scratchies, lotto</p>
-                    <p class="command-description">Buy a scratch lottery ticket</p>
+                    <p class="command-description">Buy a scratch lottery ticket - Results via PM</p>
                     <div class="command-usage">!scratchie [amount]</div>
                     <p class="command-example">Examples: !scratchie (buys $5 ticket), !scratchie 20 (buys $20 Golden Nugget)</p>
                 </div>
@@ -546,6 +546,31 @@
                     <p class="command-example">Examples: !fish (free worm), !fish prawn ($2), !fish squid ($3)</p>
                 </div>
 
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">12hr cooldown</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!cashie</span>
+                    </div>
+                    <p class="command-aliases">Aliases: cash, cashies, cashjob</p>
+                    <p class="command-description">Do some cash-in-hand work for quick dollars - Results via PM</p>
+                    <div class="command-usage">!cashie</div>
+                    <p class="command-example">Example: !cashie - Find a dodgy cash job (weekend/end of month bonuses!)</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">48hr cooldown</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!beg</span>
+                    </div>
+                    <p class="command-aliases">Aliases: panhandle, spare, sparechange</p>
+                    <p class="command-description">Beg Dazza for spare change - Success based on trust level (PUBLIC ONLY)</p>
+                    <div class="command-usage">!beg</div>
+                    <p class="command-example">Example: !beg - Try to get some money from Dazza (higher trust = better odds)</p>
+                </div>
 
             </div>
         </section>
@@ -702,8 +727,8 @@
                         <span class="command-name">!top</span>
                     </div>
                     <p class="command-description">Show leaderboards</p>
-                    <div class="command-usage">!top [talkers|bongs|quoted]</div>
-                    <p class="command-example">Examples: !top, !top bongs, !top talkers</p>
+                    <div class="command-usage">!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]</div>
+                    <p class="command-example">Examples: !top, !top bongs, !top cashie, !top fishing, !top beggars</p>
                 </div>
 
                 <div class="command">
@@ -904,6 +929,22 @@
                     <p class="command-description">Award money to users for development/testing purposes</p>
                     <div class="command-usage">!award &lt;username&gt; &lt;amount&gt; [reason]</div>
                     <p class="command-example">Examples: !award Bob 100, !award dazza 50 testing</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-admin">ADMIN</span>
+                        <span class="tag tag-pm">PM accepted</span>
+                        <span class="tag tag-cooldown">5 MIN CD</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!clear</span>
+                    </div>
+                    <p class="command-aliases">Aliases: cls, clearchat</p>
+                    <p class="command-description">Clear the chat after a delay (restricted to specific admins)</p>
+                    <div class="command-usage">!clear [time] [reason]</div>
+                    <p class="command-example">Examples: !clear (2s delay), !clear 10 spam (10s delay with reason)</p>
+                    <p class="command-note">Time: 0-60 seconds, default 2. With reason: announces who cleared chat. 5 minute persistent cooldown.</p>
                 </div>
             </div>
         </section>

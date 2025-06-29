@@ -234,8 +234,8 @@ export default new Command({
             // Send PM
             bot.sendPrivateMessage(message.username, pmMessage);
             
-            // Public announcement for big wins (only if not initiated via PM)
-            if (!message.isPM && (tier === 'legendary' || (tier === 'rare' && amount >= 80))) {
+            // Public announcement for big wins (always announce, regardless of PM)
+            if (tier === 'legendary' || (tier === 'rare' && amount >= 80)) {
                 setTimeout(() => {
                     let announcement = `🚨 BOTTLE JACKPOT! ${message.username} just `;
                     if (tier === 'legendary') {

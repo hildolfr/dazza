@@ -671,15 +671,48 @@ export class HeistManager extends EventEmitter {
 
     async updateUserEconomy(username, amount, trustChange) {
         const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
-        await this.db.run(`
-            UPDATE user_economy 
-            SET balance = balance + ?, 
-                trust = trust + ?,
-                total_earned = total_earned + ?,
-                heists_participated = heists_participated + 1,
-                updated_at = ?
-            WHERE LOWER(username) = LOWER(?)
-        `, [amount, trustChange, Math.max(0, amount), Date.now(), canonicalUsername]);
+        try {
+            // First check if the update would result in negative balance
+            if (amount < 0) {
+                const user = await this.db.get('SELECT balance FROM user_economy WHERE LOWER(username) = LOWER(?)', [canonicalUsername]);
+                if (user && user.balance + amount < 0) {
+                    this.logger.warn(`Prevented negative balance for ${username}: current=${user.balance}, attempted change=${amount}`);
+                    // Update to set balance to 0 instead
+                    await this.db.run(`
+                        UPDATE user_economy 
+                        SET balance = 0, 
+                            trust = trust + ?,
+                            total_lost = total_lost + ?,
+                            updated_at = ?
+                        WHERE LOWER(username) = LOWER(?)
+                    `, [trustChange, Math.abs(user.balance), Date.now(), canonicalUsername]);
+                    return;
+                }
+            }
+            
+            await this.db.run(`
+                UPDATE user_economy 
+                SET balance = balance + ?, 
+                    trust = trust + ?,
+                    total_earned = total_earned + ?,
+                    heists_participated = heists_participated + 1,
+                    updated_at = ?
+                WHERE LOWER(username) = LOWER(?)
+            `, [amount, trustChange, Math.max(0, amount), Date.now(), canonicalUsername]);
+        } catch (error) {
+            if (error.message && error.message.includes('CHECK constraint failed')) {
+                this.logger.error(`Balance constraint violation for ${username}: amount=${amount}`);
+                // Set balance to 0 if constraint fails
+                await this.db.run(`
+                    UPDATE user_economy 
+                    SET balance = 0, 
+                        updated_at = ?
+                    WHERE LOWER(username) = LOWER(?)
+                `, [Date.now(), canonicalUsername]);
+            } else {
+                throw error;
+            }
+        }
     }
 
     async recordTransaction(username, amount, trustChange, type, heistId) {

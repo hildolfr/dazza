@@ -13,11 +13,12 @@ export default new Command({
     users: ['all'],
     cooldown: 5000,
     cooldownMessage: 'still scratchin\' the last one with me car keys mate, gimme {time}s',
+    pmAccepted: true,
 
     async handler(bot, message, args) {
         try {
             if (!bot.heistManager) {
-                bot.sendMessage('economy system not ready yet mate');
+                bot.sendPrivateMessage(message.username, 'economy system not ready yet mate');
                 return { success: false };
             }
 
@@ -28,17 +29,17 @@ export default new Command({
             if (args.length > 0) {
                 amount = parseInt(args[0]);
                 if (isNaN(amount) || amount < 5) {
-                    bot.sendMessage('minimum scratchie is $5 mate');
+                    bot.sendPrivateMessage(message.username, 'minimum scratchie is $5 mate');
                     return { success: false };
                 }
                 if (amount > 100) {
-                    bot.sendMessage('max scratchie is $100, not made of money');
+                    bot.sendPrivateMessage(message.username, 'max scratchie is $100, not made of money');
                     return { success: false };
                 }
             }
 
             if (userBalance.balance < amount) {
-                bot.sendMessage(`ya need $${amount} for that scratchie mate, you've only got $${userBalance.balance}`);
+                bot.sendPrivateMessage(message.username, `ya need $${amount} for that scratchie mate, you've only got $${userBalance.balance}`);
                 return { success: false };
             }
 
@@ -76,8 +77,8 @@ export default new Command({
             // Deduct the cost using HeistManager for proper username handling
             await bot.heistManager.updateUserEconomy(message.username, -amount, 0);
 
-            // Scratch animation
-            bot.sendMessage(`-${message.username} bought a $${amount} "${ticketType}" scratchie... *scratch scratch*`);
+            // Start PM with scratch animation
+            bot.sendPrivateMessage(message.username, `🎫 Bought a $${amount} "${ticketType}" scratchie...\n\n*scratch scratch scratch*`);
 
             // Determine outcome
             const roll = Math.random();
@@ -125,8 +126,8 @@ export default new Command({
                 // Track in transactions with error handling
                 try {
                     await bot.db.run(
-                        'INSERT INTO economy_transactions (username, amount, transaction_type, created_at) VALUES (?, ?, ?, ?)',
-                        [message.username, winnings - amount, 'scratchie', Date.now()]
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                        [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, Date.now()]
                     );
                 } catch (error) {
                     bot.logger.error('Failed to log scratchie transaction:', error);
@@ -134,22 +135,38 @@ export default new Command({
                 }
             }
 
-            // Announce result with delay
+            // Send result via PM with formatted message
             setTimeout(() => {
-                bot.sendMessage(resultMessage);
+                let pmResult = `\n🎰 RESULT: ${resultMessage}`;
                 
-                // Extra message for big wins
-                if (winnings >= amount * 10) {
-                    setTimeout(() => {
-                        bot.sendMessage(`shiiiiit -${message.username} just won ${winnings / amount}x on a scratchie!`);
-                    }, 1000);
-                }
+                // Add balance info
+                bot.heistManager.getUserBalance(message.username).then(newBalance => {
+                    pmResult += `\n\n💰 New balance: $${newBalance.balance}`;
+                    
+                    // Extra excitement for big wins
+                    if (winnings >= amount * 10) {
+                        pmResult += `\n\n🎉 MASSIVE ${winnings / amount}x WIN! You're on fire!`;
+                    }
+                    
+                    bot.sendPrivateMessage(message.username, pmResult);
+                    
+                    // Public announcement for big wins
+                    if (winnings >= amount * 10) {
+                        setTimeout(() => {
+                            if (winnings >= amount * 50) {
+                                bot.sendMessage(`🎰💰 HOLY FUCK! ${message.username} JUST HIT THE JACKPOT! $${winnings} ON A $${amount} SCRATCHIE! 💰🎰`);
+                            } else {
+                                bot.sendMessage(`🎉 BIG WIN! ${message.username} just won $${winnings} on a $${amount} scratchie! ${winnings / amount}x return!`);
+                            }
+                        }, 1000);
+                    }
+                });
             }, 2000);
 
             return { success: true };
         } catch (error) {
             bot.logger.error('Scratchie command error:', error);
-            bot.sendMessage('scratchie machine broke mate');
+            bot.sendPrivateMessage(message.username, 'scratchie machine broke mate');
             return { success: false };
         }
     }

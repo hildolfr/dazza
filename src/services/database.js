@@ -456,7 +456,45 @@ class Database {
                 AVG(amount) as avg_per_run,
                 MAX(amount) as best_haul
             FROM economy_transactions
-            WHERE type = 'bottles'
+            WHERE transaction_type = 'bottles'
+            AND amount > 0
+            GROUP BY LOWER(username)
+            ORDER BY total_earnings DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopBeggars(limit = 10) {
+        // Get shameless beggars with their stats
+        return await this.all(`
+            SELECT 
+                username,
+                COUNT(*) as times_begged,
+                SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as total_received,
+                SUM(CASE WHEN amount > 0 THEN 1 ELSE 0 END) as successful_begs,
+                CAST(SUM(CASE WHEN amount > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100 as success_rate,
+                SUM(CASE WHEN amount < 0 THEN 1 ELSE 0 END) as times_robbed,
+                SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as total_robbed,
+                MAX(CASE WHEN amount > 0 THEN amount ELSE 0 END) as biggest_handout
+            FROM economy_transactions
+            WHERE transaction_type = 'beg'
+            GROUP BY LOWER(username)
+            ORDER BY times_begged DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopCashieWorkers(limit = 10) {
+        // Get top cashie workers by total earnings and job count
+        return await this.all(`
+            SELECT 
+                username,
+                SUM(amount) as total_earnings,
+                COUNT(*) as job_count,
+                AVG(amount) as avg_per_job,
+                MAX(amount) as best_job
+            FROM economy_transactions
+            WHERE transaction_type = 'cashie'
             AND amount > 0
             GROUP BY LOWER(username)
             ORDER BY total_earnings DESC
