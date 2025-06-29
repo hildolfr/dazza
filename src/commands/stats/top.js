@@ -3,7 +3,7 @@ import { Command } from '../base.js';
 export default new Command({
     name: 'top',
     description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]',
+    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]',
     category: 'stats',
     cooldown: 2000,
     
@@ -13,7 +13,7 @@ export default new Command({
         try {
             // If no category specified, list options
             if (!category) {
-                bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]');
+                bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
                 return { success: true };
             }
             
@@ -75,8 +75,16 @@ export default new Command({
                     title = '🤲 SHAMELESS BEGGARS 🤲\nThese pathetic cunts have no dignity:';
                     break;
                     
+                case 'sign_spinning':
+                case 'sign':
+                case 'signspinning':
+                case 'signs':
+                    results = await bot.db.getTopSignSpinners(5);
+                    title = '🪧 PROFESSIONAL SIGN SPINNERS 🪧\nMasters of roadside advertising:';
+                    break;
+                    
                 default:
-                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]');
+                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]');
                     return { success: true };
             }
             
@@ -123,6 +131,11 @@ export default new Command({
                     if (r.times_begged >= 20) extra = ' 🤡💩';
                     else if (r.times_begged >= 10) extra = ' 🤡';
                     else if (r.times_begged >= 5) extra = ' 😔';
+                } else if (category === 'sign_spinning' || category === 'sign' || category === 'signspinning' || category === 'signs') {
+                    value = `$${r.total_earnings} (${r.total_spins} shifts)`;
+                    if (r.perfect_days > 0) extra = ` ${r.perfect_days} perfect days 🌟`;
+                    else if (r.best_shift >= 100) extra = ' 💪';
+                    else if (r.cops_called > 0) extra = ` (${r.cops_called}x cop trouble)`;
                 } else {
                     value = `${r.message_count} messages`;
                 }
