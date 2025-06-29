@@ -3,7 +3,7 @@ import { Command } from '../base.js';
 export default new Command({
     name: 'top',
     description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|quoted]',
+    usage: '!top [talkers|bongs|quoted|gamblers|fishing|bottles]',
     category: 'stats',
     cooldown: 10000,
     
@@ -11,33 +11,9 @@ export default new Command({
         const category = args[0]?.toLowerCase();
         
         try {
-            // If no category specified, show all leaderboards
+            // If no category specified, ask for one
             if (!category) {
-                const talkers = await bot.db.getTopTalkers(3);
-                const bongUsers = await bot.db.getTopBongUsers(3);
-                const quotables = await bot.db.getTopQuotedUsers(3);
-                
-                let message = '📊 LEADERBOARDS\n';
-                
-                // Top talkers
-                if (talkers && talkers.length > 0) {
-                    message += '🏆 Shit Talkers: ';
-                    message += talkers.map((u, i) => `${i+1}. -${u.username} (${u.message_count})`).join(' | ');
-                }
-                
-                // Top bong users
-                if (bongUsers && bongUsers.length > 0) {
-                    message += '\n🌿 Cone Punchers: ';
-                    message += bongUsers.map((u, i) => `${i+1}. -${u.username} (${u.bong_count})`).join(' | ');
-                }
-                
-                // Top quotables
-                if (quotables && quotables.length > 0) {
-                    message += '\n💬 Quotable Legends: ';
-                    message += quotables.map((u, i) => `${i+1}. -${u.username} (${u.quotable_messages})`).join(' | ');
-                }
-                
-                bot.sendMessage(message);
+                bot.sendMessage('which leaderboard ya want mate? !top [talkers|bongs|quoted|gamblers|fishing|bottles]');
                 return { success: true };
             }
             
@@ -48,23 +24,44 @@ export default new Command({
                 case 'talkers':
                 case 'talker':
                     results = await bot.db.getTopTalkers(5);
-                    title = 'Biggest gobs in here';
+                    title = '🏆 BIGGEST GOBS IN THE JOINT 🏆\nThese cunts never shut up:';
                     break;
                     
                 case 'bongs':
                 case 'bong':
                     results = await bot.db.getTopBongUsers(5);
-                    title = 'Cooked cunts leaderboard';
+                    title = '🌿 MOST COOKED CUNTS 🌿\nPunchin\' cones like it\'s their job:';
                     break;
                     
                 case 'quoted':
                 case 'quotes':
                     results = await bot.db.getTopQuotedUsers(5);
-                    title = 'Funniest cunts apparently';
+                    title = '💬 QUOTABLE LEGENDS 💬\nApparently these cunts are funny:';
+                    break;
+                    
+                case 'gamblers':
+                case 'gambler':
+                case 'gambling':
+                    results = await bot.db.getTopGamblers(5);
+                    title = '🎰 LUCKY BASTARDS AT THE POKIES 🎰\nBiggest wins (probably all lost by now):';
+                    break;
+                    
+                case 'fishing':
+                case 'fish':
+                case 'fishers':
+                    results = await bot.db.getTopFishers(5);
+                    title = '🎣 MASTER BAITERS LEADERBOARD 🎣\nBiggest catches down at the wharf:';
+                    break;
+                    
+                case 'bottles':
+                case 'bottle':
+                case 'recycling':
+                    results = await bot.db.getTopBottleCollectors(5);
+                    title = '♻️ ECO WARRIORS AT THE DEPOT ♻️\nTop bottle collectors (professional piss-heads):';
                     break;
                     
                 default:
-                    bot.sendMessage('!top [talkers|bongs|quoted]');
+                    bot.sendMessage('!top [talkers|bongs|quoted|gamblers|fishing|bottles]');
                     return { success: true };
             }
             
@@ -74,11 +71,36 @@ export default new Command({
             }
             
             const topList = results.map((r, i) => {
-                const count = r.message_count || r.bong_count || r.quotable_messages;
-                return `${i + 1}. -${r.username} (${count})`;
-            }).join(' | ');
+                let value;
+                let extra = '';
+                
+                if (category === 'gamblers' || category === 'gambler' || category === 'gambling') {
+                    value = `$${r.biggest_win}`;
+                    // Add win type
+                    if (r.transaction_type === 'pokies') extra = ' (pokies)';
+                    else if (r.transaction_type === 'scratchie') extra = ' (scratchie)';
+                    else if (r.transaction_type === 'tab') extra = ' (TAB)';
+                    if (r.biggest_win >= 1000) extra += ' 💰';
+                } else if (category === 'fishing' || category === 'fish' || category === 'fishers') {
+                    value = `${r.biggest_catch}kg ${r.fish_type || ''}`;
+                    if (r.biggest_catch >= 10) extra = ' 🐋';
+                    else if (r.biggest_catch >= 5) extra = ' 🦈';
+                } else if (category === 'bongs' || category === 'bong') {
+                    value = `${r.bong_count} cones`;
+                    if (r.bong_count >= 100) extra = ' 💀';
+                } else if (category === 'quoted' || category === 'quotes') {
+                    value = `${r.quotable_messages} bangers`;
+                } else if (category === 'bottles' || category === 'bottle' || category === 'recycling') {
+                    value = `$${r.total_earnings.toFixed(2)} (${r.collection_count} runs, best: $${r.best_haul.toFixed(2)})`;
+                    if (r.total_earnings >= 1000) extra = ' 🏆';
+                    else if (r.total_earnings >= 500) extra = ' 💰';
+                } else {
+                    value = `${r.message_count} messages`;
+                }
+                return `${i + 1}. -${r.username}: ${value}${extra}`;
+            }).join('\n');
             
-            bot.sendMessage(`${title}: ${topList}`);
+            bot.sendMessage(`${title}\n${topList}`);
             
             return { success: true };
         } catch (error) {

@@ -197,10 +197,20 @@ export class VideoPayoutManager extends EventEmitter {
         if (!this.currentSession || this.isSystemUser(username)) return;
 
         const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
-        await this.db.run(
-            'INSERT INTO video_watchers (session_id, username, join_time) VALUES (?, ?, ?)',
-            [this.currentSession.id, canonicalUsername, joinTime]
+        
+        // Check if watcher already exists for this session
+        const existing = await this.db.get(
+            'SELECT id FROM video_watchers WHERE session_id = ? AND username = ? AND leave_time IS NULL',
+            [this.currentSession.id, canonicalUsername]
         );
+        
+        // Only insert if not already present
+        if (!existing) {
+            await this.db.run(
+                'INSERT INTO video_watchers (session_id, username, join_time) VALUES (?, ?, ?)',
+                [this.currentSession.id, canonicalUsername, joinTime]
+            );
+        }
 
         this.currentWatchers.set(username, joinTime);
     }
@@ -235,7 +245,7 @@ export class VideoPayoutManager extends EventEmitter {
         // Mark as rewarded
         await this.db.run(
             'UPDATE video_watchers SET rewarded = 1, reward_amount = ? WHERE session_id = ? AND username = ?',
-            [rewardAmount, sessionId, username]
+            [rewardAmount, sessionId, canonicalUsername]
         );
 
         this.logger.debug(`Rewarded ${username}: $${rewardAmount}${isLucky ? ' (LUCKY!)' : ''}`);
@@ -264,16 +274,36 @@ export class VideoPayoutManager extends EventEmitter {
 
     // Get user's video watching stats
     async getUserStats(username) {
-        const stats = await this.db.get(`
-            SELECT 
-                COUNT(*) as videos_watched,
-                SUM(reward_amount) as total_earned,
-                COUNT(CASE WHEN reward_amount = ? THEN 1 END) as lucky_rewards
-            FROM video_watchers 
-            WHERE username = ? AND rewarded = 1
-        `, [this.config.LUCKY_REWARD, username]);
+        try {
+            // For video stats, we just need to match case-insensitively
+            // No need to normalize since we're using LOWER() in the query
+            
+            const stats = await this.db.get(`
+                SELECT 
+                    COUNT(*) as videos_watched,
+                    COALESCE(SUM(reward_amount), 0) as total_earned,
+                    COUNT(CASE WHEN reward_amount = ? THEN 1 END) as lucky_rewards
+                FROM video_watchers 
+                WHERE LOWER(username) = LOWER(?) AND rewarded = 1
+            `, [this.config.LUCKY_REWARD, username]);
 
-        return stats;
+            // Log for debugging
+            this.logger.info(`Video stats for ${username}:`, stats);
+            
+            // Ensure we always return an object with the expected properties
+            return {
+                videos_watched: stats?.videos_watched || 0,
+                total_earned: stats?.total_earned || 0,
+                lucky_rewards: stats?.lucky_rewards || 0
+            };
+        } catch (error) {
+            this.logger.error('Error getting user video stats:', error);
+            return {
+                videos_watched: 0,
+                total_earned: 0,
+                lucky_rewards: 0
+            };
+        }
     }
     
     async reconcileWatchers(source = 'reconciliation') {

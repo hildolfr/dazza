@@ -394,6 +394,76 @@ class Database {
         `, [this.botUsername, limit]);
     }
 
+    async getTopGamblers(limit = 10) {
+        // Get biggest single gambling wins from economy transactions with details
+        return await this.all(`
+            WITH ranked_wins AS (
+                SELECT 
+                    username,
+                    amount as biggest_win,
+                    transaction_type,
+                    description,
+                    ROW_NUMBER() OVER (PARTITION BY LOWER(username) ORDER BY amount DESC) as rn
+                FROM economy_transactions
+                WHERE transaction_type IN ('pokies', 'scratchie', 'tab')
+                AND amount > 0
+            )
+            SELECT username, biggest_win, transaction_type, description
+            FROM ranked_wins
+            WHERE rn = 1
+            ORDER BY biggest_win DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopFishers(limit = 10) {
+        // Get biggest fish catches from economy transactions with fish names
+        return await this.all(`
+            WITH parsed_catches AS (
+                SELECT 
+                    username,
+                    CAST(SUBSTR(description, 1, INSTR(description, 'kg') - 1) AS REAL) as biggest_catch,
+                    SUBSTR(description, INSTR(description, 'kg') + 3) as fish_type,
+                    description
+                FROM economy_transactions
+                WHERE transaction_type = 'fishing'
+                AND description LIKE '%kg%'
+            ),
+            ranked_catches AS (
+                SELECT 
+                    username,
+                    biggest_catch,
+                    fish_type,
+                    description,
+                    ROW_NUMBER() OVER (PARTITION BY LOWER(username) ORDER BY biggest_catch DESC) as rn
+                FROM parsed_catches
+            )
+            SELECT username, biggest_catch, fish_type, description
+            FROM ranked_catches
+            WHERE rn = 1
+            ORDER BY biggest_catch DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopBottleCollectors(limit = 10) {
+        // Get top bottle collectors by total earnings and collection count
+        return await this.all(`
+            SELECT 
+                username,
+                SUM(amount) as total_earnings,
+                COUNT(*) as collection_count,
+                AVG(amount) as avg_per_run,
+                MAX(amount) as best_haul
+            FROM economy_transactions
+            WHERE type = 'bottles'
+            AND amount > 0
+            GROUP BY LOWER(username)
+            ORDER BY total_earnings DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
     async getChannelStats() {
         // Get various channel statistics
         const totalMessages = await this.get('SELECT COUNT(*) as count FROM messages');

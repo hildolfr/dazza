@@ -242,6 +242,16 @@ export default new Command({
                     pmMessage += `Total value: $${value}!\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 }
             } else if (catchRoll < 0.15) {
                 // Caught trash
@@ -253,6 +263,16 @@ export default new Command({
                     value = Math.floor(Math.random() * 5) + 1;
                     pmMessage += `\n...wait, there's $${value} stuck to it!\n`;
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 }
                 
             } else if (catchRoll < 0.25) {
@@ -319,6 +339,16 @@ export default new Command({
                     }
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 3);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 } else if (fishRarity === 'rare') {
                     pmMessage += `${rarityEmojis[fishRarity]} Fuckin' ripper! You landed a ${weight}kg ${fishName}!\n`;
                     pmMessage += `Worth $${value}! That's a keeper!\n`;
@@ -333,12 +363,32 @@ export default new Command({
                     }
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 2);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 } else if (fishRarity === 'epic') {
                     pmMessage += `${rarityEmojis[fishRarity]} Bloody oath! Epic catch - ${weight}kg ${fishName}!\n`;
                     pmMessage += `Worth $${value}! That's a ripper!\n`;
                     pmMessage += `\n⭐ **EPIC CATCH! +1 Trust bonus!**\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 1);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 } else {
                     const catchMessages = [
                         `caught a ${weight}kg ${fishName}! Worth $${value}`,
@@ -349,6 +399,16 @@ export default new Command({
                     pmMessage += `${rarityEmojis[fishRarity]} You ${catchMessages[Math.floor(Math.random() * catchMessages.length)]}\n`;
                     
                     await bot.heistManager.updateUserEconomy(message.username, value, 0);
+                    
+                    // Log to transactions for leaderboard
+                    try {
+                        await bot.db.run(
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                        );
+                    } catch (error) {
+                        bot.logger.error('Failed to log fishing transaction:', error);
+                    }
                 }
                 
                 // Random fishing stories
