@@ -272,10 +272,10 @@ export default new Command({
             // Check if victim is AFK
             const victimAFK = bot.isUserAFK(targetUsername);
             
-            // Announce the mugging attempt
-            bot.sendMessage(`-${message.username} is trying to mug -${targetUsername}!`);
+            // Announce the mugging attempt (ping the victim)
+            bot.sendMessage(`-${message.username} is trying to mug ${targetUsername}!`);
             
-            // Set up response window (5 seconds)
+            // Set up response window (30 seconds)
             let victimResponded = false;
             const responseHandler = (msg) => {
                 if (msg.username.toLowerCase() === targetUsername.toLowerCase()) {
@@ -285,8 +285,8 @@ export default new Command({
             
             bot.on('userMessage', responseHandler);
             
-            // Wait 5 seconds for response
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Wait 30 seconds for response
+            await new Promise(resolve => setTimeout(resolve, 30000));
             
             // Remove the handler
             bot.removeListener('userMessage', responseHandler);
