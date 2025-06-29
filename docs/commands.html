@@ -278,6 +278,31 @@
             color: white;
         }
 
+        /* Profitability Tags */
+        .tag-profit-high {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            color: white;
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+        }
+
+        .tag-profit-medium {
+            background: linear-gradient(135deg, #FFC107, #FFD54F);
+            color: #333;
+            box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+        }
+
+        .tag-profit-low {
+            background: linear-gradient(135deg, #FF5722, #FF7043);
+            color: white;
+            box-shadow: 0 2px 4px rgba(255, 87, 34, 0.3);
+        }
+
+        .tag-profit-negative {
+            background: linear-gradient(135deg, #D32F2F, #EF5350);
+            color: white;
+            box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3);
+        }
+
         /* Admin Section */
         .admin-section {
             background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
@@ -467,6 +492,9 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-profit-negative">💸 High Risk</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!pokies</span>
                     </div>
@@ -477,6 +505,9 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-profit-negative">💸 High Risk</span>
+                    </div>
                     <div class="command-header">
                         <span class="command-name">!scratchie</span>
                     </div>
@@ -504,6 +535,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">2hr cooldown</span>
+                        <span class="tag tag-profit-negative">💸 High Risk</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!tab</span>
@@ -517,6 +549,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">24hr cooldown</span>
+                        <span class="tag tag-profit-medium">💰 Medium Profit</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!centrelink</span>
@@ -530,6 +563,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">24hr cooldown</span>
+                        <span class="tag tag-profit-low">💵 Low Profit</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!bottles</span>
@@ -542,6 +576,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">2hr cooldown</span>
+                        <span class="tag tag-profit-high">💎 High Profit</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!fish</span>
@@ -555,6 +590,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">12hr cooldown</span>
+                        <span class="tag tag-profit-high">💎 High Profit</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!cashie</span>
@@ -568,6 +604,7 @@
                 <div class="command">
                     <div class="command-badges">
                         <span class="tag tag-cooldown">48hr cooldown</span>
+                        <span class="tag tag-profit-low">💵 Low Profit</span>
                     </div>
                     <div class="command-header">
                         <span class="command-name">!beg</span>
