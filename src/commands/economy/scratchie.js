@@ -6,8 +6,10 @@ export default new Command({
     description: 'Buy a scratch lottery ticket',
     usage: '!scratchie [amount]',
     examples: [
-        '!scratchie - Buy a $5 scratchie',
-        '!scratchie 20 - Buy a $20 Golden Nugget'
+        '!scratchie - Buy a $5 Lucky 7s scratchie',
+        '!scratchie 20 - Buy a $20 Golden Nugget',
+        '!scratchie 50 - Buy a $50 Ute Fund Deluxe',
+        '!scratchie 100 - Buy a $100 Centrelink\'s Revenge'
     ],
     category: 'economy',
     users: ['all'],
@@ -28,12 +30,9 @@ export default new Command({
             let amount = 5;
             if (args.length > 0) {
                 amount = parseInt(args[0]);
-                if (isNaN(amount) || amount < 5) {
-                    bot.sendPrivateMessage(message.username, 'minimum scratchie is $5 mate');
-                    return { success: false };
-                }
-                if (amount > 100) {
-                    bot.sendPrivateMessage(message.username, 'max scratchie is $100, not made of money');
+                // Only allow specific price points
+                if (![5, 20, 50, 100].includes(amount)) {
+                    bot.sendPrivateMessage(message.username, 'scratchies only come in $5, $20, $50, or $100 mate');
                     return { success: false };
                 }
             }
@@ -43,35 +42,49 @@ export default new Command({
                 return { success: false };
             }
 
-            // Different scratchie types based on price (all with ~40% RTP / 60% house edge)
+            // Different scratchie types based on exact price (all with ~40% RTP / 60% house edge)
             let ticketType, odds;
-            if (amount <= 5) {
-                ticketType = 'Lucky 7s';
-                odds = {
-                    lose: 0.85,      // 85% lose
-                    small: 0.1,      // 10% win 2x
-                    medium: 0.03,    // 3% win 5x
-                    big: 0.015,      // 1.5% win 10x
-                    jackpot: 0.005   // 0.5% win 50x
-                };
-            } else if (amount <= 20) {
-                ticketType = 'Golden Nugget';
-                odds = {
-                    lose: 0.82,      // 82% lose
-                    small: 0.12,     // 12% win 2x
-                    medium: 0.04,    // 4% win 5x
-                    big: 0.015,      // 1.5% win 20x
-                    jackpot: 0.005   // 0.5% win 100x
-                };
-            } else {
-                ticketType = 'Millionaire Dreams';
-                odds = {
-                    lose: 0.8,       // 80% lose
-                    small: 0.15,     // 15% win 1.5x
-                    medium: 0.035,   // 3.5% win 3x
-                    big: 0.01,       // 1% win 10x
-                    jackpot: 0.005   // 0.5% win 200x
-                };
+            switch (amount) {
+                case 5:
+                    ticketType = 'Lucky 7s';
+                    odds = {
+                        lose: 0.85,      // 85% lose
+                        small: 0.1,      // 10% win 2x
+                        medium: 0.03,    // 3% win 5x
+                        big: 0.015,      // 1.5% win 10x
+                        jackpot: 0.005   // 0.5% win 50x
+                    };
+                    break;
+                case 20:
+                    ticketType = 'Golden Nugget';
+                    odds = {
+                        lose: 0.82,      // 82% lose
+                        small: 0.12,     // 12% win 2x
+                        medium: 0.04,    // 4% win 5x
+                        big: 0.015,      // 1.5% win 20x
+                        jackpot: 0.005   // 0.5% win 100x
+                    };
+                    break;
+                case 50:
+                    ticketType = 'Ute Fund Deluxe';
+                    odds = {
+                        lose: 0.8,       // 80% lose
+                        small: 0.14,     // 14% win 1.5x
+                        medium: 0.04,    // 4% win 4x
+                        big: 0.015,      // 1.5% win 15x
+                        jackpot: 0.005   // 0.5% win 150x
+                    };
+                    break;
+                case 100:
+                    ticketType = 'Centrelink\'s Revenge';
+                    odds = {
+                        lose: 0.78,      // 78% lose
+                        small: 0.15,     // 15% win 1.5x
+                        medium: 0.05,    // 5% win 3x
+                        big: 0.015,      // 1.5% win 10x
+                        jackpot: 0.005   // 0.5% win 200x
+                    };
+                    break;
             }
 
             // Deduct the cost using HeistManager for proper username handling
@@ -100,20 +113,24 @@ export default new Command({
                 winnings = amount * 2;
                 resultMessage = `winner! matched 3 beers, won $${winnings}!`;
             } else if (roll < odds.lose + odds.small + odds.medium) {
-                // Medium win (5x or 3x)
-                const multiplier = ticketType === 'Millionaire Dreams' ? 3 : 5;
+                // Medium win
+                const multiplier = ticketType === 'Lucky 7s' ? 5 :
+                                 ticketType === 'Golden Nugget' ? 5 :
+                                 ticketType === 'Ute Fund Deluxe' ? 4 : 3;
                 winnings = amount * multiplier;
                 resultMessage = `fuckin beauty! matched 3 bongs, won $${winnings}!`;
             } else if (roll < odds.lose + odds.small + odds.medium + odds.big) {
                 // Big win
                 const multiplier = ticketType === 'Lucky 7s' ? 10 : 
-                                 ticketType === 'Golden Nugget' ? 20 : 10;
+                                 ticketType === 'Golden Nugget' ? 20 :
+                                 ticketType === 'Ute Fund Deluxe' ? 15 : 10;
                 winnings = amount * multiplier;
                 resultMessage = `HOLY SHIT! matched 3 VBs, won $${winnings}!`;
             } else {
                 // Jackpot!
                 const multiplier = ticketType === 'Lucky 7s' ? 50 : 
-                                 ticketType === 'Golden Nugget' ? 100 : 200;
+                                 ticketType === 'Golden Nugget' ? 100 :
+                                 ticketType === 'Ute Fund Deluxe' ? 150 : 200;
                 winnings = amount * multiplier;
                 resultMessage = `JACKPOT CUNT! matched 3 GOLDEN DAZZAS! WON $${winnings}!!!`;
             }
