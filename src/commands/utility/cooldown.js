@@ -22,6 +22,9 @@ export default new Command({
                 // Skip the cooldown command itself
                 if (cmdName === 'cooldown') continue;
                 
+                // Skip commands with persistent cooldowns (they're handled below)
+                if (command.persistentCooldown) continue;
+                
                 const cooldownKey = `${command.name}:${username}`;
                 const lastUsed = bot.cooldowns.cooldowns.get(cooldownKey);
                 
@@ -63,7 +66,8 @@ export default new Command({
                         'mystery_esky': 300000,    // 5 minutes
                         'sign_spinning': 129600000, // 36 hours
                         'fish': 7200000,          // 2 hours
-                        'tab': 7200000            // 2 hours
+                        'tab': 7200000,           // 2 hours
+                        'centrelink': 86400000    // 24 hours
                     };
                     
                     if (specialDurations[pc.command_name]) {
@@ -85,27 +89,7 @@ export default new Command({
                 bot.logger.error('Error checking persistent cooldowns:', error);
             }
             
-            // Check centrelink separately (it has its own table)
-            try {
-                const centrelinkResult = await bot.db.get(
-                    'SELECT last_claim FROM centrelink_claims WHERE LOWER(username) = LOWER(?)',
-                    [username]
-                );
-                if (centrelinkResult) {
-                    const cooldownMs = 24 * 60 * 60 * 1000; // 24 hours
-                    const timeSinceClaim = now - centrelinkResult.last_claim;
-                    const remaining = cooldownMs - timeSinceClaim;
-                    if (remaining > 0) {
-                        activeCooldowns.push({
-                            command: 'centrelink',
-                            remaining: Math.ceil(remaining / 1000),
-                            total: Math.ceil(cooldownMs / 1000)
-                        });
-                    }
-                }
-            } catch (error) {
-                bot.logger.debug('Error checking centrelink cooldown:', error);
-            }
+            // Centrelink is now handled in the persistent cooldowns above
             
             // Format the response - concise version
             let response;

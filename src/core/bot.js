@@ -87,6 +87,11 @@ export class CyTubeBot extends EventEmitter {
         // Ready flag - don't process commands until fully initialized
         this.ready = false;
         
+        // Media and playlist tracking
+        this.currentMedia = null;
+        this.playlist = [];
+        this.playlistLocked = false;
+        
         // Setup connection event handlers
         this.setupEventHandlers();
     }
@@ -139,6 +144,41 @@ export class CyTubeBot extends EventEmitter {
             await this.cashMonitor.start();
             
             this.logger.info('Bot initialized successfully');
+            
+            // Request playlist data after joining channel
+            setTimeout(() => {
+                this.logger.info('Attempting to request playlist data');
+                if (this.connection && this.connection.socket) {
+                    // Add debug logging for events
+                    if (!this.eventLoggingSetup) {
+                        this.eventLoggingSetup = true;
+                        this.logger.info('Setting up event logging and playlist handlers');
+                        
+                        // Setup playlist event handlers directly on socket
+                        this.connection.socket.on('playlist', (data) => this.handlePlaylist(data));
+                        this.connection.socket.on('queue', (data) => this.handleQueue(data));
+                        this.connection.socket.on('delete', (data) => this.handleDelete(data));
+                        this.connection.socket.on('moveVideo', (data) => this.handleMoveVideo(data));
+                        this.connection.socket.on('setPlaylistMeta', (data) => {
+                            this.logger.info('Playlist metadata received', data);
+                        });
+                        
+                        this.connection.socket.onAny((eventName, ...args) => {
+                            // Log ALL events temporarily to see what's available
+                            this.logger.info(`CyTube event: ${eventName}`, { 
+                                argsCount: args.length
+                            });
+                        });
+                    }
+                    
+                    // CyTube might not have a requestPlaylist event
+                    // Try different approaches
+                    this.logger.info('Emitting playlist request');
+                    this.connection.socket.emit('requestPlaylist');
+                } else {
+                    this.logger.warn('No socket available for playlist request');
+                }
+            }, 2000); // Small delay to ensure we're fully connected
         } catch (error) {
             this.logger.error('Failed to initialize bot', { error: error.message });
             throw error;
@@ -174,6 +214,9 @@ export class CyTubeBot extends EventEmitter {
         // Media events
         this.connection.on('changeMedia', (data) => this.handleMediaChange(data));
         this.connection.on('mediaUpdate', (data) => this.handleMediaUpdate(data));
+        
+        // CyTube sends setCurrent to indicate which video in playlist is current
+        this.connection.on('setCurrent', (data) => this.handleSetCurrent(data));
     }
     
     setupHeistHandlers() {
@@ -673,6 +716,9 @@ export class CyTubeBot extends EventEmitter {
     async handleMediaChange(data) {
         this.logger.info(`Media changed: ${data.title || 'Unknown'} (ID: ${data.id || 'unknown'})`);
         
+        // Update current media
+        this.currentMedia = data;
+        
         if (this.videoPayoutManager) {
             this.videoPayoutManager.handleMediaChange(data).catch(err =>
                 this.logger.error('Failed to handle media change for video payout', { error: err.message })
@@ -683,6 +729,84 @@ export class CyTubeBot extends EventEmitter {
     handleMediaUpdate(data) {
         // Media updates happen frequently (time updates), only log if needed for debugging
         // this.logger.debug('Media update', data);
+        if (this.currentMedia) {
+            this.currentMedia.currentTime = data.currentTime || 0;
+            this.currentMedia.paused = data.paused || false;
+        }
+    }
+    
+    handlePlaylist(data) {
+        // Full playlist update
+        this.playlist = data || [];
+        this.logger.info(`Playlist updated: ${this.playlist.length} videos`);
+        
+        // Log first few videos for debugging
+        if (this.playlist.length > 0) {
+            // Log the structure of the first video
+            const firstVideo = this.playlist[0];
+            this.logger.info('First video structure:', {
+                hasTitle: !!firstVideo.title,
+                hasMedia: !!firstVideo.media,
+                keys: Object.keys(firstVideo).slice(0, 10)
+            });
+            
+            // Try to get title from different possible locations
+            const title = firstVideo.title || (firstVideo.media && firstVideo.media.title) || 'Unknown';
+            this.logger.info(`First video: "${title}"`);
+        }
+    }
+    
+    handleSetCurrent(data) {
+        // CyTube sends this to indicate current video position
+        this.logger.debug(`Current video set to position: ${data}`);
+    }
+    
+    handleQueue(data) {
+        // Video added to queue
+        if (data.item) {
+            if (data.after) {
+                // Find position and insert after
+                const index = this.playlist.findIndex(v => v.uid === data.after);
+                if (index >= 0) {
+                    this.playlist.splice(index + 1, 0, data.item);
+                } else {
+                    this.playlist.push(data.item);
+                }
+            } else {
+                // Add to end
+                this.playlist.push(data.item);
+            }
+            this.logger.debug(`Video queued: ${data.item.title}`);
+        }
+    }
+    
+    handleDelete(data) {
+        // Video removed from queue
+        const index = this.playlist.findIndex(v => v.uid === data.uid);
+        if (index >= 0) {
+            const removed = this.playlist.splice(index, 1)[0];
+            this.logger.debug(`Video removed: ${removed.title}`);
+        }
+    }
+    
+    handleMoveVideo(data) {
+        // Video moved in queue
+        const fromIndex = this.playlist.findIndex(v => v.uid === data.from);
+        if (fromIndex >= 0) {
+            const video = this.playlist.splice(fromIndex, 1)[0];
+            
+            if (data.after) {
+                const toIndex = this.playlist.findIndex(v => v.uid === data.after);
+                if (toIndex >= 0) {
+                    this.playlist.splice(toIndex + 1, 0, video);
+                } else {
+                    this.playlist.push(video);
+                }
+            } else {
+                // Move to beginning
+                this.playlist.unshift(video);
+            }
+        }
     }
     
     getUserlist() {

@@ -39,34 +39,18 @@ export default new Command({
                 
                 let isAvailable = true;
                 
-                if (cmd.name === 'centrelink') {
-                    // Special check for centrelink
-                    try {
-                        const result = await bot.db.get(
-                            'SELECT last_claim FROM centrelink_claims WHERE LOWER(username) = LOWER(?)',
-                            [username]
-                        );
-                        if (result) {
-                            const timeSinceClaim = now - result.last_claim;
-                            isAvailable = timeSinceClaim >= cmd.duration;
-                        }
-                    } catch (error) {
-                        // If error, assume available
+                // Check persistent cooldowns table for all commands including centrelink
+                try {
+                    const result = await bot.db.get(
+                        'SELECT last_used FROM cooldowns WHERE command_name = ? AND LOWER(username) = LOWER(?)',
+                        [cmd.name, username]
+                    );
+                    if (result) {
+                        const elapsed = now - result.last_used;
+                        isAvailable = elapsed >= cmd.duration;
                     }
-                } else {
-                    // Check persistent cooldowns table
-                    try {
-                        const result = await bot.db.get(
-                            'SELECT last_used FROM cooldowns WHERE command_name = ? AND LOWER(username) = LOWER(?)',
-                            [cmd.name, username]
-                        );
-                        if (result) {
-                            const elapsed = now - result.last_used;
-                            isAvailable = elapsed >= cmd.duration;
-                        }
-                    } catch (error) {
-                        // If error, assume available
-                    }
+                } catch (error) {
+                    // If error, assume available
                 }
                 
                 if (isAvailable) {
