@@ -524,6 +524,27 @@
                 </div>
 
                 <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">5min cooldown</span>
+                        <span class="tag tag-profit-negative">💸 High Risk</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!mystery_box</span>
+                    </div>
+                    <p class="command-aliases">Aliases: mysterybox, box, mbox</p>
+                    <p class="command-description">Buy a mystery box for $80 - could contain riches or danger!</p>
+                    <div class="command-usage">!mystery_box</div>
+                    <p class="command-example">Features:</p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>Fixed price: $80</li>
+                        <li>20% chance to win (80% house odds)</li>
+                        <li>Wins range from $10-$1000</li>
+                        <li>5% chance of dangerous trap (hospital bills!)</li>
+                        <li>Big wins announced publicly</li>
+                    </ul>
+                </div>
+
+                <div class="command">
                     <div class="command-header">
                         <span class="command-name">!criminal</span>
                     </div>
@@ -544,6 +565,25 @@
                     <p class="command-description">Bet on the horses or dogs at the TAB - Race via PM</p>
                     <div class="command-usage">!tab &lt;amount&gt; [horse|dog]</div>
                     <p class="command-example">Examples: !tab 20 horse, !tab 10 dog</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-profit-negative">💸 50/50 Odds</span>
+                        <span class="tag tag-pvp">👥 PvP Available</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!coin_flip</span>
+                    </div>
+                    <p class="command-aliases">Aliases: coinflip, flip, cf</p>
+                    <p class="command-description">Flip a coin against another user or the house</p>
+                    <div class="command-usage">!coin_flip &lt;amount&gt; [@user]</div>
+                    <p class="command-example">Examples:</p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>!coin_flip 50 - Flip against Dazza for $50</li>
+                        <li>!coin_flip 100 @mate - Challenge mate to a $100 flip</li>
+                        <li>heads/tails - Accept a pending challenge</li>
+                    </ul>
                 </div>
 
                 <div class="command">
@@ -611,6 +651,20 @@
 
                 <div class="command">
                     <div class="command-badges">
+                        <span class="tag tag-cooldown">36hr cooldown</span>
+                        <span class="tag tag-profit-medium">💰 Medium Profit</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!sign_spinning</span>
+                    </div>
+                    <p class="command-aliases">Aliases: sign, spin, signspinning, signspin</p>
+                    <p class="command-description">Spin signs on street corners for cash - Results via PM</p>
+                    <div class="command-usage">!sign_spinning</div>
+                    <p class="command-example">Example: !sign_spinning - Stand on the corner spinning signs ($15-60, weather affects pay, 10% injury chance)</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
                         <span class="tag tag-cooldown">48hr cooldown</span>
                         <span class="tag tag-profit-low">💵 Low Profit</span>
                     </div>
@@ -621,6 +675,42 @@
                     <p class="command-description">Beg Dazza for spare change - Success based on trust level (PUBLIC ONLY)</p>
                     <div class="command-usage">!beg</div>
                     <p class="command-example">Example: !beg - Try to get some money from Dazza (higher trust = better odds)</p>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">2hr cooldown</span>
+                        <span class="tag tag-profit-negative">💸 High Risk</span>
+                        <span class="tag tag-pvp">👥 PvP</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!mug</span>
+                    </div>
+                    <p class="command-aliases">Aliases: rob, steal, jumped</p>
+                    <p class="command-description">Mug another user for their cash - Success based on trust levels and victim response</p>
+                    <div class="command-usage">!mug &lt;username&gt;</div>
+                    <p class="command-example">Examples:</p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>!mug jimmy - Try to mug jimmy (AFK users are easier targets)</li>
+                        <li>!mug dazza - Attempt to mug dazza (5% success, high reversal chance)</li>
+                        <li>Victims have 5 seconds to respond - responding heavily increases defense chance</li>
+                        <li>Failed mugs result in $20-300 police fines and -3 trust</li>
+                        <li>Successful defense gives victim +3 trust</li>
+                    </ul>
+                </div>
+
+                <div class="command">
+                    <div class="command-badges">
+                        <span class="tag tag-cooldown">12hr cooldown</span>
+                        <span class="tag tag-profit-low">💵 Low Profit</span>
+                    </div>
+                    <div class="command-header">
+                        <span class="command-name">!couch_coins</span>
+                    </div>
+                    <p class="command-aliases">Aliases: couch, couchsearch, searchcouch</p>
+                    <p class="command-description">Search the couch for lost coins - Can find $0-50 but watch for hazards!</p>
+                    <div class="command-usage">!couch_coins</div>
+                    <p class="command-example">Example: !couch_coins - Dig through couch cushions (better odds when desperate, 8% chance of bad events)</p>
                 </div>
 
             </div>
@@ -778,8 +868,8 @@
                         <span class="command-name">!top</span>
                     </div>
                     <p class="command-description">Show leaderboards</p>
-                    <div class="command-usage">!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|beggars]</div>
-                    <p class="command-example">Examples: !top, !top bongs, !top cashie, !top fishing, !top beggars</p>
+                    <div class="command-usage">!top [talkers|bongs|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars]</div>
+                    <p class="command-example">Examples: !top, !top bongs, !top cashie, !top sign_spinning, !top fishing, !top beggars</p>
                 </div>
 
                 <div class="command">

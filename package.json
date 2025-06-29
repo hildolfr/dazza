@@ -10,7 +10,10 @@
     "start:direct": "node index.js",
     "dev": "node --watch index.js",
     "fix-duplicates": "node src/scripts/fixDuplicateUsers.js",
-    "normalize-usernames": "node src/scripts/normalizeUsernames.js"
+    "normalize-usernames": "node src/scripts/normalizeUsernames.js",
+    "migrate": "node src/scripts/migrate.js up",
+    "migrate:status": "node src/scripts/migrate.js status",
+    "migrate:rollback": "node src/scripts/migrate.js rollback"
   },
   "keywords": [
     "cytube",

@@ -4,6 +4,7 @@ import path from 'path';
 import { heistSchema } from '../modules/heist/schema.js';
 import { videoPayoutSchema } from '../modules/video_payout/schema.js';
 import { cooldownSchema } from '../utils/cooldownSchema.js';
+import MigrationRunner from '../migrations/runner.js';
 
 class Database {
     constructor(dbPath, botUsername = 'dazza') {
@@ -43,7 +44,10 @@ class Database {
                         });
                     };
                     
-                    this.createTables().then(resolve).catch(reject);
+                    this.createTables()
+                        .then(() => this.runMigrations())
+                        .then(resolve)
+                        .catch(reject);
                 }
             });
         });
@@ -203,6 +207,16 @@ class Database {
         }
 
         console.log('Database tables created successfully');
+    }
+
+    async runMigrations() {
+        try {
+            const runner = new MigrationRunner(this);
+            await runner.runMigrations();
+        } catch (error) {
+            console.error('Failed to run migrations:', error);
+            throw error;
+        }
     }
 
     async logMessage(username, message) {
@@ -497,6 +511,24 @@ class Database {
             WHERE transaction_type = 'cashie'
             AND amount > 0
             GROUP BY LOWER(username)
+            ORDER BY total_earnings DESC
+            LIMIT ?
+        `, [limit]);
+    }
+
+    async getTopSignSpinners(limit = 10) {
+        // Get top sign spinners from the dedicated stats table
+        return await this.all(`
+            SELECT 
+                username,
+                total_spins,
+                total_earnings,
+                best_shift,
+                perfect_days,
+                cops_called,
+                ROUND(CAST(total_earnings AS FLOAT) / NULLIF(total_spins, 0), 2) as avg_per_shift
+            FROM sign_spinning_stats
+            WHERE total_spins > 0
             ORDER BY total_earnings DESC
             LIMIT ?
         `, [limit]);
