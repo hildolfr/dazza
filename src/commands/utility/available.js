@@ -23,7 +23,7 @@ export default new Command({
                 { name: 'couch_coins', duration: 43200000 },  // 12 hours
                 { name: 'bottles', duration: 86400000 },      // 24 hours
                 { name: 'cashie', duration: 43200000 },       // 12 hours
-                { name: 'mystery_box', duration: 300000 },    // 5 minutes
+                { name: 'mystery_esky', duration: 300000 },    // 5 minutes
                 { name: 'sign_spinning', duration: 129600000 }, // 36 hours
                 { name: 'fish', duration: 7200000 },          // 2 hours
                 { name: 'tab', duration: 7200000 },           // 2 hours

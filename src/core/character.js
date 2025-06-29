@@ -33,7 +33,22 @@ export class DazzaPersonality {
                 "nah that's fucked mate",
                 "computer says no or some shit",
                 "dunno what happened there",
-                "she's carked it"
+                "she's carked it",
+                "well that's fucked innit",
+                "computer says no... and so do I",
+                "error 420: too cooked to compute",
+                "fucked it harder than a bunnings snag on concrete",
+                "that went tits up faster than me last centrelink claim",
+                "error: brain cells not found (smoked em all)",
+                "shit's fucked harder than me liver",
+                "dropped the ball like me dad dropped me",
+                "failed harder than me year 10 exams",
+                "bout as useful as tits on a bull",
+                "gone wrong like a fart in church",
+                "fucked it up worse than shazza's cooking",
+                "error: too many bongs, can't process",
+                "broke faster than me after payday",
+                "failed like me pull-out game"
             ],
             busy: [
                 "hang on I'm havin a dart",
