@@ -1,6 +1,7 @@
 import { Command } from '../base.js';
 
-export default new Command({
+const coinFlipCommand = {
+
     name: 'coin_flip',
     aliases: ['coinflip', 'flip', 'cf'],
     description: 'Flip a coin against another user or the house',
@@ -40,7 +41,7 @@ export default new Command({
 
             // Check if this is a response to a challenge (just "heads" or "tails")
             if (args.length === 1 && ['heads', 'tails'].includes(args[0].toLowerCase())) {
-                return await this.handleChallengeResponse(bot, message, args[0].toLowerCase());
+                return await coinFlipCommand.handleChallengeResponse(bot, message, args[0].toLowerCase());
             }
 
             // Otherwise it's a new flip
@@ -95,10 +96,10 @@ export default new Command({
                     return { success: false };
                 }
 
-                return await this.createChallenge(bot, message, challengedUser, amount);
+                return await coinFlipCommand.createChallenge(bot, message, challengedUser, amount);
             } else {
                 // Flip against the house
-                return await this.flipVsHouse(bot, message, amount);
+                return await coinFlipCommand.flipVsHouse(bot, message, amount);
             }
 
         } catch (error) {
@@ -576,4 +577,6 @@ export default new Command({
             // Don't fail the command over stats
         }
     }
-});
+};
+
+export default new Command(coinFlipCommand);
