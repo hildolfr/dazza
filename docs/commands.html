@@ -1193,6 +1193,112 @@
             <div class="modal-body">
                 <p class="modal-intro">Everything ya need to know about pissin' contests, ya filthy animals!</p>
                 
+                <!-- Game Mechanics Diagram -->
+                <div class="dick-section game-diagram">
+                    <h3>🎮 How This Shit Works 🎮</h3>
+                    <div class="game-flow">
+                        <div class="flow-item">
+                            <div class="flow-icon">🍺</div>
+                            <div class="flow-title">Step 1: Get Pissed</div>
+                            <div class="flow-desc">Drink beers to fill ya bladder<br>More drinks = better performance!</div>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="flow-item">
+                            <div class="flow-icon">🤝</div>
+                            <div class="flow-title">Step 2: Challenge a Cunt</div>
+                            <div class="flow-desc">!pissing_contest 50 mate<br>They got 30 secs to accept</div>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="flow-item">
+                            <div class="flow-icon">🍆</div>
+                            <div class="flow-title">Step 3: Dick Assignment</div>
+                            <div class="flow-desc">Random characteristic rolled<br>Could be huge, could be tiny!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-flow">
+                        <div class="flow-item">
+                            <div class="flow-icon">⚡</div>
+                            <div class="flow-title">Step 4: Condition Check</div>
+                            <div class="flow-desc">10% chance of special condition<br>Might help, might fuck ya!</div>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="flow-item">
+                            <div class="flow-icon">📍</div>
+                            <div class="flow-title">Step 5: Location</div>
+                            <div class="flow-desc">Time-based spot selection<br>Each place has unique effects</div>
+                        </div>
+                        
+                        <div class="flow-arrow">→</div>
+                        
+                        <div class="flow-item">
+                            <div class="flow-icon">🌦️</div>
+                            <div class="flow-title">Step 6: Weather</div>
+                            <div class="flow-desc">Mother nature joins in<br>Wind, rain, heat affect stream!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="contest-formula">
+                        <h4>The Pissin' Formula:</h4>
+                        <div class="formula-box">
+                            <span class="formula-part">Base Stats</span>
+                            <span class="formula-op">+</span>
+                            <span class="formula-part">Bladder Bonus</span>
+                            <span class="formula-op">×</span>
+                            <span class="formula-part">Dick Type</span>
+                            <span class="formula-op">±</span>
+                            <span class="formula-part">Conditions</span>
+                            <span class="formula-op">×</span>
+                            <span class="formula-part">Location</span>
+                            <span class="formula-op">×</span>
+                            <span class="formula-part">Weather</span>
+                            <span class="formula-op">=</span>
+                            <span class="formula-result">Final Score</span>
+                        </div>
+                    </div>
+                    
+                    <div class="scoring-info">
+                        <div class="score-stat">
+                            <span class="stat-icon">📏</span>
+                            <span class="stat-name">Distance (40%)</span>
+                            <span class="stat-desc">How far can ya shoot?</span>
+                        </div>
+                        <div class="score-stat">
+                            <span class="stat-icon">💧</span>
+                            <span class="stat-name">Volume (25%)</span>
+                            <span class="stat-desc">How much ya got in the tank?</span>
+                        </div>
+                        <div class="score-stat">
+                            <span class="stat-icon">🎯</span>
+                            <span class="stat-name">Aim (20%)</span>
+                            <span class="stat-desc">Can ya hit the target?</span>
+                        </div>
+                        <div class="score-stat">
+                            <span class="stat-icon">⏱️</span>
+                            <span class="stat-name">Duration (15%)</span>
+                            <span class="stat-desc">How long can ya go?</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tips-box">
+                        <h4>💡 Pro Tips from Dazza:</h4>
+                        <ul>
+                            <li>🍺 Drink 10+ beers for maximum bladder bonus</li>
+                            <li>🎲 Some dicks counter others - it's rock paper scissors with cocks!</li>
+                            <li>💀 Failure conditions = instant loss, no matter how big ya dick is</li>
+                            <li>🌪️ Weather can turn a winner into a pisser</li>
+                            <li>⏰ Different locations appear at different times</li>
+                            <li>🗣️ 40% chance Dazza will comment on ya equipment</li>
+                        </ul>
+                    </div>
+                </div>
+                
                 <!-- Characteristics Section -->
                 <div class="dick-section">
                     <h3>🍆 Dick Characteristics (128 Total!)</h3>
@@ -1903,6 +2009,182 @@
 
         .modal-body::-webkit-scrollbar-thumb:hover {
             background: var(--light-gold);
+        }
+
+        /* Game Diagram Styles */
+        .game-diagram {
+            background: linear-gradient(135deg, rgba(0,132,61,0.1) 0%, rgba(255,205,0,0.1) 100%);
+            border: 2px solid var(--aussie-gold);
+            margin-bottom: 30px;
+        }
+
+        .game-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            gap: 20px;
+        }
+
+        .flow-item {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid var(--aussie-gold);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            flex: 0 1 200px;
+            transition: transform 0.3s;
+        }
+
+        .flow-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255,205,0,0.3);
+        }
+
+        .flow-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .flow-title {
+            font-weight: bold;
+            color: var(--aussie-gold);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .flow-desc {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--aussie-gold);
+            font-weight: bold;
+        }
+
+        .contest-formula {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .contest-formula h4 {
+            color: var(--aussie-gold);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .formula-box {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid var(--aussie-gold);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .formula-part {
+            background: rgba(255,205,0,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--aussie-gold);
+        }
+
+        .formula-op {
+            color: var(--aussie-gold);
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .formula-result {
+            background: var(--aussie-gold);
+            color: black;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .scoring-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-stat {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--aussie-gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+        }
+
+        .stat-name {
+            font-weight: bold;
+            color: var(--aussie-gold);
+        }
+
+        .stat-desc {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-left: auto;
+        }
+
+        .tips-box {
+            background: rgba(0,0,0,0.5);
+            border: 2px dashed var(--aussie-gold);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .tips-box h4 {
+            color: var(--aussie-gold);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .tips-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips-box li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+            
+            .formula-box {
+                font-size: 0.9rem;
+            }
+            
+            .score-stat {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stat-desc {
+                margin-left: 0;
+                margin-top: 5px;
+            }
         }
     </style>
 
