@@ -60,7 +60,7 @@ export default new Command({
                         'couch_coins': 43200000,  // 12 hours
                         'bottles': 86400000,      // 24 hours
                         'cashie': 43200000,       // 12 hours
-                        'mystery_box': 300000,    // 5 minutes
+                        'mystery_esky': 300000,    // 5 minutes
                         'sign_spinning': 129600000, // 36 hours
                         'fish': 7200000,          // 2 hours
                         'tab': 7200000            // 2 hours

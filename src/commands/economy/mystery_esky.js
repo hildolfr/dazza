@@ -1,67 +1,67 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
 
-// Box opening messages
+// Esky opening messages
 const openingMessages = [
-    "*rattles the mystery box* here goes nothin...",
-    "*shakes the box violently* what's in here then?",
-    "*gives the box a good shake* feels heavy...",
-    "*examines the mystery box suspiciously* alright let's crack it open",
-    "*takes a deep breath* fuck it, let's see what we got"
+    "*lifts the mystery esky lid cautiously* here goes nothin...",
+    "*kicks the esky* somethin's rattlin' around in there...",
+    "*sniffs the esky suspiciously* smells like... opportunity? or death?",
+    "*cracks open the mystery esky* fuck knows what's been festerin' in here",
+    "*pops the lid* this better not be full of spiders again..."
 ];
 
 // Small win messages ($10-50)
 const smallWinMessages = [
-    "found $-amount in crumpled notes! better than nothin",
-    "scored $-amount! enough for a six pack at least",
-    "got $-amount mate, not bad for a mystery box",
-    "sweet, $-amount! that'll do nicely",
-    "$-amount in the box! small win but I'll take it"
+    "found a scratched-off scratchie worth $-amount! already a winner!",
+    "scored an old wallet with $-amount in it! previous owner's loss",
+    "found a mason jar full of coins worth $-amount! someone's swear jar",
+    "dug up a rusty tin with $-amount! some bogan's emergency stash",
+    "found $-amount in notes wrapped in a VB label! classic hiding spot"
 ];
 
 // Medium win messages ($51-100)
 const mediumWinMessages = [
-    "fuck yeah! $-amount! that's a decent haul",
-    "beauty! found $-amount in the mystery box!",
-    "ripper! $-amount just sitting there waiting for me",
-    "bloody oath! $-amount! worth the risk",
-    "decent! pulled $-amount from the mystery box"
+    "fuck yeah! found a Bunnings gift card worth $-amount! sausage sizzle for weeks!",
+    "beauty! vintage footy cards worth $-amount! some collector's gonna want these",
+    "ripper! unopened carton of winnie blues worth $-amount! black market gold",
+    "bloody oath! fishing gear worth $-amount! some poor bastard's missing this",
+    "decent! found a toolbox with tools worth $-amount! tradie's wet dream"
 ];
 
 // Big win messages ($101-199)
 const bigWinMessages = [
-    "HOLY SHIT! $-amount! jackpot material right here!",
-    "FUCK ME DEAD! $-amount in the box! I'm rich!",
-    "GET FUCKED! $-amount! that's a massive score!",
-    "YOU BEAUTY! $-amount! drinks are on me!",
-    "STREWTH! $-amount! hit the bloody jackpot!"
+    "HOLY SHIT! found a signed Don Bradman cricket bat worth $-amount! collector's item!",
+    "FUCK ME DEAD! vintage Holden parts worth $-amount! some cunt's gonna pay top dollar!",
+    "GET FUCKED! unopened slab of VB from 1980 worth $-amount! brewery gold!",
+    "YOU BEAUTY! found a tradie's lost tool belt worth $-amount! Makita everything!",
+    "STREWTH! original AC/DC vinyl collection worth $-amount! rock n roll fortune!"
 ];
 
 // Massive win messages ($200-1000)
 const massiveWinMessages = [
-    "HOLY FUCKING SHIT! $-amount! I'M FUCKIN LOADED!",
-    "WHAT THE ACTUAL FUCK! $-amount! THIS CAN'T BE REAL!",
-    "CUNT ME DEAD! $-amount! I'M RETIRING!",
-    "JESUS TITTY FUCKING CHRIST! $-amount! JACKPOT OF JACKPOTS!",
-    "FUCK ME SIDEWAYS! $-amount! I'M BUYING THE WHOLE BOTTLE-O!"
+    "HOLY FUCKING SHIT! found a bag of opals worth $-amount! Lightning Ridge goldmine!",
+    "WHAT THE ACTUAL FUCK! vintage Torana keys and papers worth $-amount! barn find jackpot!",
+    "CUNT ME DEAD! found Shane Warne's signed baggy green worth $-amount! cricket history!",
+    "JESUS TITTY FUCKING CHRIST! gold nuggets worth $-amount! proper Ballarat fortune!",
+    "FUCK ME SIDEWAYS! found Bob Hawke's beer glass collection worth $-amount! national treasure!"
 ];
 
 // Loss messages
 const lossMessages = [
-    "empty box... what a fuckin ripoff",
-    "nothing but dust and disappointment mate",
-    "sweet fuck all in there, bloody scam",
-    "empty as me wallet on centrelink day",
-    "absolutely nothing, waste of $80"
+    "empty esky... not even a warm XXXX",
+    "nothing but melted ice and regret mate",
+    "sweet fuck all, just a mouldy sausage roll",
+    "empty as a bottle-o on Sunday arvo",
+    "absolutely nothing but a used stubby holder"
 ];
 
 // Trap messages (dangerous outcomes)
 const trapMessages = [
-    "FUCK! box exploded! *Dazza gets rushed to hospital*",
-    "SHIT! poisonous spider jumped out! *ambulance sirens*",
-    "CHRIST! box was full of angry wasps! *runs to emergency*",
-    "BLOODY HELL! razor blades everywhere! *bleeding profusely*",
-    "FUCK ME! toxic gas leak! *passes out, wakes up in hospital*"
+    "FUCK! redback spider bit me hand! *ambulance to Westmead Emergency* (antivenom: $-cost)",
+    "SHIT! funnel web jumped on me face! *chopper to Royal North Shore* (treatment: $-cost)",
+    "CHRIST! esky full of brown snakes! *rushed to St Vincent's* (snake bite kit: $-cost)",
+    "BLOODY HELL! blue-ringed octopus in there! *emergency airlift* (life support: $-cost)",
+    "FUCK ME! angry drop bear attack! *mauled, needs surgery* (reconstructive surgery: $-cost)"
 ];
 
 // Calculate win amount based on tier
@@ -83,7 +83,7 @@ function calculateWinAmount() {
     }
 }
 
-// Update mystery box stats
+// Update mystery esky stats
 async function updateStats(db, username, won, amount, wasTrap = false, wasJackpot = false) {
     try {
         // Initialize stats if user doesn't exist
@@ -125,17 +125,17 @@ async function updateStats(db, username, won, amount, wasTrap = false, wasJackpo
             `, [Date.now(), username]);
         }
     } catch (error) {
-        console.error('Failed to update mystery box stats:', error);
+        console.error('Failed to update mystery esky stats:', error);
     }
 }
 
 export default new Command({
-    name: 'mystery_box',
-    aliases: ['mysterybox', 'box', 'mbox'],
-    description: 'Buy a mystery box for $80 - could contain riches or danger!',
+    name: 'mystery_esky',
+    aliases: ['mysteryesky', 'esky', 'mesky'],
+    description: 'Buy a mystery esky for $80 - could contain Aussie treasures or deadly creatures!',
     usage: '!mystery_box',
     examples: [
-        '!mystery_box - Buy a mystery box for $80'
+        '!mystery_esky - Buy a mystery esky for $80'
     ],
     category: 'economy',
     users: ['all'],
@@ -155,7 +155,7 @@ export default new Command({
             const cost = 80;
             
             if (userBalance.balance < cost) {
-                bot.sendPrivateMessage(message.username, `ya need $${cost} for a mystery box mate, you've only got $${userBalance.balance}`);
+                bot.sendPrivateMessage(message.username, `ya need $${cost} for a mystery esky mate, you've only got $${userBalance.balance}`);
                 return { success: false };
             }
 
@@ -168,20 +168,20 @@ export default new Command({
                     const minutes = Math.floor(cooldownCheck.remaining / 60);
                     const seconds = cooldownCheck.remaining % 60;
                     
-                    bot.sendPrivateMessage(message.username, `hold ya horses mate, gotta wait ${minutes}m ${seconds}s before another mystery box`);
+                    bot.sendPrivateMessage(message.username, `hold ya horses mate, gotta wait ${minutes}m ${seconds}s before another mystery esky`);
                     return { success: false };
                 }
             }
 
             // Public acknowledgment
-            bot.sendMessage(`${message.username} bought a mystery box for $${cost}! *watches nervously*`);
+            bot.sendMessage(`${message.username} bought a mystery esky for $${cost}! *watches nervously*`);
 
             // Deduct the cost
             await bot.heistManager.updateUserEconomy(message.username, -cost, 0);
 
             // Send opening message via PM
             const openingMsg = openingMessages[Math.floor(Math.random() * openingMessages.length)];
-            bot.sendPrivateMessage(message.username, `🎁 Mystery Box Purchase\n\n${openingMsg}`);
+            bot.sendPrivateMessage(message.username, `🎁 Mystery Esky Purchase\n\n${openingMsg}`);
 
             // Determine outcome
             const roll = Math.random();
@@ -203,7 +203,7 @@ export default new Command({
                     );
                     
                     resultMessage = trapMessages[Math.floor(Math.random() * trapMessages.length)];
-                    resultMessage += `\n\n💊 Hospital bill: $${hospitalCost}`;
+                    resultMessage = resultMessage.replace('-cost', hospitalCost);
                     
                     // Deduct hospital costs
                     if (hospitalCost > 0) {
@@ -214,7 +214,7 @@ export default new Command({
                     if (bot.db) {
                         await bot.db.run(
                             'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, -hospitalCost, 'mystery_box', `Hospital bills from trap`, Date.now()]
+                            [message.username, -hospitalCost, 'mystery_esky', `Hospital bills from trap`, Date.now()]
                         );
                     }
                 } else if (roll < 0.85) {
@@ -244,14 +244,14 @@ export default new Command({
                     
                     // Public announcement for big wins
                     if (winnings >= 200) {
-                        publicAnnouncement = `🎊 MASSIVE WIN! ${message.username} just won $${winnings} from a mystery box! 🎊`;
+                        publicAnnouncement = `🎊 MASSIVE WIN! ${message.username} just won $${winnings} from a mystery esky! 🎊`;
                     }
                     
                     // Log win transaction
                     if (bot.db) {
                         await bot.db.run(
                             'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, winnings, 'mystery_box', `Won ${winnings} from mystery box`, Date.now()]
+                            [message.username, winnings, 'mystery_esky', `Won ${winnings} from mystery esky`, Date.now()]
                         );
                     }
                 }
@@ -291,7 +291,7 @@ export default new Command({
             return { success: true };
         } catch (error) {
             bot.logger.error('Mystery box command error:', error);
-            bot.sendPrivateMessage(message.username, 'mystery box machine broke mate');
+            bot.sendPrivateMessage(message.username, 'mystery esky machine broke mate');
             return { success: false };
         }
     }

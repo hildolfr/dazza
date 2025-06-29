@@ -72,7 +72,20 @@ export default new Command({
                     `got it -${message.username}, I'll poke ya in ${timeStr}`,
                     `easy -${message.username}, I'll hassle ya in ${timeStr}`,
                     `too easy mate, I'll remind ya in ${timeStr} unless I'm on the piss`,
-                    `alright -${message.username}, ${timeStr} from now I'll give ya a shout`
+                    `alright -${message.username}, ${timeStr} from now I'll give ya a shout`,
+                    `set a reminder on me phone... if I remember to charge it`,
+                    `yeah nah I'll try remember mate, no promises after this cone`,
+                    `reminders set, unless I'm passed out by then`,
+                    `I'll remind ya in ${timeStr} unless shazza's got me doin chores`,
+                    `${timeStr} from now I'll yell at ya, if I'm not too cooked`,
+                    `wrote it on me hand in permanent marker, see ya in ${timeStr}`,
+                    `reminder set for ${timeStr}, right after me next bong`,
+                    `I'll remind ya mate but ${timeStr} is a long time to stay sober`,
+                    `got it, I'll hassle ya in ${timeStr} like shazza hassles me for rent`,
+                    `reminder locked in tighter than me balls in these boardies`,
+                    `${timeStr} reminder set, that's about 3 cones from now`,
+                    `I'll ping ya in ${timeStr} unless I'm balls deep in somethin`,
+                    `reminder set mate, written on the back of a durrie packet`
                 ];
                 bot.sendMessage(selfResponses[Math.floor(Math.random() * selfResponses.length)]);
             } else {
@@ -84,7 +97,17 @@ export default new Command({
                     `easy done, -${targetUser} gets the message in ${timeStr}`,
                     `got it mate, I'll bug -${targetUser} in ${timeStr}`,
                     `sure thing, I'll let -${targetUser} know in ${timeStr}`,
-                    `no dramas, I'll remind -${targetUser} in ${timeStr} if they're around`
+                    `no dramas, I'll remind -${targetUser} in ${timeStr} if they're around`,
+                    `I'll nag -${targetUser} worse than me missus in ${timeStr}`,
+                    `gonna hassle -${targetUser} like a debt collector in ${timeStr}`,
+                    `I'll pester -${targetUser} in ${timeStr} unless they fucked off`,
+                    `reminder set to annoy the shit outta -${targetUser} in ${timeStr}`,
+                    `I'll harass -${targetUser} about it in ${timeStr}`,
+                    `gonna remind -${targetUser} harder than shazza reminds me about child support`,
+                    `I'll tell -${targetUser} in ${timeStr} if they haven't carked it`,
+                    `set to bother -${targetUser} in ${timeStr} like a mozzie at night`,
+                    `I'll bug -${targetUser} about it in ${timeStr}, no escape`,
+                    `gonna remind -${targetUser} like I'm their disappointed mother in ${timeStr}`
                 ];
                 bot.sendMessage(userResponses[Math.floor(Math.random() * userResponses.length)]);
             }
