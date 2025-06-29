@@ -30,11 +30,32 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 - `count` INTEGER DEFAULT 0
 - `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 
+### user_bongs
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `username` TEXT NOT NULL
+- `timestamp` INTEGER NOT NULL (Unix timestamp in milliseconds)
+- `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+
+### drink_counter
+- `date` TEXT PRIMARY KEY (Date string from toDateString())
+- `count` INTEGER DEFAULT 0
+- `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+
+### user_drinks
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `username` TEXT NOT NULL
+- `timestamp` INTEGER NOT NULL (Unix timestamp in milliseconds)
+- `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+
 ### Indexes
 - `idx_messages_username` on messages(username)
 - `idx_messages_timestamp` on messages(timestamp)
 - `idx_user_events_username` on user_events(username)
 - `idx_user_events_timestamp` on user_events(timestamp)
+- `idx_user_bongs_username` on user_bongs(username)
+- `idx_user_bongs_timestamp` on user_bongs(timestamp)
+- `idx_user_drinks_username` on user_drinks(username)
+- `idx_user_drinks_timestamp` on user_drinks(timestamp)
 
 ## Character Design
 - The bot should always attempt to act / roleplay like dazza the all australian bogan
