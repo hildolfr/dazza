@@ -14,6 +14,13 @@ export class Command {
         this.pmResponses = options.pmResponses || false; // Should responses go to PM instead of chat
         this.persistentCooldown = options.persistentCooldown || false; // Use persistent cooldown storage
         this.handler = options.handler;
+        
+        // Copy any additional methods from options
+        for (const key in options) {
+            if (typeof options[key] === 'function' && !this.hasOwnProperty(key)) {
+                this[key] = options[key];
+            }
+        }
     }
 
     async execute(bot, message, args) {
