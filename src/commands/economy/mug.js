@@ -275,7 +275,7 @@ export default new Command({
             // Announce the mugging attempt (ping the victim)
             bot.sendMessage(`-${message.username} is trying to mug ${targetUsername}!`);
             
-            // Set up response window (30 seconds)
+            // Set up response window (60 seconds)
             let victimResponded = false;
             const responseHandler = (msg) => {
                 if (msg.username.toLowerCase() === targetUsername.toLowerCase()) {
@@ -285,8 +285,8 @@ export default new Command({
             
             bot.on('userMessage', responseHandler);
             
-            // Wait 30 seconds for response
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            // Wait 60 seconds for response
+            await new Promise(resolve => setTimeout(resolve, 60000));
             
             // Remove the handler
             bot.removeListener('userMessage', responseHandler);
