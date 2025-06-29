@@ -11,12 +11,13 @@ export default new Command({
     category: 'economy',
     users: ['hildolfr'],
     cooldown: 5000,
+    pmAccepted: true,
 
     async handler(bot, message, args) {
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendMessage('economy system not ready yet mate');
+                bot.sendPrivateMessage(message.username, 'economy system not ready yet mate');
                 return { success: false };
             }
 
@@ -42,12 +43,12 @@ export default new Command({
                 responses.push(`dazza's down to $${dazzaBalance.balance}, must've hit the pokies again`);
             }
 
-            bot.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+            bot.sendPrivateMessage(message.username, responses[Math.floor(Math.random() * responses.length)]);
 
             return { success: true };
         } catch (error) {
             bot.logger.error('Dazza balance command error:', error);
-            bot.sendMessage('failed to check dazza\'s stash');
+            bot.sendPrivateMessage(message.username, 'failed to check dazza\'s stash');
             return { success: false };
         }
     }
