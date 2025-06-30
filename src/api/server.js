@@ -13,6 +13,7 @@ import { createRateLimiter } from './middleware/rateLimiter.js';
 import { createHealthRoutes } from './routes/health.js';
 import { createGalleryRoutes } from './routes/gallery.js';
 import { createStatsRoutes } from './routes/stats.js';
+import { createChatRoutes } from './routes/chat.js';
 import { setupWebSocketEvents } from './websocket/events.js';
 import { UpnpManager } from '../services/upnpManager.js';
 import { DoubleNatUpnpManager } from '../services/doubleNatUpnp.js';
@@ -255,6 +256,7 @@ export class ApiServer extends EventEmitter {
         router.use('/', createHealthRoutes(this));
         router.use('/gallery', createGalleryRoutes(this));
         router.use('/stats', createStatsRoutes(this));
+        router.use('/chat', createChatRoutes(this));
         
         // Mount versioned API
         this.app.use('/api/v1', router);
