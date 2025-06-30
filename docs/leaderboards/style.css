@@ -5903,3 +5903,639 @@ body {
         font-size: 1.5rem;
     }
 }
+/* ===== NEW SESSION STATISTICS STYLES ===== */
+/* High-tech HUD design with bogan inspiration */
+
+.session-stats-section {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 2px solid var(--vb-green);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.session-stats-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        var(--vb-gold), 
+        transparent
+    );
+    animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.tech-badge {
+    background: linear-gradient(90deg, var(--vb-green), var(--vb-gold));
+    color: #000;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 0 20px rgba(255, 199, 44, 0.5);
+}
+
+.session-hud {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.hud-panel {
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+    border: 1px solid rgba(0, 149, 79, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hud-panel::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--vb-green), var(--vb-gold), var(--vb-green));
+    border-radius: 15px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s;
+}
+
+.hud-panel:hover::after {
+    opacity: 0.3;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 199, 44, 0.2);
+}
+
+.panel-title {
+    color: var(--vb-gold);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.panel-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.panel-status.active {
+    color: #00ff00;
+}
+
+.panel-status.idle {
+    color: #ff6b35;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.stat-matrix {
+    display: grid;
+    gap: 15px;
+}
+
+.matrix-item {
+    background: rgba(0, 149, 79, 0.05);
+    border: 1px solid rgba(255, 199, 44, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.matrix-value-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.matrix-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(255, 199, 44, 0.5));
+}
+
+.matrix-content {
+    flex: 1;
+}
+
+.matrix-label {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.matrix-value {
+    font-size: 2rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 199, 44, 0.5);
+}
+
+.matrix-value.counter {
+    font-variant-numeric: tabular-nums;
+}
+
+.matrix-unit {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-left: 5px;
+}
+
+.mini-graph {
+    height: 20px;
+    width: 100%;
+}
+
+.performance-meter {
+    margin-top: 10px;
+}
+
+.meter-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--vb-green), var(--vb-gold));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.meter-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-20px); }
+    100% { transform: translateX(20px); }
+}
+
+.meter-label {
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: var(--vb-gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Epic Sessions Panel */
+.panel-badge {
+    background: rgba(255, 199, 44, 0.2);
+    color: var(--vb-gold);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.epic-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.epic-item {
+    background: linear-gradient(145deg, rgba(255, 199, 44, 0.05), rgba(0, 149, 79, 0.05));
+    border: 1px solid rgba(255, 199, 44, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.epic-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.epic-icon {
+    font-size: 1.5rem;
+}
+
+.epic-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.epic-stats {
+    display: grid;
+    gap: 10px;
+}
+
+.epic-main {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.epic-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--vb-gold);
+    text-shadow: 0 0 20px rgba(255, 199, 44, 0.5);
+}
+
+.epic-unit {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+}
+
+.epic-sub {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.epic-rank {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.epic-rank.god-tier {
+    background: linear-gradient(45deg, #ff6b35, #ffc72c);
+    color: #000;
+}
+
+.epic-rank.legendary {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #000;
+}
+
+.epic-rank.epic-tier {
+    background: linear-gradient(45deg, var(--vb-green), var(--vb-gold));
+    color: #000;
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 10px currentColor; }
+    50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+}
+
+/* Time Tracker Panel */
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ff0000;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.pulse {
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: livePulse 1s infinite;
+}
+
+@keyframes livePulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.time-display {
+    display: grid;
+    gap: 20px;
+}
+
+.last-cone-info {
+    text-align: center;
+}
+
+.time-label {
+    display: block;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.time-counter {
+    position: relative;
+}
+
+.time-value {
+    font-size: 1.8rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 199, 44, 0.5);
+}
+
+.time-visual {
+    margin-top: 10px;
+}
+
+.time-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.time-bar .time-fill {
+    height: 100%;
+    transition: width 0.5s, background 0.5s;
+}
+
+.time-bar.very-recent .time-fill { background: #00ff00; }
+.time-bar.recent .time-fill { background: #90ee90; }
+.time-bar.moderate .time-fill { background: #ffd700; }
+.time-bar.getting-dry .time-fill { background: #ff8c00; }
+.time-bar.drought .time-fill { background: #ff0000; }
+
+.cone-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.status-icon {
+    font-size: 2rem;
+}
+
+.status-message {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--vb-gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tolerance-meter {
+    text-align: center;
+}
+
+.tolerance-label {
+    display: block;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tolerance-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tolerance-bar {
+    flex: 1;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.tolerance-fill {
+    height: 100%;
+    background: linear-gradient(90deg, 
+        #00ff00 0%, 
+        #90ee90 25%, 
+        #ffd700 50%, 
+        #ff8c00 75%, 
+        #ff0000 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.5s;
+}
+
+.tolerance-text {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tolerance-icon {
+    font-size: 1.5rem;
+}
+
+/* Speed Stats Panel */
+.speed-display {
+    text-align: center;
+}
+
+.speedometer {
+    margin: 20px auto;
+}
+
+.speed-gauge {
+    width: 200px;
+    height: 120px;
+}
+
+.speed-gauge path {
+    transition: all 0.5s;
+}
+
+.speed-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    fill: var(--vb-gold);
+    text-shadow: 0 0 10px rgba(255, 199, 44, 0.5);
+}
+
+.speed-unit {
+    font-size: 1rem;
+    fill: rgba(255, 255, 255, 0.6);
+}
+
+.speed-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 10px;
+}
+
+.speed-date {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.speed-breakdown {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.breakdown-item {
+    margin-bottom: 10px;
+}
+
+.breakdown-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.breakdown-value {
+    font-size: 1.2rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.speed-rating {
+    margin-top: 15px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.speed-rating.insane {
+    background: linear-gradient(45deg, #ff0000, #ff6b35);
+    color: #fff;
+    animation: flash 0.5s infinite;
+}
+
+.speed-rating.rapid {
+    background: linear-gradient(45deg, var(--vb-gold), #ff8c00);
+    color: #000;
+}
+
+.speed-rating.steady {
+    background: linear-gradient(45deg, var(--vb-green), var(--vb-gold));
+    color: #000;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Session Footer */
+.session-footer {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border-top: 1px solid rgba(255, 199, 44, 0.2);
+}
+
+.footer-stats {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.footer-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.footer-icon {
+    font-size: 1.2rem;
+}
+
+.footer-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-value {
+    font-size: 1.1rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+.footer-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Gradient Definitions */
+#tech-gradient {
+    background: linear-gradient(90deg, var(--vb-green), var(--vb-gold));
+}
+
+#speed-gradient {
+    background: linear-gradient(90deg, #00ff00, #ffff00, #ff8c00, #ff0000);
+}
+EOF < /dev/null
