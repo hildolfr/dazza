@@ -3,7 +3,8 @@ import { BatchJob } from '../BatchJob.js';
 export class ActiveHoursAnalyzer extends BatchJob {
     constructor(db, logger, timezoneOffset = 0) {
         super('ActiveHoursAnalyzer', db, logger);
-        this.timezoneOffset = timezoneOffset; // Hours offset from UTC
+        // Ensure timezoneOffset is a valid number
+        this.timezoneOffset = parseInt(timezoneOffset) || 0; // Hours offset from UTC
         this.batchSize = 10000;
     }
 
@@ -25,7 +26,7 @@ export class ActiveHoursAnalyzer extends BatchJob {
             WHERE LOWER(username) != ?
                 AND username NOT LIKE '[%]'
             GROUP BY LOWER(username), hour
-        `, [`+${this.timezoneOffset}`, this.db.botUsername]);
+        `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
 
         this.logger.info(`[ActiveHoursAnalyzer] Processing ${hourlyStats.length} user-hour combinations`);
 

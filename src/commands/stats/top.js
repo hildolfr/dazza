@@ -2,189 +2,53 @@ import { Command } from '../base.js';
 
 export default new Command({
     name: 'top',
-    description: 'Show leaderboards',
-    usage: '!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]',
+    aliases: ['leaderboard'],
+    description: 'Get the leaderboards site',
+    usage: '!top',
     category: 'stats',
     cooldown: 2000,
     
     async handler(bot, message, args) {
-        const category = args[0]?.toLowerCase();
+        const leaderboardUrl = 'https://hildolfr.github.io/dazza/leaderboards/';
+        
+        // Bogan responses for the PM
+        const pmResponses = [
+            `oi mate, here's ya bloody leaderboards: ${leaderboardUrl}`,
+            `check out who's winnin' at life: ${leaderboardUrl}`,
+            `feast ya eyes on this beauty: ${leaderboardUrl}`,
+            `scope the legends here mate: ${leaderboardUrl}`,
+            `have a squiz at the top dogs: ${leaderboardUrl}`,
+            `here's where the real cunts hang: ${leaderboardUrl}`,
+            `hall of fame's right here mate: ${leaderboardUrl}`,
+            `wanna see who's king shit? ${leaderboardUrl}`,
+            `leaderboards sorted, here ya go: ${leaderboardUrl}`,
+            `all the stats ya need: ${leaderboardUrl}`
+        ];
+        
+        // Bogan acknowledgments for public chat
+        const publicAcks = [
+            `oi -${message.username}, check ya PMs mate`,
+            `sent ya the goods -${message.username}`,
+            `PM'd ya the link -${message.username}`,
+            `check ya messages -${message.username}`,
+            `sorted, check PMs -${message.username}`,
+            `sent it to ya inbox -${message.username}`,
+            `PM incoming -${message.username}`,
+            `check ya DMs legend -${message.username}`
+        ];
         
         try {
-            // If no category specified, list options
-            if (!category) {
-                bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]');
-                return { success: true };
+            // Pick random responses
+            const pmMessage = pmResponses[Math.floor(Math.random() * pmResponses.length)];
+            const publicMessage = publicAcks[Math.floor(Math.random() * publicAcks.length)];
+            
+            // Send PM with the URL
+            bot.pm(message.username, pmMessage);
+            
+            // If command was used in public chat, acknowledge it
+            if (!message.isPM) {
+                bot.sendMessage(publicMessage);
             }
-            
-            let results;
-            let title;
-            
-            switch (category) {
-                case 'talkers':
-                case 'talker':
-                    results = await bot.db.getTopTalkers(5);
-                    title = 'Top yappers:';
-                    break;
-                    
-                case 'bongs':
-                case 'bong':
-                    results = await bot.db.getTopBongUsers(5);
-                    title = '🌿 Most cooked cunts:';
-                    break;
-                    
-                case 'drinkers':
-                case 'drinker':
-                case 'drinks':
-                case 'drink':
-                case 'pissheads':
-                case 'alcoholics':
-                    results = await bot.db.getTopDrinkers(5);
-                    title = '🍺 Top Piss-heads:';
-                    break;
-                    
-                case 'quoted':
-                case 'quotes':
-                    results = await bot.db.getTopQuotedUsers(5);
-                    title = '💬 QUOTABLE LEGENDS 💬\nApparently these cunts are funny:';
-                    break;
-                    
-                case 'gamblers':
-                case 'gambler':
-                case 'gambling':
-                    results = await bot.db.getTopGamblers(5);
-                    title = '🎰 LUCKY BASTARDS AT THE POKIES 🎰\nBiggest wins (probably all lost by now):';
-                    break;
-                    
-                case 'fishing':
-                case 'fish':
-                case 'fishers':
-                    results = await bot.db.getTopFishers(5);
-                    title = '🎣 MASTER BAITERS LEADERBOARD 🎣\nBiggest catches down at the wharf:';
-                    break;
-                    
-                case 'bottles':
-                case 'bottle':
-                case 'recycling':
-                    results = await bot.db.getTopBottleCollectors(5);
-                    title = '♻️ ECO WARRIORS AT THE DEPOT ♻️\nTop bottle collectors (professional piss-heads):';
-                    break;
-                    
-                case 'cashie':
-                case 'cashies':
-                case 'cash':
-                    results = await bot.db.getTopCashieWorkers(5);
-                    title = '💪 HARDEST WORKING CASH-IN-HAND CREW 💪\nThese legends know how to hustle:';
-                    break;
-                    
-                case 'beggars':
-                case 'beggar':
-                case 'begging':
-                case 'beg':
-                    results = await bot.db.getTopBeggars(5);
-                    title = '🤲 SHAMELESS BEGGARS 🤲\nThese pathetic cunts have no dignity:';
-                    break;
-                    
-                case 'sign_spinning':
-                case 'sign':
-                case 'signspinning':
-                case 'signs':
-                    results = await bot.db.getTopSignSpinners(5);
-                    title = '🪧 PROFESSIONAL SIGN SPINNERS 🪧\nMasters of roadside advertising:';
-                    break;
-                    
-                case 'pissers':
-                case 'pisser':
-                case 'piss':
-                case 'pissing':
-                    results = await bot.db.getTopPissers(5);
-                    title = '🏆 TOP PISSERS 🏆\nDominant dick-slingers:';
-                    break;
-                    
-                default:
-                    bot.sendMessage('!top [talkers|bongs|drinkers|quoted|gamblers|fishing|bottles|cashie|sign_spinning|beggars|pissers]');
-                    return { success: true };
-            }
-            
-            if (!results || results.length === 0) {
-                bot.sendMessage('fuck all data on that one yet');
-                return { success: true };
-            }
-            
-            const topList = results.map((r, i) => {
-                let value;
-                let extra = '';
-                
-                if (category === 'gamblers' || category === 'gambler' || category === 'gambling') {
-                    value = `$${r.biggest_win}`;
-                    // Add win type
-                    if (r.transaction_type === 'pokies') extra = ' (pokies)';
-                    else if (r.transaction_type === 'scratchie') extra = ' (scratchie)';
-                    else if (r.transaction_type === 'tab') extra = ' (TAB)';
-                    if (r.biggest_win >= 1000) extra += ' 💰';
-                } else if (category === 'fishing' || category === 'fish' || category === 'fishers') {
-                    value = `${r.biggest_catch}kg ${r.fish_type || ''}`;
-                    if (r.biggest_catch >= 10) extra = ' 🐋';
-                    else if (r.biggest_catch >= 5) extra = ' 🦈';
-                } else if (category === 'bongs' || category === 'bong') {
-                    value = `${r.bong_count} cones`;
-                    if (r.bong_count >= 100) extra = ' 💀';
-                } else if (category === 'drinkers' || category === 'drinker' || category === 'drinks' || category === 'drink' || category === 'pissheads' || category === 'alcoholics') {
-                    value = `${r.drink_count} drinks`;
-                    if (r.drink_count >= 500) extra = ' 💀';
-                    else if (r.drink_count >= 100) extra = ' 🍺';
-                } else if (category === 'quoted' || category === 'quotes') {
-                    value = `${r.quotable_messages} bangers`;
-                } else if (category === 'bottles' || category === 'bottle' || category === 'recycling') {
-                    value = `$${r.total_earnings} (${r.collection_count} runs)`;
-                    if (r.total_earnings >= 1000) extra = ' 🏆';
-                    else if (r.total_earnings >= 500) extra = ' 💰';
-                } else if (category === 'cashie' || category === 'cashies' || category === 'cash') {
-                    value = `$${r.total_earnings} (${r.job_count} jobs)`;
-                    if (r.total_earnings >= 3000) extra = ' 🤑';
-                    else if (r.total_earnings >= 1500) extra = ' 💸';
-                    else if (r.total_earnings >= 500) extra = ' 💰';
-                } else if (category === 'beggars' || category === 'beggar' || category === 'begging' || category === 'beg') {
-                    value = `${r.times_begged} begs, $${r.total_received} (${r.success_rate}% success)`;
-                    if (r.times_robbed > 0) {
-                        value = `${r.times_begged} begs, $${r.total_received} (robbed ${r.times_robbed}x)`;
-                    }
-                    // Add shaming emojis for frequent beggars
-                    if (r.times_begged >= 20) extra = ' 🤡💩';
-                    else if (r.times_begged >= 10) extra = ' 🤡';
-                    else if (r.times_begged >= 5) extra = ' 😔';
-                } else if (category === 'sign_spinning' || category === 'sign' || category === 'signspinning' || category === 'signs') {
-                    value = `$${r.total_earnings} (${r.total_spins} shifts)`;
-                    if (r.perfect_days > 0) extra = ` ${r.perfect_days} perfect days 🌟`;
-                    else if (r.best_shift >= 100) extra = ' 💪';
-                    else if (r.cops_called > 0) extra = ` (${r.cops_called}x cop trouble)`;
-                } else if (category === 'pissers' || category === 'pisser' || category === 'piss' || category === 'pissing') {
-                    const winRate = r.win_rate ? r.win_rate.toFixed(1) : '0';
-                    value = `${r.wins}W/${r.losses}L (${winRate}%)`;
-                    
-                    // Add their specialty based on best stats
-                    if (r.best_distance >= 4.5) {
-                        extra = ` 📏${r.best_distance.toFixed(1)}m "Fire Hose"`;
-                    } else if (r.best_aim >= 95) {
-                        extra = ` 🎯${Math.round(r.best_aim)}% "Sniper"`;
-                    } else if (r.best_duration >= 25) {
-                        extra = ` ⏱️${Math.round(r.best_duration)}s "Marathon Man"`;
-                    } else if (r.best_volume >= 1800) {
-                        extra = ` 💧${Math.round(r.best_volume)}mL "The Camel"`;
-                    } else if (r.money_won >= 1000) {
-                        extra = ` 💰$${r.money_won} won`;
-                    }
-                    
-                    // Add legendary status
-                    if (r.wins >= 50) extra += ' 👑';
-                    else if (r.wins >= 25) extra += ' ⭐';
-                } else {
-                    value = `${r.message_count} messages`;
-                }
-                return `${i + 1}. -${r.username}: ${value}${extra}`;
-            }).join('\n');
-            
-            bot.sendMessage(`${title}\n${topList}`);
             
             return { success: true };
         } catch (error) {

@@ -1978,17 +1978,16 @@ function renderConsumptionStats(data, category, username) {
 }
 
 function renderBongStats(data, username) {
-    const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
-    const avgPerDay = data.avgPerDay;
-    const daysActive = data.dailyStats.length;
-    const maxDay = data.dailyStats.reduce((max, d) => d.count > max.count ? d : max, data.dailyStats[0]);
-    const toleranceLevel = calculateToleranceLevel(total, daysActive);
-    const sessionIntensity = avgPerDay > 0 ? Math.min((avgPerDay / 50) * 100, 100) : 0;
+    const total = data.records.totalCones;
+    const avgPerDay = parseFloat(data.avgPerDay);
+    const daysActive = data.records.daysActive;
+    const maxDay = data.records.recordDay;
     
-    // Calculate time patterns
-    const morningBongs = Math.round(total * 0.25);
-    const afternoonBongs = Math.round(total * 0.35);
-    const eveningBongs = Math.round(total * 0.4);
+    // Use real time patterns from API
+    const morningBongs = data.timePatterns.morning.count;
+    const afternoonBongs = data.timePatterns.afternoon.count;
+    const eveningBongs = data.timePatterns.evening.count;
+    const nightBongs = data.timePatterns.night.count;
     
     let html = `
         <div class="stat-section stoner-section">
@@ -2016,7 +2015,7 @@ function renderBongStats(data, username) {
                     <div class="stat-icon">🏆</div>
                     <span class="stat-label">Record Day</span>
                     <span class="stat-value large-value">${maxDay ? maxDay.count : 0}</span>
-                    <div class="record-date">${maxDay ? new Date(maxDay.date).toLocaleDateString() : 'N/A'}</div>
+                    <div class="record-date">${maxDay ? new Date(maxDay.date + 'T00:00:00').toLocaleDateString() : 'N/A'}</div>
                 </div>
                 <div class="stat-item glass-card smoke-card highlight-card">
                     <div class="stat-icon">🔥</div>
@@ -2033,40 +2032,53 @@ function renderBongStats(data, username) {
                 <div class="time-period morning">
                     <div class="period-header">
                         <span class="period-icon">🌅</span>
-                        <span class="period-name">Wake & Bake</span>
+                        <span class="period-name">Morning (6am-12pm)</span>
                     </div>
                     <div class="period-stats">
                         <span class="period-count">${morningBongs} cones</span>
                         <div class="period-bar">
-                            <div class="bar-fill" style="width: ${(morningBongs / total) * 100}%"></div>
+                            <div class="bar-fill" style="width: ${data.timePatterns.morning.percentage}%"></div>
                         </div>
-                        <span class="period-percent">${((morningBongs / total) * 100).toFixed(1)}%</span>
+                        <span class="period-percent">${data.timePatterns.morning.percentage}%</span>
                     </div>
                 </div>
                 <div class="time-period afternoon">
                     <div class="period-header">
                         <span class="period-icon">☀️</span>
-                        <span class="period-name">Arvo Sessions</span>
+                        <span class="period-name">Afternoon (12pm-6pm)</span>
                     </div>
                     <div class="period-stats">
                         <span class="period-count">${afternoonBongs} cones</span>
                         <div class="period-bar">
-                            <div class="bar-fill" style="width: ${(afternoonBongs / total) * 100}%"></div>
+                            <div class="bar-fill" style="width: ${data.timePatterns.afternoon.percentage}%"></div>
                         </div>
-                        <span class="period-percent">${((afternoonBongs / total) * 100).toFixed(1)}%</span>
+                        <span class="period-percent">${data.timePatterns.afternoon.percentage}%</span>
                     </div>
                 </div>
                 <div class="time-period evening">
                     <div class="period-header">
                         <span class="period-icon">🌙</span>
-                        <span class="period-name">Night Sesh</span>
+                        <span class="period-name">Evening (6pm-12am)</span>
                     </div>
                     <div class="period-stats">
                         <span class="period-count">${eveningBongs} cones</span>
                         <div class="period-bar">
-                            <div class="bar-fill" style="width: ${(eveningBongs / total) * 100}%"></div>
+                            <div class="bar-fill" style="width: ${data.timePatterns.evening.percentage}%"></div>
                         </div>
-                        <span class="period-percent">${((eveningBongs / total) * 100).toFixed(1)}%</span>
+                        <span class="period-percent">${data.timePatterns.evening.percentage}%</span>
+                    </div>
+                </div>
+                <div class="time-period night">
+                    <div class="period-header">
+                        <span class="period-icon">🌛</span>
+                        <span class="period-name">Night (12am-6am)</span>
+                    </div>
+                    <div class="period-stats">
+                        <span class="period-count">${nightBongs} cones</span>
+                        <div class="period-bar">
+                            <div class="bar-fill" style="width: ${data.timePatterns.night.percentage}%"></div>
+                        </div>
+                        <span class="period-percent">${data.timePatterns.night.percentage}%</span>
                     </div>
                 </div>
             </div>
@@ -2075,118 +2087,108 @@ function renderBongStats(data, username) {
         <div class="stat-section">
             <h3>🏆 Session Records</h3>
             <div class="records-display">
+                ${data.sessions.fastestRate ? `
                 <div class="record-card">
                     <div class="record-icon">⚡</div>
                     <div class="record-info">
-                        <span class="record-label">Fastest Session</span>
-                        <span class="record-value">${Math.max(5, Math.round(maxDay ? maxDay.count / 4 : 5))} cones/hour</span>
+                        <span class="record-label">Fastest Rate</span>
+                        <span class="record-value">${data.sessions.fastestRate.conesPerHour} cones/hour</span>
+                        <div class="record-date">${new Date(data.sessions.fastestRate.date).toLocaleDateString()}</div>
                     </div>
                 </div>
+                ` : ''}
                 <div class="record-card">
                     <div class="record-icon">🎯</div>
                     <div class="record-info">
-                        <span class="record-label">Longest Streak</span>
-                        <span class="record-value">${Math.min(daysActive, 30)} days</span>
+                        <span class="record-label">Current Streak</span>
+                        <span class="record-value">${data.streaks.current} days</span>
                     </div>
                 </div>
+                <div class="record-card">
+                    <div class="record-icon">🏆</div>
+                    <div class="record-info">
+                        <span class="record-label">Longest Streak</span>
+                        <span class="record-value">${data.streaks.longest} days</span>
+                    </div>
+                </div>
+                ${data.sessions.biggestSession ? `
                 <div class="record-card">
                     <div class="record-icon">💨</div>
                     <div class="record-info">
                         <span class="record-label">Biggest Session</span>
-                        <span class="record-value">${Math.round(maxDay ? maxDay.count * 0.4 : 10)} in a row</span>
+                        <span class="record-value">${data.sessions.biggestSession.coneCount} cones</span>
+                        <div class="record-date">${new Date(data.sessions.biggestSession.date).toLocaleDateString()}</div>
                     </div>
                 </div>
+                ` : ''}
+                ${data.records.weeklyPeak ? `
                 <div class="record-card">
                     <div class="record-icon">🌿</div>
                     <div class="record-info">
                         <span class="record-label">Weekly Peak</span>
-                        <span class="record-value">${Math.round(avgPerDay * 7 * 1.2)} cones</span>
+                        <span class="record-value">${data.records.weeklyPeak.count} cones</span>
+                        <div class="record-date">${new Date(data.records.weeklyPeak.date).toLocaleDateString()}</div>
+                    </div>
+                </div>
+                ` : ''}
+                <div class="record-card">
+                    <div class="record-icon">📊</div>
+                    <div class="record-info">
+                        <span class="record-label">Total Sessions</span>
+                        <span class="record-value">${data.sessions.total}</span>
                     </div>
                 </div>
             </div>
         </div>
         
+        ${data.sessions.total > 0 ? `
         <div class="stat-section">
-            <h3>🧪 Tolerance Tracking</h3>
-            <div class="tolerance-display">
-                <div class="tolerance-meter">
-                    <div class="meter-header">
-                        <span class="meter-title">Tolerance Level</span>
-                        <span class="meter-emoji">${getToleranceEmoji(toleranceLevel)}</span>
-                    </div>
-                    <div class="tolerance-gauge">
-                        <svg viewBox="0 0 200 120" class="gauge-svg">
-                            <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track"/>
-                            <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill tolerance-gradient" 
-                                  style="stroke-dasharray: ${toleranceLevel * 2.51} ${251 - (toleranceLevel * 2.51)}"/>
-                        </svg>
-                        <div class="gauge-center">
-                            <span class="gauge-value">${toleranceLevel}%</span>
-                            <span class="gauge-label">${getToleranceLevel(toleranceLevel)}</span>
-                        </div>
-                    </div>
+            <h3>📋 Session Statistics</h3>
+            <div class="session-stats-grid">
+                <div class="session-stat-card">
+                    <div class="session-icon">📊</div>
+                    <span class="session-label">Total Sessions</span>
+                    <span class="session-value">${data.sessions.total}</span>
                 </div>
-                <div class="tolerance-stats">
-                    <div class="tol-stat">
-                        <span class="tol-label">Daily Requirement:</span>
-                        <span class="tol-value">${Math.round(avgPerDay * 1.2)} cones</span>
-                    </div>
-                    <div class="tol-stat">
-                        <span class="tol-label">Build-up Rate:</span>
-                        <span class="tol-value">${(toleranceLevel / daysActive).toFixed(1)}% per day</span>
-                    </div>
-                    <div class="tol-stat">
-                        <span class="tol-label">Status:</span>
-                        <span class="tol-value ${toleranceLevel >= 80 ? 'extreme' : toleranceLevel >= 50 ? 'high' : 'moderate'}">${getToleranceStatus(toleranceLevel)}</span>
-                    </div>
+                <div class="session-stat-card">
+                    <div class="session-icon">🎯</div>
+                    <span class="session-label">Average per Session</span>
+                    <span class="session-value">${data.sessions.averageConesPerSession} cones</span>
                 </div>
+                ${data.sessions.longestSession ? `
+                <div class="session-stat-card">
+                    <div class="session-icon">⏱️</div>
+                    <span class="session-label">Longest Session</span>
+                    <span class="session-value">${Math.round(data.sessions.longestSession.duration / 60000)} mins</span>
+                    <div class="session-detail">${data.sessions.longestSession.coneCount} cones</div>
+                </div>
+                ` : ''}
+                ${data.records.lastBongTimestamp ? `
+                <div class="session-stat-card">
+                    <div class="session-icon">⏰</div>
+                    <span class="session-label">Last Cone</span>
+                    <span class="session-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
+                </div>
+                ` : ''}
             </div>
         </div>
+        ` : ''}
         
         <div class="stat-section">
-            <h3>👥 Social Stats</h3>
-            <div class="social-display">
-                <div class="social-grid">
-                    <div class="social-card">
-                        <div class="social-icon">🤝</div>
-                        <div class="social-info">
-                            <span class="social-label">Session Partners</span>
-                            <span class="social-value">${Math.round(total * 0.15)} shared</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 15%"></div>
+            <h3>🕑 Hourly Breakdown</h3>
+            <div class="hourly-chart">
+                <div class="hourly-grid">
+                    ${data.timePatterns.hourly.map((hour) => {
+                        const maxHourCount = Math.max(...data.timePatterns.hourly.map(h => h.count));
+                        const height = maxHourCount > 0 ? (hour.count / maxHourCount) * 100 : 0;
+                        return `
+                        <div class="hour-bar-wrapper">
+                            <div class="hour-bar" style="height: ${height}%" title="${hour.count} cones at ${hour.hour}:00">
+                                ${hour.count > 0 ? `<span class="hour-count">${hour.count}</span>` : ''}
                             </div>
+                            <span class="hour-label">${hour.hour}</span>
                         </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">🎉</div>
-                        <div class="social-info">
-                            <span class="social-label">Party Sessions</span>
-                            <span class="social-value">${Math.round(daysActive * 0.1)} nights</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: ${(daysActive * 0.1 / daysActive) * 100}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">🏠</div>
-                        <div class="social-info">
-                            <span class="social-label">Solo Sessions</span>
-                            <span class="social-value">${Math.round(total * 0.85)} cones</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 85%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">💬</div>
-                        <div class="social-info">
-                            <span class="social-label">Sesh Stories</span>
-                            <span class="social-value">${Math.round(daysActive * 0.3)} shared</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 30%"></div>
-                            </div>
-                        </div>
-                    </div>
+                    `}).join('')}
                 </div>
             </div>
         </div>
@@ -2195,14 +2197,16 @@ function renderBongStats(data, username) {
             <h3>📊 Consumption Timeline</h3>
             <div class="timeline-chart">
                 <div class="chart-container">
-                    ${data.dailyStats.slice(-10).map((day, index) => `
+                    ${data.dailyStats.slice(-10).map((day, index) => {
+                        const maxCount = Math.max(...data.dailyStats.slice(-10).map(d => d.count));
+                        return `
                         <div class="day-bar" style="animation-delay: ${index * 0.05}s">
-                            <div class="bar-column" style="height: ${(day.count / maxDay.count) * 100}%">
+                            <div class="bar-column" style="height: ${(day.count / maxCount) * 100}%">
                                 <span class="bar-value">${day.count}</span>
                             </div>
-                            <span class="bar-date">${new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                            <span class="bar-date">${new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             </div>
         </div>
@@ -2466,6 +2470,19 @@ function renderDrinkStats(data, username) {
     `;
     
     return html;
+}
+
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
 }
 
 function calculateToleranceLevel(total, days) {

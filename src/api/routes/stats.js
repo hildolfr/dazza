@@ -1051,13 +1051,162 @@ export function createStatsRoutes(apiServer) {
                         [normalizedUsername]
                     );
                     
-                    if (category === 'bongs' || category === 'drinks') {
-                        const tableName = category === 'bongs' ? 'user_bongs' : 'user_drinks';
+                    if (category === 'bongs') {
+                        // Get comprehensive bong statistics
+                        const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
+                        
+                        // Get daily stats
+                        const dailyStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                DATE((timestamp + ${TIMEZONE_OFFSET})/1000, 'unixepoch') as date,
+                                COUNT(*) as count
+                            FROM user_bongs
+                            WHERE LOWER(username) = ?
+                            GROUP BY date
+                            ORDER BY date DESC
+                            LIMIT 30
+                        `, [normalizedUsername]);
+                        
+                        // Get hourly breakdown
+                        const hourlyStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                hour,
+                                COUNT(*) as count
+                            FROM user_bongs
+                            WHERE LOWER(username) = ?
+                            GROUP BY hour
+                            ORDER BY hour
+                        `, [normalizedUsername]);
+                        
+                        // Calculate time patterns
+                        const totalBongs = hourlyStats.reduce((sum, h) => sum + h.count, 0);
+                        const timePatterns = {
+                            hourly: Array.from({length: 24}, (_, hour) => {
+                                const hourData = hourlyStats.find(h => h.hour === hour) || { count: 0 };
+                                return {
+                                    hour,
+                                    count: hourData.count,
+                                    percentage: totalBongs > 0 ? ((hourData.count / totalBongs) * 100).toFixed(1) : '0.0'
+                                };
+                            }),
+                            morning: { count: 0, percentage: 0 },   // 6am-12pm
+                            afternoon: { count: 0, percentage: 0 }, // 12pm-6pm
+                            evening: { count: 0, percentage: 0 },   // 6pm-12am
+                            night: { count: 0, percentage: 0 }      // 12am-6am
+                        };
+                        
+                        // Calculate period totals
+                        hourlyStats.forEach(h => {
+                            if (h.hour >= 6 && h.hour < 12) timePatterns.morning.count += h.count;
+                            else if (h.hour >= 12 && h.hour < 18) timePatterns.afternoon.count += h.count;
+                            else if (h.hour >= 18 && h.hour < 24) timePatterns.evening.count += h.count;
+                            else timePatterns.night.count += h.count;
+                        });
+                        
+                        if (totalBongs > 0) {
+                            timePatterns.morning.percentage = ((timePatterns.morning.count / totalBongs) * 100).toFixed(1);
+                            timePatterns.afternoon.percentage = ((timePatterns.afternoon.count / totalBongs) * 100).toFixed(1);
+                            timePatterns.evening.percentage = ((timePatterns.evening.count / totalBongs) * 100).toFixed(1);
+                            timePatterns.night.percentage = ((timePatterns.night.count / totalBongs) * 100).toFixed(1);
+                        }
+                        
+                        // Get session data
+                        const sessions = await apiServer.bot.db.all(`
+                            SELECT * FROM bong_sessions
+                            WHERE LOWER(username) = ?
+                            ORDER BY session_start DESC
+                        `, [normalizedUsername]);
+                        
+                        const longestSession = sessions.reduce((max, s) => 
+                            (!max || s.cone_count > max.cone_count) ? s : max, null);
+                        
+                        const fastestSession = sessions.reduce((max, s) => 
+                            (!max || s.max_cones_per_hour > max.max_cones_per_hour) ? s : max, null);
+                        
+                        // Get streak data
+                        const streakData = await apiServer.bot.db.get(
+                            'SELECT * FROM user_bong_streaks WHERE LOWER(username) = ?',
+                            [normalizedUsername]
+                        );
+                        
+                        // Get record day
+                        const recordDay = dailyStats.reduce((max, d) => 
+                            (!max || d.count > max.count) ? d : max, dailyStats[0]);
+                        
+                        // Get weekly peak (last 7 days)
+                        const weekAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000));
+                        const weeklyStats = await apiServer.bot.db.get(`
+                            SELECT 
+                                DATE((timestamp + ${TIMEZONE_OFFSET})/1000, 'unixepoch') as date,
+                                COUNT(*) as count
+                            FROM user_bongs
+                            WHERE LOWER(username) = ? 
+                            AND timestamp > ?
+                            GROUP BY date
+                            ORDER BY count DESC
+                            LIMIT 1
+                        `, [normalizedUsername, weekAgo.getTime()]);
+                        
+                        // Get last bong time for "time since last"
+                        const lastBong = await apiServer.bot.db.get(
+                            'SELECT MAX(timestamp) as last_timestamp FROM user_bongs WHERE LOWER(username) = ?',
+                            [normalizedUsername]
+                        );
+                        
+                        data = {
+                            basicStats,
+                            dailyStats,
+                            avgPerDay: dailyStats.length > 0 
+                                ? (dailyStats.reduce((sum, d) => sum + d.count, 0) / dailyStats.length).toFixed(1)
+                                : 0,
+                            timePatterns,
+                            sessions: {
+                                total: sessions.length,
+                                averageConesPerSession: sessions.length > 0 
+                                    ? (sessions.reduce((sum, s) => sum + s.cone_count, 0) / sessions.length).toFixed(1)
+                                    : 0,
+                                longestSession: longestSession ? {
+                                    date: new Date(longestSession.session_start).toISOString().split('T')[0],
+                                    startTime: new Date(longestSession.session_start).toTimeString().split(' ')[0].substring(0, 5),
+                                    duration: longestSession.session_end - longestSession.session_start,
+                                    coneCount: longestSession.cone_count
+                                } : null,
+                                biggestSession: longestSession ? {
+                                    date: new Date(longestSession.session_start).toISOString().split('T')[0],
+                                    coneCount: longestSession.cone_count
+                                } : null,
+                                fastestRate: fastestSession ? {
+                                    date: new Date(fastestSession.session_start).toISOString().split('T')[0],
+                                    conesPerHour: fastestSession.max_cones_per_hour,
+                                    sessionCones: fastestSession.cone_count
+                                } : null
+                            },
+                            streaks: {
+                                current: streakData?.current_streak || 0,
+                                longest: streakData?.longest_streak || 0,
+                                currentStartDate: streakData?.streak_start_date || null,
+                                lastBongDate: streakData?.last_bong_date || null
+                            },
+                            records: {
+                                recordDay: recordDay ? {
+                                    date: recordDay.date,
+                                    count: recordDay.count
+                                } : null,
+                                weeklyPeak: weeklyStats ? {
+                                    date: weeklyStats.date,
+                                    count: weeklyStats.count
+                                } : null,
+                                totalCones: totalBongs,
+                                daysActive: dailyStats.length,
+                                lastBongTimestamp: lastBong?.last_timestamp || null
+                            }
+                        };
+                    } else if (category === 'drinks') {
                         const dailyStats = await apiServer.bot.db.all(`
                             SELECT 
                                 DATE(timestamp/1000, 'unixepoch') as date,
                                 COUNT(*) as count
-                            FROM ${tableName}
+                            FROM user_drinks
                             WHERE LOWER(username) = ?
                             GROUP BY date
                             ORDER BY date DESC

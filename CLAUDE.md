@@ -103,3 +103,6 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 
 ## Logging Guidelines
 - When told to check logs we will ALWAYS presume to check logs/console_log.txt first. its often the most recent
+
+## Timezone Configuration
+- We shall calculate timezones assuming UTC+10, eastern australia. Server time is UTC-8.
