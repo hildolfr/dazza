@@ -37,7 +37,15 @@ export class DoubleNatUpnpManager {
     // Get real external IP from external service
     async getRealExternalIp() {
         try {
-            const response = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
+            // Create an AbortController for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const response = await fetch('https://api.ipify.org?format=json', { 
+                signal: controller.signal 
+            });
+            clearTimeout(timeoutId);
+            
             const data = await response.json();
             return data.ip;
         } catch (error) {
@@ -172,6 +180,11 @@ export class DoubleNatUpnpManager {
 
     // Alternative: Try to use UPnP-IGD on the modem through HTTP
     async tryModemUPnP(modemIp = '192.168.254.1') {
+        // Skip modem UPnP discovery for now - it's causing hangs
+        this.logger.debug(`[DoubleNAT] Skipping modem UPnP discovery (not implemented)`);
+        return false;
+        
+        /* Disabled due to hanging issues
         this.logger.info(`[DoubleNAT] Attempting to discover UPnP on modem at ${modemIp}`);
         
         try {
@@ -203,6 +216,7 @@ export class DoubleNatUpnpManager {
         }
         
         return false;
+        */
     }
 
     // Setup with double NAT awareness
