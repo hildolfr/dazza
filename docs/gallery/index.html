@@ -355,12 +355,12 @@ h1 {
     </div>
     
     <script>
-// Configuration - Use protocol-aware URLs
+// Configuration - Both HTTP and HTTPS use port 3001
 const API_BASE = window.location.protocol === 'https:' 
-    ? 'https://seg.tplinkdns.com:3443/api/v1' 
+    ? 'https://seg.tplinkdns.com:3001/api/v1' 
     : 'http://seg.tplinkdns.com:3001/api/v1';
 const WS_URL = window.location.protocol === 'https:' 
-    ? 'wss://seg.tplinkdns.com:3443' 
+    ? 'wss://seg.tplinkdns.com:3001' 
     : 'ws://seg.tplinkdns.com:3001';
 
 // State
