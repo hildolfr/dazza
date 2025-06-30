@@ -1989,9 +1989,25 @@ function renderBongStats(data, username) {
     const eveningBongs = data.timePatterns.evening.count;
     const nightBongs = data.timePatterns.night.count;
     
+    // Special 420 detection
+    const has420 = total === 420 || avgPerDay === 420 || 
+                   data.streaks.current === 420 || data.streaks.longest === 420;
+    
+    // Add floating particles for heavy smokers
+    const particleCount = avgPerDay >= 20 ? 8 : avgPerDay >= 10 ? 5 : 3;
+    let particles = '';
+    for (let i = 0; i < particleCount; i++) {
+        particles += `<div class="floating-particle" style="
+            left: ${Math.random() * 100}%;
+            animation-delay: ${i * 1.5}s;
+            animation-duration: ${10 + Math.random() * 5}s;
+        ">🍃</div>`;
+    }
+    
     let html = `
-        <div class="stat-section stoner-section">
+        <div class="stat-section stoner-section ${has420 ? 'special-420' : ''}">
             <div class="smoke-effect"></div>
+            ${particles}
             <div class="section-header">
                 <h3>🌿 Cone Statistics</h3>
                 <div class="header-badge ${avgPerDay >= 20 ? 'legendary' : avgPerDay >= 10 ? 'heavy' : 'casual'}">
@@ -2097,11 +2113,12 @@ function renderBongStats(data, username) {
                     </div>
                 </div>
                 ` : ''}
-                <div class="record-card">
-                    <div class="record-icon">🎯</div>
+                <div class="record-card ${data.streaks.current > 0 ? 'active-streak' : ''}">
+                    <div class="record-icon">${data.streaks.current > 0 ? '🔥' : '🎯'}</div>
                     <div class="record-info">
                         <span class="record-label">Current Streak</span>
-                        <span class="record-value">${data.streaks.current} days</span>
+                        <span class="record-value ${data.streaks.current > 7 ? 'hot-streak' : ''}">${data.streaks.current} days</span>
+                        ${data.streaks.current > 0 ? '<div class="streak-flames"></div>' : ''}
                     </div>
                 </div>
                 <div class="record-card">
@@ -2109,6 +2126,7 @@ function renderBongStats(data, username) {
                     <div class="record-info">
                         <span class="record-label">Longest Streak</span>
                         <span class="record-value">${data.streaks.longest} days</span>
+                        ${data.streaks.longest >= 30 ? '<span class="achievement-badge">LEGEND</span>' : ''}
                     </div>
                 </div>
                 ${data.sessions.biggestSession ? `
@@ -2164,10 +2182,13 @@ function renderBongStats(data, username) {
                 </div>
                 ` : ''}
                 ${data.records.lastBongTimestamp ? `
-                <div class="session-stat-card">
+                <div class="session-stat-card last-cone-card">
                     <div class="session-icon">⏰</div>
                     <span class="session-label">Last Cone</span>
                     <span class="session-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
+                    <div class="time-since-indicator ${getTimeSinceClass(data.records.lastBongTimestamp)}">
+                        ${getTimeSinceEmoji(data.records.lastBongTimestamp)}
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -2178,13 +2199,21 @@ function renderBongStats(data, username) {
             <h3>🕑 Hourly Breakdown</h3>
             <div class="hourly-chart">
                 <div class="hourly-grid">
-                    ${data.timePatterns.hourly.map((hour) => {
+                    ${data.timePatterns.hourly.map((hour, index) => {
                         const maxHourCount = Math.max(...data.timePatterns.hourly.map(h => h.count));
                         const height = maxHourCount > 0 ? (hour.count / maxHourCount) * 100 : 0;
+                        const is420 = hour.hour === 4 || hour.hour === 16;
+                        const intensity = hour.count > 0 ? Math.min(hour.count / 10, 1) : 0;
+                        
                         return `
-                        <div class="hour-bar-wrapper">
-                            <div class="hour-bar" style="height: ${height}%" title="${hour.count} cones at ${hour.hour}:00">
+                        <div class="hour-bar-wrapper ${is420 ? 'special-hour' : ''}">
+                            <div class="hour-bar ${hour.count > 5 ? 'intense' : ''}" 
+                                 style="height: ${height}%; 
+                                        animation-delay: ${index * 0.05}s;
+                                        --glow-intensity: ${intensity};" 
+                                 title="${hour.count} cones at ${hour.hour}:00">
                                 ${hour.count > 0 ? `<span class="hour-count">${hour.count}</span>` : ''}
+                                ${is420 ? '<span class="four-twenty-marker">420</span>' : ''}
                             </div>
                             <span class="hour-label">${hour.hour}</span>
                         </div>
@@ -2483,6 +2512,30 @@ function getTimeAgo(timestamp) {
     if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
     return 'Just now';
+}
+
+function getTimeSinceClass(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const hours = diff / 3600000;
+    
+    if (hours < 1) return 'very-recent';
+    if (hours < 4) return 'recent';
+    if (hours < 12) return 'moderate';
+    if (hours < 24) return 'getting-dry';
+    return 'drought';
+}
+
+function getTimeSinceEmoji(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const hours = diff / 3600000;
+    
+    if (hours < 1) return '💚';  // Fresh
+    if (hours < 4) return '🟢';  // Good
+    if (hours < 12) return '🟡'; // Getting there
+    if (hours < 24) return '🟠'; // Time for another
+    return '🔴';  // Drought!
 }
 
 function calculateToleranceLevel(total, days) {
