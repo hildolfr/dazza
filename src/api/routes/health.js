@@ -114,13 +114,23 @@ export function createHealthRoutes(apiServer) {
             return;
         }
         
-        const status = apiServer.upnpManager.getStatus();
+        let status;
+        
+        // Check if it's a DoubleNatUpnpManager
+        if (apiServer.upnpManager.getStatus && apiServer.upnpManager.getStatus.constructor.name === 'AsyncFunction') {
+            // Double NAT manager has async getStatus
+            status = await apiServer.upnpManager.getStatus();
+        } else {
+            // Regular manager has sync getStatus
+            status = apiServer.upnpManager.getStatus();
+        }
         
         res.json({
             success: true,
             data: {
                 ...status,
-                apiUrl: status.externalIp ? `http://${status.externalIp}:${apiServer.port}` : null
+                apiUrl: status.realExternalIp ? `http://${status.realExternalIp}:${apiServer.port}` : 
+                        status.externalIp ? `http://${status.externalIp}:${apiServer.port}` : null
             }
         });
     }));

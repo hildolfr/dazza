@@ -11,6 +11,7 @@ import { createGalleryRoutes } from './routes/gallery.js';
 import { createStatsRoutes } from './routes/stats.js';
 import { setupWebSocketEvents } from './websocket/events.js';
 import { UpnpManager } from '../services/upnpManager.js';
+import { DoubleNatUpnpManager } from '../services/doubleNatUpnp.js';
 
 export class ApiServer extends EventEmitter {
     constructor(bot, port = 3001) {
@@ -67,9 +68,27 @@ export class ApiServer extends EventEmitter {
                 // Try to setup UPnP port forwarding
                 if (this.upnpEnabled) {
                     try {
-                        this.upnpManager = new UpnpManager(this.bot.logger);
-                        const result = await this.upnpManager.setupApiPort(this.port);
-                        console.log(`[API] UPnP port forwarding enabled: ${result.external}`);
+                        // First try double NAT aware manager
+                        const doubleNatManager = new DoubleNatUpnpManager(this.bot.logger);
+                        const status = await doubleNatManager.getStatus();
+                        
+                        if (status.isDoubleNat) {
+                            console.log('[API] Double NAT detected, using enhanced UPnP handler');
+                            this.upnpManager = doubleNatManager;
+                            const result = await doubleNatManager.setupApiPort(this.port);
+                            
+                            if (result.isDoubleNat) {
+                                console.log('[API] ⚠️  Double NAT Configuration:');
+                                console.log(`[API] ✅ Router mapped: ${result.mappings[0].internal} → ${result.mappings[0].external}`);
+                                console.log(`[API] ❌ Modem needs manual config: External:${this.port} → ${result.mappings[0].external}`);
+                                console.log(`[API] Real external IP: ${result.realExternalIp}`);
+                            }
+                        } else {
+                            // Single NAT, use regular manager
+                            this.upnpManager = new UpnpManager(this.bot.logger);
+                            const result = await this.upnpManager.setupApiPort(this.port);
+                            console.log(`[API] UPnP port forwarding enabled: ${result.external}`);
+                        }
                     } catch (error) {
                         console.warn('[API] UPnP port forwarding failed:', error.message);
                         console.log('[API] You may need to manually configure port forwarding in your router');
