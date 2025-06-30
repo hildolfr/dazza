@@ -728,6 +728,13 @@ export function createStatsRoutes(apiServer) {
                                     aim: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_aim : match.challenged_aim,
                                     duration: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_duration : match.challenged_duration,
                                     total: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_total : match.challenged_total
+                                },
+                                opponentPerformance: {
+                                    distance: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_distance : match.challenger_distance,
+                                    volume: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_volume : match.challenger_volume,
+                                    aim: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_aim : match.challenger_aim,
+                                    duration: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_duration : match.challenger_duration,
+                                    total: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_total : match.challenger_total
                                 }
                             })),
                             records: records,

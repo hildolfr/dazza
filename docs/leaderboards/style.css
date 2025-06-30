@@ -648,16 +648,30 @@ body {
 
 .match-stats {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
     font-size: 0.9rem;
     color: #444;
-    flex-wrap: wrap;
 }
 
-.match-stats span {
+.player-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.player-stats span {
     background: #f0f0f0;
     padding: 4px 8px;
     border-radius: 5px;
+}
+
+.stats-label {
+    font-weight: bold;
+    background: transparent !important;
+    padding: 0 !important;
+    min-width: 80px;
 }
 
 .match-total {

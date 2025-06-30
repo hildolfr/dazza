@@ -490,23 +490,35 @@ function renderPisserStats(data) {
             <div class="stat-section">
                 <h3>Recent Matches</h3>
                 <div class="match-list">
-                    ${data.recentMatches.slice(0, 5).map(match => `
+                    ${data.recentMatches.slice(0, 10).map(match => `
                         <div class="match-item ${match.won ? 'won' : 'lost'}">
                             <div class="match-header">
-                                <span class="match-opponent">vs ${escapeHtml(match.opponent)}</span>
+                                <span class="match-opponent">${escapeHtml(username)} '${escapeHtml(match.characteristic || 'Unknown')}' vs ${escapeHtml(match.opponent)} '${escapeHtml(match.opponentCharacteristic || 'Unknown')}'</span>
                                 <span class="match-result">${match.won ? 'W' : 'L'} ($${match.amount})</span>
                             </div>
                             <div class="match-details">
-                                <span class="match-characteristic">${escapeHtml(match.characteristic || 'Unknown')} vs ${escapeHtml(match.opponentCharacteristic || 'Unknown')}</span>
                                 ${match.location ? `<span class="match-location">📍 ${escapeHtml(match.location)}</span>` : ''}
                                 ${match.weather ? `<span class="match-weather">🌤️ ${escapeHtml(match.weather)}</span>` : ''}
                             </div>
                             <div class="match-stats">
-                                <span>📏 ${match.performance.distance.toFixed(1)}m</span>
-                                <span>💧 ${Math.round(match.performance.volume)}mL</span>
-                                <span>🎯 ${Math.round(match.performance.aim)}%</span>
-                                <span>⏱️ ${Math.round(match.performance.duration)}s</span>
-                                <span class="match-total">Total: ${match.performance.total}</span>
+                                <div class="player-stats">
+                                    <span class="stats-label">${escapeHtml(username)}:</span>
+                                    <span>📏 ${match.performance.distance.toFixed(1)}m</span>
+                                    <span>💧 ${Math.round(match.performance.volume)}mL</span>
+                                    <span>🎯 ${Math.round(match.performance.aim)}%</span>
+                                    <span>⏱️ ${Math.round(match.performance.duration)}s</span>
+                                    <span class="match-total">Total: ${match.performance.total}</span>
+                                </div>
+                                ${match.opponentPerformance ? `
+                                <div class="player-stats">
+                                    <span class="stats-label">${escapeHtml(match.opponent)}:</span>
+                                    <span>📏 ${match.opponentPerformance.distance.toFixed(1)}m</span>
+                                    <span>💧 ${Math.round(match.opponentPerformance.volume)}mL</span>
+                                    <span>🎯 ${Math.round(match.opponentPerformance.aim)}%</span>
+                                    <span>⏱️ ${Math.round(match.opponentPerformance.duration)}s</span>
+                                    <span class="match-total">Total: ${match.opponentPerformance.total}</span>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     `).join('')}
