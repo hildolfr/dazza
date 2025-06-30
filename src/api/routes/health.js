@@ -101,10 +101,35 @@ export function createHealthRoutes(apiServer) {
         });
     });
     
+    // GET /api/v1/health/upnp - UPnP status
+    router.get('/health/upnp', asyncHandler(async (req, res) => {
+        if (!apiServer.upnpManager) {
+            res.json({
+                success: true,
+                data: {
+                    enabled: false,
+                    message: 'UPnP is disabled. Set ENABLE_UPNP=true to enable.'
+                }
+            });
+            return;
+        }
+        
+        const status = apiServer.upnpManager.getStatus();
+        
+        res.json({
+            success: true,
+            data: {
+                ...status,
+                apiUrl: status.externalIp ? `http://${status.externalIp}:${apiServer.port}` : null
+            }
+        });
+    }));
+    
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/health');
     apiServer.registerEndpoint('GET', '/api/v1/health/detailed');
     apiServer.registerEndpoint('GET', '/api/v1/health/endpoints');
+    apiServer.registerEndpoint('GET', '/api/v1/health/upnp');
     
     return router;
 }
