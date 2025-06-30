@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler, ValidationError, NotFoundError } from '../middleware/errorHandler.js';
+import { getCacheStatus } from '../../batch/registerAnalyzers.js';
 
 export function createStatsRoutes(apiServer) {
     const router = Router();
@@ -898,6 +899,115 @@ export function createStatsRoutes(apiServer) {
                     };
                     break;
                     
+                case 'talkers':
+                    // Get basic user stats with word count
+                    const userStats = await apiServer.bot.db.get(
+                        'SELECT * FROM user_stats WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    if (!userStats) {
+                        throw new NotFoundError('User stats not found');
+                    }
+                    
+                    // Get chat streaks
+                    const chatStreaks = await apiServer.bot.db.get(
+                        'SELECT * FROM user_chat_streaks WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    // Get hourly activity
+                    const activeHours = await apiServer.bot.db.all(
+                        'SELECT * FROM user_active_hours WHERE LOWER(username) = ? ORDER BY hour',
+                        [normalizedUsername]
+                    );
+                    
+                    // Get message analysis cache
+                    const messageAnalysis = await apiServer.bot.db.get(
+                        'SELECT * FROM message_analysis_cache WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    // Get chat achievements
+                    const achievements = await apiServer.bot.db.all(`
+                        SELECT ca.*, ad.name, ad.description, ad.icon 
+                        FROM chat_achievements ca
+                        JOIN achievement_definitions ad ON ca.achievement_type = ad.type
+                        WHERE LOWER(ca.username) = ?
+                        ORDER BY ca.achieved_at DESC
+                    `, [normalizedUsername]);
+                    
+                    // Get activity summary (night owl, early bird scores)
+                    const activitySummary = await apiServer.bot.db.get(
+                        'SELECT * FROM user_activity_summary WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    // Calculate days active (total unique days with messages)
+                    const daysActiveResult = await apiServer.bot.db.get(`
+                        SELECT COUNT(DISTINCT date) as days_active
+                        FROM user_daily_activity
+                        WHERE LOWER(username) = ?
+                    `, [normalizedUsername]);
+                    
+                    const daysActive = daysActiveResult?.days_active || 1;
+                    const avgWordsPerMessage = messageAnalysis?.avg_words_per_message || 15;
+                    
+                    // Build allTime object for frontend compatibility
+                    const allTime = {
+                        message_count: userStats.message_count || 0,
+                        days_active: daysActive,
+                        avg_words: avgWordsPerMessage
+                    };
+                    
+                    // Process hourly activity for time slots
+                    let morningMessages = 0, afternoonMessages = 0, eveningMessages = 0, nightMessages = 0;
+                    activeHours.forEach(hour => {
+                        if (hour.hour >= 6 && hour.hour < 12) morningMessages += hour.message_count;
+                        else if (hour.hour >= 12 && hour.hour < 18) afternoonMessages += hour.message_count;
+                        else if (hour.hour >= 18 && hour.hour < 24) eveningMessages += hour.message_count;
+                        else nightMessages += hour.message_count;
+                    });
+                    
+                    data = {
+                        allTime,
+                        userStats,
+                        chatStreaks: chatStreaks || {
+                            current_streak: 0,
+                            best_streak: 0,
+                            total_active_days: daysActive
+                        },
+                        activeHours: {
+                            morning: morningMessages,
+                            afternoon: afternoonMessages,
+                            evening: eveningMessages,
+                            night: nightMessages,
+                            hourlyData: activeHours
+                        },
+                        messageAnalysis: messageAnalysis || {
+                            total_messages: userStats.message_count,
+                            total_words: userStats.total_words || 0,
+                            avg_message_length: 0,
+                            avg_words_per_message: avgWordsPerMessage,
+                            emoji_count: 0,
+                            emoji_usage_rate: 0,
+                            caps_count: 0,
+                            caps_usage_rate: 0,
+                            question_count: 0,
+                            exclamation_count: 0,
+                            url_count: 0,
+                            mention_count: 0,
+                            vocabulary_size: 0
+                        },
+                        achievements,
+                        activitySummary: activitySummary || {
+                            night_owl_score: 0,
+                            early_bird_score: 0,
+                            consistency_score: 0
+                        }
+                    };
+                    break;
+                    
                 case 'bottles':
                 case 'cashie':
                     const jobType = category === 'bottles' ? 'bottles' : 'cashie';
@@ -1053,12 +1163,39 @@ export function createStatsRoutes(apiServer) {
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username');
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/ranks');
+    // GET /api/v1/stats/batch/status - Get batch job status
+    router.get('/batch/status', asyncHandler(async (req, res) => {
+        const batchJobs = await apiServer.bot.db.all(
+            'SELECT * FROM batch_jobs ORDER BY job_name'
+        );
+        
+        const jobHistory = await apiServer.bot.db.all(`
+            SELECT job_name, status, started_at, completed_at, records_processed, duration_ms
+            FROM batch_job_history
+            WHERE id IN (
+                SELECT MAX(id) FROM batch_job_history GROUP BY job_name
+            )
+        `);
+        
+        const cacheStatus = await getCacheStatus(apiServer.bot.db);
+        
+        res.json({
+            success: true,
+            data: {
+                jobs: batchJobs,
+                lastRuns: jobHistory,
+                cacheStatus
+            }
+        });
+    }));
+
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/category/:category');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/all');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/channel');
     apiServer.registerEndpoint('GET', '/api/v1/stats/daily/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/recent/activity');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/batch/status');
     
     return router;
 }
