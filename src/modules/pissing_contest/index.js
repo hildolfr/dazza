@@ -578,6 +578,10 @@ export class PissingContestManager {
             
             // Save match to database
             await this.saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather);
+            
+            // Update analytics (rarest characteristic, favorite location)
+            await this.updateAnalytics(winner);
+            await this.updateAnalytics(loser);
         } catch (error) {
             console.error('Error handling pissing contest outcome:', error);
             this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
@@ -819,6 +823,53 @@ export class PissingContestManager {
             
         } catch (error) {
             console.error('Error updating stats:', error);
+        }
+    }
+
+    // Update analytics like rarest characteristic and favorite location
+    async updateAnalytics(username) {
+        const normalized = await normalizeUsernameForDb(this.bot, username);
+        
+        try {
+            // Get rarest characteristic used
+            const rarestChar = await this.db.get(`
+                SELECT characteristic, COUNT(*) as usage_count
+                FROM (
+                    SELECT challenger_characteristic as characteristic
+                    FROM pissing_contest_challenges
+                    WHERE LOWER(challenger) = ? AND challenger_characteristic IS NOT NULL
+                    UNION ALL
+                    SELECT challenged_characteristic as characteristic
+                    FROM pissing_contest_challenges
+                    WHERE LOWER(challenged) = ? AND challenged_characteristic IS NOT NULL
+                ) combined
+                GROUP BY characteristic
+                ORDER BY usage_count ASC
+                LIMIT 1
+            `, [normalized, normalized]);
+            
+            // Get favorite location (most used)
+            const favoriteLocation = await this.db.get(`
+                SELECT location, COUNT(*) as visit_count
+                FROM pissing_contest_challenges
+                WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
+                AND location IS NOT NULL
+                GROUP BY location
+                ORDER BY visit_count DESC
+                LIMIT 1
+            `, [normalized, normalized]);
+            
+            // Update the stats with analytics
+            if (rarestChar || favoriteLocation) {
+                await this.db.run(`
+                    UPDATE pissing_contest_stats
+                    SET rarest_characteristic = COALESCE(?, rarest_characteristic),
+                        favorite_location = COALESCE(?, favorite_location)
+                    WHERE username = ?
+                `, [rarestChar?.characteristic, favoriteLocation?.location, normalized]);
+            }
+        } catch (error) {
+            console.error('Error updating analytics:', error);
         }
     }
 
