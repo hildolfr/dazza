@@ -21,6 +21,7 @@ import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 import { CashMonitor } from '../utils/cashMonitor.js';
 import { ApiServer } from '../api/server.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
+import { ImageHealthChecker } from '../modules/imageHealthChecker.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -128,6 +129,10 @@ export class CyTubeBot extends EventEmitter {
             // Initialize GalleryUpdater
             this.galleryUpdater = new GalleryUpdater(this.db, this.logger);
             this.galleryUpdater.start();
+            
+            // Initialize ImageHealthChecker
+            this.imageHealthChecker = new ImageHealthChecker(this);
+            this.imageHealthChecker.start();
             
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
@@ -1724,25 +1729,53 @@ export class CyTubeBot extends EventEmitter {
     async shutdown() {
         this.logger.info('Shutting down bot...');
         
-        // Stop periodic tasks
-        if (this.reminderInterval) clearInterval(this.reminderInterval);
-        if (this.statsInterval) clearInterval(this.statsInterval);
-        if (this.cooldownCleanupInterval) clearInterval(this.cooldownCleanupInterval);
+        // Mark bot as not ready to prevent processing new messages
+        this.ready = false;
         
-        // Cancel pending greeting
+        // Stop periodic tasks
+        if (this.reminderInterval) {
+            clearInterval(this.reminderInterval);
+            this.reminderInterval = null;
+        }
+        if (this.statsInterval) {
+            clearInterval(this.statsInterval);
+            this.statsInterval = null;
+        }
+        if (this.cooldownCleanupInterval) {
+            clearInterval(this.cooldownCleanupInterval);
+            this.cooldownCleanupInterval = null;
+        }
+        
+        // Cancel all pending timeouts
         if (this.pendingGreeting) {
             clearTimeout(this.pendingGreeting);
+            this.pendingGreeting = null;
         }
         
         // Clear all pending mention timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
         
+        // Clear URL comment timeout
+        if (this.lastUrlCommentTime) {
+            this.lastUrlCommentTime = null;
+        }
+        
         // Stop memory cleanup
         this.memoryManager.stopCleanup();
         
         // Stop rate limiter cleanup
         this.rateLimiter.stopAutoCleanup();
+        
+        // Stop cash monitor
+        if (this.cashMonitor) {
+            this.cashMonitor.stop();
+        }
+        
+        // Stop image health checker
+        if (this.imageHealthChecker) {
+            this.imageHealthChecker.stop();
+        }
         
         // Shutdown heist manager
         if (this.heistManager) {
@@ -1754,20 +1787,29 @@ export class CyTubeBot extends EventEmitter {
             await this.videoPayoutManager.shutdown();
         }
         
+        // Stop gallery updater
         if (this.galleryUpdater) {
             this.galleryUpdater.stop();
         }
         
-        // Stop API server
+        // Stop API server (this will also close WebSocket connections)
         if (this.apiServer) {
             await this.apiServer.stop();
         }
         
+        // Remove all event listeners to prevent memory leaks
+        this.removeAllListeners();
+        
         // Disconnect from server
-        this.connection.disconnect();
+        if (this.connection) {
+            this.connection.removeAllListeners();
+            this.connection.disconnect();
+        }
         
         // Close database
-        await this.db.close();
+        if (this.db) {
+            await this.db.close();
+        }
         
         this.logger.info('Bot shutdown complete');
     }

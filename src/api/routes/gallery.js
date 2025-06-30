@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler, ValidationError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { strictCorsMiddleware } from '../middleware/cors.js';
+import { extractImageMetadata } from '../../services/imageMetadata.js';
 
 export function createGalleryRoutes(apiServer) {
     const router = Router();
@@ -253,12 +254,233 @@ export function createGalleryRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/gallery/activity - Get recent gallery activity
+    router.get('/activity', asyncHandler(async (req, res) => {
+        const { limit = 50, offset = 0, type = 'all' } = req.query;
+        
+        let query;
+        const params = [];
+        
+        if (type === 'added') {
+            // Show only recently added images
+            query = `
+                SELECT 
+                    ui.id,
+                    ui.username,
+                    ui.url,
+                    ui.timestamp,
+                    ui.is_active as isActive,
+                    'added' as activityType,
+                    ui.created_at as activityTime
+                FROM user_images ui
+                WHERE ui.is_active = 1
+                ORDER BY ui.timestamp DESC
+                LIMIT ? OFFSET ?
+            `;
+            params.push(parseInt(limit), parseInt(offset));
+        } else if (type === 'deleted') {
+            // Show only recently deleted images
+            query = `
+                SELECT 
+                    ui.id,
+                    ui.username,
+                    ui.url,
+                    ui.timestamp,
+                    ui.is_active as isActive,
+                    ui.pruned_reason as reason,
+                    'deleted' as activityType,
+                    ui.created_at as activityTime
+                FROM user_images ui
+                WHERE ui.is_active = 0
+                AND ui.pruned_reason IS NOT NULL
+                ORDER BY ui.created_at DESC
+                LIMIT ? OFFSET ?
+            `;
+            params.push(parseInt(limit), parseInt(offset));
+        } else {
+            // Show all activity (both added and deleted)
+            query = `
+                SELECT * FROM (
+                    SELECT 
+                        ui.id,
+                        ui.username,
+                        ui.url,
+                        ui.timestamp,
+                        ui.is_active as isActive,
+                        ui.pruned_reason as reason,
+                        CASE 
+                            WHEN ui.is_active = 1 THEN 'added'
+                            ELSE 'deleted'
+                        END as activityType,
+                        ui.timestamp as activityTime
+                    FROM user_images ui
+                    WHERE ui.is_active = 1
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        ui.id,
+                        ui.username,
+                        ui.url,
+                        ui.timestamp,
+                        ui.is_active as isActive,
+                        ui.pruned_reason as reason,
+                        'deleted' as activityType,
+                        ui.created_at as activityTime
+                    FROM user_images ui
+                    WHERE ui.is_active = 0
+                    AND ui.pruned_reason IS NOT NULL
+                ) combined
+                ORDER BY activityTime DESC
+                LIMIT ? OFFSET ?
+            `;
+            params.push(parseInt(limit), parseInt(offset));
+        }
+        
+        const activities = await apiServer.bot.db.all(query, params);
+        
+        // Get total count
+        let countQuery;
+        const countParams = [];
+        
+        if (type === 'added') {
+            countQuery = 'SELECT COUNT(*) as count FROM user_images WHERE is_active = 1';
+        } else if (type === 'deleted') {
+            countQuery = 'SELECT COUNT(*) as count FROM user_images WHERE is_active = 0 AND pruned_reason IS NOT NULL';
+        } else {
+            countQuery = 'SELECT COUNT(*) as count FROM user_images';
+        }
+        
+        const total = await apiServer.bot.db.get(countQuery, countParams);
+        
+        res.json({
+            success: true,
+            data: {
+                activities: activities.map(activity => ({
+                    id: activity.id,
+                    username: activity.username,
+                    url: activity.url,
+                    timestamp: activity.timestamp,
+                    isActive: Boolean(activity.isActive),
+                    activityType: activity.activityType,
+                    activityTime: activity.activityTime,
+                    reason: activity.reason
+                })),
+                pagination: {
+                    total: total.count,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                }
+            }
+        });
+    }));
+    
+    // POST /api/v1/gallery/images/metadata - Get metadata for an image URL
+    router.post('/images/metadata', asyncHandler(async (req, res) => {
+        const { url } = req.body;
+        
+        if (!url) {
+            throw new ValidationError('URL is required', 'url');
+        }
+        
+        if (typeof url !== 'string' || !url.trim()) {
+            throw new ValidationError('URL must be a non-empty string', 'url');
+        }
+        
+        // Extract metadata
+        const metadata = await extractImageMetadata(url);
+        
+        res.json({
+            success: true,
+            data: metadata
+        });
+    }));
+    
+    // POST /api/v1/gallery/health-check - Manually trigger health check for a user
+    router.post('/health-check', asyncHandler(async (req, res) => {
+        const { username } = req.body;
+        
+        if (!username) {
+            throw new ValidationError('Username is required', 'username');
+        }
+        
+        // Run health check
+        const result = await apiServer.bot.imageHealthChecker.checkUserImages(username);
+        
+        // Emit event
+        if (result.dead > 0) {
+            apiServer.broadcast('gallery:health:check', {
+                username,
+                checked: result.checked,
+                dead: result.dead,
+                timestamp: Date.now()
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: {
+                username,
+                imagesChecked: result.checked,
+                deadImagesFound: result.dead
+            }
+        });
+    }));
+    
+    // GET /api/v1/gallery/stats - Get gallery statistics
+    router.get('/stats', asyncHandler(async (req, res) => {
+        const stats = await apiServer.bot.db.all(`
+            SELECT 
+                COUNT(DISTINCT username) as totalUsers,
+                COUNT(*) as totalImages,
+                COUNT(CASE WHEN is_active = 1 THEN 1 END) as activeImages,
+                COUNT(CASE WHEN is_active = 0 THEN 1 END) as deletedImages,
+                COUNT(DISTINCT CASE WHEN is_active = 1 THEN username END) as activeUsers
+            FROM user_images
+        `);
+        
+        const topUploaders = await apiServer.bot.db.all(`
+            SELECT 
+                username,
+                COUNT(*) as imageCount,
+                COUNT(CASE WHEN is_active = 1 THEN 1 END) as activeCount
+            FROM user_images
+            GROUP BY username
+            ORDER BY imageCount DESC
+            LIMIT 10
+        `);
+        
+        const recentActivity = await apiServer.bot.db.all(`
+            SELECT 
+                DATE(timestamp/1000, 'unixepoch') as date,
+                COUNT(*) as uploads
+            FROM user_images
+            WHERE timestamp > ?
+            GROUP BY date
+            ORDER BY date DESC
+            LIMIT 7
+        `, [Date.now() - 7 * 24 * 60 * 60 * 1000]); // Last 7 days
+        
+        res.json({
+            success: true,
+            data: {
+                overview: stats[0],
+                topUploaders,
+                recentActivity: recentActivity.reverse() // Chronological order
+            }
+        });
+    }));
+    
     // Register endpoints
     apiServer.registerEndpoint('DELETE', '/api/v1/gallery/images');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/locks');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/locks/:username');
     apiServer.registerEndpoint('PUT', '/api/v1/gallery/locks/:username');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/images/:username');
+    apiServer.registerEndpoint('GET', '/api/v1/gallery/activity');
+    apiServer.registerEndpoint('POST', '/api/v1/gallery/images/metadata');
+    apiServer.registerEndpoint('POST', '/api/v1/gallery/health-check');
+    apiServer.registerEndpoint('GET', '/api/v1/gallery/stats');
     
     return router;
 }
