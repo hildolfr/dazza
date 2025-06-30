@@ -6539,3 +6539,665 @@ body {
     background: linear-gradient(90deg, #00ff00, #ffff00, #ff8c00, #ff0000);
 }
 EOF < /dev/null
+/* ===== BONG HUD SECTION STYLES ===== */
+/* High-tech command center for cone statistics */
+
+.bong-hud-section {
+    background: #0a0a0a;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.hud-container {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 2px solid var(--vb-green);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid rgba(0, 149, 79, 0.3);
+}
+
+.hud-title {
+    color: var(--vb-gold);
+    font-size: 1.8rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255, 199, 44, 0.5);
+    margin: 0;
+}
+
+.hud-scanner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--vb-gold), transparent);
+    animation: scan 3s linear infinite;
+}
+
+.bong-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Metric Grid Styles */
+.main-metrics .metric-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.metric-item {
+    background: rgba(0, 149, 79, 0.05);
+    border: 1px solid rgba(255, 199, 44, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.metric-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 5px rgba(255, 199, 44, 0.5));
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.metric-value-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 199, 44, 0.5);
+}
+
+.metric-value.counter {
+    font-variant-numeric: tabular-nums;
+}
+
+.metric-unit {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.special-420-badge {
+    background: linear-gradient(45deg, #00ff00, #ffff00);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    animation: pulse420 2s infinite;
+}
+
+@keyframes pulse420 {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.metric-bar {
+    margin-top: 10px;
+}
+
+.bar-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--vb-green), var(--vb-gold));
+    transition: width 0.5s ease;
+}
+
+.bar-label {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+}
+
+.intensity-meter {
+    margin-top: 10px;
+}
+
+.intensity-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.intensity-fill {
+    height: 100%;
+    transition: width 0.5s;
+}
+
+.intensity-fill.extreme {
+    background: linear-gradient(90deg, #ff0000, #ff6b35);
+}
+
+.intensity-fill.high {
+    background: linear-gradient(90deg, #ff8c00, #ffd700);
+}
+
+.intensity-fill.moderate {
+    background: linear-gradient(90deg, var(--vb-green), var(--vb-gold));
+}
+
+/* Streak Panel Styles */
+.streak-panel {
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+}
+
+.streak-status {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.streak-status.active {
+    background: rgba(255, 69, 0, 0.2);
+    color: #ff4500;
+}
+
+.streak-status.broken {
+    background: rgba(0, 191, 255, 0.2);
+    color: #00bfff;
+}
+
+.streak-display {
+    display: grid;
+    gap: 20px;
+}
+
+.streak-item {
+    display: grid;
+    gap: 10px;
+}
+
+.streak-icon-wrapper {
+    font-size: 2rem;
+    text-align: center;
+}
+
+.streak-info {
+    text-align: center;
+}
+
+.streak-label {
+    display: block;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.streak-value {
+    font-size: 3rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 15px rgba(255, 199, 44, 0.5);
+}
+
+.streak-unit {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-left: 5px;
+}
+
+.streak-progress {
+    margin-top: 10px;
+}
+
+.progress-track {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.5s;
+}
+
+.progress-fill.flame {
+    background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);
+    position: relative;
+    animation: flameFlicker 2s infinite;
+}
+
+@keyframes flameFlicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.progress-label {
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.achievement-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+.achievement-badge.gold {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #000;
+}
+
+.achievement-badge.silver {
+    background: linear-gradient(45deg, #c0c0c0, #e8e8e8);
+    color: #000;
+}
+
+.achievement-badge.bronze {
+    background: linear-gradient(45deg, #cd7f32, #e8a561);
+    color: #000;
+}
+
+/* Time Analysis Panel */
+.time-analysis {
+    background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+}
+
+.analysis-icon {
+    font-size: 1.2rem;
+}
+
+.time-breakdown {
+    display: grid;
+    gap: 15px;
+}
+
+.time-slot {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.3s;
+}
+
+.time-slot.active {
+    border-color: rgba(255, 199, 44, 0.3);
+}
+
+.time-slot:hover {
+    background: rgba(0, 149, 79, 0.1);
+    border-color: rgba(0, 149, 79, 0.5);
+}
+
+.slot-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.slot-icon {
+    font-size: 1.2rem;
+}
+
+.slot-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--vb-gold);
+}
+
+.slot-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: auto;
+}
+
+.slot-meter {
+    display: grid;
+    gap: 5px;
+}
+
+.slot-meter .meter-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.slot-meter .meter-fill {
+    height: 100%;
+    transition: width 0.5s;
+}
+
+.meter-fill.sunrise {
+    background: linear-gradient(90deg, #ff6b35, #ffd700);
+}
+
+.meter-fill.sunshine {
+    background: linear-gradient(90deg, #ffd700, #ffed4e);
+}
+
+.meter-fill.sunset {
+    background: linear-gradient(90deg, #ff8c00, #ff4500);
+}
+
+.meter-fill.moonlight {
+    background: linear-gradient(90deg, #4169e1, #6495ed);
+}
+
+.slot-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.slot-count {
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+.slot-percent {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Records Panel */
+.records-panel {
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+}
+
+.records-icon {
+    font-size: 1.2rem;
+}
+
+.records-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.record-item {
+    background: rgba(255, 199, 44, 0.05);
+    border: 1px solid rgba(255, 199, 44, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.record-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.record-icon {
+    font-size: 1.5rem;
+}
+
+.record-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.record-value-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.record-value {
+    font-size: 2rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 199, 44, 0.5);
+}
+
+.record-unit {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.record-date {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 5px;
+}
+
+.record-detail {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 5px;
+}
+
+.record-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+
+.record-badge.legendary {
+    background: linear-gradient(45deg, #ff0000, #ff6b35);
+    color: #fff;
+}
+
+.record-badge.epic {
+    background: linear-gradient(45deg, #9400d3, #ff1493);
+    color: #fff;
+}
+
+.record-badge.rare {
+    background: linear-gradient(45deg, #00bfff, #1e90ff);
+    color: #fff;
+}
+
+/* Session Overview Panel */
+.session-overview {
+    background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+}
+
+.session-count {
+    background: rgba(255, 199, 44, 0.2);
+    color: var(--vb-gold);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.session-metrics {
+    display: grid;
+    gap: 15px;
+}
+
+.session-metric {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.session-metric .metric-icon {
+    font-size: 1.5rem;
+}
+
+.metric-info {
+    flex: 1;
+}
+
+.session-metric .metric-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.session-metric .metric-value {
+    font-size: 1.5rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+.session-metric .metric-unit {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 5px;
+}
+
+.freshness-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+
+.freshness-indicator.very-recent {
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+}
+
+.freshness-indicator.recent {
+    background: rgba(144, 238, 144, 0.2);
+    color: #90ee90;
+}
+
+.freshness-indicator.moderate {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+}
+
+.freshness-indicator.getting-dry {
+    background: rgba(255, 140, 0, 0.2);
+    color: #ff8c00;
+}
+
+.freshness-indicator.drought {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff0000;
+}
+
+/* HUD Footer */
+.hud-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border-top: 1px solid rgba(255, 199, 44, 0.2);
+}
+
+.footer-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-footer .stat-icon {
+    font-size: 1rem;
+}
+
+.hud-footer .stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hud-footer .stat-value {
+    font-size: 0.9rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+/* Panel Status Styles */
+.panel-status.legendary {
+    background: linear-gradient(45deg, #ff0000, #ff6b35);
+    color: #fff;
+}
+
+.panel-status.heavy {
+    background: linear-gradient(45deg, #ff8c00, #ffd700);
+    color: #000;
+}
+
+.panel-status.moderate {
+    background: linear-gradient(45deg, var(--vb-green), var(--vb-gold));
+    color: #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .bong-hud-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hud-title {
+        font-size: 1.4rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .streak-value {
+        font-size: 2.5rem;
+    }
+}
+EOF < /dev/null
