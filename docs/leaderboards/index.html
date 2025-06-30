@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dazza's Hall of Shame - Where Legends Are Made</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">DAZZA'S HALL OF SHAME</h1>
+            <p class="subtitle">Where legends are made, cunts!</p>
+            <div class="vb-can spinning"></div>
+        </header>
+
+        <!-- Category Tabs -->
+        <nav class="category-tabs">
+            <button class="tab-button active" data-category="all">
+                <span class="tab-icon">🏆</span>
+                <span class="tab-text">ALL</span>
+            </button>
+            <button class="tab-button" data-category="talkers">
+                <span class="tab-icon">💬</span>
+                <span class="tab-text">YAPPERS</span>
+            </button>
+            <button class="tab-button" data-category="bongs">
+                <span class="tab-icon">🌿</span>
+                <span class="tab-text">STONERS</span>
+            </button>
+            <button class="tab-button" data-category="drinks">
+                <span class="tab-icon">🍺</span>
+                <span class="tab-text">PISSHEADS</span>
+            </button>
+            <button class="tab-button" data-category="quoted">
+                <span class="tab-icon">💭</span>
+                <span class="tab-text">QUOTABLES</span>
+            </button>
+            <button class="tab-button" data-category="gamblers">
+                <span class="tab-icon">🎰</span>
+                <span class="tab-text">GAMBLERS</span>
+            </button>
+            <button class="tab-button" data-category="fishing">
+                <span class="tab-icon">🎣</span>
+                <span class="tab-text">FISHERS</span>
+            </button>
+            <button class="tab-button" data-category="bottles">
+                <span class="tab-icon">♻️</span>
+                <span class="tab-text">COLLECTORS</span>
+            </button>
+            <button class="tab-button" data-category="cashie">
+                <span class="tab-icon">💪</span>
+                <span class="tab-text">WORKERS</span>
+            </button>
+            <button class="tab-button" data-category="sign_spinning">
+                <span class="tab-icon">🪧</span>
+                <span class="tab-text">SPINNERS</span>
+            </button>
+            <button class="tab-button" data-category="beggars">
+                <span class="tab-icon">🤲</span>
+                <span class="tab-text">BEGGARS</span>
+            </button>
+            <button class="tab-button" data-category="pissers">
+                <span class="tab-icon">🚽</span>
+                <span class="tab-text">PISSERS</span>
+            </button>
+        </nav>
+
+        <!-- Search/Filter Bar -->
+        <div class="filter-bar">
+            <input type="text" id="user-search" placeholder="Find a cunt..." class="search-input">
+            <div class="filter-options">
+                <label class="filter-label">
+                    <input type="checkbox" id="show-achievements" checked>
+                    <span>Show achievements</span>
+                </label>
+                <label class="filter-label">
+                    <input type="checkbox" id="animate-changes" checked>
+                    <span>Live updates</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Leaderboards Container -->
+        <div id="leaderboards-container" class="leaderboards-container">
+            <!-- Loading State -->
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading legends...</p>
+            </div>
+        </div>
+
+        <!-- User Modal -->
+        <div id="user-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <div id="user-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-header">
+            <span class="chat-title">LIVE CHAT</span>
+            <span class="chat-toggle">−</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-loading">Connecting to chat...</div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

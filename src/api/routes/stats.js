@@ -64,95 +64,405 @@ export function createStatsRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/stats/leaderboard/all - Get all leaderboards at once
+    router.get('/leaderboard/all', asyncHandler(async (req, res) => {
+        const { limit = 5 } = req.query;
+        const limitNum = Math.min(Math.max(parseInt(limit) || 5, 1), 10);
+        
+        // Define all leaderboard types with their titles
+        const leaderboardTypes = [
+            { type: 'talkers', title: 'Top Yappers' },
+            { type: 'bongs', title: '🌿 Most Cooked Cunts' },
+            { type: 'drinks', title: '🍺 Top Piss-heads' },
+            { type: 'quoted', title: '💬 Quotable Legends' },
+            { type: 'gamblers', title: '🎰 Lucky Bastards' },
+            { type: 'fishing', title: '🎣 Master Baiters' },
+            { type: 'bottles', title: '♻️ Eco Warriors' },
+            { type: 'cashie', title: '💪 Hardest Workers' },
+            { type: 'sign_spinning', title: '🪧 Sign Spinners' },
+            { type: 'beggars', title: '🤲 Shameless Beggars' },
+            { type: 'pissers', title: '🏆 Top Pissers' }
+        ];
+        
+        // Fetch all leaderboards in parallel
+        const allLeaderboards = await Promise.all(
+            leaderboardTypes.map(async ({ type, title }) => {
+                try {
+                    let results;
+                    switch (type) {
+                        case 'talkers':
+                            results = await apiServer.bot.db.getTopTalkers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.message_count} messages`
+                                }))
+                            };
+                        case 'bongs':
+                            results = await apiServer.bot.db.getTopBongUsers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.bong_count} cones`,
+                                    achievement: r.bong_count >= 100 ? '💀' : null
+                                }))
+                            };
+                        case 'drinks':
+                            results = await apiServer.bot.db.getTopDrinkers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.drink_count} drinks`,
+                                    achievement: r.drink_count >= 500 ? '💀' : r.drink_count >= 100 ? '🍺' : null
+                                }))
+                            };
+                        case 'quoted':
+                            results = await apiServer.bot.db.getTopQuotedUsers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.quotable_messages} bangers`
+                                }))
+                            };
+                        case 'gamblers':
+                            results = await apiServer.bot.db.getTopGamblers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `$${r.biggest_win}`,
+                                    extra: r.transaction_type,
+                                    achievement: r.biggest_win >= 1000 ? '💰' : null
+                                }))
+                            };
+                        case 'fishing':
+                            results = await apiServer.bot.db.getTopFishers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.biggest_catch}kg ${r.fish_type || ''}`,
+                                    achievement: r.biggest_catch >= 10 ? '🐋' : r.biggest_catch >= 5 ? '🦈' : null
+                                }))
+                            };
+                        case 'bottles':
+                            results = await apiServer.bot.db.getTopBottleCollectors(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `$${r.total_earnings}`,
+                                    extra: `${r.collection_count} runs`,
+                                    achievement: r.total_earnings >= 1000 ? '🏆' : r.total_earnings >= 500 ? '💰' : null
+                                }))
+                            };
+                        case 'cashie':
+                            results = await apiServer.bot.db.getTopCashieWorkers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `$${r.total_earnings}`,
+                                    extra: `${r.job_count} jobs`,
+                                    achievement: r.total_earnings >= 3000 ? '🤑' : r.total_earnings >= 1500 ? '💸' : null
+                                }))
+                            };
+                        case 'sign_spinning':
+                            results = await apiServer.bot.db.getTopSignSpinners(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `$${r.total_earnings}`,
+                                    extra: `${r.total_spins} shifts`,
+                                    achievement: r.perfect_days > 0 ? '🌟' : null
+                                }))
+                            };
+                        case 'beggars':
+                            results = await apiServer.bot.db.getTopBeggars(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.times_begged} begs`,
+                                    extra: `$${r.total_received} received`,
+                                    achievement: r.times_begged >= 20 ? '🤡💩' : r.times_begged >= 10 ? '🤡' : null
+                                }))
+                            };
+                        case 'pissers':
+                            results = await apiServer.bot.db.getTopPissers(limitNum);
+                            return {
+                                type,
+                                title,
+                                data: results.map((r, i) => ({
+                                    rank: i + 1,
+                                    username: r.username,
+                                    value: `${r.wins}W/${r.losses}L`,
+                                    extra: r.best_distance >= 4.5 ? `📏${r.best_distance.toFixed(1)}m` : null,
+                                    achievement: r.wins >= 50 ? '👑' : r.wins >= 25 ? '⭐' : null
+                                }))
+                            };
+                    }
+                } catch (error) {
+                    console.error(`Error fetching ${type} leaderboard:`, error);
+                    return { type, title, error: true, data: [] };
+                }
+            })
+        );
+        
+        res.json({
+            success: true,
+            data: {
+                leaderboards: allLeaderboards
+            }
+        });
+    }));
+    
     // GET /api/v1/stats/leaderboard/:type - Get leaderboards
     router.get('/leaderboard/:type', asyncHandler(async (req, res) => {
         const { type } = req.params;
         const { limit = 10 } = req.query;
         
-        const validTypes = ['bongs', 'drinks', 'money', 'criminal', 'messages', 'images'];
+        const validTypes = ['talkers', 'bongs', 'drinks', 'quoted', 'gamblers', 'fishing', 
+                          'bottles', 'cashie', 'sign_spinning', 'beggars', 'pissers',
+                          'money', 'criminal', 'messages', 'images'];
         if (!validTypes.includes(type)) {
             throw new ValidationError(`Invalid leaderboard type. Must be one of: ${validTypes.join(', ')}`, 'type');
         }
         
         const limitNum = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
-        let query, data;
+        let results, data;
         
         switch (type) {
+            case 'talkers':
+                results = await apiServer.bot.db.getTopTalkers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.message_count,
+                    label: 'messages'
+                }));
+                break;
+                
             case 'bongs':
-                query = `
-                    SELECT username, COUNT(*) as count
-                    FROM user_bongs
-                    GROUP BY username
-                    ORDER BY count DESC
-                    LIMIT ?
-                `;
+                results = await apiServer.bot.db.getTopBongUsers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.bong_count,
+                    label: 'cones',
+                    achievement: row.bong_count >= 100 ? '💀' : null
+                }));
                 break;
             
             case 'drinks':
-                query = `
-                    SELECT username, COUNT(*) as count
-                    FROM user_drinks
-                    GROUP BY username
-                    ORDER BY count DESC
-                    LIMIT ?
-                `;
+                results = await apiServer.bot.db.getTopDrinkers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.drink_count,
+                    label: 'drinks',
+                    achievement: row.drink_count >= 500 ? '💀' : row.drink_count >= 100 ? '🍺' : null
+                }));
+                break;
+                
+            case 'quoted':
+                results = await apiServer.bot.db.getTopQuotedUsers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.quotable_messages,
+                    label: 'bangers'
+                }));
+                break;
+                
+            case 'gamblers':
+                results = await apiServer.bot.db.getTopGamblers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    amount: row.biggest_win,
+                    gameType: row.transaction_type,
+                    achievement: row.biggest_win >= 1000 ? '💰' : null
+                }));
+                break;
+                
+            case 'fishing':
+                results = await apiServer.bot.db.getTopFishers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    weight: row.biggest_catch,
+                    fishType: row.fish_type || 'Unknown',
+                    achievement: row.biggest_catch >= 10 ? '🐋' : row.biggest_catch >= 5 ? '🦈' : null
+                }));
+                break;
+                
+            case 'bottles':
+                results = await apiServer.bot.db.getTopBottleCollectors(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    totalEarnings: row.total_earnings,
+                    collectionCount: row.collection_count,
+                    avgPerRun: row.avg_per_run,
+                    achievement: row.total_earnings >= 1000 ? '🏆' : row.total_earnings >= 500 ? '💰' : null
+                }));
+                break;
+                
+            case 'cashie':
+                results = await apiServer.bot.db.getTopCashieWorkers(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    totalEarnings: row.total_earnings,
+                    jobCount: row.job_count,
+                    avgPerJob: row.avg_per_job,
+                    achievement: row.total_earnings >= 3000 ? '🤑' : row.total_earnings >= 1500 ? '💸' : row.total_earnings >= 500 ? '💰' : null
+                }));
+                break;
+                
+            case 'sign_spinning':
+                results = await apiServer.bot.db.getTopSignSpinners(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    totalEarnings: row.total_earnings,
+                    totalSpins: row.total_spins,
+                    perfectDays: row.perfect_days,
+                    copsCalled: row.cops_called,
+                    avgPerShift: row.avg_per_shift,
+                    achievement: row.perfect_days > 0 ? '🌟' : row.best_shift >= 100 ? '💪' : null
+                }));
+                break;
+                
+            case 'beggars':
+                results = await apiServer.bot.db.getTopBeggars(limitNum);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    timesBegged: row.times_begged,
+                    totalReceived: row.total_received,
+                    successRate: Math.round(row.success_rate),
+                    timesRobbed: row.times_robbed,
+                    achievement: row.times_begged >= 20 ? '🤡💩' : row.times_begged >= 10 ? '🤡' : row.times_begged >= 5 ? '😔' : null
+                }));
+                break;
+                
+            case 'pissers':
+                results = await apiServer.bot.db.getTopPissers(limitNum);
+                data = results.map((row, index) => {
+                    const winRate = row.win_rate ? row.win_rate.toFixed(1) : '0';
+                    let specialty = null;
+                    
+                    if (row.best_distance >= 4.5) {
+                        specialty = { type: 'distance', value: `${row.best_distance.toFixed(1)}m`, title: 'Fire Hose' };
+                    } else if (row.best_aim >= 95) {
+                        specialty = { type: 'aim', value: `${Math.round(row.best_aim)}%`, title: 'Sniper' };
+                    } else if (row.best_duration >= 25) {
+                        specialty = { type: 'duration', value: `${Math.round(row.best_duration)}s`, title: 'Marathon Man' };
+                    } else if (row.best_volume >= 1800) {
+                        specialty = { type: 'volume', value: `${Math.round(row.best_volume)}mL`, title: 'The Camel' };
+                    }
+                    
+                    return {
+                        rank: index + 1,
+                        username: row.username,
+                        wins: row.wins,
+                        losses: row.losses,
+                        winRate: parseFloat(winRate),
+                        moneyWon: row.money_won,
+                        specialty,
+                        achievement: row.wins >= 50 ? '👑' : row.wins >= 25 ? '⭐' : null
+                    };
+                });
                 break;
             
             case 'money':
-                query = `
+                results = await apiServer.bot.db.all(`
                     SELECT username, balance as count
                     FROM economy_users
                     ORDER BY balance DESC
                     LIMIT ?
-                `;
+                `, [limitNum]);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.count,
+                    label: 'dollarydoos'
+                }));
                 break;
             
             case 'criminal':
-                query = `
+                results = await apiServer.bot.db.all(`
                     SELECT username, record as description, created_at
                     FROM criminal_records
                     ORDER BY created_at DESC
                     LIMIT ?
-                `;
+                `, [limitNum]);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    record: row.description,
+                    date: row.created_at
+                }));
                 break;
             
             case 'messages':
-                query = `
+                results = await apiServer.bot.db.all(`
                     SELECT username, message_count as count
                     FROM user_stats
                     ORDER BY message_count DESC
                     LIMIT ?
-                `;
+                `, [limitNum]);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.count,
+                    label: 'messages'
+                }));
                 break;
             
             case 'images':
-                query = `
+                results = await apiServer.bot.db.all(`
                     SELECT username, COUNT(*) as count
                     FROM user_images
                     WHERE is_active = 1
                     GROUP BY username
                     ORDER BY count DESC
                     LIMIT ?
-                `;
+                `, [limitNum]);
+                data = results.map((row, index) => ({
+                    rank: index + 1,
+                    username: row.username,
+                    count: row.count,
+                    label: 'images'
+                }));
                 break;
-        }
-        
-        const results = await apiServer.bot.db.all(query, [limitNum]);
-        
-        // Format results based on type
-        if (type === 'criminal') {
-            data = results.map((row, index) => ({
-                rank: index + 1,
-                username: row.username,
-                record: row.description,
-                date: row.created_at
-            }));
-        } else {
-            data = results.map((row, index) => ({
-                rank: index + 1,
-                username: row.username,
-                count: row.count
-            }));
         }
         
         res.json({
@@ -311,8 +621,75 @@ export function createStatsRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/stats/users/:username/ranks - Get user's position across all leaderboards
+    router.get('/users/:username/ranks', asyncHandler(async (req, res) => {
+        const { username } = req.params;
+        const normalizedUsername = username.toLowerCase();
+        
+        // Check if user exists
+        const userExists = await apiServer.bot.db.get(
+            'SELECT username FROM user_stats WHERE LOWER(username) = ?',
+            [normalizedUsername]
+        );
+        
+        if (!userExists) {
+            throw new NotFoundError('User');
+        }
+        
+        // Get user's ranks in all leaderboards
+        const ranks = {};
+        
+        // Helper function to find user's rank
+        const findUserRank = (results, username, valueExtractor) => {
+            const index = results.findIndex(r => r.username.toLowerCase() === username.toLowerCase());
+            if (index === -1) return null;
+            return {
+                rank: index + 1,
+                value: valueExtractor(results[index]),
+                total: results.length
+            };
+        };
+        
+        // Fetch all ranks
+        const [talkers, bongs, drinks, quoted, gamblers, fishing, bottles, cashie, signSpinning, beggars, pissers] = await Promise.all([
+            apiServer.bot.db.getTopTalkers(100),
+            apiServer.bot.db.getTopBongUsers(100),
+            apiServer.bot.db.getTopDrinkers(100),
+            apiServer.bot.db.getTopQuotedUsers(100),
+            apiServer.bot.db.getTopGamblers(100),
+            apiServer.bot.db.getTopFishers(100),
+            apiServer.bot.db.getTopBottleCollectors(100),
+            apiServer.bot.db.getTopCashieWorkers(100),
+            apiServer.bot.db.getTopSignSpinners(100),
+            apiServer.bot.db.getTopBeggars(100),
+            apiServer.bot.db.getTopPissers(100)
+        ]);
+        
+        ranks.talkers = findUserRank(talkers, normalizedUsername, r => `${r.message_count} messages`);
+        ranks.bongs = findUserRank(bongs, normalizedUsername, r => `${r.bong_count} cones`);
+        ranks.drinks = findUserRank(drinks, normalizedUsername, r => `${r.drink_count} drinks`);
+        ranks.quoted = findUserRank(quoted, normalizedUsername, r => `${r.quotable_messages} bangers`);
+        ranks.gamblers = findUserRank(gamblers, normalizedUsername, r => `$${r.biggest_win}`);
+        ranks.fishing = findUserRank(fishing, normalizedUsername, r => `${r.biggest_catch}kg`);
+        ranks.bottles = findUserRank(bottles, normalizedUsername, r => `$${r.total_earnings}`);
+        ranks.cashie = findUserRank(cashie, normalizedUsername, r => `$${r.total_earnings}`);
+        ranks.signSpinning = findUserRank(signSpinning, normalizedUsername, r => `$${r.total_earnings}`);
+        ranks.beggars = findUserRank(beggars, normalizedUsername, r => `${r.times_begged} begs`);
+        ranks.pissers = findUserRank(pissers, normalizedUsername, r => `${r.wins} wins`);
+        
+        res.json({
+            success: true,
+            data: {
+                username: normalizedUsername,
+                ranks
+            }
+        });
+    }));
+    
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/ranks');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/all');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/channel');
     apiServer.registerEndpoint('GET', '/api/v1/stats/daily/:type');
