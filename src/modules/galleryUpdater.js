@@ -1,6 +1,12 @@
 import GalleryGenerator from '../services/galleryGenerator.js';
 import gitService from '../services/git.js';
 import fetch from 'node-fetch';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { JSDOM } from 'jsdom';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class GalleryUpdater {
     constructor(database, logger) {
@@ -68,6 +74,42 @@ class GalleryUpdater {
         return prunedCount;
     }
 
+    async processPendingDeletions() {
+        const galleryPath = path.join(__dirname, '../../docs/gallery/index.html');
+        
+        try {
+            const html = await fs.readFile(galleryPath, 'utf8');
+            const dom = new JSDOM(html);
+            const document = dom.window.document;
+            
+            // Find all images marked for deletion
+            const markedElements = document.querySelectorAll('.image-item.marked-for-deletion');
+            const deletions = [];
+            
+            markedElements.forEach(element => {
+                const url = element.getAttribute('data-url');
+                const deleteBtn = element.querySelector('.delete-btn');
+                const username = deleteBtn ? deleteBtn.getAttribute('data-username') : 'Unknown';
+                
+                if (url) {
+                    deletions.push({ url, username });
+                }
+            });
+            
+            // Process each deletion
+            for (const { url, username } of deletions) {
+                await this.db.pruneUserImage(url, `Deleted via gallery by community`);
+                this.logger.info(`Processed deletion: ${url} from ${username}'s gallery`);
+            }
+            
+            return deletions.length;
+        } catch (error) {
+            // File might not exist yet or be malformed
+            this.logger.debug('No pending deletions found or error reading gallery:', error.message);
+            return 0;
+        }
+    }
+
     async generateContentHash() {
         const images = await this.db.getAllUserImagesGrouped(true);
         const prunedImages = await this.db.getPrunedImages();
@@ -101,8 +143,14 @@ class GalleryUpdater {
             }
 
             this.logger.info('Starting gallery update');
+            
+            // Process pending deletions first
+            const deletedCount = await this.processPendingDeletions();
+            if (deletedCount > 0) {
+                this.logger.info(`Processed ${deletedCount} pending deletions from gallery`);
+            }
 
-            // Prune dead images first
+            // Prune dead images
             const prunedCount = await this.pruneDeadImages();
             if (prunedCount > 0) {
                 this.logger.info(`Pruned ${prunedCount} dead images`);
