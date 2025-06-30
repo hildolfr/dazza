@@ -354,14 +354,15 @@ h1 {
         <div class="modal-content" id="modalImage"></div>
     </div>
     
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
 // Configuration - Both HTTP and HTTPS use port 3001
 const API_BASE = window.location.protocol === 'https:' 
     ? 'https://seg.tplinkdns.com:3001/api/v1' 
     : 'http://seg.tplinkdns.com:3001/api/v1';
 const WS_URL = window.location.protocol === 'https:' 
-    ? 'wss://seg.tplinkdns.com:3001' 
-    : 'ws://seg.tplinkdns.com:3001';
+    ? 'https://seg.tplinkdns.com:3001' 
+    : 'http://seg.tplinkdns.com:3001';
 
 // State
 let socket = null;
@@ -441,57 +442,64 @@ async function loadStats() {
 
 // Setup WebSocket connection
 function setupWebSocket() {
-    socket = new WebSocket(WS_URL);
+    socket = io(WS_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 5000
+    });
 
-    socket.addEventListener('open', () => {
+    socket.on('connect', () => {
         console.log('WebSocket connected');
         isConnected = true;
         updateConnectionStatus(true);
+        
+        // Subscribe to gallery events
+        socket.emit('subscribe', ['gallery']);
     });
 
-    socket.addEventListener('close', () => {
+    socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
         isConnected = false;
         updateConnectionStatus(false);
-        // Attempt to reconnect after 5 seconds
-        setTimeout(setupWebSocket, 5000);
     });
 
-    socket.addEventListener('error', (error) => {
-        console.error('WebSocket error:', error);
+    socket.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
         updateConnectionStatus(false);
     });
 
-    socket.addEventListener('message', (event) => {
-        try {
-            const message = JSON.parse(event.data);
-            handleWebSocketMessage(message);
-        } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
+    socket.on('welcome', (data) => {
+        console.log('Received welcome message:', data);
+    });
+
+    socket.on('subscribed', (data) => {
+        console.log('Subscribed to topics:', data.topics);
+    });
+
+    // Gallery event handlers
+    socket.on('gallery:image:added', (data) => {
+        handleImageAdded(data);
+    });
+
+    socket.on('gallery:image:deleted', (data) => {
+        handleImageDeleted(data);
+    });
+
+    socket.on('gallery:lock:changed', (data) => {
+        if (data.isLocked) {
+            handleGalleryLockChange(data.username, true);
+        } else {
+            handleGalleryLockChange(data.username, false);
         }
+    });
+
+    socket.on('gallery:updated', (data) => {
+        // Reload specific user gallery if needed
+        console.log('Gallery updated for user:', data.username);
     });
 }
 
-// Handle WebSocket messages
-function handleWebSocketMessage(message) {
-    switch (message.type) {
-        case 'imageAdded':
-            handleImageAdded(message.data);
-            break;
-        case 'imageDeleted':
-            handleImageDeleted(message.data);
-            break;
-        case 'galleryLocked':
-            handleGalleryLockChange(message.data.username, true);
-            break;
-        case 'galleryUnlocked':
-            handleGalleryLockChange(message.data.username, false);
-            break;
-        case 'galleryStats':
-            updateStats(message.data);
-            break;
-    }
-}
 
 // Handle real-time image addition
 function handleImageAdded(data) {
