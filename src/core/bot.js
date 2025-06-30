@@ -22,6 +22,8 @@ import { CashMonitor } from '../utils/cashMonitor.js';
 import { ApiServer } from '../api/server.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
 import { ImageHealthChecker } from '../modules/imageHealthChecker.js';
+import BatchScheduler from '../batch/BatchScheduler.js';
+import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -89,6 +91,9 @@ export class CyTubeBot extends EventEmitter {
         // API server
         this.apiServer = null;
         
+        // Batch processing scheduler
+        this.batchScheduler = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -137,6 +142,21 @@ export class CyTubeBot extends EventEmitter {
             
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
+            
+            // Initialize Batch Scheduler for chat analytics
+            this.batchScheduler = new BatchScheduler(this.db, this.logger);
+            await this.batchScheduler.init();
+            
+            // Register chat analyzers (run every 4 hours)
+            await registerChatAnalyzers(this.batchScheduler, this.db, this.logger, {
+                intervalHours: 4,
+                timezoneOffset: this.config.batch?.timezoneOffset || 0,
+                runOnStartup: this.config.batch?.runOnStartup !== false // Default to true
+            });
+            
+            // Start batch scheduler
+            await this.batchScheduler.start();
+            this.logger.info('Batch scheduler started');
             
             // Initialize API server
             this.apiServer = new ApiServer(this, this.config.api?.port || 3001);
@@ -1749,6 +1769,12 @@ export class CyTubeBot extends EventEmitter {
         if (this.cooldownCleanupInterval) {
             clearInterval(this.cooldownCleanupInterval);
             this.cooldownCleanupInterval = null;
+        }
+        
+        // Stop batch scheduler
+        if (this.batchScheduler) {
+            this.logger.info('Stopping batch scheduler...');
+            await this.batchScheduler.stop();
         }
         
         // Cancel all pending timeouts

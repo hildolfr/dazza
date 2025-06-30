@@ -2525,17 +2525,17 @@ function getRecoveryTime(avgPerDay) {
 function renderTalkerStats(data, username) {
     const allTime = data.allTime || {};
     const messageCount = allTime.message_count || 0;
-    const avgWordsPerMessage = allTime.avg_words || 15;
-    const totalWords = Math.round(messageCount * avgWordsPerMessage);
-    const daysActive = allTime.days_active || 1;
+    const avgWordsPerMessage = data.messageAnalysis?.avg_words_per_message || allTime.avg_words || 15;
+    const totalWords = data.userStats?.total_words || data.messageAnalysis?.total_words || Math.round(messageCount * avgWordsPerMessage);
+    const daysActive = data.chatStreaks?.total_active_days || allTime.days_active || 1;
     const avgMessagesPerDay = Math.round(messageCount / daysActive);
     const activityLevel = calculateActivityLevel(avgMessagesPerDay);
     
-    // Calculate conversation patterns
-    const morningMessages = Math.round(messageCount * 0.2);
-    const afternoonMessages = Math.round(messageCount * 0.3);
-    const eveningMessages = Math.round(messageCount * 0.35);
-    const lateNightMessages = Math.round(messageCount * 0.15);
+    // Use real data from activeHours
+    const morningMessages = data.activeHours?.morning || Math.round(messageCount * 0.2);
+    const afternoonMessages = data.activeHours?.afternoon || Math.round(messageCount * 0.3);
+    const eveningMessages = data.activeHours?.evening || Math.round(messageCount * 0.35);
+    const lateNightMessages = data.activeHours?.night || Math.round(messageCount * 0.15);
     
     let html = `
         <div class="stat-section chat-section">
@@ -2568,7 +2568,7 @@ function renderTalkerStats(data, username) {
                 <div class="stat-item glass-card chat-card highlight-card">
                     <div class="stat-icon">🔥</div>
                     <span class="stat-label">Chat Streak</span>
-                    <span class="stat-value large-value">${Math.min(daysActive, 30)} days</span>
+                    <span class="stat-value large-value">${data.chatStreaks?.current_streak || 0} days</span>
                     <div class="streak-fire"></div>
                 </div>
             </div>
@@ -2640,29 +2640,20 @@ function renderTalkerStats(data, username) {
                 <div class="analysis-card">
                     <div class="analysis-header">
                         <span class="analysis-icon">📏</span>
-                        <span class="analysis-title">Message Length</span>
+                        <span class="analysis-title">Message Stats</span>
                     </div>
-                    <div class="length-distribution">
-                        <div class="length-bar short">
-                            <span class="length-label">Short (1-5 words)</span>
-                            <div class="bar-container">
-                                <div class="bar-fill" style="width: 30%"></div>
-                            </div>
-                            <span class="length-percent">30%</span>
+                    <div class="analysis-stats">
+                        <div class="analysis-stat">
+                            <span class="stat-label">Average Length:</span>
+                            <span class="stat-value">${Math.round(data.messageAnalysis?.avg_message_length || 0)} chars</span>
                         </div>
-                        <div class="length-bar medium">
-                            <span class="length-label">Medium (6-20 words)</span>
-                            <div class="bar-container">
-                                <div class="bar-fill" style="width: 50%"></div>
-                            </div>
-                            <span class="length-percent">50%</span>
+                        <div class="analysis-stat">
+                            <span class="stat-label">Vocabulary Size:</span>
+                            <span class="stat-value">${data.messageAnalysis?.vocabulary_size || 0} unique words</span>
                         </div>
-                        <div class="length-bar long">
-                            <span class="length-label">Long (20+ words)</span>
-                            <div class="bar-container">
-                                <div class="bar-fill" style="width: 20%"></div>
-                            </div>
-                            <span class="length-percent">20%</span>
+                        <div class="analysis-stat">
+                            <span class="stat-label">Longest Message:</span>
+                            <span class="stat-value">${data.messageAnalysis?.longest_message || 0} chars</span>
                         </div>
                     </div>
                 </div>
@@ -2670,59 +2661,28 @@ function renderTalkerStats(data, username) {
                 <div class="analysis-card">
                     <div class="analysis-header">
                         <span class="analysis-icon">🎯</span>
-                        <span class="analysis-title">Common Phrases</span>
+                        <span class="analysis-title">Message Style</span>
                     </div>
-                    <div class="phrase-cloud">
-                        <span class="phrase common">yeah nah</span>
-                        <span class="phrase frequent">fucken oath</span>
-                        <span class="phrase common">cunt</span>
-                        <span class="phrase rare">cheers mate</span>
-                        <span class="phrase frequent">bloody hell</span>
-                        <span class="phrase common">oi</span>
-                        <span class="phrase rare">straya</span>
-                        <span class="phrase frequent">fuck yeah</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>👥 Conversation Partners</h3>
-            <div class="partners-display">
-                <div class="partners-info">
-                    <div class="info-item">
-                        <span class="info-icon">🤝</span>
-                        <span class="info-label">Unique Conversations:</span>
-                        <span class="info-value">${Math.round(messageCount * 0.01)} people</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">💬</span>
-                        <span class="info-label">Reply Rate:</span>
-                        <span class="info-value">${Math.round(Math.random() * 30 + 60)}%</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">⏱️</span>
-                        <span class="info-label">Avg Response Time:</span>
-                        <span class="info-value">${Math.round(Math.random() * 5 + 1)} min</span>
-                    </div>
-                </div>
-                <div class="top-conversations">
-                    <h4>Most Active Chats</h4>
-                    <div class="convo-list">
-                        <div class="convo-item">
-                            <span class="convo-rank">1.</span>
-                            <span class="convo-user">General Chat</span>
-                            <span class="convo-count">${Math.round(messageCount * 0.6)} msgs</span>
+                    <div class="style-stats">
+                        <div class="style-item">
+                            <span class="style-icon">😄</span>
+                            <span class="style-label">Emoji Usage:</span>
+                            <span class="style-value">${data.messageAnalysis?.emoji_count || 0} total (${(data.messageAnalysis?.emoji_usage_rate || 0).toFixed(1)}%)</span>
                         </div>
-                        <div class="convo-item">
-                            <span class="convo-rank">2.</span>
-                            <span class="convo-user">Banter Zone</span>
-                            <span class="convo-count">${Math.round(messageCount * 0.3)} msgs</span>
+                        <div class="style-item">
+                            <span class="style-icon">📢</span>
+                            <span class="style-label">CAPS Messages:</span>
+                            <span class="style-value">${data.messageAnalysis?.caps_count || 0} (${(data.messageAnalysis?.caps_usage_rate || 0).toFixed(1)}%)</span>
                         </div>
-                        <div class="convo-item">
-                            <span class="convo-rank">3.</span>
-                            <span class="convo-user">Deep Convos</span>
-                            <span class="convo-count">${Math.round(messageCount * 0.1)} msgs</span>
+                        <div class="style-item">
+                            <span class="style-icon">❓</span>
+                            <span class="style-label">Questions Asked:</span>
+                            <span class="style-value">${data.messageAnalysis?.question_count || 0}</span>
+                        </div>
+                        <div class="style-item">
+                            <span class="style-icon">🔗</span>
+                            <span class="style-label">Links Shared:</span>
+                            <span class="style-value">${data.messageAnalysis?.url_count || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -2731,36 +2691,29 @@ function renderTalkerStats(data, username) {
         
         <div class="stat-section">
             <h3>🏆 Chat Achievements</h3>
-            <div class="achievements-grid">
-                <div class="achievement ${messageCount >= 1000 ? 'unlocked' : 'locked'}">
-                    <div class="achievement-icon">💬</div>
-                    <div class="achievement-info">
-                        <span class="achievement-name">Conversation Starter</span>
-                        <span class="achievement-desc">1,000 messages sent</span>
-                    </div>
+            ${data.achievements && data.achievements.length > 0 ? `
+                <div class="achievements-grid">
+                    ${data.achievements.slice(0, 8).map(achievement => `
+                        <div class="achievement unlocked ${achievement.achievement_level}">
+                            <div class="achievement-icon">${achievement.icon || '🏆'}</div>
+                            <div class="achievement-info">
+                                <span class="achievement-name">${escapeHtml(achievement.name)}</span>
+                                <span class="achievement-desc">${escapeHtml(achievement.description || achievement.details || '')}</span>
+                                <span class="achievement-tier">${achievement.achievement_level.toUpperCase()}</span>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="achievement ${messageCount >= 10000 ? 'unlocked' : 'locked'}">
-                    <div class="achievement-icon">🗣️</div>
-                    <div class="achievement-info">
-                        <span class="achievement-name">Chatterbox</span>
-                        <span class="achievement-desc">10,000 messages sent</span>
+                ${data.achievements.length > 8 ? `
+                    <div class="achievement-summary">
+                        <span>+${data.achievements.length - 8} more achievements</span>
                     </div>
+                ` : ''}
+            ` : `
+                <div class="no-achievements">
+                    <span>Keep chatting to unlock achievements!</span>
                 </div>
-                <div class="achievement ${daysActive >= 30 ? 'unlocked' : 'locked'}">
-                    <div class="achievement-icon">🔥</div>
-                    <div class="achievement-info">
-                        <span class="achievement-name">30 Day Streak</span>
-                        <span class="achievement-desc">Active for 30 days</span>
-                    </div>
-                </div>
-                <div class="achievement ${avgMessagesPerDay >= 100 ? 'unlocked' : 'locked'}">
-                    <div class="achievement-icon">👑</div>
-                    <div class="achievement-info">
-                        <span class="achievement-name">Chat Legend</span>
-                        <span class="achievement-desc">100+ messages per day</span>
-                    </div>
-                </div>
-            </div>
+            `}
         </div>
     `;
     

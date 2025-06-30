@@ -15,7 +15,8 @@
     "migrate:status": "node src/scripts/migrate.js status",
     "migrate:rollback": "node src/scripts/migrate.js rollback",
     "update-pissing-analytics": "node src/scripts/updatePissingAnalytics.js",
-    "fill-pissing-data": "node src/scripts/fillMissingPissingData.js"
+    "fill-pissing-data": "node src/scripts/fillMissingPissingData.js",
+    "analyze": "node src/batch/runAnalyzers.js"
   },
   "keywords": [
     "cytube",

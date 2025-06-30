@@ -4515,4 +4515,92 @@ body {
         transform: translateX(0);
     }
 }
-EOF < /dev/null
+
+/* Message Analysis Styles */
+.analysis-stats, .style-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.analysis-stat, .style-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 149, 79, 0.05);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.analysis-stat:hover, .style-item:hover {
+    background: rgba(0, 149, 79, 0.1);
+    transform: translateX(5px);
+}
+
+.style-item {
+    gap: 10px;
+}
+
+.style-icon {
+    font-size: 1.2rem;
+}
+
+.style-label {
+    flex: 1;
+    font-weight: 600;
+    color: var(--vb-dark);
+}
+
+.style-value {
+    font-weight: bold;
+    color: var(--vb-green);
+}
+
+/* Achievement Tier Styles */
+.achievement.bronze .achievement-tier {
+    color: #CD7F32;
+    background: rgba(205, 127, 50, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.achievement.silver .achievement-tier {
+    color: #C0C0C0;
+    background: rgba(192, 192, 192, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.achievement.gold .achievement-tier {
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.achievement.diamond .achievement-tier {
+    color: #B9F2FF;
+    background: rgba(185, 242, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.no-achievements {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.achievement-summary {
+    text-align: center;
+    margin-top: 15px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
