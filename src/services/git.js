@@ -52,7 +52,7 @@ class GitService {
             );
             return { success: true, stdout, stderr };
         } catch (error) {
-            if (error.message.includes('nothing to commit')) {
+            if (error.stdout && error.stdout.includes('nothing to commit')) {
                 return { success: true, nothingToCommit: true };
             }
             console.error('Git commit failed:', error);
