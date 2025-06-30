@@ -1428,7 +1428,6 @@
             <a href="#stats" class="nav-button">Stats</a>
             <a href="#utility" class="nav-button">Utility</a>
             <a href="#admin" class="nav-button" style="background: var(--admin-red);">Admin</a>
-            <a href="#api" class="nav-button" style="background: #4A90E2;">API</a>
         </div>
     </nav>
 
@@ -2295,79 +2294,6 @@
             </div>
         </section>
 
-        <!-- API Documentation -->
-        <section class="category" id="api">
-            <h2 class="category-title">🔌 API Documentation</h2>
-            <p class="category-description">Dazza Bot runs an HTTP API server on port 3001 for external integrations</p>
-            
-            <div class="commands-grid">
-                <div class="command-card">
-                    <h3 class="command-name">API Overview</h3>
-                    <p class="command-desc">RESTful API with WebSocket support for real-time updates</p>
-                    <p class="command-example">Base URL: http://your-server:3001/api/v1</p>
-                    <p class="command-example">WebSocket: ws://your-server:3001</p>
-                    <p class="command-example">CORS: Only allows requests from https://hildolfr.github.io</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Health Check</h3>
-                    <p class="command-desc">GET /api/v1/health - Check if API is running</p>
-                    <p class="command-example">Returns: status, uptime, version, endpoints count</p>
-                    <p class="command-example">GET /api/v1/health/detailed - Extended health info with memory and database stats</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Gallery Management</h3>
-                    <p class="command-desc">Manage user image galleries</p>
-                    <p class="command-example">DELETE /api/v1/gallery/images - Delete an image (requires CORS origin)</p>
-                    <p class="command-example">GET /api/v1/gallery/locks - Get all gallery lock statuses</p>
-                    <p class="command-example">PUT /api/v1/gallery/locks/:username - Update gallery lock status</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">User Statistics</h3>
-                    <p class="command-desc">GET /api/v1/stats/users/:username - Get user stats</p>
-                    <p class="command-example">Returns: firstSeen, lastSeen, messageCount, bongCount, drinkCount, balance, criminalRecord</p>
-                    <p class="command-example">GET /api/v1/stats/recent/activity - Get recent channel activity</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Leaderboards</h3>
-                    <p class="command-desc">GET /api/v1/stats/leaderboard/:type - Get rankings</p>
-                    <p class="command-example">Types: bongs, drinks, money, criminal, messages, images</p>
-                    <p class="command-example">Query params: ?limit=10 (max 50)</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Channel Statistics</h3>
-                    <p class="command-desc">GET /api/v1/stats/channel - Get channel-wide stats</p>
-                    <p class="command-example">Returns: totalMessages, uniqueUsers, activeToday, currentVideo</p>
-                    <p class="command-example">GET /api/v1/stats/daily/:type?days=7 - Get daily stats (bongs/drinks/messages)</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">WebSocket Events</h3>
-                    <p class="command-desc">Real-time updates via Socket.IO</p>
-                    <p class="command-example">Subscribe to topics: ['gallery', 'stats', 'chat', 'bot']</p>
-                    <p class="command-example">Events: gallery:image:added, user:join, user:leave, media:change</p>
-                    <p class="command-example">Connection: const socket = io('ws://your-server:3001')</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Rate Limiting</h3>
-                    <p class="command-desc">Default: 100 requests per 15 minutes per IP</p>
-                    <p class="command-example">Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset</p>
-                    <p class="command-example">429 status when exceeded with Retry-After header</p>
-                </div>
-                
-                <div class="command-card">
-                    <h3 class="command-name">Error Responses</h3>
-                    <p class="command-desc">Consistent error format for all endpoints</p>
-                    <p class="command-example">Format: { error: true, message: "...", code: "ERROR_CODE", id: "..." }</p>
-                    <p class="command-example">Common codes: NOT_FOUND, VALIDATION_ERROR, CORS_FORBIDDEN, RATE_LIMIT</p>
-                </div>
-            </div>
-        </section>
     </div>
 
     <!-- Footer -->

@@ -12,6 +12,13 @@ class Logger {
         this.logToConsole = options.console !== false;
         this.logLevel = options.level || 'info';
         
+        // Debug: Show what level we're actually using
+        console.log(`[LOGGER DEBUG] Initialized with level: ${this.logLevel} (options.level: ${options.level})`);
+        
+        if (this.logLevel === 'warn') {
+            console.log('[LOGGER DEBUG] ✅ Logger correctly set to WARN level - INFO messages will be suppressed');
+        }
+        
         this.levels = {
             error: 0,
             warn: 1,

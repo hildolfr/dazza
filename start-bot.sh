@@ -141,6 +141,9 @@ process_output() {
 echo -e "${BLUE}[$(date "+$TIMESTAMP_FORMAT")] [SYSTEM] Launching node process...${NC}"
 echo "[$(date "+$TIMESTAMP_FORMAT")] [SYSTEM] Launching node process..." >> "$LOG_PATH"
 
+# Set log level to warn to reduce verbosity
+export LOG_LEVEL=warn
+
 # Start node process in background and capture its PID
 node index.js 2>&1 | process_output &
 NODE_PID=$!
