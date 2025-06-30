@@ -1038,6 +1038,57 @@ export class HeistManager extends EventEmitter {
         this.logger.debug('Cleaned up heist state');
     }
 
+    // Transfer money from one user to another
+    async transferMoney(fromUser, toUser, amount) {
+        try {
+            if (amount <= 0) {
+                throw new Error('Transfer amount must be positive');
+            }
+            
+            // Check if sender has enough money
+            const senderBalance = await this.getUserBalance(fromUser);
+            if (senderBalance.balance < amount) {
+                throw new Error(`Insufficient funds: ${fromUser} has $${senderBalance.balance}, needs $${amount}`);
+            }
+            
+            // Perform the transfer
+            await this.updateUserEconomy(fromUser, -amount, 0);
+            await this.updateUserEconomy(toUser, amount, 0);
+            
+            this.logger.debug(`Transferred $${amount} from ${fromUser} to ${toUser}`);
+            return true;
+        } catch (error) {
+            this.logger.error(`Transfer failed: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    // Deduct money from a user (e.g., for fines)
+    async deductMoney(username, amount) {
+        try {
+            if (amount <= 0) {
+                throw new Error('Deduction amount must be positive');
+            }
+            
+            // Check current balance
+            const balance = await this.getUserBalance(username);
+            if (balance.balance < amount) {
+                // Deduct what they have, set to 0
+                await this.updateUserEconomy(username, -balance.balance, 0);
+                this.logger.debug(`Deducted all remaining balance ($${balance.balance}) from ${username}`);
+            } else {
+                // Deduct the full amount
+                await this.updateUserEconomy(username, -amount, 0);
+                this.logger.debug(`Deducted $${amount} from ${username}`);
+            }
+            
+            return true;
+        } catch (error) {
+            this.logger.error(`Deduction failed: ${error.message}`);
+            throw error;
+        }
+    }
+
     // Clean shutdown
     async shutdown() {
         if (this.nextHeistTimer) clearTimeout(this.nextHeistTimer);
