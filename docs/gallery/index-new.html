@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dazza's Fuckin' Art Gallery</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1a1a1a;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00; }
+    to { text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 40px #00ff00; }
+}
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    color: #ffff00;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    z-index: 1000;
+}
+
+.connection-status.connected {
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.connection-status.disconnected {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+.loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.5em;
+    color: #ffff00;
+}
+
+.error-message {
+    text-align: center;
+    padding: 50px;
+    color: #ff0000;
+    font-size: 1.2em;
+}
+
+.user-section {
+    margin-bottom: 60px;
+    border: 2px dashed #00ff00;
+    padding: 20px;
+    background: rgba(0, 255, 0, 0.05);
+}
+
+.user-section h2 {
+    color: #ff00ff;
+    margin-bottom: 20px;
+    font-size: 2em;
+    text-shadow: 2px 2px 4px #000;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.image-item {
+    position: relative;
+    overflow: hidden;
+    border: 3px solid #00ff00;
+    background: #000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 250px;
+}
+
+.image-item:hover {
+    transform: scale(1.05) rotate(2deg);
+    border-color: #ff00ff;
+    box-shadow: 0 0 20px #ff00ff;
+}
+
+.image-item img, .image-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.timestamp {
+    color: #00ff00;
+    padding: 5px;
+    font-size: 0.8em;
+    text-align: center;
+    border-bottom: 1px solid #00ff00;
+}
+
+.control-buttons {
+    display: flex;
+}
+
+.copy-url-btn, .delete-btn {
+    flex: 1;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.delete-btn {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+.copy-url-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    color: #ff00ff;
+    border-color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 0, 0, 0.3);
+    color: #ffffff;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.copy-url-btn:active, .delete-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-url-btn.copied {
+    background: rgba(255, 0, 255, 0.3);
+    color: #ffff00;
+    border-color: #ffff00;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    max-width: 90%;
+    max-height: 90%;
+    position: relative;
+}
+
+.modal-content img, .modal-content video {
+    max-width: 100%;
+    max-height: 90vh;
+    border: 5px solid #00ff00;
+    box-shadow: 0 0 30px #00ff00;
+}
+
+.close {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    color: #ff0000;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    text-shadow: 0 0 10px #ff0000;
+}
+
+.close:hover {
+    color: #ff00ff;
+    transform: rotate(180deg);
+    transition: all 0.3s ease;
+}
+
+.no-images {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 40px;
+}
+
+.flash-text {
+    animation: flash 0.5s ease-in-out infinite;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.lock-status {
+    font-size: 0.7em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.lock-status.locked {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+.lock-status.unlocked {
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.deleting {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.stats {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #00ff00;
+    background: rgba(0, 255, 0, 0.05);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    padding: 15px;
+    border: 1px solid #ff00ff;
+    background: rgba(255, 0, 255, 0.05);
+}
+
+.stat-value {
+    font-size: 2em;
+    color: #ffff00;
+    font-weight: bold;
+}
+
+.stat-label {
+    color: #00ff00;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+</style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">
+        <span id="statusText">Connecting...</span>
+    </div>
+
+    <div class="header">
+        <h1>🍺 Dazza's Fuckin' Art Gallery 🍺</h1>
+        <p class="subtitle flash-text">ALL THE SHIT YOU CUNTS POST</p>
+        <p style="color: #ffff00; margin-top: 20px;">Click DELETE on unlocked galleries to remove images instantly</p>
+        <p style="color: #ff00ff; margin-top: 10px;">To lock/unlock your gallery: Use !gallery lock or !gallery unlock in chat</p>
+    </div>
+
+    <div class="stats" id="statsSection" style="display: none;">
+        <h2>Gallery Stats</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="totalImages">0</div>
+                <div class="stat-label">Total Images</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Contributing Cunts</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="storageSize">0 MB</div>
+                <div class="stat-label">Storage Used</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingMessage" class="loading">
+        Loading gallery data...
+    </div>
+
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+    <div id="galleryContent" style="display: none;"></div>
+
+    <div class="modal" id="imageModal">
+        <span class="close">&times;</span>
+        <div class="modal-content" id="modalImage"></div>
+    </div>
+    
+    <script>
+// Configuration
+const API_BASE = 'http://seg.tplinkdns.com:3001/api/v1';
+const WS_URL = 'ws://seg.tplinkdns.com:3001';
+
+// State
+let socket = null;
+let galleryData = {};
+let isConnected = false;
+
+// DOM elements
+const connectionStatus = document.getElementById('connectionStatus');
+const statusText = document.getElementById('statusText');
+const loadingMessage = document.getElementById('loadingMessage');
+const errorMessage = document.getElementById('errorMessage');
+const galleryContent = document.getElementById('galleryContent');
+const statsSection = document.getElementById('statsSection');
+const modal = document.getElementById('imageModal');
+const modalContent = document.getElementById('modalImage');
+const closeBtn = document.querySelector('.close');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadGallery();
+    setupWebSocket();
+    setupModalHandlers();
+});
+
+// Load gallery data from API
+async function loadGallery() {
+    try {
+        const response = await fetch(`${API_BASE}/gallery/images`, {
+            headers: {
+                'Origin': window.location.origin
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            galleryData = data.data;
+            renderGallery();
+            loadStats();
+            loadingMessage.style.display = 'none';
+            galleryContent.style.display = 'block';
+            statsSection.style.display = 'block';
+        } else {
+            throw new Error(data.message || 'Failed to load gallery');
+        }
+    } catch (error) {
+        console.error('Failed to load gallery:', error);
+        showError('Failed to load gallery: ' + error.message);
+    }
+}
+
+// Load gallery stats
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_BASE}/gallery/stats`, {
+            headers: {
+                'Origin': window.location.origin
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('totalImages').textContent = data.data.totalImages;
+                document.getElementById('totalUsers').textContent = data.data.totalUsers;
+                document.getElementById('storageSize').textContent = data.data.storageSize;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+// Setup WebSocket connection
+function setupWebSocket() {
+    socket = new WebSocket(WS_URL);
+
+    socket.addEventListener('open', () => {
+        console.log('WebSocket connected');
+        isConnected = true;
+        updateConnectionStatus(true);
+    });
+
+    socket.addEventListener('close', () => {
+        console.log('WebSocket disconnected');
+        isConnected = false;
+        updateConnectionStatus(false);
+        // Attempt to reconnect after 5 seconds
+        setTimeout(setupWebSocket, 5000);
+    });
+
+    socket.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+        updateConnectionStatus(false);
+    });
+
+    socket.addEventListener('message', (event) => {
+        try {
+            const message = JSON.parse(event.data);
+            handleWebSocketMessage(message);
+        } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
+        }
+    });
+}
+
+// Handle WebSocket messages
+function handleWebSocketMessage(message) {
+    switch (message.type) {
+        case 'imageAdded':
+            handleImageAdded(message.data);
+            break;
+        case 'imageDeleted':
+            handleImageDeleted(message.data);
+            break;
+        case 'galleryLocked':
+            handleGalleryLockChange(message.data.username, true);
+            break;
+        case 'galleryUnlocked':
+            handleGalleryLockChange(message.data.username, false);
+            break;
+        case 'galleryStats':
+            updateStats(message.data);
+            break;
+    }
+}
+
+// Handle real-time image addition
+function handleImageAdded(data) {
+    if (!galleryData.galleries[data.username]) {
+        galleryData.galleries[data.username] = {
+            images: [],
+            isLocked: false
+        };
+    }
+    
+    // Add new image to the beginning
+    galleryData.galleries[data.username].images.unshift({
+        url: data.url,
+        timestamp: data.timestamp
+    });
+    
+    // Re-render just that user's section
+    renderUserSection(data.username);
+    
+    // Update stats
+    loadStats();
+}
+
+// Handle real-time image deletion
+function handleImageDeleted(data) {
+    if (galleryData.galleries[data.username]) {
+        galleryData.galleries[data.username].images = 
+            galleryData.galleries[data.username].images.filter(img => img.url !== data.url);
+        
+        // Re-render that user's section
+        renderUserSection(data.username);
+        
+        // Update stats
+        loadStats();
+    }
+}
+
+// Handle gallery lock/unlock
+function handleGalleryLockChange(username, isLocked) {
+    if (galleryData.galleries[username]) {
+        galleryData.galleries[username].isLocked = isLocked;
+        renderUserSection(username);
+    }
+}
+
+// Update stats in real-time
+function updateStats(stats) {
+    document.getElementById('totalImages').textContent = stats.totalImages;
+    document.getElementById('totalUsers').textContent = stats.totalUsers;
+    document.getElementById('storageSize').textContent = stats.storageSize;
+}
+
+// Render entire gallery
+function renderGallery() {
+    galleryContent.innerHTML = '';
+    
+    // Sort users by most recent image
+    const sortedUsers = Object.entries(galleryData.galleries)
+        .sort((a, b) => {
+            const aLatest = a[1].images[0]?.timestamp || 0;
+            const bLatest = b[1].images[0]?.timestamp || 0;
+            return bLatest - aLatest;
+        });
+    
+    sortedUsers.forEach(([username, data]) => {
+        if (data.images.length > 0) {
+            const section = createUserSection(username, data);
+            galleryContent.appendChild(section);
+        }
+    });
+}
+
+// Render single user section
+function renderUserSection(username) {
+    const existingSection = document.querySelector(`[data-username="${username}"]`);
+    const data = galleryData.galleries[username];
+    
+    if (!data || data.images.length === 0) {
+        if (existingSection) {
+            existingSection.remove();
+        }
+        return;
+    }
+    
+    const newSection = createUserSection(username, data);
+    
+    if (existingSection) {
+        existingSection.replaceWith(newSection);
+    } else {
+        // Find correct position to insert
+        const sections = Array.from(galleryContent.querySelectorAll('.user-section'));
+        const latestTimestamp = data.images[0]?.timestamp || 0;
+        
+        const insertBefore = sections.find(section => {
+            const sectionUsername = section.getAttribute('data-username');
+            const sectionData = galleryData.galleries[sectionUsername];
+            const sectionLatest = sectionData?.images[0]?.timestamp || 0;
+            return latestTimestamp > sectionLatest;
+        });
+        
+        if (insertBefore) {
+            galleryContent.insertBefore(newSection, insertBefore);
+        } else {
+            galleryContent.appendChild(newSection);
+        }
+    }
+}
+
+// Create user section element
+function createUserSection(username, data) {
+    const section = document.createElement('div');
+    section.className = 'user-section';
+    section.setAttribute('data-username', username);
+    
+    const lockStatus = data.isLocked ? 
+        '<span class="lock-status locked">🔒 LOCKED</span>' : 
+        '<span class="lock-status unlocked">🔓 UNLOCKED</span>';
+    
+    section.innerHTML = `
+        <h2>${username}'s Collection (${data.images.length} pics) ${lockStatus}</h2>
+        <div class="gallery-grid">
+            ${data.images.map(img => createImageElement(img, username, data.isLocked)).join('')}
+        </div>
+    `;
+    
+    // Add event listeners
+    setupSectionEventListeners(section);
+    
+    return section;
+}
+
+// Create image element
+function createImageElement(image, username, isLocked) {
+    const date = new Date(image.timestamp);
+    const formattedDate = date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const deleteButton = !isLocked ? 
+        `<button class="delete-btn" data-url="${image.url}" data-username="${username}">DELETE</button>` : '';
+    
+    return `
+        <div class="image-item" data-url="${image.url}">
+            <img src="${image.url}" alt="Posted by ${username}" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIExvYWQgRXJyb3I8L3RleHQ+PC9zdmc+'">
+            <div class="image-controls">
+                <div class="timestamp">${formattedDate}</div>
+                <div class="control-buttons">
+                    <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
+                    ${deleteButton}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Setup event listeners for a section
+function setupSectionEventListeners(section) {
+    // Copy URL functionality
+    section.querySelectorAll('.copy-url-btn').forEach(btn => {
+        btn.addEventListener('click', handleCopyUrl);
+    });
+    
+    // Delete functionality
+    section.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', handleDelete);
+    });
+    
+    // Image click for modal
+    section.querySelectorAll('.image-item img').forEach(img => {
+        img.addEventListener('click', handleImageClick);
+    });
+}
+
+// Handle copy URL
+async function handleCopyUrl(e) {
+    e.stopPropagation();
+    const btn = e.target;
+    const url = btn.getAttribute('data-url');
+    
+    try {
+        await navigator.clipboard.writeText(url);
+        
+        const originalText = btn.textContent;
+        btn.textContent = 'COPIED!';
+        btn.classList.add('copied');
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('copied');
+        }, 2000);
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            
+            setTimeout(() => {
+                btn.textContent = 'GRAB URL';
+                btn.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            btn.textContent = 'COPY FAILED!';
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+// Handle delete
+async function handleDelete(e) {
+    e.stopPropagation();
+    const btn = e.target;
+    const url = btn.getAttribute('data-url');
+    const username = btn.getAttribute('data-username');
+    const imageItem = btn.closest('.image-item');
+    
+    if (!confirm(`Delete this image from ${username}'s gallery?`)) {
+        return;
+    }
+    
+    // Add loading state
+    imageItem.classList.add('deleting');
+    btn.textContent = 'DELETING...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/gallery/images`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            },
+            body: JSON.stringify({ username, url })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to delete image');
+        }
+        
+        // The WebSocket will handle the UI update
+    } catch (error) {
+        console.error('Failed to delete image:', error);
+        alert('Failed to delete image: ' + error.message);
+        
+        // Restore state
+        imageItem.classList.remove('deleting');
+        btn.textContent = 'DELETE';
+        btn.disabled = false;
+    }
+}
+
+// Handle image click for modal
+function handleImageClick(e) {
+    const imgSrc = e.target.src;
+    modalContent.innerHTML = `<img src="${imgSrc}" alt="Gallery image">`;
+    modal.classList.add('active');
+}
+
+// Setup modal handlers
+function setupModalHandlers() {
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+            modalContent.innerHTML = '';
+        }
+    });
+}
+
+// Update connection status
+function updateConnectionStatus(connected) {
+    if (connected) {
+        connectionStatus.className = 'connection-status connected';
+        statusText.textContent = 'Connected';
+    } else {
+        connectionStatus.className = 'connection-status disconnected';
+        statusText.textContent = 'Disconnected';
+    }
+}
+
+// Show error message
+function showError(message) {
+    loadingMessage.style.display = 'none';
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+}
+
+// Add random glitch effect
+setInterval(function() {
+    const elements = document.querySelectorAll('.user-section h2');
+    const randomElement = elements[Math.floor(Math.random() * elements.length)];
+    if (randomElement) {
+        randomElement.style.transform = 'translateX(' + (Math.random() * 4 - 2) + 'px)';
+        setTimeout(() => {
+            randomElement.style.transform = 'translateX(0)';
+        }, 100);
+    }
+}, 3000);
+</script>
+</body>
+</html>
