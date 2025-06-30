@@ -260,6 +260,7 @@ class Database {
         // Extract and save any image URLs
         const imageUrls = extractImageUrls(message);
         const restoredImages = [];
+        let limitEnforced = false;
         
         for (const url of imageUrls) {
             const imageResult = await this.addUserImage(username, url);
@@ -269,12 +270,16 @@ class Database {
                     previousReason: imageResult.previousReason
                 });
             }
+            if (imageResult.limitEnforced) {
+                limitEnforced = true;
+            }
         }
         
         // Return the message ID and any restored images
         return {
             messageId: result.lastID,
-            restoredImages
+            restoredImages,
+            limitEnforced
         };
     }
 
@@ -897,6 +902,7 @@ class Database {
     // User images methods
     async addUserImage(username, url) {
         const timestamp = Date.now();
+        const IMAGE_LIMIT = 25;
         
         try {
             // Check if this URL was previously pruned
@@ -908,6 +914,30 @@ class Database {
             
             if (existingImage && !existingImage.is_active) {
                 console.log(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
+            }
+            
+            // Check if user is at the image limit
+            const activeCount = await this.get(`
+                SELECT COUNT(*) as count
+                FROM user_images
+                WHERE username = ? AND is_active = 1
+            `, [username]);
+            
+            // If at or over limit, mark oldest images as pruned
+            if (activeCount.count >= IMAGE_LIMIT) {
+                const imagesToRemove = activeCount.count - IMAGE_LIMIT + 1; // +1 to make room for new image
+                
+                await this.run(`
+                    UPDATE user_images
+                    SET is_active = 0, pruned_reason = 'Gallery limit (25 images)'
+                    WHERE username = ? 
+                    AND is_active = 1
+                    AND url != ?
+                    ORDER BY timestamp ASC
+                    LIMIT ?
+                `, [username, url, imagesToRemove]);
+                
+                console.log(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
             }
             
             await this.run(`
@@ -931,7 +961,8 @@ class Database {
             return { 
                 success: true, 
                 restored: existingImage && !existingImage.is_active,
-                previousReason: existingImage?.pruned_reason
+                previousReason: existingImage?.pruned_reason,
+                limitEnforced: activeCount.count >= IMAGE_LIMIT
             };
         } catch (error) {
             console.error('Error adding user image:', error);
