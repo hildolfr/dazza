@@ -386,7 +386,19 @@ export class CyTubeBot extends EventEmitter {
             
             // Log message to database with normalized username and get the message ID
             const canonicalUsername = await normalizeUsernameForDb(this, data.username);
-            const messageId = await this.db.logMessage(canonicalUsername, data.msg);
+            const logResult = await this.db.logMessage(canonicalUsername, data.msg);
+            const messageId = logResult.messageId || logResult; // Handle both old and new format
+            
+            // Check if any images were restored
+            if (logResult.restoredImages && logResult.restoredImages.length > 0) {
+                for (const restored of logResult.restoredImages) {
+                    this.logger.info(`Restored previously dead image: ${restored.url}`);
+                }
+                // Notify in chat about restored image (Dazza style)
+                setTimeout(() => {
+                    this.sendMessage(`Oi fucken' oath! That pic's back from the dead! Thought it carked it but she's alive again!`);
+                }, 2000);
+            }
 
             // Detect and log URLs in the message
             const urlDetection = detectUrls(data.msg);

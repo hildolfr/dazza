@@ -47,6 +47,17 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 - `timestamp` INTEGER NOT NULL (Unix timestamp in milliseconds)
 - `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 
+### user_images
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `username` TEXT NOT NULL
+- `url` TEXT NOT NULL
+- `timestamp` INTEGER NOT NULL (Unix timestamp in milliseconds)
+- `is_active` INTEGER DEFAULT 1 (1 = active, 0 = pruned)
+- `pruned_reason` TEXT (reason why image was marked as dead)
+- `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+- UNIQUE(username, url) - prevents duplicate entries
+- Note: When a pruned image URL is posted again, it's automatically restored to active status
+
 ### Indexes
 - `idx_messages_username` on messages(username)
 - `idx_messages_timestamp` on messages(timestamp)
@@ -56,6 +67,9 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 - `idx_user_bongs_timestamp` on user_bongs(timestamp)
 - `idx_user_drinks_username` on user_drinks(username)
 - `idx_user_drinks_timestamp` on user_drinks(timestamp)
+- `idx_user_images_username` on user_images(username)
+- `idx_user_images_timestamp` on user_images(timestamp)
+- `idx_user_images_active` on user_images(is_active)
 
 ## Character Design
 - The bot should always attempt to act / roleplay like dazza the all australian bogan
