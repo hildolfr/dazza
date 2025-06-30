@@ -378,7 +378,6 @@ function setupWebSocket() {
     });
 
     socket.on('connect', () => {
-        console.log('WebSocket connected');
         isConnected = true;
         updateConnectionStatus(true);
         
@@ -387,7 +386,6 @@ function setupWebSocket() {
     });
 
     socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
         isConnected = false;
         updateConnectionStatus(false);
     });
@@ -398,11 +396,11 @@ function setupWebSocket() {
     });
 
     socket.on('welcome', (data) => {
-        console.log('Received welcome message:', data);
+        // Connection established
     });
 
     socket.on('subscribed', (data) => {
-        console.log('Subscribed to topics:', data.topics);
+        // Successfully subscribed to topics
     });
 
     // Gallery event handlers
@@ -424,7 +422,6 @@ function setupWebSocket() {
 
     socket.on('gallery:updated', (data) => {
         // Reload specific user gallery if needed
-        console.log('Gallery updated for user:', data.username);
     });
 }
 

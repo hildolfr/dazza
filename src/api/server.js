@@ -305,12 +305,6 @@ export class ApiServer extends EventEmitter {
     broadcast(event, data) {
         // Use EventEmitter to trigger internal event
         this.emit(event, data);
-        
-        // Also broadcast via Socket.IO
-        this.io.emit(event, {
-            ...data,
-            timestamp: Date.now()
-        });
         this.bot.logger.debug(`[API] Broadcast event: ${event}`, data);
     }
 }
