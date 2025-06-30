@@ -488,11 +488,13 @@ body {
 
 .modal-content {
     background: white;
-    margin: 5% auto;
+    margin: 2% auto;
     padding: 30px;
     border-radius: 20px;
     width: 90%;
-    max-width: 600px;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
     animation: slideDown 0.3s ease-out;
 }
@@ -515,6 +517,338 @@ body {
 
 .modal-close:hover {
     color: var(--vb-red);
+}
+
+/* Modal Content Styles */
+.stat-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f8f8;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+}
+
+.stat-section h3 {
+    margin: 0 0 15px 0;
+    color: var(--vb-green);
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.stat-item {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--vb-dark);
+}
+
+.stat-value.profit {
+    color: var(--vb-green);
+}
+
+.stat-value.loss {
+    color: var(--vb-red);
+}
+
+/* Progress Bars */
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--vb-green) 0%, var(--vb-gold) 100%);
+    transition: width 0.5s ease-out;
+    border-radius: 10px;
+}
+
+/* Match List (Pissing Contest) */
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.match-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border-left: 5px solid #ccc;
+}
+
+.match-item.won {
+    border-left-color: var(--vb-green);
+    background: rgba(0, 149, 79, 0.05);
+}
+
+.match-item.lost {
+    border-left-color: var(--vb-red);
+    background: rgba(206, 17, 38, 0.05);
+}
+
+.match-opponent {
+    font-weight: bold;
+}
+
+.match-result {
+    font-weight: bold;
+}
+
+.match-stats {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Game Stats (Gambling) */
+.game-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.game-stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.game-stat-card h4 {
+    margin: 0 0 10px 0;
+    color: var(--vb-gold);
+    text-align: center;
+}
+
+.game-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+/* Win List */
+.win-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.win-item {
+    display: grid;
+    grid-template-columns: 80px 100px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background: linear-gradient(90deg, rgba(255, 199, 44, 0.1) 0%, transparent 100%);
+    border-radius: 8px;
+}
+
+.win-game {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.win-amount {
+    font-weight: bold;
+    color: var(--vb-green);
+}
+
+.win-desc {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Fishing Stats */
+.catch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.catch-item {
+    display: grid;
+    grid-template-columns: 40px 80px 1fr 80px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.catch-item.trophy {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+    border-color: gold;
+}
+
+.catch-rank {
+    font-weight: bold;
+    color: var(--vb-green);
+}
+
+.catch-weight {
+    font-weight: bold;
+}
+
+.catch-type {
+    font-style: italic;
+    color: #666;
+}
+
+.catch-value {
+    text-align: right;
+    color: var(--vb-green);
+}
+
+/* Fish Type Grid */
+.fish-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.fish-type-card {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+}
+
+.fish-name {
+    font-weight: bold;
+    color: var(--vb-dark);
+    margin-bottom: 8px;
+}
+
+.fish-stats {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    color: #666;
+    gap: 3px;
+}
+
+/* Shame Meter (Beggars) */
+.shame-meter {
+    position: relative;
+    height: 40px;
+    background: #e0e0e0;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.shame-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ffc72c 0%, #ce1126 100%);
+    transition: width 0.5s ease-out;
+}
+
+.shame-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    color: var(--vb-dark);
+    text-shadow: 0 0 3px white;
+}
+
+/* Big Stat Display */
+.big-stat {
+    font-size: 4rem;
+    font-weight: bold;
+    color: var(--vb-green);
+    text-align: center;
+    margin: 20px 0;
+    text-shadow: 3px 3px 0 var(--vb-gold);
+}
+
+.stat-subtitle {
+    text-align: center;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* View All Ranks Button */
+.view-all-ranks-btn {
+    padding: 12px 30px;
+    background: var(--vb-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-all-ranks-btn:hover {
+    background: #007a3f;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 149, 79, 0.3);
+}
+
+/* User Ranks (All Categories) */
+.user-ranks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-rank-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 15px;
+    align-items: center;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.rank-category {
+    font-weight: bold;
+    color: var(--vb-dark);
+}
+
+.rank-position {
+    text-align: center;
+    font-weight: bold;
+    color: var(--vb-green);
+}
+
+.rank-value {
+    text-align: right;
+    color: #666;
 }
 
 /* Toast Notifications */

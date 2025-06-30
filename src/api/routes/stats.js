@@ -621,6 +621,274 @@ export function createStatsRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/stats/users/:username/category/:category - Get detailed user stats for a specific category
+    router.get('/users/:username/category/:category', asyncHandler(async (req, res) => {
+        const { username, category } = req.params;
+        const normalizedUsername = username.toLowerCase();
+        
+        let data = {};
+        
+        try {
+            switch (category) {
+                case 'pissers':
+                    const pissingStats = await apiServer.bot.db.get(
+                        'SELECT * FROM pissing_contest_stats WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    if (pissingStats) {
+                        // Get recent matches
+                        const recentMatches = await apiServer.bot.db.all(`
+                            SELECT * FROM pissing_contest_challenges 
+                            WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
+                            AND status = 'completed'
+                            ORDER BY completed_at DESC
+                            LIMIT 5
+                        `, [normalizedUsername, normalizedUsername]);
+                        
+                        // Get records
+                        const records = await apiServer.bot.db.all(`
+                            SELECT * FROM pissing_contest_records
+                            WHERE LOWER(username) = ?
+                        `, [normalizedUsername]);
+                        
+                        data = {
+                            stats: pissingStats,
+                            recentMatches: recentMatches.map(match => ({
+                                opponent: match.challenger.toLowerCase() === normalizedUsername ? match.challenged : match.challenger,
+                                won: match.winner?.toLowerCase() === normalizedUsername,
+                                amount: match.amount,
+                                date: match.completed_at,
+                                performance: {
+                                    distance: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_distance : match.challenged_distance,
+                                    volume: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_volume : match.challenged_volume,
+                                    aim: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_aim : match.challenged_aim,
+                                    duration: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_duration : match.challenged_duration
+                                }
+                            })),
+                            records: records
+                        };
+                    }
+                    break;
+                    
+                case 'sign_spinning':
+                    const spinStats = await apiServer.bot.db.get(
+                        'SELECT * FROM sign_spinning_stats WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    if (spinStats) {
+                        // Get recent shifts from transactions
+                        const recentShifts = await apiServer.bot.db.all(`
+                            SELECT * FROM economy_transactions
+                            WHERE LOWER(username) = ? AND transaction_type = 'sign_spinning'
+                            ORDER BY timestamp DESC
+                            LIMIT 10
+                        `, [normalizedUsername]);
+                        
+                        data = {
+                            stats: spinStats,
+                            recentShifts: recentShifts,
+                            efficiency: spinStats.total_spins > 0 ? (spinStats.total_earnings / spinStats.total_spins).toFixed(2) : 0,
+                            copRate: spinStats.total_spins > 0 ? ((spinStats.cops_called / spinStats.total_spins) * 100).toFixed(1) : 0
+                        };
+                    }
+                    break;
+                    
+                case 'gamblers':
+                    // Get all gambling wins
+                    const allWins = await apiServer.bot.db.all(`
+                        SELECT transaction_type as game, amount, description, timestamp
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? 
+                        AND transaction_type IN ('pokies', 'scratchie', 'tab')
+                        AND amount > 0
+                        ORDER BY amount DESC
+                        LIMIT 20
+                    `, [normalizedUsername]);
+                    
+                    // Get total stats per game
+                    const gameStats = await apiServer.bot.db.all(`
+                        SELECT 
+                            transaction_type as game,
+                            COUNT(*) as plays,
+                            SUM(CASE WHEN amount > 0 THEN 1 ELSE 0 END) as wins,
+                            SUM(CASE WHEN amount < 0 THEN 1 ELSE 0 END) as losses,
+                            SUM(amount) as net_profit,
+                            MAX(amount) as biggest_win
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ?
+                        AND transaction_type IN ('pokies', 'scratchie', 'tab')
+                        GROUP BY transaction_type
+                    `, [normalizedUsername]);
+                    
+                    data = {
+                        topWins: allWins,
+                        gameStats: gameStats,
+                        totalGames: gameStats.reduce((sum, g) => sum + g.plays, 0),
+                        totalProfit: gameStats.reduce((sum, g) => sum + g.net_profit, 0)
+                    };
+                    break;
+                    
+                case 'fishing':
+                    // Get all catches
+                    const catches = await apiServer.bot.db.all(`
+                        SELECT 
+                            description,
+                            amount,
+                            timestamp,
+                            CAST(SUBSTR(description, 1, INSTR(description, 'kg') - 1) AS REAL) as weight,
+                            SUBSTR(description, INSTR(description, 'kg') + 3) as fish_type
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = 'fishing'
+                        AND description LIKE '%kg%'
+                        ORDER BY weight DESC
+                        LIMIT 50
+                    `, [normalizedUsername]);
+                    
+                    // Get fish type counts
+                    const fishTypes = await apiServer.bot.db.all(`
+                        SELECT 
+                            SUBSTR(description, INSTR(description, 'kg') + 3) as fish_type,
+                            COUNT(*) as count,
+                            SUM(CAST(SUBSTR(description, 1, INSTR(description, 'kg') - 1) AS REAL)) as total_weight,
+                            MAX(CAST(SUBSTR(description, 1, INSTR(description, 'kg') - 1) AS REAL)) as biggest
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = 'fishing'
+                        AND description LIKE '%kg%'
+                        GROUP BY fish_type
+                        ORDER BY count DESC
+                    `, [normalizedUsername]);
+                    
+                    data = {
+                        topCatches: catches.slice(0, 10),
+                        fishTypes: fishTypes,
+                        totalCatches: catches.length,
+                        totalWeight: catches.reduce((sum, c) => sum + c.weight, 0).toFixed(1)
+                    };
+                    break;
+                    
+                case 'beggars':
+                    const begStats = await apiServer.bot.db.all(`
+                        SELECT 
+                            DATE(timestamp/1000, 'unixepoch') as date,
+                            COUNT(*) as attempts,
+                            SUM(CASE WHEN amount > 0 THEN 1 ELSE 0 END) as successes,
+                            SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as earned,
+                            SUM(CASE WHEN amount < 0 THEN 1 ELSE 0 END) as robbed,
+                            SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as lost
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = 'beg'
+                        GROUP BY date
+                        ORDER BY date DESC
+                        LIMIT 30
+                    `, [normalizedUsername]);
+                    
+                    const allTimeBeg = await apiServer.bot.db.get(`
+                        SELECT 
+                            COUNT(*) as total_begs,
+                            SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as total_earned,
+                            SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as total_lost,
+                            MAX(CASE WHEN amount > 0 THEN amount ELSE 0 END) as best_handout,
+                            MAX(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as worst_robbery
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = 'beg'
+                    `, [normalizedUsername]);
+                    
+                    data = {
+                        dailyStats: begStats,
+                        allTime: allTimeBeg,
+                        avgPerDay: begStats.length > 0 ? (allTimeBeg.total_begs / begStats.length).toFixed(1) : 0
+                    };
+                    break;
+                    
+                case 'bottles':
+                case 'cashie':
+                    const jobType = category === 'bottles' ? 'bottles' : 'cashie';
+                    const jobStats = await apiServer.bot.db.all(`
+                        SELECT 
+                            DATE(timestamp/1000, 'unixepoch') as date,
+                            COUNT(*) as jobs,
+                            SUM(amount) as earned,
+                            AVG(amount) as avg_per_job,
+                            MAX(amount) as best_job
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = ?
+                        AND amount > 0
+                        GROUP BY date
+                        ORDER BY date DESC
+                        LIMIT 30
+                    `, [normalizedUsername, jobType]);
+                    
+                    const allTimeJob = await apiServer.bot.db.get(`
+                        SELECT 
+                            COUNT(*) as total_jobs,
+                            SUM(amount) as total_earned,
+                            AVG(amount) as avg_per_job,
+                            MAX(amount) as best_job
+                        FROM economy_transactions
+                        WHERE LOWER(username) = ? AND transaction_type = ?
+                        AND amount > 0
+                    `, [normalizedUsername, jobType]);
+                    
+                    data = {
+                        dailyStats: jobStats,
+                        allTime: allTimeJob,
+                        avgPerDay: jobStats.length > 0 ? (allTimeJob.total_jobs / jobStats.length).toFixed(1) : 0
+                    };
+                    break;
+                    
+                default:
+                    // For simple counters (talkers, bongs, drinks, quoted)
+                    const basicStats = await apiServer.bot.db.get(
+                        'SELECT * FROM user_stats WHERE LOWER(username) = ?',
+                        [normalizedUsername]
+                    );
+                    
+                    if (category === 'bongs' || category === 'drinks') {
+                        const tableName = category === 'bongs' ? 'user_bongs' : 'user_drinks';
+                        const dailyStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                DATE(timestamp/1000, 'unixepoch') as date,
+                                COUNT(*) as count
+                            FROM ${tableName}
+                            WHERE LOWER(username) = ?
+                            GROUP BY date
+                            ORDER BY date DESC
+                            LIMIT 30
+                        `, [normalizedUsername]);
+                        
+                        data = {
+                            basicStats,
+                            dailyStats,
+                            avgPerDay: dailyStats.length > 0 
+                                ? (dailyStats.reduce((sum, d) => sum + d.count, 0) / dailyStats.length).toFixed(1)
+                                : 0
+                        };
+                    } else {
+                        data = { basicStats };
+                    }
+            }
+            
+            if (Object.keys(data).length === 0) {
+                throw new NotFoundError(`No ${category} stats found for user`);
+            }
+            
+            res.json({
+                success: true,
+                data: {
+                    username: normalizedUsername,
+                    category,
+                    ...data
+                }
+            });
+            
+        } catch (error) {
+            console.error(`Error fetching ${category} stats for ${username}:`, error);
+            throw error;
+        }
+    }));
+    
     // GET /api/v1/stats/users/:username/ranks - Get user's position across all leaderboards
     router.get('/users/:username/ranks', asyncHandler(async (req, res) => {
         const { username } = req.params;
@@ -689,6 +957,7 @@ export function createStatsRoutes(apiServer) {
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username');
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/ranks');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/category/:category');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/all');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/channel');
