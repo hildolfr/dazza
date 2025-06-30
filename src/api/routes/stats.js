@@ -218,13 +218,33 @@ export function createStatsRoutes(apiServer) {
                             return {
                                 type,
                                 title,
-                                data: results.map((r, i) => ({
-                                    rank: i + 1,
-                                    username: r.username,
-                                    value: `${r.wins}W/${r.losses}L`,
-                                    extra: r.best_distance >= 4.5 ? `📏${r.best_distance.toFixed(1)}m` : null,
-                                    achievement: r.wins >= 50 ? '👑' : r.wins >= 25 ? '⭐' : null
-                                }))
+                                data: results.map((r, i) => {
+                                    // Build extra info with characteristic and location
+                                    let extraParts = [];
+                                    
+                                    // Add rarest characteristic if available
+                                    if (r.rarest_characteristic) {
+                                        extraParts.push(`'${r.rarest_characteristic}'`);
+                                    }
+                                    
+                                    // Add favorite location if available
+                                    if (r.favorite_location) {
+                                        extraParts.push(`📍 ${r.favorite_location}`);
+                                    }
+                                    
+                                    // Add best distance if impressive
+                                    if (r.best_distance >= 4.5) {
+                                        extraParts.push(`📏 ${r.best_distance.toFixed(1)}m`);
+                                    }
+                                    
+                                    return {
+                                        rank: i + 1,
+                                        username: r.username,
+                                        value: `${r.wins}W/${r.losses}L`,
+                                        extra: extraParts.length > 0 ? extraParts.join(' • ') : null,
+                                        achievement: r.wins >= 50 ? '👑' : r.wins >= 25 ? '⭐' : null
+                                    };
+                                })
                             };
                     }
                 } catch (error) {
@@ -397,6 +417,8 @@ export function createStatsRoutes(apiServer) {
                         winRate: parseFloat(winRate),
                         moneyWon: row.money_won,
                         specialty,
+                        rarestCharacteristic: row.rarest_characteristic,
+                        favoriteLocation: row.favorite_location,
                         achievement: row.wins >= 50 ? '👑' : row.wins >= 25 ? '⭐' : null
                     };
                 });
