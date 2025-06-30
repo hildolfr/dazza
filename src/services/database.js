@@ -404,11 +404,21 @@ class Database {
 
     async logUserBong(username) {
         const timestamp = Date.now();
+        // Calculate hour in UTC+10 (server is UTC-8, so +18 hours)
+        const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
+        const adjustedTime = new Date(timestamp + TIMEZONE_OFFSET);
+        const hour = adjustedTime.getUTCHours();
         
         await this.run(
-            'INSERT INTO user_bongs (username, timestamp) VALUES (?, ?)',
-            [username, timestamp]
+            'INSERT INTO user_bongs (username, timestamp, hour) VALUES (?, ?, ?)',
+            [username, timestamp, hour]
         );
+        
+        // Update session data
+        await this.updateBongSession(username, timestamp);
+        
+        // Update streak data
+        await this.updateBongStreak(username, timestamp);
     }
 
     async getUserBongCount(username) {
@@ -1057,6 +1067,111 @@ class Database {
             FROM user_gallery_locks
             WHERE is_locked = 1
         `);
+    }
+
+    async updateBongSession(username, timestamp) {
+        const SESSION_GAP = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+        
+        // Check if there's an active session (last bong within 2 hours)
+        const lastSession = await this.get(`
+            SELECT * FROM bong_sessions 
+            WHERE LOWER(username) = LOWER(?) 
+            ORDER BY session_end DESC 
+            LIMIT 1
+        `, [username]);
+        
+        if (lastSession && (timestamp - lastSession.session_end) <= SESSION_GAP) {
+            // Update existing session
+            const sessionBongs = await this.all(`
+                SELECT timestamp FROM user_bongs
+                WHERE LOWER(username) = LOWER(?) AND timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp
+            `, [username, lastSession.session_start, timestamp]);
+            
+            const maxRate = this.calculateMaxConesPerHour(sessionBongs.map(b => b.timestamp));
+            
+            await this.run(`
+                UPDATE bong_sessions 
+                SET session_end = ?, 
+                    cone_count = cone_count + 1,
+                    max_cones_per_hour = ?
+                WHERE id = ?
+            `, [timestamp, maxRate, lastSession.id]);
+        } else {
+            // Create new session
+            await this.run(`
+                INSERT INTO bong_sessions (username, session_start, session_end, cone_count, max_cones_per_hour)
+                VALUES (?, ?, ?, 1, 1)
+            `, [username, timestamp, timestamp]);
+        }
+    }
+    
+    calculateMaxConesPerHour(timestamps) {
+        if (timestamps.length <= 1) return timestamps.length;
+        
+        let maxRate = 0;
+        const ONE_HOUR = 60 * 60 * 1000;
+        
+        for (let i = 0; i < timestamps.length; i++) {
+            let count = 1;
+            const windowEnd = timestamps[i] + ONE_HOUR;
+            
+            for (let j = i + 1; j < timestamps.length && timestamps[j] <= windowEnd; j++) {
+                count++;
+            }
+            
+            maxRate = Math.max(maxRate, count);
+        }
+        
+        return maxRate;
+    }
+    
+    async updateBongStreak(username, timestamp) {
+        const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
+        const today = new Date(timestamp + TIMEZONE_OFFSET).toISOString().split('T')[0];
+        
+        const streakData = await this.get(
+            'SELECT * FROM user_bong_streaks WHERE LOWER(username) = LOWER(?)',
+            [username]
+        );
+        
+        if (!streakData) {
+            // First bong ever - create streak record
+            await this.run(`
+                INSERT INTO user_bong_streaks (username, current_streak, longest_streak, last_bong_date, streak_start_date)
+                VALUES (?, 1, 1, ?, ?)
+            `, [username, today, today]);
+        } else {
+            const lastBongDate = new Date(streakData.last_bong_date);
+            const todayDate = new Date(today);
+            const daysDiff = Math.floor((todayDate - lastBongDate) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff === 0) {
+                // Same day - no streak update needed
+                return;
+            } else if (daysDiff === 1) {
+                // Consecutive day - increase streak
+                const newStreak = streakData.current_streak + 1;
+                const longestStreak = Math.max(newStreak, streakData.longest_streak);
+                
+                await this.run(`
+                    UPDATE user_bong_streaks 
+                    SET current_streak = ?, 
+                        longest_streak = ?, 
+                        last_bong_date = ?
+                    WHERE username = ?
+                `, [newStreak, longestStreak, today, username]);
+            } else {
+                // Streak broken - reset to 1
+                await this.run(`
+                    UPDATE user_bong_streaks 
+                    SET current_streak = 1, 
+                        last_bong_date = ?,
+                        streak_start_date = ?
+                    WHERE username = ?
+                `, [today, today, username]);
+            }
+        }
     }
 
     close() {

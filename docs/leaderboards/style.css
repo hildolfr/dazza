@@ -4604,3 +4604,112 @@ body {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
+
+/* Hourly Breakdown Styles */
+.hourly-chart {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.hourly-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 150px;
+    gap: 2px;
+}
+
+.hour-bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    height: 100%;
+}
+
+.hour-bar {
+    width: 100%;
+    background: linear-gradient(to top, var(--vb-green), var(--vb-green-dark));
+    border-radius: 4px 4px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 2px;
+}
+
+.hour-bar:hover {
+    background: linear-gradient(to top, var(--vb-green-light), var(--vb-green));
+    transform: translateY(-2px);
+}
+
+.hour-count {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--vb-green-light);
+    font-weight: bold;
+}
+
+.hour-label {
+    margin-top: 5px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Session Statistics Styles */
+.session-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.session-stat-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(76, 206, 172, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.session-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--vb-green);
+    box-shadow: 0 5px 20px rgba(76, 206, 172, 0.3);
+}
+
+.session-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.session-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.session-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--vb-green);
+}
+
+.session-detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.record-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}

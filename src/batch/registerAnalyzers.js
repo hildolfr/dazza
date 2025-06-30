@@ -4,6 +4,7 @@ import { ChatStreakCalculator } from './jobs/ChatStreakCalculator.js';
 import { ActiveHoursAnalyzer } from './jobs/ActiveHoursAnalyzer.js';
 import { MessageContentAnalyzer } from './jobs/MessageContentAnalyzer.js';
 import { ChatAchievementCalculator } from './jobs/ChatAchievementCalculator.js';
+import { BongStreakMaintenance } from './jobs/BongStreakMaintenance.js';
 
 /**
  * Registers all chat analyzers with the batch scheduler
@@ -79,7 +80,17 @@ export async function registerChatAnalyzers(scheduler, db, logger, options = {})
         intervalHours
     );
 
-    logger.info(`Registered 6 chat analyzers with ${intervalHours} hour intervals`);
+    // Register Bong Streak Maintenance (runs daily to check broken streaks)
+    scheduler.registerJob(
+        'BongStreakMaintenance',
+        async () => {
+            const analyzer = new BongStreakMaintenance(db, logger);
+            return await analyzer.run();
+        },
+        24 // Run once daily regardless of intervalHours setting
+    );
+
+    logger.info(`Registered 7 chat analyzers with ${intervalHours} hour intervals (BongStreakMaintenance runs daily)`);
 
     // Run all analyzers once on startup if requested
     if (runOnStartup) {
@@ -102,7 +113,8 @@ export async function runAllAnalyzersOnce(scheduler, db, logger, timezoneOffset 
         { name: 'ChatStreakCalculator', class: ChatStreakCalculator, options: { timezoneOffset } },
         { name: 'ActiveHoursAnalyzer', class: ActiveHoursAnalyzer, options: { timezoneOffset } },
         { name: 'MessageContentAnalyzer', class: MessageContentAnalyzer },
-        { name: 'ChatAchievementCalculator', class: ChatAchievementCalculator }
+        { name: 'ChatAchievementCalculator', class: ChatAchievementCalculator },
+        { name: 'BongStreakMaintenance', class: BongStreakMaintenance }
     ];
 
     for (const { name, class: AnalyzerClass, options = {} } of analyzers) {
