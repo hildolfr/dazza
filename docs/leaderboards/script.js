@@ -1,8 +1,12 @@
 // ===== DAZZA'S HALL OF SHAME - LEADERBOARD SCRIPT =====
 
-// Configuration
-const API_BASE = 'https://localhost:3001/api/v1';
-const WS_URL = 'wss://localhost:3001';
+// Configuration - Both HTTP and HTTPS use port 3001
+const API_BASE = window.location.protocol === 'https:' 
+    ? 'https://seg.tplinkdns.com:3001/api/v1' 
+    : 'http://seg.tplinkdns.com:3001/api/v1';
+const WS_URL = window.location.protocol === 'https:' 
+    ? 'https://seg.tplinkdns.com:3001' 
+    : 'http://seg.tplinkdns.com:3001';
 const UPDATE_INTERVAL = 30000; // 30 seconds
 const CHAT_HISTORY_SIZE = 10;
 
@@ -74,9 +78,10 @@ async function loadLeaderboards() {
             
         const response = await fetch(endpoint, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            // Skip certificate validation for localhost
-            ...(API_BASE.includes('localhost') && { rejectUnauthorized: false })
+            headers: { 
+                'Accept': 'application/json',
+                'Origin': window.location.origin
+            }
         });
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -101,7 +106,10 @@ async function loadUserRanks(username) {
     try {
         const response = await fetch(`${API_BASE}/stats/users/${username}/ranks`, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
+            headers: { 
+                'Accept': 'application/json',
+                'Origin': window.location.origin
+            }
         });
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -118,9 +126,9 @@ async function loadUserRanks(username) {
 function initializeWebSocket() {
     try {
         socket = io(WS_URL, {
-            transports: ['websocket'],
-            secure: true,
-            rejectUnauthorized: false
+            transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
         });
 
         socket.on('connect', () => {
@@ -157,7 +165,10 @@ async function initializeChat() {
     try {
         const response = await fetch(`${API_BASE}/chat/recent?limit=${CHAT_HISTORY_SIZE}`, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
+            headers: { 
+                'Accept': 'application/json',
+                'Origin': window.location.origin
+            }
         });
 
         if (response.ok) {
