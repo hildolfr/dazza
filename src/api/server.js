@@ -195,23 +195,19 @@ export class ApiServer extends EventEmitter {
             this.websocketCleanup();
         }
         
-        // Cleanup UPnP port mappings
+        // Cleanup UPnP port mappings (don't wait, just fire and forget)
         if (this.upnpManager) {
-            try {
-                await this.upnpManager.cleanup();
-                console.log('[API] UPnP port mappings cleaned up');
-            } catch (error) {
-                console.warn('[API] Failed to cleanup UPnP:', error.message);
-            }
+            this.upnpManager.cleanup().catch(error => {
+                this.bot.logger.debug('[API] UPnP cleanup error (ignored):', error.message);
+            });
         }
         
         return new Promise((resolve) => {
-            // Set a timeout to force shutdown after 5 seconds
+            // Set a timeout to force shutdown after 1 second
             const forceShutdownTimer = setTimeout(() => {
-                this.bot.logger.warn('API server force shutdown after timeout');
-                console.log('[API] Force shutdown after timeout');
+                this.bot.logger.debug('API server force shutdown after timeout');
                 resolve();
-            }, 5000);
+            }, 1000);
             
             // Disconnect all WebSocket clients first
             this.io.disconnectSockets(true);
@@ -222,7 +218,6 @@ export class ApiServer extends EventEmitter {
                 this.server.close(() => {
                     clearTimeout(forceShutdownTimer);
                     this.bot.logger.info('API server stopped');
-                    console.log('[API] Server stopped');
                     resolve();
                 });
             });

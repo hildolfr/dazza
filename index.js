@@ -35,7 +35,7 @@ async function main() {
         const shutdownTimeout = setTimeout(() => {
             console.error('Shutdown timeout exceeded, forcing exit...');
             process.exit(1);
-        }, 10000); // 10 second timeout
+        }, 3000); // 3 second timeout
         
         try {
             await bot.shutdown();
@@ -70,10 +70,8 @@ async function main() {
     process.on('beforeExit', (code) => {
         console.log(`Process about to exit with code: ${code}`);
         // Force exit if there are still handles keeping the process alive
-        setTimeout(() => {
-            console.error('Force exiting due to hanging handles');
-            process.exit(code);
-        }, 1000);
+        // Exit immediately
+        process.exit(code);
     });
     
     try {
