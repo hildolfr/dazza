@@ -58,6 +58,13 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 - UNIQUE(username, url) - prevents duplicate entries
 - Note: When a pruned image URL is posted again, it's automatically restored to active status
 
+### user_gallery_locks
+- `username` TEXT PRIMARY KEY
+- `is_locked` INTEGER DEFAULT 0 (0 = unlocked, 1 = locked)
+- `locked_at` INTEGER (Unix timestamp when locked)
+- `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+- Note: Controls whether images in a user's gallery can be deleted by others
+
 ### Indexes
 - `idx_messages_username` on messages(username)
 - `idx_messages_timestamp` on messages(timestamp)

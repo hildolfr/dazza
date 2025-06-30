@@ -977,6 +977,37 @@ class Database {
         `);
     }
 
+    // Gallery lock methods
+    async setGalleryLock(username, isLocked) {
+        const timestamp = isLocked ? Date.now() : null;
+        
+        await this.run(`
+            INSERT INTO user_gallery_locks (username, is_locked, locked_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                is_locked = ?,
+                locked_at = ?
+        `, [username, isLocked ? 1 : 0, timestamp, isLocked ? 1 : 0, timestamp]);
+    }
+
+    async isGalleryLocked(username) {
+        const result = await this.get(`
+            SELECT is_locked
+            FROM user_gallery_locks
+            WHERE LOWER(username) = LOWER(?)
+        `, [username]);
+        
+        return result ? result.is_locked === 1 : false;
+    }
+
+    async getLockedGalleries() {
+        return await this.all(`
+            SELECT username
+            FROM user_gallery_locks
+            WHERE is_locked = 1
+        `);
+    }
+
     close() {
         if (this.db) {
             this.db.close();
