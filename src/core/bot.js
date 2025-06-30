@@ -19,6 +19,8 @@ import { PissingContestManager } from '../modules/pissing_contest/index.js';
 import GalleryUpdater from '../modules/galleryUpdater.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 import { CashMonitor } from '../utils/cashMonitor.js';
+import { ApiServer } from '../api/server.js';
+import { extractImageUrls } from '../utils/imageDetector.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -83,6 +85,9 @@ export class CyTubeBot extends EventEmitter {
         // Cash monitoring system
         this.cashMonitor = null;
         
+        // API server
+        this.apiServer = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -126,6 +131,10 @@ export class CyTubeBot extends EventEmitter {
             
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
+            
+            // Initialize API server
+            this.apiServer = new ApiServer(this, this.config.api?.port || 3001);
+            await this.apiServer.start();
             
             // Log initial connection attempt
             await this.db.logConnectionEvent('connect', { type: 'initial' });
@@ -205,6 +214,15 @@ export class CyTubeBot extends EventEmitter {
         });
         this.connection.on('stateChange', (change) => {
             this.logger.connection(`state changed from ${change.from} to ${change.to}`);
+            
+            // Emit connection state changes for API WebSocket
+            if (this.apiServer) {
+                if (change.to === 'connected') {
+                    this.emit('connected');
+                } else if (change.to === 'disconnected') {
+                    this.emit('disconnected');
+                }
+            }
         });
         
         // Chat events
@@ -398,6 +416,33 @@ export class CyTubeBot extends EventEmitter {
                 setTimeout(() => {
                     this.sendMessage(`Oi fucken' oath! That pic's back from the dead! Thought it carked it but she's alive again!`);
                 }, 2000);
+            }
+            
+            // Emit events for API WebSocket
+            if (this.apiServer) {
+                // Emit chat message event
+                this.emit('chat:message', {
+                    username: data.username,
+                    message: data.msg,
+                    timestamp: Date.now(),
+                    isPM: data.meta && data.meta.pm
+                });
+                
+                // Emit user stats update
+                this.emit('stats:user:update', {
+                    username: canonicalUsername,
+                    event: 'message'
+                });
+                
+                // If images were added, emit gallery events
+                const imageUrls = extractImageUrls(data.msg);
+                for (const url of imageUrls) {
+                    this.emit('gallery:image:added', {
+                        username: canonicalUsername,
+                        url,
+                        timestamp: Date.now()
+                    });
+                }
             }
 
             // Detect and log URLs in the message
@@ -669,6 +714,16 @@ export class CyTubeBot extends EventEmitter {
         
         this.logger.userEvent(user.name, 'join');
         
+        // Emit user join event for API WebSocket
+        if (this.apiServer) {
+            this.emit('user:join', user.name);
+            this.emit('stats:channel:activity', {
+                activeUsers: this.userlist.size,
+                event: 'user_joined',
+                username: user.name
+            });
+        }
+        
         // Track join for spam prevention
         this.recentJoins.push(Date.now());
 
@@ -750,6 +805,16 @@ export class CyTubeBot extends EventEmitter {
         
         this.logger.userEvent(user.name, 'leave');
         
+        // Emit user leave event for API WebSocket
+        if (this.apiServer) {
+            this.emit('user:leave', user.name);
+            this.emit('stats:channel:activity', {
+                activeUsers: this.userlist.size,
+                event: 'user_left',
+                username: user.name
+            });
+        }
+        
         // Track for video payout
         if (this.videoPayoutManager) {
             this.videoPayoutManager.handleUserLeave(user.name).catch(err =>
@@ -767,6 +832,16 @@ export class CyTubeBot extends EventEmitter {
         
         // Update current media
         this.currentMedia = data;
+        
+        // Emit media change event for API WebSocket
+        if (this.apiServer) {
+            this.emit('media:change', {
+                title: data.title,
+                id: data.id,
+                type: data.type,
+                duration: data.duration || data.seconds
+            });
+        }
         
         if (this.videoPayoutManager) {
             this.videoPayoutManager.handleMediaChange(data).catch(err =>
@@ -1681,6 +1756,11 @@ export class CyTubeBot extends EventEmitter {
         
         if (this.galleryUpdater) {
             this.galleryUpdater.stop();
+        }
+        
+        // Stop API server
+        if (this.apiServer) {
+            await this.apiServer.stop();
         }
         
         // Disconnect from server
