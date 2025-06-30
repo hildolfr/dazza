@@ -254,12 +254,23 @@ class Database {
         
         // Extract and save any image URLs
         const imageUrls = extractImageUrls(message);
+        const restoredImages = [];
+        
         for (const url of imageUrls) {
-            await this.addUserImage(username, url);
+            const imageResult = await this.addUserImage(username, url);
+            if (imageResult.restored) {
+                restoredImages.push({
+                    url,
+                    previousReason: imageResult.previousReason
+                });
+            }
         }
         
-        // Return the message ID for linking URLs
-        return result.lastID;
+        // Return the message ID and any restored images
+        return {
+            messageId: result.lastID,
+            restoredImages
+        };
     }
 
     async logUserEvent(username, eventType) {
@@ -878,6 +889,17 @@ class Database {
         const timestamp = Date.now();
         
         try {
+            // Check if this URL was previously pruned
+            const existingImage = await this.get(`
+                SELECT username, is_active, pruned_reason
+                FROM user_images
+                WHERE url = ?
+            `, [url]);
+            
+            if (existingImage && !existingImage.is_active) {
+                console.log(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
+            }
+            
             await this.run(`
                 INSERT INTO user_images (username, url, timestamp)
                 VALUES (?, ?, ?)
@@ -886,7 +908,12 @@ class Database {
                     is_active = 1,
                     pruned_reason = NULL
             `, [username, url, timestamp, timestamp]);
-            return { success: true };
+            
+            return { 
+                success: true, 
+                restored: existingImage && !existingImage.is_active,
+                previousReason: existingImage?.pruned_reason
+            };
         } catch (error) {
             console.error('Error adding user image:', error);
             return { success: false, error: error.message };
