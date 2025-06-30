@@ -255,6 +255,79 @@ h1 {
     border: 1px solid #00ff00;
     color: #00ff00;
 }
+
+.delete-btn {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 0, 0, 0.3);
+    color: #ffffff;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.image-item.marked-for-deletion {
+    opacity: 0.5;
+    border-color: #ff0000;
+}
+
+.image-item.marked-for-deletion::after {
+    content: "MARKED FOR DELETION";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff0000;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-shadow: 2px 2px 4px #000;
+    pointer-events: none;
+}
+
+.pending-deletions {
+    margin-top: 50px;
+    padding: 20px;
+    border: 2px solid #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.pending-deletions h2 {
+    color: #ff0000;
+    margin-bottom: 20px;
+}
+
+.pending-list {
+    list-style: none;
+}
+
+.pending-item {
+    margin-bottom: 10px;
+    color: #ff6666;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.undo-btn {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.undo-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+}
 `;
     }
 
@@ -340,6 +413,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Delete functionality
+    function updatePendingDeletions() {
+        const pendingSection = document.getElementById('pendingDeletions');
+        const markedItems = document.querySelectorAll('.image-item.marked-for-deletion');
+        
+        if (markedItems.length === 0) {
+            pendingSection.style.display = 'none';
+            return;
+        }
+        
+        pendingSection.style.display = 'block';
+        const list = pendingSection.querySelector('.pending-list');
+        list.innerHTML = '';
+        
+        markedItems.forEach(item => {
+            const url = item.getAttribute('data-url');
+            const username = item.querySelector('.delete-btn').getAttribute('data-username');
+            
+            const li = document.createElement('li');
+            li.className = 'pending-item';
+            li.innerHTML = \`
+                <span><strong>\${username}</strong> - \${url}</span>
+                <button class="undo-btn" data-url="\${url}">UNDO</button>
+            \`;
+            list.appendChild(li);
+        });
+    }
+    
+    // Handle delete button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-btn')) {
+            const url = e.target.getAttribute('data-url');
+            const imageItem = document.querySelector(\`.image-item[data-url="\${url}"]\`);
+            
+            if (imageItem) {
+                imageItem.classList.add('marked-for-deletion');
+                updatePendingDeletions();
+            }
+        }
+        
+        if (e.target.classList.contains('undo-btn')) {
+            const url = e.target.getAttribute('data-url');
+            const imageItem = document.querySelector(\`.image-item[data-url="\${url}"]\`);
+            
+            if (imageItem) {
+                imageItem.classList.remove('marked-for-deletion');
+                updatePendingDeletions();
+            }
+        }
+    });
+    
     // Add random glitch effect
     setInterval(function() {
         const elements = document.querySelectorAll('.user-section h2');
@@ -351,6 +475,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
         }
     }, 3000);
+    
+    // Initialize pending deletions on load
+    updatePendingDeletions();
 });
 `;
     }
@@ -364,27 +491,30 @@ document.addEventListener('DOMContentLoaded', function() {
         return url.toLowerCase().includes('.webm');
     }
 
-    generateImageHtml(image) {
+    generateImageHtml(image, isLocked) {
         const formattedTime = this.formatTimestamp(image.timestamp);
         const isVideo = this.isVideoUrl(image.url);
+        const deleteButton = !isLocked ? `<button class="delete-btn" data-url="${image.url}" data-username="${image.username}">DELETE</button>` : '';
         
         if (isVideo) {
             return `
-                <div class="image-item">
+                <div class="image-item" data-url="${image.url}">
                     <video src="${image.url}" muted loop preload="metadata"></video>
                     <div class="image-controls">
                         <div class="timestamp">${formattedTime}</div>
                         <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
+                        ${deleteButton}
                     </div>
                 </div>
             `;
         } else {
             return `
-                <div class="image-item">
+                <div class="image-item" data-url="${image.url}">
                     <img src="${image.url}" alt="Posted by ${image.username}" loading="lazy">
                     <div class="image-controls">
                         <div class="timestamp">${formattedTime}</div>
                         <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
+                        ${deleteButton}
                     </div>
                 </div>
             `;
@@ -409,8 +539,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="header">
         <h1>🍺 Dazza's Fuckin' Art Gallery 🍺</h1>
         <p class="subtitle flash-text">ALL THE SHIT YOU CUNTS POST</p>
-        <p style="color: #ffff00; margin-top: 20px;">To delete images from unlocked galleries: Use !deleteimage &lt;url&gt; in chat</p>
-        <p style="color: #ff00ff; margin-top: 10px;">To lock/unlock your gallery: Use !gallery lock or !gallery unlock</p>
+        <p style="color: #ffff00; margin-top: 20px;">Click DELETE button on images in unlocked galleries to mark for deletion</p>
+        <p style="color: #ff00ff; margin-top: 10px;">To lock/unlock your gallery: Use !gallery lock or !gallery unlock in chat</p>
     </div>
 `;
 
@@ -434,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
 `;
                     
                     for (const image of userImages) {
-                        html += this.generateImageHtml(image);
+                        html += this.generateImageHtml(image, isLocked);
                     }
                     
                     html += `
@@ -444,6 +574,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+
+        // Add pending deletions section (always include, JS will show/hide)
+        html += `
+    <div id="pendingDeletions" class="pending-deletions" style="display: none;">
+        <h2>⚠️ Pending Deletions ⚠️</h2>
+        <ul class="pending-list"></ul>
+    </div>
+`;
 
         // Add pruned images section if any exist
         if (prunedImages.length > 0) {
