@@ -18,6 +18,14 @@ export default new Command({
             try {
                 await bot.db.setGalleryLock(message.username, isLocking);
                 
+                // Emit WebSocket event for real-time update
+                if (bot.apiServer) {
+                    bot.apiServer.broadcastToTopic('gallery', 
+                        isLocking ? 'galleryLocked' : 'galleryUnlocked', 
+                        { username: message.username }
+                    );
+                }
+                
                 if (isLocking) {
                     bot.sendMessage(`Locked -${message.username}'s gallery tighter than a fish's arsehole! No cunt's deletin' yer pics now!`);
                 } else {

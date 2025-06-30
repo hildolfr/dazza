@@ -109,6 +109,7 @@ export class CyTubeBot extends EventEmitter {
         try {
             // Initialize database
             await this.db.init();
+            this.db.setBot(this); // Set bot reference for WebSocket events
             
             // Load commands
             this.commands = await loadCommands();
@@ -126,9 +127,9 @@ export class CyTubeBot extends EventEmitter {
             // Initialize PissingContestManager
             this.pissingContestManager = new PissingContestManager(this);
             
-            // Initialize GalleryUpdater
-            this.galleryUpdater = new GalleryUpdater(this.db, this.logger);
-            this.galleryUpdater.start();
+            // Initialize GalleryUpdater - DISABLED: Using real-time API instead
+            // this.galleryUpdater = new GalleryUpdater(this.db, this.logger);
+            // this.galleryUpdater.start();
             
             // Initialize ImageHealthChecker
             this.imageHealthChecker = new ImageHealthChecker(this);

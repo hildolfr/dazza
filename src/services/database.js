@@ -12,11 +12,16 @@ class Database {
         this.dbPath = dbPath;
         this.botUsername = botUsername.toLowerCase();
         this.db = null;
+        this.bot = null; // Bot reference for WebSocket events
         
         // Bind promisified methods after database is initialized
         this.run = null;
         this.get = null;
         this.all = null;
+    }
+    
+    setBot(bot) {
+        this.bot = bot;
     }
 
     async init() {
@@ -723,6 +728,11 @@ class Database {
             messageId,
             timestamp
         ]);
+        
+        // If it's an image URL, also add to user_images
+        if (urlData.type === 'image') {
+            await this.addUserImage(username, urlData.url, timestamp);
+        }
     }
 
     async getRecentUrls(limit = 50) {
@@ -908,6 +918,15 @@ class Database {
                     is_active = 1,
                     pruned_reason = NULL
             `, [username, url, timestamp, timestamp]);
+            
+            // Emit event for real-time updates
+            if (this.bot && this.bot.apiServer) {
+                this.bot.apiServer.broadcastToTopic('gallery', 'imageAdded', {
+                    username,
+                    url,
+                    timestamp
+                });
+            }
             
             return { 
                 success: true, 

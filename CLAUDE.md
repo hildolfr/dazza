@@ -100,3 +100,6 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 ## Documentation Management
 - Keep the help document up to date when adding new commands
 - If a new command is implemented, remember to document it in the help resources
+
+## Logging Guidelines
+- When told to check logs we will ALWAYS presume to check logs/console_log.txt first. its often the most recent
