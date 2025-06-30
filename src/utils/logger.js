@@ -10,7 +10,7 @@ class Logger {
         this.maxFileSize = options.maxFileSize || 10 * 1024 * 1024; // 10MB
         this.maxFiles = options.maxFiles || 5;
         this.logToConsole = options.console !== false;
-        this.logLevel = options.level || 'info';
+        this.logLevel = options.level || process.env.LOG_LEVEL || 'info';
         
         // Debug: Show what level we're actually using
         console.log(`[LOGGER DEBUG] Initialized with level: ${this.logLevel} (options.level: ${options.level})`);
