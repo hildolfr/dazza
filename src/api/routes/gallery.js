@@ -60,7 +60,7 @@ export function createGalleryRoutes(apiServer) {
         apiServer.bot.logger.info(`[API] Image deleted: ${url} (user: ${image.username}, reason: ${reason})`);
         
         // Broadcast deletion event via WebSocket
-        apiServer.emit('gallery:image:deleted', {
+        apiServer.broadcast('gallery:image:deleted', {
             url,
             username: image.username,
             reason,
@@ -195,7 +195,7 @@ export function createGalleryRoutes(apiServer) {
         apiServer.bot.logger.info(`[API] Gallery lock status changed: ${normalizedUsername} = ${locked}`);
         
         // Broadcast lock change event
-        apiServer.emit('gallery:lock:changed', {
+        apiServer.broadcast('gallery:lock:changed', {
             username: normalizedUsername,
             isLocked: locked,
             timestamp: now
