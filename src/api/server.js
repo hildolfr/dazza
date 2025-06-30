@@ -12,6 +12,7 @@ import { createStatsRoutes } from './routes/stats.js';
 import { setupWebSocketEvents } from './websocket/events.js';
 import { UpnpManager } from '../services/upnpManager.js';
 import { DoubleNatUpnpManager } from '../services/doubleNatUpnp.js';
+import { EnhancedDoubleNatManager } from '../services/enhancedDoubleNat.js';
 
 export class ApiServer extends EventEmitter {
     constructor(bot, port = 3001) {
@@ -77,26 +78,35 @@ export class ApiServer extends EventEmitter {
                     
                     const upnpSetup = (async () => {
                         try {
-                            // First try double NAT aware manager
-                            const doubleNatManager = new DoubleNatUpnpManager(this.bot.logger);
-                            const status = await doubleNatManager.getStatus();
+                            // Use enhanced double NAT manager
+                            const enhancedManager = new EnhancedDoubleNatManager(this.bot.logger);
+                            const status = await enhancedManager.getStatus();
                             
-                            if (status.isDoubleNat) {
-                                console.log('[API] Double NAT detected, using enhanced UPnP handler');
-                                this.upnpManager = doubleNatManager;
-                                const result = await doubleNatManager.setupApiPort(this.port);
-                                
-                                if (result.isDoubleNat) {
-                                    console.log('[API] ⚠️  Double NAT Configuration:');
-                                    console.log(`[API] ✅ Router mapped: ${result.mappings[0].internal} → ${result.mappings[0].external}`);
-                                    console.log(`[API] ❌ Modem needs manual config: External:${this.port} → ${result.mappings[0].external}`);
-                                    console.log(`[API] Real external IP: ${result.realExternalIp}`);
-                                }
+                            console.log('[API] Network configuration detected:');
+                            console.log(`[API] Local IP: ${status.localIp}`);
+                            console.log(`[API] Real external IP: ${status.realExternalIp}`);
+                            console.log(`[API] NAT layers: ${status.layers.length}`);
+                            
+                            this.upnpManager = enhancedManager;
+                            const result = await enhancedManager.setupCompletePortForwarding(this.port);
+                            
+                            if (result.success) {
+                                console.log('[API] ✅ Port forwarding configured successfully!');
+                                console.log(`[API] Your bot should be accessible at: ${result.realExternalIp}:${this.port}`);
                             } else {
-                                // Single NAT, use regular manager
-                                this.upnpManager = new UpnpManager(this.bot.logger);
-                                const result = await this.upnpManager.setupApiPort(this.port);
-                                console.log(`[API] UPnP port forwarding enabled: ${result.external}`);
+                                console.log('[API] ⚠️  Port forwarding partially configured');
+                                result.layers.forEach(layer => {
+                                    if (layer.success) {
+                                        console.log(`[API] ✅ ${layer.name}: ${layer.mapping}`);
+                                    } else {
+                                        console.log(`[API] ❌ ${layer.name}: ${layer.error}`);
+                                    }
+                                });
+                                
+                                if (result.instructions.length > 0) {
+                                    console.log('[API] 📝 Manual configuration required:');
+                                    result.instructions.forEach(inst => console.log(`[API]    ${inst}`));
+                                }
                             }
                         } catch (error) {
                             console.warn('[API] UPnP port forwarding failed:', error.message);

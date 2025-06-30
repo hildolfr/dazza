@@ -11,21 +11,29 @@ export function createGalleryRoutes(apiServer) {
     
     // DELETE /api/v1/gallery/images - Mark an image as deleted
     router.delete('/images', asyncHandler(async (req, res) => {
-        const { url, reason = 'Deleted via gallery' } = req.body;
+        const { url, username, reason = 'Deleted via gallery' } = req.body;
         
         // Validate input
         if (!url) {
             throw new ValidationError('URL is required', 'url');
         }
         
+        if (!username) {
+            throw new ValidationError('Username is required', 'username');
+        }
+        
         if (typeof url !== 'string' || !url.trim()) {
             throw new ValidationError('URL must be a non-empty string', 'url');
         }
         
+        if (typeof username !== 'string' || !username.trim()) {
+            throw new ValidationError('Username must be a non-empty string', 'username');
+        }
+        
         // Find the image in database
         const image = await apiServer.bot.db.get(
-            'SELECT * FROM user_images WHERE url = ? AND is_active = 1',
-            [url]
+            'SELECT * FROM user_images WHERE url = ? AND username = ? AND is_active = 1',
+            [url, username.toLowerCase()]
         );
         
         if (!image) {
@@ -44,15 +52,15 @@ export function createGalleryRoutes(apiServer) {
         
         // Mark image as deleted
         await apiServer.bot.db.run(
-            'UPDATE user_images SET is_active = 0, pruned_reason = ? WHERE url = ?',
-            [reason, url]
+            'UPDATE user_images SET is_active = 0, pruned_reason = ? WHERE url = ? AND username = ?',
+            [reason, url, username.toLowerCase()]
         );
         
         // Log the deletion
         apiServer.bot.logger.info(`[API] Image deleted: ${url} (user: ${image.username}, reason: ${reason})`);
         
-        // Broadcast deletion event
-        apiServer.broadcast('gallery:image:deleted', {
+        // Broadcast deletion event via WebSocket
+        apiServer.broadcastToTopic('gallery', 'imageDeleted', {
             url,
             username: image.username,
             reason,
@@ -427,51 +435,86 @@ export function createGalleryRoutes(apiServer) {
         });
     }));
     
-    // GET /api/v1/gallery/stats - Get gallery statistics
-    router.get('/stats', asyncHandler(async (req, res) => {
-        const stats = await apiServer.bot.db.all(`
+    // GET /api/v1/gallery/images - Get all gallery images
+    router.get('/images', asyncHandler(async (req, res) => {
+        const galleries = await apiServer.bot.db.all(`
             SELECT 
-                COUNT(DISTINCT username) as totalUsers,
+                ui.username,
+                ui.url,
+                ui.timestamp,
+                COALESCE(gl.is_locked, 0) as is_locked
+            FROM user_images ui
+            LEFT JOIN user_gallery_locks gl ON ui.username = gl.username
+            WHERE ui.is_active = 1
+            ORDER BY ui.username ASC, ui.timestamp DESC
+        `);
+        
+        // Group by user
+        const groupedGalleries = {};
+        galleries.forEach(img => {
+            if (!groupedGalleries[img.username]) {
+                groupedGalleries[img.username] = {
+                    images: [],
+                    isLocked: Boolean(img.is_locked)
+                };
+            }
+            groupedGalleries[img.username].images.push({
+                url: img.url,
+                timestamp: img.timestamp
+            });
+        });
+        
+        // Get storage size estimate
+        const sizeStats = await apiServer.bot.db.get(`
+            SELECT 
                 COUNT(*) as totalImages,
-                COUNT(CASE WHEN is_active = 1 THEN 1 END) as activeImages,
-                COUNT(CASE WHEN is_active = 0 THEN 1 END) as deletedImages,
-                COUNT(DISTINCT CASE WHEN is_active = 1 THEN username END) as activeUsers
+                COUNT(DISTINCT username) as totalUsers
             FROM user_images
+            WHERE is_active = 1
         `);
         
-        const topUploaders = await apiServer.bot.db.all(`
-            SELECT 
-                username,
-                COUNT(*) as imageCount,
-                COUNT(CASE WHEN is_active = 1 THEN 1 END) as activeCount
-            FROM user_images
-            GROUP BY username
-            ORDER BY imageCount DESC
-            LIMIT 10
-        `);
-        
-        const recentActivity = await apiServer.bot.db.all(`
-            SELECT 
-                DATE(timestamp/1000, 'unixepoch') as date,
-                COUNT(*) as uploads
-            FROM user_images
-            WHERE timestamp > ?
-            GROUP BY date
-            ORDER BY date DESC
-            LIMIT 7
-        `, [Date.now() - 7 * 24 * 60 * 60 * 1000]); // Last 7 days
+        // Estimate 500KB per image average
+        const estimatedSizeMB = ((sizeStats.totalImages * 500) / 1024 / 1024).toFixed(1);
         
         res.json({
             success: true,
             data: {
-                overview: stats[0],
-                topUploaders,
-                recentActivity: recentActivity.reverse() // Chronological order
+                galleries: groupedGalleries,
+                stats: {
+                    totalImages: sizeStats.totalImages,
+                    totalUsers: sizeStats.totalUsers,
+                    storageSize: `${estimatedSizeMB} MB`
+                }
+            }
+        });
+    }));
+    
+    // GET /api/v1/gallery/stats - Get gallery statistics
+    router.get('/stats', asyncHandler(async (req, res) => {
+        const stats = await apiServer.bot.db.get(`
+            SELECT 
+                COUNT(DISTINCT username) as totalUsers,
+                COUNT(*) as totalImages,
+                COUNT(CASE WHEN is_active = 1 THEN 1 END) as activeImages,
+                COUNT(CASE WHEN is_active = 0 THEN 1 END) as deletedImages
+            FROM user_images
+        `);
+        
+        // Estimate storage size (500KB per image average)
+        const estimatedSizeMB = ((stats.activeImages * 500) / 1024 / 1024).toFixed(1);
+        
+        res.json({
+            success: true,
+            data: {
+                totalImages: stats.activeImages,
+                totalUsers: stats.totalUsers,
+                storageSize: `${estimatedSizeMB} MB`
             }
         });
     }));
     
     // Register endpoints
+    apiServer.registerEndpoint('GET', '/api/v1/gallery/images');
     apiServer.registerEndpoint('DELETE', '/api/v1/gallery/images');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/locks');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/locks/:username');

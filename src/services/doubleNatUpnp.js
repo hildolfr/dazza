@@ -84,8 +84,9 @@ export class DoubleNatUpnpManager {
                 
                 // Try to create a client for the second layer
                 // This is tricky - we need to use the gateway of the first router
-                const gateway = firstExternal.split('.').slice(0, 3).join('.') + '.1';
-                this.logger.info(`[DoubleNAT] Attempting to connect to upstream router at ${gateway}`);
+                // Allow override via environment variable, otherwise use common defaults
+                const modemIp = process.env.MODEM_IP || '192.168.254.254';
+                this.logger.info(`[DoubleNAT] Attempting to connect to upstream router at ${modemIp}`);
                 
                 // Get real external IP
                 const realExternal = await this.getRealExternalIp();
@@ -179,7 +180,7 @@ export class DoubleNatUpnpManager {
     }
 
     // Alternative: Try to use UPnP-IGD on the modem through HTTP
-    async tryModemUPnP(modemIp = '192.168.254.1') {
+    async tryModemUPnP(modemIp = process.env.MODEM_IP || '192.168.254.254') {
         // Skip modem UPnP discovery for now - it's causing hangs
         this.logger.debug(`[DoubleNAT] Skipping modem UPnP discovery (not implemented)`);
         return false;
