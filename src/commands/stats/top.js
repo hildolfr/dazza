@@ -43,7 +43,7 @@ export default new Command({
             const publicMessage = publicAcks[Math.floor(Math.random() * publicAcks.length)];
             
             // Send PM with the URL
-            bot.pm(message.username, pmMessage);
+            bot.sendPrivateMessage(message.username, pmMessage);
             
             // If command was used in public chat, acknowledge it
             if (!message.isPM) {
