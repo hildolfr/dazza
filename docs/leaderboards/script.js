@@ -320,30 +320,30 @@ function renderCategoryDetails(username, category, data) {
     
     switch (category) {
         case 'pissers':
-            content += renderPisserStats(data);
+            content += renderPisserStats(data, username);
             break;
         case 'sign_spinning':
-            content += renderSignSpinningStats(data);
+            content += renderSignSpinningStats(data, username);
             break;
         case 'gamblers':
-            content += renderGamblerStats(data);
+            content += renderGamblerStats(data, username);
             break;
         case 'fishing':
-            content += renderFishingStats(data);
+            content += renderFishingStats(data, username);
             break;
         case 'beggars':
-            content += renderBeggarStats(data);
+            content += renderBeggarStats(data, username);
             break;
         case 'bottles':
         case 'cashie':
-            content += renderJobStats(data, category);
+            content += renderJobStats(data, category, username);
             break;
         case 'bongs':
         case 'drinks':
-            content += renderConsumptionStats(data, category);
+            content += renderConsumptionStats(data, category, username);
             break;
         default:
-            content += renderBasicStats(data);
+            content += renderBasicStats(data, username);
     }
     
     // Add "View All Rankings" button
@@ -363,7 +363,7 @@ function renderCategoryDetails(username, category, data) {
     });
 }
 
-function renderPisserStats(data) {
+function renderPisserStats(data, username) {
     const stats = data.stats;
     const winRate = stats.total_matches > 0 ? ((stats.wins / stats.total_matches) * 100).toFixed(1) : 0;
     
@@ -530,7 +530,7 @@ function renderPisserStats(data) {
     return html;
 }
 
-function renderSignSpinningStats(data) {
+function renderSignSpinningStats(data, username) {
     const stats = data.stats;
     
     return `
@@ -580,7 +580,7 @@ function renderSignSpinningStats(data) {
     `;
 }
 
-function renderGamblerStats(data) {
+function renderGamblerStats(data, username) {
     const netClass = data.totalProfit >= 0 ? 'profit' : 'loss';
     
     let html = `
@@ -644,7 +644,7 @@ function renderGamblerStats(data) {
     return html;
 }
 
-function renderFishingStats(data) {
+function renderFishingStats(data, username) {
     return `
         <div class="stat-section">
             <h3>Fishing Career</h3>
@@ -694,7 +694,7 @@ function renderFishingStats(data) {
     `;
 }
 
-function renderBeggarStats(data) {
+function renderBeggarStats(data, username) {
     const allTime = data.allTime;
     const successRate = allTime.total_begs > 0 
         ? ((allTime.total_earned > 0 ? allTime.total_begs : 0) / allTime.total_begs * 100).toFixed(1) 
@@ -741,7 +741,7 @@ function renderBeggarStats(data) {
     `;
 }
 
-function renderJobStats(data, category) {
+function renderJobStats(data, category, username) {
     const jobName = category === 'bottles' ? 'Bottle Collection' : 'Cash Jobs';
     const allTime = data.allTime;
     
@@ -770,7 +770,7 @@ function renderJobStats(data, category) {
     `;
 }
 
-function renderConsumptionStats(data, category) {
+function renderConsumptionStats(data, category, username) {
     const itemName = category === 'bongs' ? 'Cones' : 'Drinks';
     const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
     
@@ -783,7 +783,7 @@ function renderConsumptionStats(data, category) {
     `;
 }
 
-function renderBasicStats(data) {
+function renderBasicStats(data, username) {
     return `
         <div class="stat-section">
             <p>No detailed stats available for this category.</p>
