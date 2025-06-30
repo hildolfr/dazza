@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 
-import { Database } from '../services/database.js';
-import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
+import Database from '../services/database.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DB_PATH = path.join(__dirname, '../../cytube_stats.db');
 
 async function updateAllPissingAnalytics() {
-    const db = new Database();
+    const db = new Database(DB_PATH);
     
     try {
-        await db.connect();
+        await db.init();
         console.log('Connected to database');
         
         // Get all users who have participated in pissing contests
