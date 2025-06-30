@@ -2230,8 +2230,8 @@ function renderBongStats(data, username) {
                         const maxCount = Math.max(...data.dailyStats.slice(-10).map(d => d.count));
                         return `
                         <div class="day-bar" style="animation-delay: ${index * 0.05}s">
-                            <div class="bar-column" style="height: ${(day.count / maxCount) * 100}%">
-                                <span class="bar-value">${day.count}</span>
+                            <div class="bar-column" style="height: ${Math.max((day.count / maxCount) * 100, 5)}%">
+                                <span class="bar-value" style="${(day.count / maxCount) < 0.15 ? 'top: -25px;' : ''}">${day.count}</span>
                             </div>
                             <span class="bar-date">${new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                         </div>

@@ -4644,30 +4644,57 @@ body {
     transform: translateY(-2px);
 }
 
+/* Hour label below bars */
+.hour-label {
+    margin-top: 8px;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+}
+
+/* Show 6-hour intervals in bold */
+.hour-bar-wrapper:nth-child(1) .hour-label,
+.hour-bar-wrapper:nth-child(7) .hour-label,
+.hour-bar-wrapper:nth-child(13) .hour-label,
+.hour-bar-wrapper:nth-child(19) .hour-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 700;
+}
+
+/* Hour count tooltip */
 .hour-count {
     position: absolute;
-    top: 5px;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--vb-green-light);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
     font-weight: 700;
-    text-shadow: 
-        0 1px 3px rgba(0, 0, 0, 0.5),
-        0 0 10px rgba(76, 206, 172, 0.3);
+    white-space: nowrap;
     opacity: 0;
-    transition: all 0.3s ease;
     pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 10;
+    margin-bottom: 5px;
+}
+
+.hour-count::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
 }
 
 .hour-bar:hover .hour-count {
     opacity: 1;
-    top: -20px;
+    margin-bottom: 10px;
 }
-
-.hour-label {
-    margin-top: 5px;
-    font-size: 0.7rem;
     color: var(--text-secondary);
 }
 
@@ -5042,21 +5069,61 @@ body {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Hourly chart enhancements */
+/* Hourly chart complete redesign */
 .stoner-section .hourly-chart {
-    background: radial-gradient(ellipse at center, rgba(76, 206, 172, 0.05) 0%, transparent 70%);
-    border: 1px solid rgba(76, 206, 172, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 25px 20px 15px;
+    position: relative;
+    overflow: visible;
+}
+
+.stoner-section .hourly-grid {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 120px;
+    position: relative;
+    gap: 2px;
+}
+
+/* Grid lines for better readability */
+.stoner-section .hourly-chart::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 20px;
+    right: 20px;
+    bottom: 35px;
+    background-image: 
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 100% 30px, 50px 100%;
+    pointer-events: none;
+}
+
+.stoner-section .hour-bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    max-width: 30px;
 }
 
 .stoner-section .hour-bar {
+    width: 100%;
     background: linear-gradient(180deg, #4CCEAC, #2a7a5e);
-    box-shadow: 0 0 10px rgba(76, 206, 172, 0.4);
+    border-radius: 4px 4px 0 0;
+    position: relative;
     transition: all 0.3s ease;
+    min-height: 3px;
+    cursor: pointer;
 }
 
 .stoner-section .hour-bar:hover {
     transform: scaleY(1.1);
-    box-shadow: 0 0 20px rgba(76, 206, 172, 0.8);
+    filter: brightness(1.2);
 }
 
 /* Records display container */
@@ -5198,35 +5265,49 @@ body {
     50% { transform: scale(1.02); }
 }
 
-/* Consumption timeline enhancement */
+/* Consumption timeline complete redesign */
 .stoner-section .timeline-chart {
-    background: linear-gradient(180deg, transparent, rgba(76, 206, 172, 0.05));
+    background: rgba(0, 0, 0, 0.4);
     border-radius: 15px;
-    padding: 20px;
+    padding: 30px 20px 20px;
     position: relative;
-    overflow: hidden;
+    border: 1px solid rgba(76, 206, 172, 0.2);
 }
 
-.stoner-section .timeline-chart::before {
+/* Trend indicator */
+.stoner-section .timeline-chart::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(76, 206, 172, 0.5) 20%, 
-        rgba(76, 206, 172, 0.5) 80%, 
-        transparent);
+    top: 10px;
+    right: 20px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
 }
 
 .stoner-section .chart-container {
     display: flex;
     align-items: flex-end;
-    justify-content: space-around;
-    height: 150px;
-    gap: 10px;
+    height: 180px;
+    gap: 8px;
+    position: relative;
+    padding: 0 10px;
+}
+
+/* Y-axis labels */
+.stoner-section .timeline-chart::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 30px;
+    bottom: 50px;
+    width: 30px;
+    background: linear-gradient(180deg, 
+        var(--vb-green-light) 0%, 
+        transparent 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+    opacity: 0.1;
+    border-radius: 5px 0 0 5px;
 }
 
 .stoner-section .day-bar {
@@ -5234,7 +5315,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
     opacity: 0;
     animation: fadeInUp 0.5s ease forwards;
 }
@@ -5250,49 +5333,118 @@ body {
     }
 }
 
+.stoner-section .day-bar:hover {
+    transform: translateY(-5px);
+}
+
 .stoner-section .bar-column {
     width: 100%;
-    background: linear-gradient(180deg, #5cdb98 0%, #4CCEAC 30%, #3a9b7f 70%, #2a7a5e 100%);
-    border-radius: 8px 8px 0 0;
+    max-width: 50px;
+    background: linear-gradient(180deg, 
+        rgba(92, 219, 152, 0.9) 0%, 
+        rgba(76, 206, 172, 0.9) 20%, 
+        rgba(58, 155, 127, 0.9) 80%, 
+        rgba(42, 122, 94, 0.9) 100%);
+    border-radius: 6px 6px 0 0;
     position: relative;
     transition: all 0.3s ease;
+    min-height: 5px;
+    backdrop-filter: blur(10px);
     box-shadow: 
-        0 -2px 10px rgba(76, 206, 172, 0.4),
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
-    min-height: 10px;
+        0 0 20px rgba(76, 206, 172, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stoner-section .bar-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 6px 6px 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stoner-section .day-bar:hover .bar-column::before {
+    opacity: 1;
 }
 
 .stoner-section .bar-column:hover {
     transform: scaleY(1.05);
     box-shadow: 
-        0 -4px 20px rgba(76, 206, 172, 0.6),
-        inset 0 2px 8px rgba(255, 255, 255, 0.3);
-    filter: brightness(1.1);
+        0 0 30px rgba(76, 206, 172, 0.6),
+        inset 0 2px 8px rgba(255, 255, 255, 0.4),
+        inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.15);
 }
 
+/* Value display inside bar for better readability */
 .stoner-section .bar-value {
     position: absolute;
-    top: -25px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--vb-green-light);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    opacity: 0;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
+    z-index: 2;
 }
 
+/* Show value outside if bar is too small */
 .stoner-section .day-bar:hover .bar-value {
-    opacity: 1;
-    top: -30px;
+    transform: translateX(-50%) scale(1.1);
+    color: #fff;
 }
 
 .stoner-section .bar-date {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.6);
+    margin-top: 8px;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
     text-align: center;
-    white-space: nowrap;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.stoner-section .day-bar:hover .bar-date {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 700;
+}
+
+/* Weekend highlighting */
+.stoner-section .day-bar:nth-child(1) .bar-date,
+.stoner-section .day-bar:nth-child(7) .bar-date,
+.stoner-section .day-bar:nth-child(8) .bar-date {
+    color: var(--vb-green-light);
+}
+
+/* Baseline grid */
+.stoner-section .chart-container::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background-image: linear-gradient(180deg, 
+        transparent 0%, 
+        transparent 24%, 
+        rgba(255, 255, 255, 0.03) 25%, 
+        transparent 26%, 
+        transparent 49%, 
+        rgba(255, 255, 255, 0.03) 50%, 
+        transparent 51%, 
+        transparent 74%, 
+        rgba(255, 255, 255, 0.03) 75%, 
+        transparent 76%);
+    pointer-events: none;
 }
 
 /* Streak glow effect */
@@ -5364,59 +5516,25 @@ body {
     }
 }
 
-/* Enhanced hourly chart */
-.stoner-section .hour-bar-wrapper {
-    position: relative;
-}
-
+/* Enhanced hourly chart animations */
 .stoner-section .hour-bar {
     animation: barGrowStoner 0.8s ease-out forwards;
-    position: relative;
-    background: linear-gradient(180deg, #4CCEAC 0%, #3a9b7f 50%, #2a7a5e 100%);
-    box-shadow: 
-        0 2px 10px rgba(76, 206, 172, 0.3),
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.stoner-section .hour-bar:hover {
-    transform: scaleY(1.05) translateY(-2px);
-    box-shadow: 
-        0 4px 20px rgba(76, 206, 172, 0.5),
-        inset 0 2px 8px rgba(255, 255, 255, 0.3);
-    filter: brightness(1.1);
 }
 
 .stoner-section .hour-bar.intense {
     background: linear-gradient(180deg, #5cdb98 0%, #4CCEAC 50%, #3a9b7f 100%);
-    animation: intenseGlow 2s ease-in-out infinite;
-}
-
-@keyframes intenseGlow {
-    0%, 100% {
-        box-shadow: 
-            0 2px 15px rgba(76, 206, 172, 0.5),
-            inset 0 2px 4px rgba(255, 255, 255, 0.3);
-    }
-    50% {
-        box-shadow: 
-            0 4px 25px rgba(76, 206, 172, 0.8),
-            inset 0 2px 8px rgba(255, 255, 255, 0.4);
-    }
+    box-shadow: 
+        0 0 15px rgba(76, 206, 172, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 
 @keyframes barGrowStoner {
     0% {
         height: 0 !important;
         opacity: 0;
-        transform: scaleX(0.8);
-    }
-    50% {
-        transform: scaleX(1.05);
     }
     100% {
         opacity: 1;
-        transform: scaleX(1);
     }
 }
 
