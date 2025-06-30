@@ -174,7 +174,7 @@ export class PissingContestManager {
             "it's on cunts!",
             "dicks out boys!",
             "let's fuckin go!",
-            "prepare to get soaked!",
+            "you're gonna lose mate!",
             "whip em out lads!"
         ];
         this.bot.sendMessage(acceptMessages[Math.floor(Math.random() * acceptMessages.length)]);
