@@ -79,10 +79,21 @@ export class ApiServer extends EventEmitter {
         }
         
         return new Promise((resolve) => {
-            // Close WebSocket connections
+            // Set a timeout to force shutdown after 5 seconds
+            const forceShutdownTimer = setTimeout(() => {
+                this.bot.logger.warn('API server force shutdown after timeout');
+                console.log('[API] Force shutdown after timeout');
+                resolve();
+            }, 5000);
+            
+            // Disconnect all WebSocket clients first
+            this.io.disconnectSockets(true);
+            
+            // Close WebSocket server
             this.io.close(() => {
                 // Close HTTP server
                 this.server.close(() => {
+                    clearTimeout(forceShutdownTimer);
                     this.bot.logger.info('API server stopped');
                     console.log('[API] Server stopped');
                     resolve();
