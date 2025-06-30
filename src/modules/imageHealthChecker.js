@@ -103,12 +103,8 @@ export class ImageHealthChecker {
                 });
             }
             
-            // Announce in chat if we found a lot of dead images
-            if (deadCount >= 5) {
-                setTimeout(() => {
-                    this.bot.sendMessage(`Oi fucken hell, just found ${deadCount} carked images in the gallery. Cleaned 'em out like empties after a piss-up!`);
-                }, 2000);
-            }
+            // Don't announce in chat - just log the cleanup
+            // Removed chat announcement to keep gallery cleanup silent
             
         } catch (error) {
             this.bot.logger.error('[ImageHealthChecker] Health check failed:', error);
