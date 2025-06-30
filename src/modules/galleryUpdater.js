@@ -15,24 +15,51 @@ class GalleryUpdater {
 
     async checkImageHealth(url) {
         try {
+            // Try GET request instead of HEAD (more compatible)
             const response = await fetch(url, {
-                method: 'HEAD',
-                timeout: 5000
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; DazzaBot/1.0)'
+                },
+                timeout: 10000, // Increase timeout to 10 seconds
+                redirect: 'follow'
             });
-            return response.ok;
+            
+            // Check if response is ok (2xx status)
+            if (!response.ok) {
+                // Only mark as unhealthy for specific error codes
+                if (response.status === 404 || response.status === 410) {
+                    return false;
+                }
+                // For other errors (403, 500, etc), assume image is still valid
+                return true;
+            }
+            
+            return true;
         } catch (error) {
-            return false;
+            // Network errors or timeouts - don't prune these
+            // Could be temporary issues or CORS restrictions
+            console.log(`Skipping health check for ${url}: ${error.message}`);
+            return true; // Assume healthy on error
         }
     }
 
     async pruneDeadImages() {
         const images = await this.db.getUserImages(null, true);
         let prunedCount = 0;
+        const minAgeForPruning = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        const now = Date.now();
         
         for (const image of images) {
+            // Only check images older than 24 hours
+            const imageAge = now - image.timestamp;
+            if (imageAge < minAgeForPruning) {
+                continue; // Skip recent images
+            }
+            
             const isHealthy = await this.checkImageHealth(image.url);
             if (!isHealthy) {
-                await this.db.pruneUserImage(image.url, 'Link broken - 404 or timeout');
+                await this.db.pruneUserImage(image.url, 'Link broken - 404 not found');
                 prunedCount++;
                 this.logger.info(`Pruned dead image: ${image.url}`);
             }
