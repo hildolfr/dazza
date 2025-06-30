@@ -30,6 +30,7 @@
     "express": "^5.1.0",
     "glob": "^11.0.3",
     "jsdom": "^26.1.0",
+    "nat-upnp": "^1.1.1",
     "node-fetch": "^3.3.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.7.5",

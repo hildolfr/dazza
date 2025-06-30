@@ -10,6 +10,7 @@ import { createHealthRoutes } from './routes/health.js';
 import { createGalleryRoutes } from './routes/gallery.js';
 import { createStatsRoutes } from './routes/stats.js';
 import { setupWebSocketEvents } from './websocket/events.js';
+import { UpnpManager } from '../services/upnpManager.js';
 
 export class ApiServer extends EventEmitter {
     constructor(bot, port = 3001) {
@@ -27,6 +28,8 @@ export class ApiServer extends EventEmitter {
         });
         
         this.endpoints = new Set();
+        this.upnpManager = null;
+        this.upnpEnabled = process.env.ENABLE_UPNP !== 'false'; // Default to true
     }
 
     getAllowedOrigins() {
@@ -55,11 +58,26 @@ export class ApiServer extends EventEmitter {
         this.setupWebSocket();
         
         return new Promise((resolve, reject) => {
-            this.server.listen(this.port, () => {
+            this.server.listen(this.port, async () => {
                 this.bot.logger.info(`API server started on port ${this.port}`);
                 console.log(`[API] Server listening on http://localhost:${this.port}`);
                 console.log(`[API] Endpoints registered: ${this.endpoints.size}`);
                 console.log(`[API] CORS origins:`, this.getAllowedOrigins());
+                
+                // Try to setup UPnP port forwarding
+                if (this.upnpEnabled) {
+                    try {
+                        this.upnpManager = new UpnpManager(this.bot.logger);
+                        const result = await this.upnpManager.setupApiPort(this.port);
+                        console.log(`[API] UPnP port forwarding enabled: ${result.external}`);
+                    } catch (error) {
+                        console.warn('[API] UPnP port forwarding failed:', error.message);
+                        console.log('[API] You may need to manually configure port forwarding in your router');
+                    }
+                } else {
+                    console.log('[API] UPnP disabled (set ENABLE_UPNP=true to enable)');
+                }
+                
                 resolve();
             }).on('error', (err) => {
                 this.bot.logger.error('API server failed to start', err);
@@ -76,6 +94,16 @@ export class ApiServer extends EventEmitter {
         }
         if (this.websocketCleanup) {
             this.websocketCleanup();
+        }
+        
+        // Cleanup UPnP port mappings
+        if (this.upnpManager) {
+            try {
+                await this.upnpManager.cleanup();
+                console.log('[API] UPnP port mappings cleaned up');
+            } catch (error) {
+                console.warn('[API] Failed to cleanup UPnP:', error.message);
+            }
         }
         
         return new Promise((resolve) => {
