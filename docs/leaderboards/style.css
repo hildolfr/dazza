@@ -4646,12 +4646,23 @@ body {
 
 .hour-count {
     position: absolute;
-    top: -20px;
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.7rem;
-    color: var(--vb-green-light);
-    font-weight: bold;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 700;
+    text-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(76, 206, 172, 0.3);
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.hour-bar:hover .hour-count {
+    opacity: 1;
+    top: -20px;
 }
 
 .hour-label {
@@ -4898,33 +4909,137 @@ body {
     50% { filter: drop-shadow(0 0 20px rgba(76, 206, 172, 0.8)); }
 }
 
+/* Time distribution container */
+.time-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
 /* Time period enhancements */
 .stoner-section .time-period {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(76, 206, 172, 0.2);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(76, 206, 172, 0.05));
+    border: 1px solid rgba(76, 206, 172, 0.3);
+    border-radius: 12px;
+    padding: 15px;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .time-period::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 206, 172, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stoner-section .time-period:hover::before {
+    left: 100%;
 }
 
 .stoner-section .time-period:hover {
-    background: rgba(76, 206, 172, 0.1);
-    border-color: rgba(76, 206, 172, 0.5);
+    background: linear-gradient(135deg, rgba(76, 206, 172, 0.15), rgba(0, 0, 0, 0.7));
+    border-color: rgba(76, 206, 172, 0.6);
     transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(76, 206, 172, 0.3);
+}
+
+.period-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.period-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.period-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.period-stats {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 15px;
+}
+
+.period-count {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--vb-green-light);
+    min-width: 70px;
+}
+
+.period-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.period-bar .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.period-bar .bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -50%; }
+    100% { left: 150%; }
+}
+
+.period-percent {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    min-width: 40px;
+    text-align: right;
 }
 
 .stoner-section .time-period.morning .bar-fill {
-    background: linear-gradient(90deg, #87CEEB, #4CCEAC);
+    background: linear-gradient(90deg, #87CEEB 0%, #4CCEAC 50%, #3a9b7f 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stoner-section .time-period.afternoon .bar-fill {
-    background: linear-gradient(90deg, #FFD700, #FFA500);
+    background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stoner-section .time-period.evening .bar-fill {
-    background: linear-gradient(90deg, #9370DB, #4B0082);
+    background: linear-gradient(90deg, #9370DB 0%, #8A2BE2 50%, #4B0082 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stoner-section .time-period.night .bar-fill {
-    background: linear-gradient(90deg, #191970, #4B0082);
+    background: linear-gradient(90deg, #191970 0%, #483D8B 50%, #4B0082 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Hourly chart enhancements */
@@ -4944,13 +5059,24 @@ body {
     box-shadow: 0 0 20px rgba(76, 206, 172, 0.8);
 }
 
+/* Records display container */
+.records-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
 /* Session record cards */
 .stoner-section .record-card {
-    background: linear-gradient(145deg, rgba(76, 206, 172, 0.05), rgba(0, 0, 0, 0.4));
-    border: 1px solid rgba(76, 206, 172, 0.3);
+    background: linear-gradient(145deg, rgba(76, 206, 172, 0.1), rgba(0, 0, 0, 0.5));
+    border: 1px solid rgba(76, 206, 172, 0.4);
+    border-radius: 15px;
+    padding: 20px;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .stoner-section .record-card::before {
@@ -4984,6 +5110,80 @@ body {
     }
 }
 
+/* Record card elements */
+.stoner-section .record-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+}
+
+.stoner-section .record-card:hover .record-icon {
+    transform: scale(1.2) rotate(10deg);
+    filter: drop-shadow(0 4px 8px rgba(76, 206, 172, 0.5));
+}
+
+.stoner-section .record-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stoner-section .record-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stoner-section .record-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--vb-green-light);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.stoner-section .record-value.hot-streak {
+    color: #FFD700;
+    text-shadow: 
+        0 0 10px rgba(255, 215, 0, 0.8),
+        0 0 20px rgba(255, 215, 0, 0.4);
+    animation: hotStreakPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hotStreakPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+.stoner-section .record-date {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.stoner-section .achievement-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+    animation: achievementGlow 2s ease-in-out infinite;
+}
+
+@keyframes achievementGlow {
+    0%, 100% { box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5); }
+    50% { box-shadow: 0 2px 16px rgba(255, 215, 0, 0.8); }
+}
+
 /* Breathing effect for session stats */
 .stoner-section .session-stat-card {
     animation: breathe 4s ease-in-out infinite;
@@ -5001,11 +5201,98 @@ body {
 /* Consumption timeline enhancement */
 .stoner-section .timeline-chart {
     background: linear-gradient(180deg, transparent, rgba(76, 206, 172, 0.05));
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .timeline-chart::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(76, 206, 172, 0.5) 20%, 
+        rgba(76, 206, 172, 0.5) 80%, 
+        transparent);
+}
+
+.stoner-section .chart-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 150px;
+    gap: 10px;
+}
+
+.stoner-section .day-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .stoner-section .bar-column {
-    background: linear-gradient(180deg, #4CCEAC, #2a7a5e);
-    box-shadow: 0 0 15px rgba(76, 206, 172, 0.5);
+    width: 100%;
+    background: linear-gradient(180deg, #5cdb98 0%, #4CCEAC 30%, #3a9b7f 70%, #2a7a5e 100%);
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 -2px 10px rgba(76, 206, 172, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    min-height: 10px;
+}
+
+.stoner-section .bar-column:hover {
+    transform: scaleY(1.05);
+    box-shadow: 
+        0 -4px 20px rgba(76, 206, 172, 0.6),
+        inset 0 2px 8px rgba(255, 255, 255, 0.3);
+    filter: brightness(1.1);
+}
+
+.stoner-section .bar-value {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--vb-green-light);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.stoner-section .day-bar:hover .bar-value {
+    opacity: 1;
+    top: -30px;
+}
+
+.stoner-section .bar-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    white-space: nowrap;
 }
 
 /* Streak glow effect */
@@ -5085,57 +5372,162 @@ body {
 .stoner-section .hour-bar {
     animation: barGrowStoner 0.8s ease-out forwards;
     position: relative;
+    background: linear-gradient(180deg, #4CCEAC 0%, #3a9b7f 50%, #2a7a5e 100%);
+    box-shadow: 
+        0 2px 10px rgba(76, 206, 172, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.stoner-section .hour-bar:hover {
+    transform: scaleY(1.05) translateY(-2px);
+    box-shadow: 
+        0 4px 20px rgba(76, 206, 172, 0.5),
+        inset 0 2px 8px rgba(255, 255, 255, 0.3);
+    filter: brightness(1.1);
+}
+
+.stoner-section .hour-bar.intense {
+    background: linear-gradient(180deg, #5cdb98 0%, #4CCEAC 50%, #3a9b7f 100%);
+    animation: intenseGlow 2s ease-in-out infinite;
+}
+
+@keyframes intenseGlow {
+    0%, 100% {
+        box-shadow: 
+            0 2px 15px rgba(76, 206, 172, 0.5),
+            inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        box-shadow: 
+            0 4px 25px rgba(76, 206, 172, 0.8),
+            inset 0 2px 8px rgba(255, 255, 255, 0.4);
+    }
 }
 
 @keyframes barGrowStoner {
     0% {
         height: 0 !important;
         opacity: 0;
+        transform: scaleX(0.8);
+    }
+    50% {
+        transform: scaleX(1.05);
     }
     100% {
         opacity: 1;
+        transform: scaleX(1);
     }
 }
 
-.stoner-section .hour-bar.intense {
-    animation: intensePulse 2s ease-in-out infinite;
-    box-shadow: 
-        0 0 20px rgba(76, 206, 172, calc(var(--glow-intensity) * 0.8)),
-        inset 0 0 10px rgba(255, 255, 255, 0.2);
-}
-
-@keyframes intensePulse {
-    0%, 100% {
-        filter: brightness(1) hue-rotate(0deg);
-    }
-    50% {
-        filter: brightness(1.2) hue-rotate(10deg);
-    }
-}
 
 /* Special 4:20 hour marker */
 .hour-bar-wrapper.special-hour .hour-bar {
-    background: linear-gradient(180deg, #FFD700, #FFA500) !important;
+    background: linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%) !important;
     box-shadow: 
-        0 0 25px rgba(255, 215, 0, 0.6),
-        inset 0 0 15px rgba(255, 255, 255, 0.3);
+        0 0 30px rgba(255, 215, 0, 0.8),
+        0 0 60px rgba(255, 215, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 4px rgba(255, 140, 0, 0.4);
+    animation: special420Glow 2s ease-in-out infinite;
+}
+
+@keyframes special420Glow {
+    0%, 100% {
+        filter: brightness(1) saturate(1);
+        transform: scaleY(1);
+    }
+    50% {
+        filter: brightness(1.3) saturate(1.2);
+        transform: scaleY(1.05);
+    }
 }
 
 .four-twenty-marker {
     position: absolute;
-    top: -20px;
+    top: -25px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #FFD700;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    font-weight: 900;
+    text-shadow: 
+        0 0 10px rgba(255, 215, 0, 1),
+        0 0 20px rgba(255, 215, 0, 0.6),
+        0 0 30px rgba(255, 215, 0, 0.3);
     animation: marker420Pulse 1.5s ease-in-out infinite;
+    letter-spacing: 1px;
 }
 
 @keyframes marker420Pulse {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.2); }
+    0%, 100% { 
+        transform: translateX(-50%) scale(1) rotate(0deg);
+        filter: brightness(1);
+    }
+    50% { 
+        transform: translateX(-50%) scale(1.2) rotate(5deg);
+        filter: brightness(1.3);
+    }
+}
+
+/* Streak flames effect */
+.streak-flames {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 30px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.streak-flames::before,
+.streak-flames::after {
+    content: '🔥';
+    position: absolute;
+    font-size: 1.2rem;
+    animation: flameFlicker 0.5s ease-in-out infinite alternate;
+}
+
+.streak-flames::before {
+    left: 30%;
+    animation-delay: 0.1s;
+}
+
+.streak-flames::after {
+    right: 30%;
+    animation-delay: 0.3s;
+}
+
+@keyframes flameFlicker {
+    0% {
+        transform: translateY(0) scale(1) rotate(-5deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-3px) scale(1.1) rotate(5deg);
+        opacity: 1;
+    }
+}
+
+.record-card.active-streak {
+    background: linear-gradient(145deg, rgba(255, 140, 0, 0.1), rgba(0, 0, 0, 0.5));
+    border-color: rgba(255, 140, 0, 0.5);
+    animation: activeStreakGlow 2s ease-in-out infinite;
+}
+
+@keyframes activeStreakGlow {
+    0%, 100% {
+        box-shadow: 
+            0 0 20px rgba(255, 140, 0, 0.3),
+            inset 0 0 20px rgba(255, 140, 0, 0.1);
+    }
+    50% {
+        box-shadow: 
+            0 0 30px rgba(255, 140, 0, 0.5),
+            inset 0 0 30px rgba(255, 140, 0, 0.2);
+    }
 }
 
 /* Enhanced time period hover effects */
