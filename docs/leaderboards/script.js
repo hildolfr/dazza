@@ -238,7 +238,7 @@ function renderAllLeaderboards(leaderboards) {
         <div class="leaderboard-card" data-category="${board.type}">
             <div class="leaderboard-header">${board.title}</div>
             <div class="leaderboard-list">
-                ${board.data.length > 0 ? board.data.map(item => renderLeaderboardItem(item)).join('') : '<p style="text-align: center; padding: 20px; color: #999;">No data yet</p>'}
+                ${board.data.length > 0 ? board.data.map(item => renderLeaderboardItem(item, board.type)).join('') : '<p style="text-align: center; padding: 20px; color: #999;">No data yet</p>'}
             </div>
         </div>
     `).join('');
@@ -247,7 +247,8 @@ function renderAllLeaderboards(leaderboards) {
     document.querySelectorAll('.leaderboard-item').forEach(item => {
         item.addEventListener('click', () => {
             const username = item.dataset.username;
-            showUserDetails(username);
+            const category = item.dataset.category;
+            showUserDetails(username, category);
         });
     });
 }
@@ -262,12 +263,12 @@ function renderSingleLeaderboard(data) {
     renderAllLeaderboards([board]);
 }
 
-function renderLeaderboardItem(item) {
+function renderLeaderboardItem(item, category) {
     const showAchievements = elements.showAchievements.checked;
     const rankClass = item.rank === 1 ? 'gold' : item.rank === 2 ? 'silver' : item.rank === 3 ? 'bronze' : '';
     
     return `
-        <div class="leaderboard-item" data-username="${item.username}">
+        <div class="leaderboard-item" data-username="${item.username}" data-category="${category}">
             <div class="rank ${rankClass}">#${item.rank}</div>
             <div class="user-info">
                 <div class="username">${escapeHtml(item.username)}</div>
@@ -280,12 +281,431 @@ function renderLeaderboardItem(item) {
 }
 
 // User Modal
-async function showUserDetails(username) {
+async function showUserDetails(username, category) {
     elements.modalContent.innerHTML = '<div class="loading-spinner"></div>';
     elements.modal.style.display = 'block';
     
-    const userRanks = await loadUserRanks(username);
+    try {
+        // Fetch category-specific details
+        const response = await fetch(`${API_BASE}/stats/users/${username}/category/${category}`, {
+            method: 'GET',
+            headers: { 
+                'Accept': 'application/json',
+                'Origin': window.location.origin
+            }
+        });
+
+        if (!response.ok) {
+            // If category data fails, fall back to showing all ranks
+            const userRanks = await loadUserRanks(username);
+            showAllRanks(username, userRanks);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            renderCategoryDetails(username, category, data.data);
+        } else {
+            throw new Error('Failed to load stats');
+        }
+    } catch (error) {
+        console.error('Failed to load user details:', error);
+        elements.modalContent.innerHTML = '<p>Failed to load user details.</p>';
+    }
+}
+
+function renderCategoryDetails(username, category, data) {
+    let content = `<h2 style="color: var(--vb-green); margin-bottom: 20px;">${escapeHtml(username)}'s ${getCategoryTitle(category)} Stats</h2>`;
     
+    switch (category) {
+        case 'pissers':
+            content += renderPisserStats(data);
+            break;
+        case 'sign_spinning':
+            content += renderSignSpinningStats(data);
+            break;
+        case 'gamblers':
+            content += renderGamblerStats(data);
+            break;
+        case 'fishing':
+            content += renderFishingStats(data);
+            break;
+        case 'beggars':
+            content += renderBeggarStats(data);
+            break;
+        case 'bottles':
+        case 'cashie':
+            content += renderJobStats(data, category);
+            break;
+        case 'bongs':
+        case 'drinks':
+            content += renderConsumptionStats(data, category);
+            break;
+        default:
+            content += renderBasicStats(data);
+    }
+    
+    // Add "View All Rankings" button
+    content += `
+        <div style="margin-top: 30px; text-align: center;">
+            <button class="view-all-ranks-btn" data-username="${username}">View All Rankings</button>
+        </div>
+    `;
+    
+    elements.modalContent.innerHTML = content;
+    
+    // Add click handler for view all ranks button
+    document.querySelector('.view-all-ranks-btn')?.addEventListener('click', async (e) => {
+        const user = e.target.dataset.username;
+        const userRanks = await loadUserRanks(user);
+        showAllRanks(user, userRanks);
+    });
+}
+
+function renderPisserStats(data) {
+    const stats = data.stats;
+    const winRate = stats.total_matches > 0 ? ((stats.wins / stats.total_matches) * 100).toFixed(1) : 0;
+    
+    let html = `
+        <div class="stat-section">
+            <h3>Overall Performance</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Record:</span>
+                    <span class="stat-value">${stats.wins}W - ${stats.losses}L (${winRate}%)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Money Won:</span>
+                    <span class="stat-value">$${stats.money_won}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Money Lost:</span>
+                    <span class="stat-value">$${stats.money_lost}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>Personal Bests</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">📏 Distance:</span>
+                    <span class="stat-value">${stats.best_distance.toFixed(1)}m</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(stats.best_distance / 6) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">💧 Volume:</span>
+                    <span class="stat-value">${Math.round(stats.best_volume)}mL</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(stats.best_volume / 2500) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🎯 Aim:</span>
+                    <span class="stat-value">${Math.round(stats.best_aim)}%</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${stats.best_aim}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">⏱️ Duration:</span>
+                    <span class="stat-value">${Math.round(stats.best_duration)}s</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(stats.best_duration / 40) * 100}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (data.recentMatches && data.recentMatches.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Recent Matches</h3>
+                <div class="match-list">
+                    ${data.recentMatches.map(match => `
+                        <div class="match-item ${match.won ? 'won' : 'lost'}">
+                            <span class="match-opponent">vs ${escapeHtml(match.opponent)}</span>
+                            <span class="match-result">${match.won ? 'W' : 'L'} ($${match.amount})</span>
+                            <span class="match-stats">
+                                📏${match.performance.distance.toFixed(1)}m 
+                                💧${Math.round(match.performance.volume)}mL
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+function renderSignSpinningStats(data) {
+    const stats = data.stats;
+    
+    return `
+        <div class="stat-section">
+            <h3>Career Stats</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Shifts:</span>
+                    <span class="stat-value">${stats.total_spins}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Earnings:</span>
+                    <span class="stat-value">$${stats.total_earnings}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg Per Shift:</span>
+                    <span class="stat-value">$${data.efficiency}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Shift:</span>
+                    <span class="stat-value">$${stats.best_shift}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>Performance Metrics</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">🌟 Perfect Days:</span>
+                    <span class="stat-value">${stats.perfect_days}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🚗 Cars Hit:</span>
+                    <span class="stat-value">${stats.cars_hit}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">👮 Cops Called:</span>
+                    <span class="stat-value">${stats.cops_called} (${data.copRate}%)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">💸 Worst Shift:</span>
+                    <span class="stat-value">$${stats.worst_shift}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderGamblerStats(data) {
+    const netClass = data.totalProfit >= 0 ? 'profit' : 'loss';
+    
+    let html = `
+        <div class="stat-section">
+            <h3>Overall Gambling Stats</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Games:</span>
+                    <span class="stat-value">${data.totalGames}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Net Profit:</span>
+                    <span class="stat-value ${netClass}">$${data.totalProfit}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (data.gameStats && data.gameStats.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Game Breakdown</h3>
+                <div class="game-stats">
+                    ${data.gameStats.map(game => {
+                        const winRate = game.plays > 0 ? ((game.wins / game.plays) * 100).toFixed(1) : 0;
+                        const profitClass = game.net_profit >= 0 ? 'profit' : 'loss';
+                        return `
+                            <div class="game-stat-card">
+                                <h4>${game.game.toUpperCase()}</h4>
+                                <div class="game-stat-grid">
+                                    <div>Plays: ${game.plays}</div>
+                                    <div>Win Rate: ${winRate}%</div>
+                                    <div>Biggest Win: $${game.biggest_win}</div>
+                                    <div class="${profitClass}">Net: $${game.net_profit}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.topWins && data.topWins.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Biggest Wins</h3>
+                <div class="win-list">
+                    ${data.topWins.slice(0, 5).map(win => `
+                        <div class="win-item">
+                            <span class="win-game">${win.game}</span>
+                            <span class="win-amount">$${win.amount}</span>
+                            <span class="win-desc">${escapeHtml(win.description || '')}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+function renderFishingStats(data) {
+    return `
+        <div class="stat-section">
+            <h3>Fishing Career</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Catches:</span>
+                    <span class="stat-value">${data.totalCatches}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Weight:</span>
+                    <span class="stat-value">${data.totalWeight}kg</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>Top Catches</h3>
+            <div class="catch-list">
+                ${data.topCatches.map((catch, i) => `
+                    <div class="catch-item ${i < 3 ? 'trophy' : ''}">
+                        <span class="catch-rank">#${i + 1}</span>
+                        <span class="catch-weight">${catch.weight.toFixed(1)}kg</span>
+                        <span class="catch-type">${escapeHtml(catch.fish_type)}</span>
+                        <span class="catch-value">$${catch.amount}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        ${data.fishTypes && data.fishTypes.length > 0 ? `
+            <div class="stat-section">
+                <h3>Fish Collection</h3>
+                <div class="fish-type-grid">
+                    ${data.fishTypes.map(type => `
+                        <div class="fish-type-card">
+                            <div class="fish-name">${escapeHtml(type.fish_type)}</div>
+                            <div class="fish-stats">
+                                <span>Caught: ${type.count}</span>
+                                <span>Total: ${type.total_weight.toFixed(1)}kg</span>
+                                <span>Biggest: ${type.biggest.toFixed(1)}kg</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+    `;
+}
+
+function renderBeggarStats(data) {
+    const allTime = data.allTime;
+    const successRate = allTime.total_begs > 0 
+        ? ((allTime.total_earned > 0 ? allTime.total_begs : 0) / allTime.total_begs * 100).toFixed(1) 
+        : 0;
+    
+    return `
+        <div class="stat-section">
+            <h3>Lifetime Begging Stats</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Begs:</span>
+                    <span class="stat-value">${allTime.total_begs}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Earned:</span>
+                    <span class="stat-value">$${allTime.total_earned}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Lost:</span>
+                    <span class="stat-value">$${allTime.total_lost}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Success Rate:</span>
+                    <span class="stat-value">${successRate}%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Handout:</span>
+                    <span class="stat-value">$${allTime.best_handout || 0}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Worst Robbery:</span>
+                    <span class="stat-value">$${allTime.worst_robbery || 0}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>Shame Level</h3>
+            <div class="shame-meter">
+                <div class="shame-bar" style="width: ${Math.min(allTime.total_begs / 50 * 100, 100)}%"></div>
+                <span class="shame-label">${getShameLevel(allTime.total_begs)}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderJobStats(data, category) {
+    const jobName = category === 'bottles' ? 'Bottle Collection' : 'Cash Jobs';
+    const allTime = data.allTime;
+    
+    return `
+        <div class="stat-section">
+            <h3>${jobName} Career</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Jobs:</span>
+                    <span class="stat-value">${allTime.total_jobs}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Earned:</span>
+                    <span class="stat-value">$${allTime.total_earned}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg Per Job:</span>
+                    <span class="stat-value">$${allTime.avg_per_job.toFixed(2)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Job:</span>
+                    <span class="stat-value">$${allTime.best_job}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderConsumptionStats(data, category) {
+    const itemName = category === 'bongs' ? 'Cones' : 'Drinks';
+    const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
+    
+    return `
+        <div class="stat-section">
+            <h3>Total ${itemName}</h3>
+            <div class="big-stat">${total}</div>
+            <div class="stat-subtitle">Average ${data.avgPerDay} per day</div>
+        </div>
+    `;
+}
+
+function renderBasicStats(data) {
+    return `
+        <div class="stat-section">
+            <p>No detailed stats available for this category.</p>
+        </div>
+    `;
+}
+
+function showAllRanks(username, userRanks) {
     if (userRanks) {
         const ranksHtml = Object.entries(userRanks.ranks)
             .filter(([_, rank]) => rank !== null)
@@ -306,6 +726,15 @@ async function showUserDetails(username) {
     } else {
         elements.modalContent.innerHTML = '<p>Failed to load user details.</p>';
     }
+}
+
+function getShameLevel(begs) {
+    if (begs >= 100) return "ABSOLUTELY SHAMELESS 🤡💩";
+    if (begs >= 50) return "NO DIGNITY LEFT 🤡";
+    if (begs >= 20) return "PROFESSIONAL BEGGAR 😔";
+    if (begs >= 10) return "GETTING DESPERATE";
+    if (begs >= 5) return "OCCASIONAL BEGGAR";
+    return "STILL HAS SOME PRIDE";
 }
 
 function closeModal() {
