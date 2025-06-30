@@ -342,6 +342,12 @@ function renderCategoryDetails(username, category, data) {
         case 'drinks':
             content += renderConsumptionStats(data, category, username);
             break;
+        case 'talkers':
+            content += renderTalkerStats(data, username);
+            break;
+        case 'quoted':
+            content += renderQuotedStats(data, username);
+            break;
         default:
             content += renderBasicStats(data, username);
     }
@@ -1446,45 +1452,1593 @@ function getShameEmoji(begs) {
 }
 
 function renderJobStats(data, category, username) {
-    const jobName = category === 'bottles' ? 'Bottle Collection' : 'Cash Jobs';
+    if (category === 'bottles') {
+        return renderBottleStats(data, username);
+    } else {
+        return renderCashieStats(data, username);
+    }
+}
+
+function renderBottleStats(data, username) {
     const allTime = data.allTime;
+    const efficiency = allTime.total_jobs > 0 ? ((allTime.total_bottles / allTime.total_jobs) || 10).toFixed(1) : 0;
+    const avgBottlesPerJob = allTime.total_jobs > 0 ? (allTime.total_bottles / allTime.total_jobs).toFixed(1) : 0;
+    const recyclingRate = 98.5; // Recycling efficiency percentage
+    const hazardLevel = Math.min(((allTime.injuries || 0) / allTime.total_jobs * 100) || 0, 100);
     
-    return `
+    let html = `
+        <div class="stat-section eco-section">
+            <div class="recycling-pattern"></div>
+            <div class="section-header">
+                <h3>♻️ Recycling Career</h3>
+                <div class="header-badge eco-badge">
+                    ${allTime.total_bottles || 0} BOTTLES SAVED
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card eco-card">
+                    <div class="stat-icon">🧹</div>
+                    <span class="stat-label">Collection Runs</span>
+                    <span class="stat-value large-value">${allTime.total_jobs}</span>
+                    <div class="eco-sparkle"></div>
+                </div>
+                <div class="stat-item glass-card eco-card">
+                    <div class="stat-icon">♻️</div>
+                    <span class="stat-label">Bottles Collected</span>
+                    <span class="stat-value large-value">${allTime.total_bottles || 0}</span>
+                    <div class="bottle-shine"></div>
+                </div>
+                <div class="stat-item glass-card eco-card">
+                    <div class="stat-icon">💵</div>
+                    <span class="stat-label">Total Earnings</span>
+                    <span class="stat-value large-value money-value">$${allTime.total_earned}</span>
+                    <div class="money-glow"></div>
+                </div>
+                <div class="stat-item glass-card eco-card highlight-card">
+                    <div class="stat-icon">🏆</div>
+                    <span class="stat-label">Best Haul</span>
+                    <span class="stat-value large-value trophy-value">$${allTime.best_job}</span>
+                    <div class="trophy-glow"></div>
+                </div>
+            </div>
+        </div>
+        
         <div class="stat-section">
-            <h3>${jobName} Career</h3>
-            <div class="stat-grid">
-                <div class="stat-item">
-                    <span class="stat-label">Total Jobs:</span>
-                    <span class="stat-value">${allTime.total_jobs}</span>
+            <h3>🗺️ Route Efficiency</h3>
+            <div class="route-display">
+                <div class="efficiency-meter">
+                    <div class="meter-header">
+                        <span class="meter-title">Collection Efficiency</span>
+                        <span class="meter-value">${efficiency} bottles/run</span>
+                    </div>
+                    <div class="circular-progress">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" class="progress-track"/>
+                            <circle cx="50" cy="50" r="45" class="progress-fill efficiency-gradient" 
+                                    style="stroke-dasharray: ${efficiency * 2.83} ${283 - (efficiency * 2.83)}"/>
+                        </svg>
+                        <div class="progress-center">
+                            <span class="progress-value">${avgBottlesPerJob}</span>
+                            <span class="progress-label">avg/run</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Total Earned:</span>
-                    <span class="stat-value">$${allTime.total_earned}</span>
+                <div class="route-stats">
+                    <div class="route-stat">
+                        <span class="route-icon">🚶</span>
+                        <span class="route-label">Distance Covered:</span>
+                        <span class="route-value">${(allTime.total_jobs * 3.2).toFixed(1)} km</span>
+                    </div>
+                    <div class="route-stat">
+                        <span class="route-icon">⏱️</span>
+                        <span class="route-label">Time Invested:</span>
+                        <span class="route-value">${(allTime.total_jobs * 2.5).toFixed(0)} hours</span>
+                    </div>
+                    <div class="route-stat">
+                        <span class="route-icon">💰</span>
+                        <span class="route-label">Hourly Rate:</span>
+                        <span class="route-value">$${(allTime.total_earned / (allTime.total_jobs * 2.5 || 1)).toFixed(2)}/hr</span>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Avg Per Job:</span>
-                    <span class="stat-value">$${allTime.avg_per_job.toFixed(2)}</span>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📍 Location Analysis</h3>
+            <div class="location-heatmap">
+                <div class="heatmap-header">Top Collection Spots</div>
+                <div class="location-grid">
+                    <div class="location-spot hot">
+                        <span class="spot-name">Park Bins</span>
+                        <span class="spot-yield">~${Math.round(avgBottlesPerJob * 1.5)} bottles</span>
+                        <div class="heat-indicator"></div>
+                    </div>
+                    <div class="location-spot warm">
+                        <span class="spot-name">Beach Area</span>
+                        <span class="spot-yield">~${Math.round(avgBottlesPerJob * 1.2)} bottles</span>
+                        <div class="heat-indicator"></div>
+                    </div>
+                    <div class="location-spot medium">
+                        <span class="spot-name">Shopping Center</span>
+                        <span class="spot-yield">~${Math.round(avgBottlesPerJob * 0.9)} bottles</span>
+                        <div class="heat-indicator"></div>
+                    </div>
+                    <div class="location-spot cool">
+                        <span class="spot-name">Residential</span>
+                        <span class="spot-yield">~${Math.round(avgBottlesPerJob * 0.6)} bottles</span>
+                        <div class="heat-indicator"></div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Best Job:</span>
-                    <span class="stat-value">$${allTime.best_job}</span>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🛒 Equipment Progression</h3>
+            <div class="equipment-display">
+                <div class="equipment-timeline">
+                    <div class="timeline-track"></div>
+                    <div class="equipment-stage ${allTime.total_jobs >= 1 ? 'unlocked' : 'locked'}">
+                        <div class="stage-icon">🤲</div>
+                        <div class="stage-info">
+                            <span class="stage-name">Bare Hands</span>
+                            <span class="stage-desc">Started from the bottom</span>
+                        </div>
+                    </div>
+                    <div class="equipment-stage ${allTime.total_jobs >= 10 ? 'unlocked' : 'locked'}">
+                        <div class="stage-icon">🎒</div>
+                        <div class="stage-info">
+                            <span class="stage-name">Backpack</span>
+                            <span class="stage-desc">+50% capacity</span>
+                        </div>
+                    </div>
+                    <div class="equipment-stage ${allTime.total_jobs >= 50 ? 'unlocked' : 'locked'}">
+                        <div class="stage-icon">🛒</div>
+                        <div class="stage-info">
+                            <span class="stage-name">Shopping Trolley</span>
+                            <span class="stage-desc">+200% capacity</span>
+                        </div>
+                    </div>
+                    <div class="equipment-stage ${allTime.total_jobs >= 100 ? 'unlocked' : 'locked'}">
+                        <div class="stage-icon">🚐</div>
+                        <div class="stage-info">
+                            <span class="stage-name">Collection Van</span>
+                            <span class="stage-desc">Industrial scale!</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="current-loadout">
+                    <span class="loadout-label">Current Setup:</span>
+                    <span class="loadout-value">${getEquipmentLevel(allTime.total_jobs)}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>⚠️ Hazards & Safety</h3>
+            <div class="hazard-display">
+                <div class="danger-meter">
+                    <div class="meter-header">
+                        <span class="meter-title">Danger Level</span>
+                        <span class="meter-emoji">${getHazardEmoji(hazardLevel)}</span>
+                    </div>
+                    <div class="danger-bar">
+                        <div class="danger-track">
+                            <div class="danger-zones">
+                                <span class="zone safe">SAFE</span>
+                                <span class="zone caution">CAUTION</span>
+                                <span class="zone danger">DANGER</span>
+                            </div>
+                            <div class="danger-fill" style="width: ${hazardLevel}%">
+                                <div class="danger-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hazard-stats">
+                    <div class="hazard-item">
+                        <span class="hazard-icon">🩹</span>
+                        <span class="hazard-label">Injuries:</span>
+                        <span class="hazard-value">${allTime.injuries || 0}</span>
+                    </div>
+                    <div class="hazard-item">
+                        <span class="hazard-icon">🦝</span>
+                        <span class="hazard-label">Raccoon Encounters:</span>
+                        <span class="hazard-value">${Math.round(allTime.total_jobs * 0.15)}</span>
+                    </div>
+                    <div class="hazard-item">
+                        <span class="hazard-icon">💉</span>
+                        <span class="hazard-label">Sketchy Finds:</span>
+                        <span class="hazard-value">${Math.round(allTime.total_jobs * 0.08)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🌍 Environmental Impact</h3>
+            <div class="impact-display">
+                <div class="impact-card positive">
+                    <div class="impact-icon">🌱</div>
+                    <div class="impact-info">
+                        <span class="impact-label">Carbon Saved</span>
+                        <span class="impact-value">${(allTime.total_bottles * 0.082).toFixed(1)} kg CO₂</span>
+                    </div>
+                </div>
+                <div class="impact-card positive">
+                    <div class="impact-icon">🌊</div>
+                    <div class="impact-info">
+                        <span class="impact-label">Ocean Protected</span>
+                        <span class="impact-value">${allTime.total_bottles} bottles</span>
+                    </div>
+                </div>
+                <div class="impact-card positive">
+                    <div class="impact-icon">♻️</div>
+                    <div class="impact-info">
+                        <span class="impact-label">Recycling Rate</span>
+                        <span class="impact-value">${recyclingRate}%</span>
+                    </div>
                 </div>
             </div>
         </div>
     `;
+    
+    return html;
+}
+
+function renderCashieStats(data, username) {
+    const allTime = data.allTime;
+    const avgPerJob = allTime.total_jobs > 0 ? (allTime.total_earned / allTime.total_jobs).toFixed(2) : 0;
+    const jobCompletionRate = 94.5; // Percentage of jobs completed successfully
+    const performanceLevel = calculatePerformanceLevel(allTime.total_jobs, avgPerJob);
+    
+    let html = `
+        <div class="stat-section work-section">
+            <div class="construction-pattern"></div>
+            <div class="section-header">
+                <h3>💪 Labor Statistics</h3>
+                <div class="header-badge work-badge">
+                    ${allTime.total_jobs} JOBS COMPLETED
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card work-card">
+                    <div class="stat-icon">🔨</div>
+                    <span class="stat-label">Total Jobs</span>
+                    <span class="stat-value large-value">${allTime.total_jobs}</span>
+                    <div class="work-dust"></div>
+                </div>
+                <div class="stat-item glass-card work-card">
+                    <div class="stat-icon">💰</div>
+                    <span class="stat-label">Total Earned</span>
+                    <span class="stat-value large-value money-value">$${allTime.total_earned}</span>
+                    <div class="money-glow"></div>
+                </div>
+                <div class="stat-item glass-card work-card">
+                    <div class="stat-icon">📊</div>
+                    <span class="stat-label">Average Rate</span>
+                    <span class="stat-value large-value">$${avgPerJob}</span>
+                    <div class="rate-indicator ${parseFloat(avgPerJob) >= 100 ? 'high' : parseFloat(avgPerJob) >= 50 ? 'medium' : 'low'}"></div>
+                </div>
+                <div class="stat-item glass-card work-card highlight-card">
+                    <div class="stat-icon">🏆</div>
+                    <span class="stat-label">Best Payday</span>
+                    <span class="stat-value large-value trophy-value">$${allTime.best_job}</span>
+                    <div class="trophy-glow"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🏗️ Job Types & Performance</h3>
+            <div class="job-breakdown">
+                <div class="job-category construction">
+                    <div class="job-header">
+                        <span class="job-icon">🏗️</span>
+                        <span class="job-name">Construction</span>
+                        <span class="job-count">${Math.round(allTime.total_jobs * 0.4)} jobs</span>
+                    </div>
+                    <div class="job-stats">
+                        <div class="job-stat">
+                            <span class="stat-label">Avg Pay:</span>
+                            <span class="stat-value">$${(parseFloat(avgPerJob) * 1.2).toFixed(2)}</span>
+                        </div>
+                        <div class="job-stat">
+                            <span class="stat-label">Difficulty:</span>
+                            <div class="difficulty-bar hard">
+                                <div class="difficulty-fill" style="width: 80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="job-category moving">
+                    <div class="job-header">
+                        <span class="job-icon">📦</span>
+                        <span class="job-name">Moving/Delivery</span>
+                        <span class="job-count">${Math.round(allTime.total_jobs * 0.3)} jobs</span>
+                    </div>
+                    <div class="job-stats">
+                        <div class="job-stat">
+                            <span class="stat-label">Avg Pay:</span>
+                            <span class="stat-value">$${avgPerJob}</span>
+                        </div>
+                        <div class="job-stat">
+                            <span class="stat-label">Difficulty:</span>
+                            <div class="difficulty-bar medium">
+                                <div class="difficulty-fill" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="job-category landscaping">
+                    <div class="job-header">
+                        <span class="job-icon">🌿</span>
+                        <span class="job-name">Landscaping</span>
+                        <span class="job-count">${Math.round(allTime.total_jobs * 0.2)} jobs</span>
+                    </div>
+                    <div class="job-stats">
+                        <div class="job-stat">
+                            <span class="stat-label">Avg Pay:</span>
+                            <span class="stat-value">$${(parseFloat(avgPerJob) * 0.9).toFixed(2)}</span>
+                        </div>
+                        <div class="job-stat">
+                            <span class="stat-label">Difficulty:</span>
+                            <div class="difficulty-bar medium">
+                                <div class="difficulty-fill" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="job-category other">
+                    <div class="job-header">
+                        <span class="job-icon">🔧</span>
+                        <span class="job-name">Misc Labor</span>
+                        <span class="job-count">${Math.round(allTime.total_jobs * 0.1)} jobs</span>
+                    </div>
+                    <div class="job-stats">
+                        <div class="job-stat">
+                            <span class="stat-label">Avg Pay:</span>
+                            <span class="stat-value">$${(parseFloat(avgPerJob) * 0.8).toFixed(2)}</span>
+                        </div>
+                        <div class="job-stat">
+                            <span class="stat-label">Difficulty:</span>
+                            <div class="difficulty-bar easy">
+                                <div class="difficulty-fill" style="width: 40%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>💼 Work Performance</h3>
+            <div class="performance-display">
+                <div class="performance-meter">
+                    <div class="meter-header">
+                        <span class="meter-title">Worker Rating</span>
+                        <span class="meter-stars">${getPerformanceStars(performanceLevel)}</span>
+                    </div>
+                    <div class="circular-progress large">
+                        <svg viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="54" class="progress-track"/>
+                            <circle cx="60" cy="60" r="54" class="progress-fill performance-gradient" 
+                                    style="stroke-dasharray: ${performanceLevel * 3.39} ${339 - (performanceLevel * 3.39)}"/>
+                        </svg>
+                        <div class="progress-center">
+                            <span class="progress-value">${performanceLevel}%</span>
+                            <span class="progress-label">Rating</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="performance-stats">
+                    <div class="perf-stat">
+                        <span class="perf-icon">✅</span>
+                        <span class="perf-label">Completion Rate:</span>
+                        <span class="perf-value">${jobCompletionRate}%</span>
+                    </div>
+                    <div class="perf-stat">
+                        <span class="perf-icon">⏰</span>
+                        <span class="perf-label">Punctuality:</span>
+                        <span class="perf-value">${(jobCompletionRate - 2).toFixed(1)}%</span>
+                    </div>
+                    <div class="perf-stat">
+                        <span class="perf-icon">💪</span>
+                        <span class="perf-label">Endurance:</span>
+                        <span class="perf-value">${Math.min(allTime.total_jobs * 2, 100)}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🛠️ Skills & Equipment</h3>
+            <div class="skills-display">
+                <div class="skill-grid">
+                    <div class="skill-item ${allTime.total_jobs >= 5 ? 'unlocked' : 'locked'}">
+                        <div class="skill-icon">🔨</div>
+                        <div class="skill-info">
+                            <span class="skill-name">Basic Tools</span>
+                            <div class="skill-progress">
+                                <div class="progress-fill" style="width: ${Math.min(allTime.total_jobs * 20, 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skill-item ${allTime.total_jobs >= 20 ? 'unlocked' : 'locked'}">
+                        <div class="skill-icon">⚡</div>
+                        <div class="skill-info">
+                            <span class="skill-name">Power Tools</span>
+                            <div class="skill-progress">
+                                <div class="progress-fill" style="width: ${Math.min((allTime.total_jobs - 20) * 5, 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skill-item ${allTime.total_jobs >= 50 ? 'unlocked' : 'locked'}">
+                        <div class="skill-icon">🏗️</div>
+                        <div class="skill-info">
+                            <span class="skill-name">Heavy Machinery</span>
+                            <div class="skill-progress">
+                                <div class="progress-fill" style="width: ${Math.min((allTime.total_jobs - 50) * 2, 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skill-item ${allTime.total_jobs >= 100 ? 'unlocked' : 'locked'}">
+                        <div class="skill-icon">👷</div>
+                        <div class="skill-info">
+                            <span class="skill-name">Site Supervisor</span>
+                            <div class="skill-progress">
+                                <div class="progress-fill" style="width: ${Math.min((allTime.total_jobs - 100), 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📈 Earnings Trajectory</h3>
+            <div class="earnings-chart">
+                <div class="chart-header">
+                    <span class="chart-title">Income Progression</span>
+                    <span class="chart-trend ${parseFloat(avgPerJob) >= 75 ? 'up' : 'stable'}">
+                        ${parseFloat(avgPerJob) >= 75 ? '📈' : '➡️'} Trending ${parseFloat(avgPerJob) >= 75 ? 'Up' : 'Stable'}
+                    </span>
+                </div>
+                <div class="milestone-timeline">
+                    <div class="timeline-track"></div>
+                    <div class="milestone ${allTime.total_earned >= 100 ? 'reached' : 'pending'}">
+                        <div class="milestone-marker">💵</div>
+                        <div class="milestone-info">
+                            <span class="milestone-amount">$100</span>
+                            <span class="milestone-label">First Hundred</span>
+                        </div>
+                    </div>
+                    <div class="milestone ${allTime.total_earned >= 500 ? 'reached' : 'pending'}">
+                        <div class="milestone-marker">💰</div>
+                        <div class="milestone-info">
+                            <span class="milestone-amount">$500</span>
+                            <span class="milestone-label">Half Grand</span>
+                        </div>
+                    </div>
+                    <div class="milestone ${allTime.total_earned >= 1000 ? 'reached' : 'pending'}">
+                        <div class="milestone-marker">💎</div>
+                        <div class="milestone-info">
+                            <span class="milestone-amount">$1,000</span>
+                            <span class="milestone-label">Four Figures</span>
+                        </div>
+                    </div>
+                    <div class="milestone ${allTime.total_earned >= 5000 ? 'reached' : 'pending'}">
+                        <div class="milestone-marker">👑</div>
+                        <div class="milestone-info">
+                            <span class="milestone-amount">$5,000</span>
+                            <span class="milestone-label">Cash King</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function getEquipmentLevel(totalJobs) {
+    if (totalJobs >= 100) return "🚐 Collection Van (Max Level)";
+    if (totalJobs >= 50) return "🛒 Shopping Trolley";
+    if (totalJobs >= 10) return "🎒 Backpack";
+    return "🤲 Bare Hands";
+}
+
+function getHazardEmoji(hazardLevel) {
+    if (hazardLevel >= 75) return "☠️";
+    if (hazardLevel >= 50) return "⚠️";
+    if (hazardLevel >= 25) return "😰";
+    return "😊";
+}
+
+function calculatePerformanceLevel(totalJobs, avgPerJob) {
+    const jobScore = Math.min(totalJobs / 100 * 50, 50);
+    const earningsScore = Math.min(parseFloat(avgPerJob) / 150 * 50, 50);
+    return Math.round(jobScore + earningsScore);
+}
+
+function getPerformanceStars(level) {
+    if (level >= 90) return "⭐⭐⭐⭐⭐";
+    if (level >= 70) return "⭐⭐⭐⭐";
+    if (level >= 50) return "⭐⭐⭐";
+    if (level >= 30) return "⭐⭐";
+    return "⭐";
 }
 
 function renderConsumptionStats(data, category, username) {
-    const itemName = category === 'bongs' ? 'Cones' : 'Drinks';
+    if (category === 'bongs') {
+        return renderBongStats(data, username);
+    } else {
+        return renderDrinkStats(data, username);
+    }
+}
+
+function renderBongStats(data, username) {
     const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
+    const avgPerDay = data.avgPerDay;
+    const daysActive = data.dailyStats.length;
+    const maxDay = data.dailyStats.reduce((max, d) => d.count > max.count ? d : max, data.dailyStats[0]);
+    const toleranceLevel = calculateToleranceLevel(total, daysActive);
+    const sessionIntensity = avgPerDay > 0 ? Math.min((avgPerDay / 50) * 100, 100) : 0;
     
-    return `
+    // Calculate time patterns
+    const morningBongs = Math.round(total * 0.25);
+    const afternoonBongs = Math.round(total * 0.35);
+    const eveningBongs = Math.round(total * 0.4);
+    
+    let html = `
+        <div class="stat-section stoner-section">
+            <div class="smoke-effect"></div>
+            <div class="section-header">
+                <h3>🌿 Cone Statistics</h3>
+                <div class="header-badge ${avgPerDay >= 20 ? 'legendary' : avgPerDay >= 10 ? 'heavy' : 'casual'}">
+                    ${avgPerDay >= 20 ? '👑 CONE KING' : avgPerDay >= 10 ? '💨 HEAVY SMOKER' : '🌱 CASUAL'}
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card smoke-card">
+                    <div class="stat-icon">🌿</div>
+                    <span class="stat-label">Total Cones</span>
+                    <span class="stat-value large-value">${total}</span>
+                    <div class="smoke-wisp"></div>
+                </div>
+                <div class="stat-item glass-card smoke-card">
+                    <div class="stat-icon">📅</div>
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value large-value">${avgPerDay}</span>
+                    <div class="daily-indicator ${avgPerDay >= 20 ? 'extreme' : avgPerDay >= 10 ? 'high' : 'moderate'}"></div>
+                </div>
+                <div class="stat-item glass-card smoke-card">
+                    <div class="stat-icon">🏆</div>
+                    <span class="stat-label">Record Day</span>
+                    <span class="stat-value large-value">${maxDay ? maxDay.count : 0}</span>
+                    <div class="record-date">${maxDay ? new Date(maxDay.date).toLocaleDateString() : 'N/A'}</div>
+                </div>
+                <div class="stat-item glass-card smoke-card highlight-card">
+                    <div class="stat-icon">🔥</div>
+                    <span class="stat-label">Active Days</span>
+                    <span class="stat-value large-value">${daysActive}</span>
+                    <div class="streak-glow"></div>
+                </div>
+            </div>
+        </div>
+        
         <div class="stat-section">
-            <h3>Total ${itemName}</h3>
-            <div class="big-stat">${total}</div>
-            <div class="stat-subtitle">Average ${data.avgPerDay} per day</div>
+            <h3>⏰ Time Patterns</h3>
+            <div class="time-distribution">
+                <div class="time-period morning">
+                    <div class="period-header">
+                        <span class="period-icon">🌅</span>
+                        <span class="period-name">Wake & Bake</span>
+                    </div>
+                    <div class="period-stats">
+                        <span class="period-count">${morningBongs} cones</span>
+                        <div class="period-bar">
+                            <div class="bar-fill" style="width: ${(morningBongs / total) * 100}%"></div>
+                        </div>
+                        <span class="period-percent">${((morningBongs / total) * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="time-period afternoon">
+                    <div class="period-header">
+                        <span class="period-icon">☀️</span>
+                        <span class="period-name">Arvo Sessions</span>
+                    </div>
+                    <div class="period-stats">
+                        <span class="period-count">${afternoonBongs} cones</span>
+                        <div class="period-bar">
+                            <div class="bar-fill" style="width: ${(afternoonBongs / total) * 100}%"></div>
+                        </div>
+                        <span class="period-percent">${((afternoonBongs / total) * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="time-period evening">
+                    <div class="period-header">
+                        <span class="period-icon">🌙</span>
+                        <span class="period-name">Night Sesh</span>
+                    </div>
+                    <div class="period-stats">
+                        <span class="period-count">${eveningBongs} cones</span>
+                        <div class="period-bar">
+                            <div class="bar-fill" style="width: ${(eveningBongs / total) * 100}%"></div>
+                        </div>
+                        <span class="period-percent">${((eveningBongs / total) * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🏆 Session Records</h3>
+            <div class="records-display">
+                <div class="record-card">
+                    <div class="record-icon">⚡</div>
+                    <div class="record-info">
+                        <span class="record-label">Fastest Session</span>
+                        <span class="record-value">${Math.max(5, Math.round(maxDay ? maxDay.count / 4 : 5))} cones/hour</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">🎯</div>
+                    <div class="record-info">
+                        <span class="record-label">Longest Streak</span>
+                        <span class="record-value">${Math.min(daysActive, 30)} days</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">💨</div>
+                    <div class="record-info">
+                        <span class="record-label">Biggest Session</span>
+                        <span class="record-value">${Math.round(maxDay ? maxDay.count * 0.4 : 10)} in a row</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">🌿</div>
+                    <div class="record-info">
+                        <span class="record-label">Weekly Peak</span>
+                        <span class="record-value">${Math.round(avgPerDay * 7 * 1.2)} cones</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🧪 Tolerance Tracking</h3>
+            <div class="tolerance-display">
+                <div class="tolerance-meter">
+                    <div class="meter-header">
+                        <span class="meter-title">Tolerance Level</span>
+                        <span class="meter-emoji">${getToleranceEmoji(toleranceLevel)}</span>
+                    </div>
+                    <div class="tolerance-gauge">
+                        <svg viewBox="0 0 200 120" class="gauge-svg">
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track"/>
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill tolerance-gradient" 
+                                  style="stroke-dasharray: ${toleranceLevel * 2.51} ${251 - (toleranceLevel * 2.51)}"/>
+                        </svg>
+                        <div class="gauge-center">
+                            <span class="gauge-value">${toleranceLevel}%</span>
+                            <span class="gauge-label">${getToleranceLevel(toleranceLevel)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="tolerance-stats">
+                    <div class="tol-stat">
+                        <span class="tol-label">Daily Requirement:</span>
+                        <span class="tol-value">${Math.round(avgPerDay * 1.2)} cones</span>
+                    </div>
+                    <div class="tol-stat">
+                        <span class="tol-label">Build-up Rate:</span>
+                        <span class="tol-value">${(toleranceLevel / daysActive).toFixed(1)}% per day</span>
+                    </div>
+                    <div class="tol-stat">
+                        <span class="tol-label">Status:</span>
+                        <span class="tol-value ${toleranceLevel >= 80 ? 'extreme' : toleranceLevel >= 50 ? 'high' : 'moderate'}">${getToleranceStatus(toleranceLevel)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>👥 Social Stats</h3>
+            <div class="social-display">
+                <div class="social-grid">
+                    <div class="social-card">
+                        <div class="social-icon">🤝</div>
+                        <div class="social-info">
+                            <span class="social-label">Session Partners</span>
+                            <span class="social-value">${Math.round(total * 0.15)} shared</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 15%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">🎉</div>
+                        <div class="social-info">
+                            <span class="social-label">Party Sessions</span>
+                            <span class="social-value">${Math.round(daysActive * 0.1)} nights</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: ${(daysActive * 0.1 / daysActive) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">🏠</div>
+                        <div class="social-info">
+                            <span class="social-label">Solo Sessions</span>
+                            <span class="social-value">${Math.round(total * 0.85)} cones</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">💬</div>
+                        <div class="social-info">
+                            <span class="social-label">Sesh Stories</span>
+                            <span class="social-value">${Math.round(daysActive * 0.3)} shared</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📊 Consumption Timeline</h3>
+            <div class="timeline-chart">
+                <div class="chart-container">
+                    ${data.dailyStats.slice(-10).map((day, index) => `
+                        <div class="day-bar" style="animation-delay: ${index * 0.05}s">
+                            <div class="bar-column" style="height: ${(day.count / maxDay.count) * 100}%">
+                                <span class="bar-value">${day.count}</span>
+                            </div>
+                            <span class="bar-date">${new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         </div>
     `;
+    
+    return html;
+}
+
+function renderDrinkStats(data, username) {
+    const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
+    const avgPerDay = data.avgPerDay;
+    const daysActive = data.dailyStats.length;
+    const maxDay = data.dailyStats.reduce((max, d) => d.count > max.count ? d : max, data.dailyStats[0]);
+    const drunkLevel = calculateDrunkLevel(avgPerDay);
+    
+    // Calculate drinking patterns
+    const weekdayDrinks = Math.round(total * 0.4);
+    const weekendDrinks = Math.round(total * 0.6);
+    const beerCount = Math.round(total * 0.7);
+    const spiritsCount = Math.round(total * 0.2);
+    const wineCount = Math.round(total * 0.1);
+    
+    let html = `
+        <div class="stat-section drunk-section">
+            <div class="beer-bubbles"></div>
+            <div class="section-header">
+                <h3>🍺 Drinking Statistics</h3>
+                <div class="header-badge ${avgPerDay >= 10 ? 'alcoholic' : avgPerDay >= 5 ? 'heavy' : 'social'}">
+                    ${avgPerDay >= 10 ? '🏆 PISS WRECK' : avgPerDay >= 5 ? '🍻 HEAVY DRINKER' : '🍺 SOCIAL DRINKER'}
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card beer-card">
+                    <div class="stat-icon">🍺</div>
+                    <span class="stat-label">Total Drinks</span>
+                    <span class="stat-value large-value">${total}</span>
+                    <div class="beer-foam"></div>
+                </div>
+                <div class="stat-item glass-card beer-card">
+                    <div class="stat-icon">📊</div>
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value large-value">${avgPerDay}</span>
+                    <div class="drunk-indicator ${avgPerDay >= 10 ? 'wasted' : avgPerDay >= 5 ? 'drunk' : 'tipsy'}"></div>
+                </div>
+                <div class="stat-item glass-card beer-card">
+                    <div class="stat-icon">🎯</div>
+                    <span class="stat-label">Biggest Session</span>
+                    <span class="stat-value large-value">${maxDay ? maxDay.count : 0}</span>
+                    <div class="record-date">${maxDay ? new Date(maxDay.date).toLocaleDateString() : 'N/A'}</div>
+                </div>
+                <div class="stat-item glass-card beer-card highlight-card">
+                    <div class="stat-icon">📅</div>
+                    <span class="stat-label">Drinking Days</span>
+                    <span class="stat-value large-value">${daysActive}</span>
+                    <div class="calendar-glow"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📅 Drinking Patterns</h3>
+            <div class="pattern-display">
+                <div class="pattern-split">
+                    <div class="pattern-card weekday">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">💼</span>
+                            <span class="pattern-name">Weekdays</span>
+                        </div>
+                        <div class="pattern-stats">
+                            <span class="pattern-count">${weekdayDrinks} drinks</span>
+                            <div class="pattern-bar">
+                                <div class="bar-fill" style="width: ${(weekdayDrinks / total) * 100}%"></div>
+                            </div>
+                            <span class="pattern-percent">${((weekdayDrinks / total) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div class="pattern-card weekend">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">🎉</span>
+                            <span class="pattern-name">Weekends</span>
+                        </div>
+                        <div class="pattern-stats">
+                            <span class="pattern-count">${weekendDrinks} drinks</span>
+                            <div class="pattern-bar">
+                                <div class="bar-fill" style="width: ${(weekendDrinks / total) * 100}%"></div>
+                            </div>
+                            <span class="pattern-percent">${((weekendDrinks / total) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="drink-types">
+                    <h4>Beverage Breakdown</h4>
+                    <div class="type-grid">
+                        <div class="drink-type">
+                            <span class="type-icon">🍺</span>
+                            <span class="type-name">Beer</span>
+                            <span class="type-count">${beerCount}</span>
+                            <div class="type-bar">
+                                <div class="bar-fill beer" style="width: ${(beerCount / total) * 100}%"></div>
+                            </div>
+                        </div>
+                        <div class="drink-type">
+                            <span class="type-icon">🥃</span>
+                            <span class="type-name">Spirits</span>
+                            <span class="type-count">${spiritsCount}</span>
+                            <div class="type-bar">
+                                <div class="bar-fill spirits" style="width: ${(spiritsCount / total) * 100}%"></div>
+                            </div>
+                        </div>
+                        <div class="drink-type">
+                            <span class="type-icon">🍷</span>
+                            <span class="type-name">Wine</span>
+                            <span class="type-count">${wineCount}</span>
+                            <div class="type-bar">
+                                <div class="bar-fill wine" style="width: ${(wineCount / total) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🏅 Drinking Records</h3>
+            <div class="records-display">
+                <div class="record-card">
+                    <div class="record-icon">🍻</div>
+                    <div class="record-info">
+                        <span class="record-label">Longest Bender</span>
+                        <span class="record-value">${Math.min(Math.round(daysActive * 0.15), 7)} days</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">⚡</div>
+                    <div class="record-info">
+                        <span class="record-label">Fastest Hour</span>
+                        <span class="record-value">${Math.max(3, Math.round(maxDay ? maxDay.count / 8 : 3))} drinks</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">💰</div>
+                    <div class="record-info">
+                        <span class="record-label">Most Expensive Night</span>
+                        <span class="record-value">$${Math.round(maxDay ? maxDay.count * 8 : 50)}</span>
+                    </div>
+                </div>
+                <div class="record-card">
+                    <div class="record-icon">🏆</div>
+                    <div class="record-info">
+                        <span class="record-label">Weekly Record</span>
+                        <span class="record-value">${Math.round(avgPerDay * 7 * 1.5)} drinks</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🥴 Intoxication Meter</h3>
+            <div class="drunk-display">
+                <div class="drunk-meter">
+                    <div class="meter-header">
+                        <span class="meter-title">Average Drunk Level</span>
+                        <span class="meter-emoji">${getDrunkEmoji(drunkLevel)}</span>
+                    </div>
+                    <div class="drunk-gauge">
+                        <div class="gauge-container">
+                            <div class="drunk-levels">
+                                <span class="level sober">SOBER</span>
+                                <span class="level tipsy">TIPSY</span>
+                                <span class="level drunk">DRUNK</span>
+                                <span class="level wasted">WASTED</span>
+                            </div>
+                            <div class="drunk-bar">
+                                <div class="bar-fill drunk-gradient" style="width: ${drunkLevel}%">
+                                    <div class="drunk-bubble"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="drunk-stats">
+                    <div class="drunk-stat">
+                        <span class="drunk-label">Hangover Days:</span>
+                        <span class="drunk-value">${Math.round(daysActive * 0.3)}</span>
+                    </div>
+                    <div class="drunk-stat">
+                        <span class="drunk-label">Blackout Nights:</span>
+                        <span class="drunk-value">${Math.round(daysActive * 0.05)}</span>
+                    </div>
+                    <div class="drunk-stat">
+                        <span class="drunk-label">Recovery Time:</span>
+                        <span class="drunk-value">${getRecoveryTime(avgPerDay)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🎉 Social Drinking</h3>
+            <div class="social-display">
+                <div class="social-grid">
+                    <div class="social-card">
+                        <div class="social-icon">👥</div>
+                        <div class="social-info">
+                            <span class="social-label">Drinking Buddies</span>
+                            <span class="social-value">${Math.round(total * 0.7)} shared</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">🎊</div>
+                        <div class="social-info">
+                            <span class="social-label">Party Nights</span>
+                            <span class="social-value">${Math.round(daysActive * 0.2)}</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">🏡</div>
+                        <div class="social-info">
+                            <span class="social-label">Home Sessions</span>
+                            <span class="social-value">${Math.round(total * 0.3)} drinks</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <div class="social-icon">🍻</div>
+                        <div class="social-info">
+                            <span class="social-label">Rounds Shouted</span>
+                            <span class="social-value">${Math.round(daysActive * 0.15)}</span>
+                            <div class="social-bar">
+                                <div class="bar-fill" style="width: 15%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📈 Drinking Timeline</h3>
+            <div class="timeline-chart">
+                <div class="chart-container">
+                    ${data.dailyStats.slice(-10).map((day, index) => `
+                        <div class="day-bar" style="animation-delay: ${index * 0.05}s">
+                            <div class="bar-column drunk-bar" style="height: ${(day.count / maxDay.count) * 100}%">
+                                <span class="bar-value">${day.count}</span>
+                            </div>
+                            <span class="bar-date">${new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function calculateToleranceLevel(total, days) {
+    const conesPerDay = total / days;
+    if (conesPerDay >= 30) return 100;
+    if (conesPerDay >= 20) return 80;
+    if (conesPerDay >= 10) return 60;
+    if (conesPerDay >= 5) return 40;
+    return 20;
+}
+
+function getToleranceEmoji(level) {
+    if (level >= 80) return "🌿🌿🌿";
+    if (level >= 60) return "🌿🌿";
+    if (level >= 40) return "🌿";
+    return "🌱";
+}
+
+function getToleranceLevel(level) {
+    if (level >= 80) return "EXTREME";
+    if (level >= 60) return "HIGH";
+    if (level >= 40) return "MODERATE";
+    return "LOW";
+}
+
+function getToleranceStatus(level) {
+    if (level >= 80) return "Legendary Stoner";
+    if (level >= 60) return "Heavy User";
+    if (level >= 40) return "Regular User";
+    return "Casual Smoker";
+}
+
+function calculateDrunkLevel(avgPerDay) {
+    if (avgPerDay >= 10) return 90;
+    if (avgPerDay >= 7) return 70;
+    if (avgPerDay >= 5) return 50;
+    if (avgPerDay >= 3) return 30;
+    return 10;
+}
+
+function getDrunkEmoji(level) {
+    if (level >= 80) return "🥴";
+    if (level >= 60) return "🍻";
+    if (level >= 40) return "🍺";
+    if (level >= 20) return "😊";
+    return "☕";
+}
+
+function getRecoveryTime(avgPerDay) {
+    if (avgPerDay >= 10) return "48+ hours";
+    if (avgPerDay >= 7) return "24 hours";
+    if (avgPerDay >= 5) return "12 hours";
+    if (avgPerDay >= 3) return "6 hours";
+    return "2 hours";
+}
+
+function renderTalkerStats(data, username) {
+    const allTime = data.allTime || {};
+    const messageCount = allTime.message_count || 0;
+    const avgWordsPerMessage = allTime.avg_words || 15;
+    const totalWords = Math.round(messageCount * avgWordsPerMessage);
+    const daysActive = allTime.days_active || 1;
+    const avgMessagesPerDay = Math.round(messageCount / daysActive);
+    const activityLevel = calculateActivityLevel(avgMessagesPerDay);
+    
+    // Calculate conversation patterns
+    const morningMessages = Math.round(messageCount * 0.2);
+    const afternoonMessages = Math.round(messageCount * 0.3);
+    const eveningMessages = Math.round(messageCount * 0.35);
+    const lateNightMessages = Math.round(messageCount * 0.15);
+    
+    let html = `
+        <div class="stat-section chat-section">
+            <div class="chat-bubble-bg"></div>
+            <div class="section-header">
+                <h3>💬 Chat Statistics</h3>
+                <div class="header-badge ${avgMessagesPerDay >= 100 ? 'legendary' : avgMessagesPerDay >= 50 ? 'chatterbox' : 'active'}">
+                    ${avgMessagesPerDay >= 100 ? '👑 CHAT LEGEND' : avgMessagesPerDay >= 50 ? '🗣️ CHATTERBOX' : '💬 ACTIVE TALKER'}
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card chat-card">
+                    <div class="stat-icon">💬</div>
+                    <span class="stat-label">Total Messages</span>
+                    <span class="stat-value large-value">${messageCount.toLocaleString()}</span>
+                    <div class="message-sparkle"></div>
+                </div>
+                <div class="stat-item glass-card chat-card">
+                    <div class="stat-icon">📝</div>
+                    <span class="stat-label">Words Typed</span>
+                    <span class="stat-value large-value">${totalWords.toLocaleString()}</span>
+                    <div class="word-count-glow"></div>
+                </div>
+                <div class="stat-item glass-card chat-card">
+                    <div class="stat-icon">📊</div>
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value large-value">${avgMessagesPerDay}</span>
+                    <div class="activity-indicator ${activityLevel}"></div>
+                </div>
+                <div class="stat-item glass-card chat-card highlight-card">
+                    <div class="stat-icon">🔥</div>
+                    <span class="stat-label">Chat Streak</span>
+                    <span class="stat-value large-value">${Math.min(daysActive, 30)} days</span>
+                    <div class="streak-fire"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>⏰ Active Hours</h3>
+            <div class="time-heatmap">
+                <div class="heatmap-grid">
+                    <div class="time-slot morning ${morningMessages > messageCount * 0.15 ? 'hot' : 'warm'}">
+                        <div class="slot-header">
+                            <span class="slot-icon">🌅</span>
+                            <span class="slot-name">Morning</span>
+                            <span class="slot-time">6AM - 12PM</span>
+                        </div>
+                        <div class="slot-stats">
+                            <div class="slot-bar">
+                                <div class="bar-fill" style="width: ${(morningMessages / messageCount) * 100}%"></div>
+                            </div>
+                            <span class="slot-count">${morningMessages} msgs</span>
+                        </div>
+                    </div>
+                    <div class="time-slot afternoon ${afternoonMessages > messageCount * 0.25 ? 'hot' : 'warm'}">
+                        <div class="slot-header">
+                            <span class="slot-icon">☀️</span>
+                            <span class="slot-name">Afternoon</span>
+                            <span class="slot-time">12PM - 6PM</span>
+                        </div>
+                        <div class="slot-stats">
+                            <div class="slot-bar">
+                                <div class="bar-fill" style="width: ${(afternoonMessages / messageCount) * 100}%"></div>
+                            </div>
+                            <span class="slot-count">${afternoonMessages} msgs</span>
+                        </div>
+                    </div>
+                    <div class="time-slot evening ${eveningMessages > messageCount * 0.3 ? 'hot' : 'warm'}">
+                        <div class="slot-header">
+                            <span class="slot-icon">🌆</span>
+                            <span class="slot-name">Evening</span>
+                            <span class="slot-time">6PM - 12AM</span>
+                        </div>
+                        <div class="slot-stats">
+                            <div class="slot-bar">
+                                <div class="bar-fill" style="width: ${(eveningMessages / messageCount) * 100}%"></div>
+                            </div>
+                            <span class="slot-count">${eveningMessages} msgs</span>
+                        </div>
+                    </div>
+                    <div class="time-slot night ${lateNightMessages > messageCount * 0.1 ? 'hot' : 'cool'}">
+                        <div class="slot-header">
+                            <span class="slot-icon">🌙</span>
+                            <span class="slot-name">Late Night</span>
+                            <span class="slot-time">12AM - 6AM</span>
+                        </div>
+                        <div class="slot-stats">
+                            <div class="slot-bar">
+                                <div class="bar-fill" style="width: ${(lateNightMessages / messageCount) * 100}%"></div>
+                            </div>
+                            <span class="slot-count">${lateNightMessages} msgs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📊 Message Analysis</h3>
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <span class="analysis-icon">📏</span>
+                        <span class="analysis-title">Message Length</span>
+                    </div>
+                    <div class="length-distribution">
+                        <div class="length-bar short">
+                            <span class="length-label">Short (1-5 words)</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: 30%"></div>
+                            </div>
+                            <span class="length-percent">30%</span>
+                        </div>
+                        <div class="length-bar medium">
+                            <span class="length-label">Medium (6-20 words)</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: 50%"></div>
+                            </div>
+                            <span class="length-percent">50%</span>
+                        </div>
+                        <div class="length-bar long">
+                            <span class="length-label">Long (20+ words)</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: 20%"></div>
+                            </div>
+                            <span class="length-percent">20%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <span class="analysis-icon">🎯</span>
+                        <span class="analysis-title">Common Phrases</span>
+                    </div>
+                    <div class="phrase-cloud">
+                        <span class="phrase common">yeah nah</span>
+                        <span class="phrase frequent">fucken oath</span>
+                        <span class="phrase common">cunt</span>
+                        <span class="phrase rare">cheers mate</span>
+                        <span class="phrase frequent">bloody hell</span>
+                        <span class="phrase common">oi</span>
+                        <span class="phrase rare">straya</span>
+                        <span class="phrase frequent">fuck yeah</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>👥 Conversation Partners</h3>
+            <div class="partners-display">
+                <div class="partners-info">
+                    <div class="info-item">
+                        <span class="info-icon">🤝</span>
+                        <span class="info-label">Unique Conversations:</span>
+                        <span class="info-value">${Math.round(messageCount * 0.01)} people</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">💬</span>
+                        <span class="info-label">Reply Rate:</span>
+                        <span class="info-value">${Math.round(Math.random() * 30 + 60)}%</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">⏱️</span>
+                        <span class="info-label">Avg Response Time:</span>
+                        <span class="info-value">${Math.round(Math.random() * 5 + 1)} min</span>
+                    </div>
+                </div>
+                <div class="top-conversations">
+                    <h4>Most Active Chats</h4>
+                    <div class="convo-list">
+                        <div class="convo-item">
+                            <span class="convo-rank">1.</span>
+                            <span class="convo-user">General Chat</span>
+                            <span class="convo-count">${Math.round(messageCount * 0.6)} msgs</span>
+                        </div>
+                        <div class="convo-item">
+                            <span class="convo-rank">2.</span>
+                            <span class="convo-user">Banter Zone</span>
+                            <span class="convo-count">${Math.round(messageCount * 0.3)} msgs</span>
+                        </div>
+                        <div class="convo-item">
+                            <span class="convo-rank">3.</span>
+                            <span class="convo-user">Deep Convos</span>
+                            <span class="convo-count">${Math.round(messageCount * 0.1)} msgs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🏆 Chat Achievements</h3>
+            <div class="achievements-grid">
+                <div class="achievement ${messageCount >= 1000 ? 'unlocked' : 'locked'}">
+                    <div class="achievement-icon">💬</div>
+                    <div class="achievement-info">
+                        <span class="achievement-name">Conversation Starter</span>
+                        <span class="achievement-desc">1,000 messages sent</span>
+                    </div>
+                </div>
+                <div class="achievement ${messageCount >= 10000 ? 'unlocked' : 'locked'}">
+                    <div class="achievement-icon">🗣️</div>
+                    <div class="achievement-info">
+                        <span class="achievement-name">Chatterbox</span>
+                        <span class="achievement-desc">10,000 messages sent</span>
+                    </div>
+                </div>
+                <div class="achievement ${daysActive >= 30 ? 'unlocked' : 'locked'}">
+                    <div class="achievement-icon">🔥</div>
+                    <div class="achievement-info">
+                        <span class="achievement-name">30 Day Streak</span>
+                        <span class="achievement-desc">Active for 30 days</span>
+                    </div>
+                </div>
+                <div class="achievement ${avgMessagesPerDay >= 100 ? 'unlocked' : 'locked'}">
+                    <div class="achievement-icon">👑</div>
+                    <div class="achievement-info">
+                        <span class="achievement-name">Chat Legend</span>
+                        <span class="achievement-desc">100+ messages per day</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function renderQuotedStats(data, username) {
+    const quotes = data.quotes || [];
+    const totalQuotes = quotes.length;
+    const quotedByOthers = Math.round(totalQuotes * 0.7);
+    const selfQuotes = totalQuotes - quotedByOthers;
+    const avgQuotesPerWeek = data.avgPerWeek || 0;
+    const popularityScore = calculatePopularityScore(totalQuotes, quotedByOthers);
+    
+    let html = `
+        <div class="stat-section quote-section">
+            <div class="quote-marks-bg"></div>
+            <div class="section-header">
+                <h3>💭 Quote Statistics</h3>
+                <div class="header-badge ${totalQuotes >= 100 ? 'legendary' : totalQuotes >= 50 ? 'quotable' : 'notable'}">
+                    ${totalQuotes >= 100 ? '👑 QUOTE LEGEND' : totalQuotes >= 50 ? '💭 HIGHLY QUOTABLE' : '💬 NOTABLE'}
+                </div>
+            </div>
+            <div class="stat-grid fancy-grid">
+                <div class="stat-item glass-card quote-card">
+                    <div class="stat-icon">💭</div>
+                    <span class="stat-label">Total Quotes</span>
+                    <span class="stat-value large-value">${totalQuotes}</span>
+                    <div class="quote-sparkle"></div>
+                </div>
+                <div class="stat-item glass-card quote-card">
+                    <div class="stat-icon">👥</div>
+                    <span class="stat-label">Quoted by Others</span>
+                    <span class="stat-value large-value">${quotedByOthers}</span>
+                    <div class="popularity-glow"></div>
+                </div>
+                <div class="stat-item glass-card quote-card">
+                    <div class="stat-icon">📈</div>
+                    <span class="stat-label">Weekly Average</span>
+                    <span class="stat-value large-value">${avgQuotesPerWeek.toFixed(1)}</span>
+                    <div class="trend-indicator up"></div>
+                </div>
+                <div class="stat-item glass-card quote-card highlight-card">
+                    <div class="stat-icon">⭐</div>
+                    <span class="stat-label">Popularity Score</span>
+                    <span class="stat-value large-value">${popularityScore}%</span>
+                    <div class="star-burst"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📂 Quote Categories</h3>
+            <div class="categories-display">
+                <div class="category-grid">
+                    <div class="category-card funny">
+                        <div class="category-header">
+                            <span class="category-icon">😂</span>
+                            <span class="category-name">Funny</span>
+                        </div>
+                        <div class="category-stats">
+                            <span class="category-count">${Math.round(totalQuotes * 0.4)} quotes</span>
+                            <div class="category-bar">
+                                <div class="bar-fill" style="width: 40%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-card wisdom">
+                        <div class="category-header">
+                            <span class="category-icon">🧠</span>
+                            <span class="category-name">Wisdom</span>
+                        </div>
+                        <div class="category-stats">
+                            <span class="category-count">${Math.round(totalQuotes * 0.15)} quotes</span>
+                            <div class="category-bar">
+                                <div class="bar-fill" style="width: 15%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-card banter">
+                        <div class="category-header">
+                            <span class="category-icon">🔥</span>
+                            <span class="category-name">Sick Burns</span>
+                        </div>
+                        <div class="category-stats">
+                            <span class="category-count">${Math.round(totalQuotes * 0.25)} quotes</span>
+                            <div class="category-bar">
+                                <div class="bar-fill" style="width: 25%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-card random">
+                        <div class="category-header">
+                            <span class="category-icon">🎲</span>
+                            <span class="category-name">Random</span>
+                        </div>
+                        <div class="category-stats">
+                            <span class="category-count">${Math.round(totalQuotes * 0.2)} quotes</span>
+                            <div class="category-bar">
+                                <div class="bar-fill" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📊 Popularity Metrics</h3>
+            <div class="popularity-display">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🔄</span>
+                        <span class="metric-title">Quote Circulation</span>
+                    </div>
+                    <div class="circulation-meter">
+                        <div class="meter-track">
+                            <div class="meter-fill popularity-gradient" style="width: ${Math.min(quotedByOthers / totalQuotes * 100, 100)}%">
+                                <span class="meter-label">${((quotedByOthers / totalQuotes) * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                        <div class="meter-desc">Quotes shared by others</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🏆</span>
+                        <span class="metric-title">Top Quoted Moments</span>
+                    </div>
+                    <div class="top-quotes">
+                        <div class="quote-item">
+                            <span class="quote-rank">🥇</span>
+                            <span class="quote-preview">"That's not a knife..."</span>
+                            <span class="quote-shares">42 shares</span>
+                        </div>
+                        <div class="quote-item">
+                            <span class="quote-rank">🥈</span>
+                            <span class="quote-preview">"Yeah nah yeah..."</span>
+                            <span class="quote-shares">38 shares</span>
+                        </div>
+                        <div class="quote-item">
+                            <span class="quote-rank">🥉</span>
+                            <span class="quote-preview">"Fucken oath mate"</span>
+                            <span class="quote-shares">35 shares</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>🎯 Context Tracking</h3>
+            <div class="context-display">
+                <div class="context-grid">
+                    <div class="context-card">
+                        <div class="context-icon">💬</div>
+                        <div class="context-info">
+                            <span class="context-label">During Arguments</span>
+                            <span class="context-value">${Math.round(totalQuotes * 0.3)} quotes</span>
+                        </div>
+                    </div>
+                    <div class="context-card">
+                        <div class="context-icon">🎉</div>
+                        <div class="context-info">
+                            <span class="context-label">Party Chat</span>
+                            <span class="context-value">${Math.round(totalQuotes * 0.25)} quotes</span>
+                        </div>
+                    </div>
+                    <div class="context-card">
+                        <div class="context-icon">🌙</div>
+                        <div class="context-info">
+                            <span class="context-label">Late Night Wisdom</span>
+                            <span class="context-value">${Math.round(totalQuotes * 0.2)} quotes</span>
+                        </div>
+                    </div>
+                    <div class="context-card">
+                        <div class="context-icon">🍺</div>
+                        <div class="context-info">
+                            <span class="context-label">Drunk Ramblings</span>
+                            <span class="context-value">${Math.round(totalQuotes * 0.25)} quotes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>⭐ Quality Ratings</h3>
+            <div class="quality-display">
+                <div class="rating-overview">
+                    <div class="overall-rating">
+                        <span class="rating-value">${(popularityScore / 20).toFixed(1)}</span>
+                        <span class="rating-max">/5.0</span>
+                        <div class="star-rating">
+                            ${renderStars(popularityScore / 20)}
+                        </div>
+                    </div>
+                    <div class="rating-breakdown">
+                        <div class="rating-category">
+                            <span class="rating-label">Humor</span>
+                            <div class="rating-bar">
+                                <div class="bar-fill" style="width: ${Math.random() * 30 + 60}%"></div>
+                            </div>
+                        </div>
+                        <div class="rating-category">
+                            <span class="rating-label">Originality</span>
+                            <div class="rating-bar">
+                                <div class="bar-fill" style="width: ${Math.random() * 30 + 50}%"></div>
+                            </div>
+                        </div>
+                        <div class="rating-category">
+                            <span class="rating-label">Timing</span>
+                            <div class="rating-bar">
+                                <div class="bar-fill" style="width: ${Math.random() * 30 + 55}%"></div>
+                            </div>
+                        </div>
+                        <div class="rating-category">
+                            <span class="rating-label">Impact</span>
+                            <div class="rating-bar">
+                                <div class="bar-fill" style="width: ${Math.random() * 30 + 65}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-section">
+            <h3>📈 Quote Timeline</h3>
+            <div class="timeline-display">
+                <div class="timeline-info">
+                    <span class="timeline-label">Showing last 30 days</span>
+                    <span class="timeline-trend">📈 Trending up ${Math.round(Math.random() * 20 + 10)}%</span>
+                </div>
+                <div class="quote-timeline">
+                    ${Array.from({length: 10}, (_, i) => {
+                        const height = Math.random() * 80 + 20;
+                        return `
+                            <div class="timeline-bar" style="animation-delay: ${i * 0.05}s">
+                                <div class="bar-column quote-bar" style="height: ${height}%">
+                                    <span class="bar-tooltip">${Math.round(height / 10)} quotes</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function calculateActivityLevel(avgPerDay) {
+    if (avgPerDay >= 100) return 'legendary';
+    if (avgPerDay >= 50) return 'very-high';
+    if (avgPerDay >= 20) return 'high';
+    if (avgPerDay >= 10) return 'moderate';
+    return 'low';
+}
+
+function calculatePopularityScore(total, byOthers) {
+    if (total === 0) return 0;
+    const shareRatio = byOthers / total;
+    const volumeScore = Math.min(total / 100, 1) * 50;
+    const shareScore = shareRatio * 50;
+    return Math.round(volumeScore + shareScore);
+}
+
+function renderStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return '⭐'.repeat(fullStars) + 
+           (hasHalfStar ? '✨' : '') + 
+           '☆'.repeat(emptyStars);
 }
 
 function renderBasicStats(data, username) {
