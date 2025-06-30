@@ -858,6 +858,7 @@ class Database {
                 best_aim,
                 best_duration,
                 rarest_characteristic,
+                favorite_location,
                 CAST(wins AS REAL) / NULLIF(total_matches, 0) * 100 as win_rate
             FROM pissing_contest_stats
             WHERE total_matches > 0
