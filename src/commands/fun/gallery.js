@@ -20,10 +20,11 @@ export default new Command({
                 
                 // Emit WebSocket event for real-time update
                 if (bot.apiServer) {
-                    bot.apiServer.broadcastToTopic('gallery', 
-                        isLocking ? 'galleryLocked' : 'galleryUnlocked', 
-                        { username: message.username }
-                    );
+                    bot.apiServer.emit('gallery:lock:changed', {
+                        username: message.username,
+                        isLocked: isLocking,
+                        timestamp: Date.now()
+                    });
                 }
                 
                 if (isLocking) {
