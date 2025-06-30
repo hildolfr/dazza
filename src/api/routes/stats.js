@@ -778,7 +778,7 @@ export function createStatsRoutes(apiServer) {
                         const recentShifts = await apiServer.bot.db.all(`
                             SELECT * FROM economy_transactions
                             WHERE LOWER(username) = ? AND transaction_type = 'sign_spinning'
-                            ORDER BY timestamp DESC
+                            ORDER BY created_at DESC
                             LIMIT 10
                         `, [normalizedUsername]);
                         
@@ -794,7 +794,7 @@ export function createStatsRoutes(apiServer) {
                 case 'gamblers':
                     // Get all gambling wins
                     const allWins = await apiServer.bot.db.all(`
-                        SELECT transaction_type as game, amount, description, timestamp
+                        SELECT transaction_type as game, amount, description, created_at as timestamp
                         FROM economy_transactions
                         WHERE LOWER(username) = ? 
                         AND transaction_type IN ('pokies', 'scratchie', 'tab')
@@ -832,7 +832,7 @@ export function createStatsRoutes(apiServer) {
                         SELECT 
                             description,
                             amount,
-                            timestamp,
+                            created_at as timestamp,
                             CAST(SUBSTR(description, 1, INSTR(description, 'kg') - 1) AS REAL) as weight,
                             SUBSTR(description, INSTR(description, 'kg') + 3) as fish_type
                         FROM economy_transactions
@@ -867,7 +867,7 @@ export function createStatsRoutes(apiServer) {
                 case 'beggars':
                     const begStats = await apiServer.bot.db.all(`
                         SELECT 
-                            DATE(timestamp/1000, 'unixepoch') as date,
+                            DATE(created_at/1000, 'unixepoch') as date,
                             COUNT(*) as attempts,
                             SUM(CASE WHEN amount > 0 THEN 1 ELSE 0 END) as successes,
                             SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as earned,
@@ -903,7 +903,7 @@ export function createStatsRoutes(apiServer) {
                     const jobType = category === 'bottles' ? 'bottles' : 'cashie';
                     const jobStats = await apiServer.bot.db.all(`
                         SELECT 
-                            DATE(timestamp/1000, 'unixepoch') as date,
+                            DATE(created_at/1000, 'unixepoch') as date,
                             COUNT(*) as jobs,
                             SUM(amount) as earned,
                             AVG(amount) as avg_per_job,
