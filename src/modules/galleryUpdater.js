@@ -1,4 +1,5 @@
 import GalleryGenerator from '../services/galleryGenerator.js';
+import DynamicGalleryGenerator from '../services/dynamicGalleryGenerator.js';
 import gitService from '../services/git.js';
 import fetch from 'node-fetch';
 import fs from 'fs/promises';
@@ -13,6 +14,8 @@ class GalleryUpdater {
         this.db = database;
         this.logger = logger;
         this.generator = new GalleryGenerator(database);
+        this.dynamicGenerator = new DynamicGalleryGenerator(database);
+        this.useDynamicGallery = process.env.ENABLE_DYNAMIC_GALLERY === 'true';
         this.updateInterval = 5 * 60 * 1000; // 5 minutes
         this.intervalId = null;
         this.isUpdating = false;
@@ -157,7 +160,13 @@ class GalleryUpdater {
             }
 
             // Generate the gallery HTML
-            const galleryPath = await this.generator.updateGallery();
+            let galleryPath;
+            if (this.useDynamicGallery) {
+                this.logger.info('Generating dynamic gallery with API integration');
+                galleryPath = await this.dynamicGenerator.updateGallery();
+            } else {
+                galleryPath = await this.generator.updateGallery();
+            }
             this.logger.info(`Gallery HTML generated at ${galleryPath}`);
 
             // Commit and push changes
