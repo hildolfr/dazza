@@ -104,16 +104,51 @@ h1 {
     object-fit: cover;
 }
 
-.timestamp {
+.image-controls {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.timestamp {
     color: #00ff00;
     padding: 5px;
     font-size: 0.8em;
     text-align: center;
+    border-bottom: 1px solid #00ff00;
+}
+
+.copy-url-btn {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.copy-url-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    color: #ff00ff;
+    border-color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff;
+}
+
+.copy-url-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-url-btn.copied {
+    background: rgba(255, 0, 255, 0.3);
+    color: #ffff00;
+    border-color: #ffff00;
 }
 
 .modal {
@@ -210,11 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalContent = document.getElementById('modalImage');
     const closeBtn = document.querySelector('.close');
     
-    // Open modal when image is clicked
-    document.querySelectorAll('.image-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const imgSrc = this.querySelector('img, video').src;
-            const isVideo = this.querySelector('video') !== null;
+    // Open modal when image is clicked (but not on button click)
+    document.querySelectorAll('.image-item img, .image-item video').forEach(media => {
+        media.addEventListener('click', function() {
+            const imgSrc = this.src;
+            const isVideo = this.tagName === 'VIDEO';
             
             if (isVideo) {
                 modalContent.innerHTML = '<video src="' + imgSrc + '" controls autoplay></video>';
@@ -223,6 +258,51 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             modal.classList.add('active');
+        });
+    });
+    
+    // Copy URL functionality
+    document.querySelectorAll('.copy-url-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.stopPropagation(); // Prevent modal from opening
+            const url = this.getAttribute('data-url');
+            
+            try {
+                await navigator.clipboard.writeText(url);
+                
+                // Visual feedback
+                const originalText = this.textContent;
+                this.textContent = 'COPIED!';
+                this.classList.add('copied');
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.textContent = 'COPIED!';
+                    this.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        this.textContent = 'GRAB URL';
+                        this.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    this.textContent = 'COPY FAILED!';
+                }
+                
+                document.body.removeChild(textArea);
+            }
         });
     });
     
@@ -272,14 +352,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return `
                 <div class="image-item">
                     <video src="${image.url}" muted loop preload="metadata"></video>
-                    <div class="timestamp">${formattedTime}</div>
+                    <div class="image-controls">
+                        <div class="timestamp">${formattedTime}</div>
+                        <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
+                    </div>
                 </div>
             `;
         } else {
             return `
                 <div class="image-item">
                     <img src="${image.url}" alt="Posted by ${image.username}" loading="lazy">
-                    <div class="timestamp">${formattedTime}</div>
+                    <div class="image-controls">
+                        <div class="timestamp">${formattedTime}</div>
+                        <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
+                    </div>
                 </div>
             `;
         }
