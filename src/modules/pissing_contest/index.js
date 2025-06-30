@@ -402,10 +402,10 @@ export class PissingContestManager {
         const loserScore = winner === challenger ? challengedScore : challengerScore;
         
         // Display results
-        this.displayResults(winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB);
+        this.displayResults(winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, challenge);
         
         // Handle money and stats
-        await this.handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore);
+        await this.handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather);
         
         // Check for special events
         this.checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged);
@@ -479,20 +479,23 @@ export class PissingContestManager {
     }
 
     // Display contest results
-    displayResults(winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB) {
+    displayResults(winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, challenge) {
         // Format stats
         const formatStats = (stats) => {
             return `📏${stats.distance.toFixed(1)}m 💧${Math.round(stats.volume)}mL 🎯${Math.round(stats.aim)}% ⏱️${Math.round(stats.duration)}s`;
         };
         
-        // Winner announcement
-        const winnerChar = winner === charA.name ? charA : charB;
+        // Get the correct characteristic for each player
+        const winnerChar = winner === challenge.challenger ? charA : charB;
+        const loserChar = winner === challenge.challenger ? charB : charA;
+        
+        // Winner announcement with boxing-style naming
         this.bot.sendMessage(`${formatStats(winnerStats)} **[${winnerScore}]**`);
         this.bot.sendMessage(`🏆 -${winner} '${winnerChar.name}' fuckin WINS with ${winnerScore} points!`);
         
-        // Loser stats
+        // Loser stats with boxing-style naming
         setTimeout(() => {
-            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} got smashed!`);
+            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} '${loserChar.name}' got smashed!`);
         }, 1500);
         
         // Add contextual commentary
@@ -559,7 +562,7 @@ export class PissingContestManager {
     }
 
     // Handle match outcome
-    async handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore) {
+    async handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather) {
         const { amount } = challenge;
         
         try {
@@ -574,7 +577,7 @@ export class PissingContestManager {
             await this.updateStats(loser, false, amount, loserStats);
             
             // Save match to database
-            await this.saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore);
+            await this.saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather);
         } catch (error) {
             console.error('Error handling pissing contest outcome:', error);
             this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
@@ -820,7 +823,7 @@ export class PissingContestManager {
     }
 
     // Save match to database
-    async saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore) {
+    async saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather) {
         try {
             const loser = winner === challenge.challenger ? challenge.challenged : challenge.challenger;
             const challengerStats = winner === challenge.challenger ? winnerStats : loserStats;
@@ -831,15 +834,17 @@ export class PissingContestManager {
                     challenger, challenged, amount, status, created_at, expires_at, completed_at,
                     winner, challenger_distance, challenger_volume, challenger_aim,
                     challenger_duration, challenger_total, challenged_distance,
-                    challenged_volume, challenged_aim, challenged_duration, challenged_total
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    challenged_volume, challenged_aim, challenged_duration, challenged_total,
+                    challenger_characteristic, challenged_characteristic, location, weather
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 challenge.challenger, challenge.challenged, challenge.amount,
                 'completed', challenge.created_at, challenge.expires_at, Date.now(), winner,
                 challengerStats.distance, challengerStats.volume, challengerStats.aim,
                 challengerStats.duration, winnerScore,
                 challengedStats.distance, challengedStats.volume, challengedStats.aim,
-                challengedStats.duration, loserScore
+                challengedStats.duration, loserScore,
+                charA.name, charB.name, location.name, weather.name
             ]);
         } catch (error) {
             console.error('Error saving match:', error);
