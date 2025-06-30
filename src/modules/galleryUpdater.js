@@ -175,7 +175,9 @@ class GalleryUpdater {
                 }
                 this.lastUpdateHash = currentHash;
             } else {
-                this.logger.error('Failed to push gallery update:', gitResult.error);
+                // Log only the error message, not the full error object
+                const errorMsg = typeof gitResult.error === 'string' ? gitResult.error : 'Unknown error';
+                this.logger.error('Failed to push gallery update:', errorMsg.split('\n')[0]); // Only first line
             }
 
         } catch (error) {

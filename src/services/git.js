@@ -37,7 +37,7 @@ class GitService {
             const { stdout, stderr } = await execAsync(`git add ${filesStr}`, { cwd: PROJECT_ROOT });
             return { success: true, stdout, stderr };
         } catch (error) {
-            console.error('Git add failed:', error);
+            // Suppress console error, return failure silently
             return { success: false, error: error.message };
         }
     }
@@ -55,7 +55,7 @@ class GitService {
             if (error.stdout && error.stdout.includes('nothing to commit')) {
                 return { success: true, nothingToCommit: true };
             }
-            console.error('Git commit failed:', error);
+            // Suppress console error, return failure silently
             return { success: false, error: error.message };
         }
     }
@@ -67,7 +67,7 @@ class GitService {
             const { stdout, stderr } = await execAsync(`git push origin ${branch}`, { cwd: PROJECT_ROOT });
             return { success: true, stdout, stderr };
         } catch (error) {
-            console.error('Git push failed:', error);
+            // Suppress console error, return failure silently
             return { success: false, error: error.message };
         }
     }
@@ -77,7 +77,7 @@ class GitService {
             const { stdout } = await execAsync('git status --porcelain', { cwd: PROJECT_ROOT });
             return { success: true, files: stdout.trim().split('\n').filter(line => line) };
         } catch (error) {
-            console.error('Git status failed:', error);
+            // Suppress console error, return failure silently
             return { success: false, error: error.message };
         }
     }
