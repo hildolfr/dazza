@@ -53,12 +53,12 @@ export class ApiServer extends EventEmitter {
                 
                 this.server = https.createServer(sslOptions, this.app);
                 this.isHttps = true;
-                this.bot.logger.info('[API] HTTPS server configured with SSL certificates');
+                this.bot.logger.debug('[API] HTTPS server configured with SSL certificates');
             } else {
                 this.server = http.createServer(this.app);
                 this.isHttps = false;
-                this.bot.logger.warn('[API] SSL certificates not found. Using HTTP server.');
-                this.bot.logger.info('[API] To enable HTTPS, place server.key and server.crt in the ssl/ directory');
+                this.bot.logger.debug('[API] SSL certificates not found. Using HTTP server.');
+                this.bot.logger.debug('[API] To enable HTTPS, place server.key and server.crt in the ssl/ directory');
             }
         } catch (error) {
             // Fallback to HTTP on error
@@ -108,7 +108,7 @@ export class ApiServer extends EventEmitter {
                 const url = this.isHttps ? `https://localhost:${this.port}` : `http://localhost:${this.port}`;
                 
                 this.bot.logger.info(`API ${protocol} server started on port ${this.port}`);
-                console.log(`[API] ${protocol} server listening on ${url}`);
+                this.bot.logger.debug(`[API] ${protocol} server listening on ${url}`);
                 
                 // Set up Socket.IO with the server
                 this.io = new SocketIOServer(this.server, {
@@ -122,15 +122,15 @@ export class ApiServer extends EventEmitter {
                 // Set up WebSocket events after Socket.IO is initialized
                 this.setupWebSocket();
                 
-                console.log(`[API] Endpoints registered: ${this.endpoints.size}`);
-                console.log(`[API] CORS origins:`, this.getAllowedOrigins());
+                this.bot.logger.debug(`[API] Endpoints registered: ${this.endpoints.size}`);
+                this.bot.logger.debug(`[API] CORS origins:`, this.getAllowedOrigins());
                 
                 // Try to setup UPnP port forwarding (with timeout)
                 if (this.upnpEnabled) {
                     // Don't let UPnP setup block startup for more than 10 seconds
                     const upnpTimeout = new Promise((resolve) => {
                         setTimeout(() => {
-                            console.warn('[API] UPnP setup timeout - continuing without port forwarding');
+                            this.bot.logger.debug('[API] UPnP setup timeout - continuing without port forwarding');
                             resolve(null);
                         }, 10000);
                     });
@@ -141,42 +141,40 @@ export class ApiServer extends EventEmitter {
                             const enhancedManager = new EnhancedDoubleNatManager(this.bot.logger);
                             const status = await enhancedManager.getStatus();
                             
-                            console.log('[API] Network configuration detected:');
-                            console.log(`[API] Local IP: ${status.localIp}`);
-                            console.log(`[API] Real external IP: ${status.realExternalIp}`);
-                            console.log(`[API] NAT layers: ${status.layers.length}`);
+                            this.bot.logger.debug('[API] Network configuration detected:');
+                            this.bot.logger.debug(`[API] Local IP: ${status.localIp}`);
+                            this.bot.logger.debug(`[API] Real external IP: ${status.realExternalIp}`);
+                            this.bot.logger.debug(`[API] NAT layers: ${status.layers.length}`);
                             
                             this.upnpManager = enhancedManager;
                             const result = await enhancedManager.setupCompletePortForwarding(this.port);
                             
                             if (result.success) {
-                                console.log('[API] ✅ Port forwarding configured successfully!');
-                                console.log(`[API] Your bot should be accessible at: ${result.realExternalIp}:${this.port}`);
+                                this.bot.logger.info('[API] Port forwarding configured successfully');
                             } else {
-                                console.log('[API] ⚠️  Port forwarding partially configured');
+                                this.bot.logger.warn('[API] Port forwarding partially configured');
                                 result.layers.forEach(layer => {
                                     if (layer.success) {
-                                        console.log(`[API] ✅ ${layer.name}: ${layer.mapping}`);
+                                        this.bot.logger.debug(`[API] ${layer.name}: ${layer.mapping}`);
                                     } else {
-                                        console.log(`[API] ❌ ${layer.name}: ${layer.error}`);
+                                        this.bot.logger.debug(`[API] ${layer.name}: ${layer.error}`);
                                     }
                                 });
                                 
                                 if (result.instructions.length > 0) {
-                                    console.log('[API] 📝 Manual configuration required:');
-                                    result.instructions.forEach(inst => console.log(`[API]    ${inst}`));
+                                    this.bot.logger.debug('[API] Manual configuration may be required');
+                                    result.instructions.forEach(inst => this.bot.logger.debug(`[API]    ${inst}`));
                                 }
                             }
                         } catch (error) {
-                            console.warn('[API] UPnP port forwarding failed:', error.message);
-                            console.log('[API] You may need to manually configure port forwarding in your router');
+                            this.bot.logger.warn('[API] UPnP port forwarding failed:', error.message);
                         }
                     })();
                     
                     // Wait for either UPnP setup or timeout
                     await Promise.race([upnpSetup, upnpTimeout]);
                 } else {
-                    console.log('[API] UPnP disabled (set ENABLE_UPNP=true to enable)');
+                    this.bot.logger.debug('[API] UPnP disabled (set ENABLE_UPNP=true to enable)');
                 }
                 
                 resolve();

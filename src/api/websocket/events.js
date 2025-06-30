@@ -15,7 +15,7 @@ export function setupWebSocketEvents(apiServer) {
         clients.set(socket.id, clientInfo);
         
         // Log connection
-        bot.logger.info('[API] WebSocket client connected', clientInfo);
+        bot.logger.debug('[API] WebSocket client connected', clientInfo);
         
         // Send welcome message with current state
         socket.emit('welcome', {
@@ -81,7 +81,7 @@ export function setupWebSocketEvents(apiServer) {
             const clientInfo = clients.get(socket.id);
             if (clientInfo) {
                 const duration = Date.now() - clientInfo.connectedAt;
-                bot.logger.info(`[API] WebSocket client disconnected`, {
+                bot.logger.debug(`[API] WebSocket client disconnected`, {
                     ...clientInfo,
                     reason,
                     duration
