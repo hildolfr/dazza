@@ -424,12 +424,6 @@ export class CyTubeBot extends EventEmitter {
                 }, 2000);
             }
             
-            // Check if image limit was enforced
-            if (logResult.limitEnforced) {
-                setTimeout(() => {
-                    this.sendMessage(`Oi -${data.username}, yer gallery's chockers at 25 pics! Binned yer oldest one to make room for the new shit!`);
-                }, 2500);
-            }
             
             // Emit events for API WebSocket
             if (this.apiServer) {
