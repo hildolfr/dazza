@@ -427,10 +427,13 @@ export class CyTubeBot extends EventEmitter {
             
             // Emit events for API WebSocket
             if (this.apiServer) {
+                // Strip HTML from message for clean display
+                const cleanMessage = data.msg.replace(/<[^>]*>/g, '');
+                
                 // Emit chat message event
                 this.emit('chat:message', {
                     username: data.username,
-                    message: data.msg,
+                    message: cleanMessage,
                     timestamp: Date.now(),
                     isPM: data.meta && data.meta.pm
                 });
