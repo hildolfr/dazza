@@ -23,17 +23,12 @@ export class ApiServer extends EventEmitter {
         super();
         this.bot = bot;
         this.port = port;
-        this.httpsPort = parseInt(process.env.API_HTTPS_PORT || '3443');
         this.app = express();
         
-        // Set up HTTP server
-        this.httpServer = http.createServer(this.app);
+        // Set up HTTPS server if certificates are available, otherwise fall back to HTTP
+        this.setupServer();
         
-        // Set up HTTPS server if certificates are available
-        this.httpsServer = null;
-        this.setupHttpsServer();
-        
-        // Socket.IO will be set up after servers are started
+        // Socket.IO will be set up after server is started
         this.io = null;
         
         this.endpoints = new Set();
@@ -41,7 +36,7 @@ export class ApiServer extends EventEmitter {
         this.upnpEnabled = process.env.ENABLE_UPNP !== 'false'; // Default to true
     }
 
-    setupHttpsServer() {
+    setupServer() {
         try {
             const __dirname = path.dirname(fileURLToPath(import.meta.url));
             const sslPath = path.join(__dirname, '..', '..', 'ssl');
@@ -56,14 +51,20 @@ export class ApiServer extends EventEmitter {
                     cert: fs.readFileSync(certPath)
                 };
                 
-                this.httpsServer = https.createServer(sslOptions, this.app);
+                this.server = https.createServer(sslOptions, this.app);
+                this.isHttps = true;
                 this.bot.logger.info('[API] HTTPS server configured with SSL certificates');
             } else {
-                this.bot.logger.warn('[API] SSL certificates not found. HTTPS will not be available.');
+                this.server = http.createServer(this.app);
+                this.isHttps = false;
+                this.bot.logger.warn('[API] SSL certificates not found. Using HTTP server.');
                 this.bot.logger.info('[API] To enable HTTPS, place server.key and server.crt in the ssl/ directory');
             }
         } catch (error) {
-            this.bot.logger.error('[API] Failed to setup HTTPS server:', error);
+            // Fallback to HTTP on error
+            this.server = http.createServer(this.app);
+            this.isHttps = false;
+            this.bot.logger.error('[API] Failed to setup HTTPS server, falling back to HTTP:', error);
         }
     }
 
@@ -92,30 +93,22 @@ export class ApiServer extends EventEmitter {
         this.setupRoutes();
         
         return new Promise((resolve, reject) => {
-            // Start HTTP server
-            this.httpServer.listen(this.port, async () => {
-                this.bot.logger.info(`API HTTP server started on port ${this.port}`);
-                console.log(`[API] HTTP server listening on http://localhost:${this.port}`);
+            // Start the server (either HTTPS or HTTP)
+            this.server.listen(this.port, async () => {
+                const protocol = this.isHttps ? 'HTTPS' : 'HTTP';
+                const url = this.isHttps ? `https://localhost:${this.port}` : `http://localhost:${this.port}`;
                 
-                // Set up Socket.IO with the HTTP server
-                this.io = new SocketIOServer(this.httpServer, {
+                this.bot.logger.info(`API ${protocol} server started on port ${this.port}`);
+                console.log(`[API] ${protocol} server listening on ${url}`);
+                
+                // Set up Socket.IO with the server
+                this.io = new SocketIOServer(this.server, {
                     cors: {
                         origin: this.getAllowedOrigins(),
                         methods: ["GET", "POST", "PUT", "DELETE"],
                         credentials: true
                     }
                 });
-                
-                // Start HTTPS server if available
-                if (this.httpsServer) {
-                    // Attach Socket.IO to HTTPS server as well
-                    this.io.attach(this.httpsServer);
-                    
-                    this.httpsServer.listen(this.httpsPort, () => {
-                        this.bot.logger.info(`API HTTPS server started on port ${this.httpsPort}`);
-                        console.log(`[API] HTTPS server listening on https://localhost:${this.httpsPort}`);
-                    });
-                }
                 
                 // Set up WebSocket events after Socket.IO is initialized
                 this.setupWebSocket();
@@ -218,32 +211,13 @@ export class ApiServer extends EventEmitter {
             
             // Close WebSocket server
             this.io.close(() => {
-                // Close both HTTP and HTTPS servers
-                let serversToClose = 1;
-                let serversClosed = 0;
-                
-                const checkAllClosed = () => {
-                    serversClosed++;
-                    if (serversClosed === serversToClose) {
-                        clearTimeout(forceShutdownTimer);
-                        this.bot.logger.info('API servers stopped');
-                        console.log('[API] All servers stopped');
-                        resolve();
-                    }
-                };
-                
-                // Close HTTP server
-                this.httpServer.close(() => {
-                    checkAllClosed();
+                // Close the server
+                this.server.close(() => {
+                    clearTimeout(forceShutdownTimer);
+                    this.bot.logger.info('API server stopped');
+                    console.log('[API] Server stopped');
+                    resolve();
                 });
-                
-                // Close HTTPS server if it exists
-                if (this.httpsServer) {
-                    serversToClose++;
-                    this.httpsServer.close(() => {
-                        checkAllClosed();
-                    });
-                }
             });
         });
     }

@@ -38,8 +38,9 @@ For production use, you should use proper SSL certificates from Let's Encrypt or
 
 ## Configuration
 
-- **HTTP Port**: 3001 (default)
-- **HTTPS Port**: 3443 (configurable via `API_HTTPS_PORT` environment variable)
+- **Port**: 3001 (used for both HTTP and HTTPS)
+- The server automatically uses HTTPS when SSL certificates are present
+- Falls back to HTTP when certificates are not found
 
 ## Files
 
