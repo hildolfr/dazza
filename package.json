@@ -13,7 +13,8 @@
     "normalize-usernames": "node src/scripts/normalizeUsernames.js",
     "migrate": "node src/scripts/migrate.js up",
     "migrate:status": "node src/scripts/migrate.js status",
-    "migrate:rollback": "node src/scripts/migrate.js rollback"
+    "migrate:rollback": "node src/scripts/migrate.js rollback",
+    "update-pissing-analytics": "node src/scripts/updatePissingAnalytics.js"
   },
   "keywords": [
     "cytube",
