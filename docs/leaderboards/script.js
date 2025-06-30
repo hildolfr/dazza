@@ -2160,85 +2160,222 @@ function renderBongStats(data, username) {
         </div>
         
         ${data.sessions.total > 0 ? `
-        <div class="stat-section">
-            <h3>📋 Session Statistics</h3>
-            <div class="session-stats-grid">
-                <div class="session-stat-card">
-                    <div class="session-icon">📊</div>
-                    <span class="session-label">Total Sessions</span>
-                    <span class="session-value">${data.sessions.total}</span>
+        <div class="stat-section session-stats-section">
+            <div class="section-header">
+                <h3>💨 Sesh Analytics</h3>
+                <div class="header-badge tech-badge">POWERED BY DAZZA-TECH™</div>
+            </div>
+            
+            <div class="session-hud">
+                <div class="hud-grid">
+                    <div class="hud-panel main-stats">
+                        <div class="panel-header">
+                            <span class="panel-title">SESSION OVERVIEW</span>
+                            <div class="panel-status ${data.records.lastBongTimestamp && (Date.now() - data.records.lastBongTimestamp) < 3600000 ? 'active' : 'idle'}">
+                                <span class="status-dot"></span>
+                                ${data.records.lastBongTimestamp && (Date.now() - data.records.lastBongTimestamp) < 3600000 ? 'ACTIVE' : 'IDLE'}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-matrix">
+                            <div class="matrix-item total-sessions">
+                                <div class="matrix-value-wrapper">
+                                    <div class="matrix-icon">🎮</div>
+                                    <div class="matrix-content">
+                                        <span class="matrix-label">Total Seshes</span>
+                                        <span class="matrix-value counter">${data.sessions.total}</span>
+                                    </div>
+                                </div>
+                                <div class="matrix-graph">
+                                    <svg viewBox="0 0 50 20" class="mini-graph">
+                                        <polyline points="0,15 10,10 20,12 30,8 40,5 50,10" 
+                                                  fill="none" 
+                                                  stroke="url(#tech-gradient)" 
+                                                  stroke-width="2"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <div class="matrix-item avg-session">
+                                <div class="matrix-value-wrapper">
+                                    <div class="matrix-icon">📊</div>
+                                    <div class="matrix-content">
+                                        <span class="matrix-label">Avg per Sesh</span>
+                                        <span class="matrix-value">${data.sessions.averageConesPerSession}</span>
+                                        <span class="matrix-unit">cones</span>
+                                    </div>
+                                </div>
+                                <div class="performance-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill" style="width: ${Math.min((data.sessions.averageConesPerSession / 20) * 100, 100)}%"></div>
+                                    </div>
+                                    <span class="meter-label">${data.sessions.averageConesPerSession >= 15 ? 'LEGENDARY' : data.sessions.averageConesPerSession >= 10 ? 'SOLID' : 'CRUISY'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${data.sessions.longestSession || data.sessions.biggestSession ? `
+                    <div class="hud-panel epic-sessions">
+                        <div class="panel-header">
+                            <span class="panel-title">EPIC SESHES</span>
+                            <div class="panel-badge">🏆 HALL OF FAME</div>
+                        </div>
+                        
+                        <div class="epic-grid">
+                            ${data.sessions.longestSession ? `
+                            <div class="epic-item longest-sesh">
+                                <div class="epic-header">
+                                    <span class="epic-icon">⏱️</span>
+                                    <span class="epic-label">Marathon Sesh</span>
+                                </div>
+                                <div class="epic-stats">
+                                    <div class="epic-main">
+                                        <span class="epic-value">${Math.round(data.sessions.longestSession.duration / 60000)}</span>
+                                        <span class="epic-unit">MINS</span>
+                                    </div>
+                                    <div class="epic-sub">
+                                        <span class="cone-count">${data.sessions.longestSession.coneCount} cones</span>
+                                        <span class="sesh-date">${new Date(data.sessions.longestSession.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
+                                    </div>
+                                    <div class="epic-rank ${data.sessions.longestSession.duration >= 180000 ? 'god-tier' : 'epic-tier'}">
+                                        ${data.sessions.longestSession.duration >= 180000 ? '🔥 GOD TIER' : '⭐ EPIC'}
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${data.sessions.biggestSession ? `
+                            <div class="epic-item biggest-sesh">
+                                <div class="epic-header">
+                                    <span class="epic-icon">💨</span>
+                                    <span class="epic-label">Biggest Sesh</span>
+                                </div>
+                                <div class="epic-stats">
+                                    <div class="epic-main">
+                                        <span class="epic-value">${data.sessions.biggestSession.coneCount}</span>
+                                        <span class="epic-unit">CONES</span>
+                                    </div>
+                                    <div class="epic-sub">
+                                        <span class="sesh-date">${new Date(data.sessions.biggestSession.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
+                                    </div>
+                                    <div class="epic-rank ${data.sessions.biggestSession.coneCount >= 50 ? 'legendary' : 'epic-tier'}">
+                                        ${data.sessions.biggestSession.coneCount >= 50 ? '👑 LEGENDARY' : '⭐ EPIC'}
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.records.lastBongTimestamp ? `
+                    <div class="hud-panel time-tracker">
+                        <div class="panel-header">
+                            <span class="panel-title">CONE TRACKER</span>
+                            <div class="live-indicator">
+                                <span class="pulse"></span>
+                                LIVE
+                            </div>
+                        </div>
+                        
+                        <div class="time-display">
+                            <div class="last-cone-info">
+                                <span class="time-label">Time Since Last Cone</span>
+                                <div class="time-counter">
+                                    <span class="time-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
+                                    <div class="time-visual">
+                                        <div class="time-bar ${getTimeSinceClass(data.records.lastBongTimestamp)}">
+                                            <div class="time-fill" style="width: ${Math.min((Date.now() - data.records.lastBongTimestamp) / 86400000 * 100, 100)}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="cone-status">
+                                <div class="status-icon">${getTimeSinceEmoji(data.records.lastBongTimestamp)}</div>
+                                <div class="status-message">
+                                    ${(Date.now() - data.records.lastBongTimestamp) < 3600000 ? "You're cooked mate!" :
+                                      (Date.now() - data.records.lastBongTimestamp) < 14400000 ? "Cruisin' nicely" :
+                                      (Date.now() - data.records.lastBongTimestamp) < 43200000 ? "Sobering up..." :
+                                      "Drought warning!"}
+                                </div>
+                            </div>
+                            
+                            <div class="tolerance-meter">
+                                <span class="tolerance-label">Tolerance Level</span>
+                                <div class="tolerance-display">
+                                    <div class="tolerance-bar">
+                                        <div class="tolerance-fill" style="width: ${calculateToleranceLevel(data.records.totalCones, data.records.daysActive)}%">
+                                            <span class="tolerance-text">${getToleranceStatus(calculateToleranceLevel(data.records.totalCones, data.records.daysActive))}</span>
+                                        </div>
+                                    </div>
+                                    <div class="tolerance-icon">${getToleranceEmoji(calculateToleranceLevel(data.records.totalCones, data.records.daysActive))}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.sessions.fastestRate ? `
+                    <div class="hud-panel speed-stats">
+                        <div class="panel-header">
+                            <span class="panel-title">SPEED METRICS</span>
+                            <div class="panel-icon">⚡</div>
+                        </div>
+                        
+                        <div class="speed-display">
+                            <div class="speed-main">
+                                <div class="speedometer">
+                                    <svg viewBox="0 0 200 120" class="speed-gauge">
+                                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#333" stroke-width="10"/>
+                                        <path d="M 20 100 A 80 80 0 0 1 ${20 + (160 * Math.min(data.sessions.fastestRate.conesPerHour / 60, 1))} 100" 
+                                              fill="none" 
+                                              stroke="url(#speed-gradient)" 
+                                              stroke-width="10"
+                                              stroke-linecap="round"/>
+                                        <text x="100" y="90" text-anchor="middle" class="speed-value">${data.sessions.fastestRate.conesPerHour}</text>
+                                        <text x="100" y="110" text-anchor="middle" class="speed-unit">cones/hr</text>
+                                    </svg>
+                                </div>
+                                <div class="speed-label">Personal Best</div>
+                                <div class="speed-date">${new Date(data.sessions.fastestRate.date).toLocaleDateString('en-AU')}</div>
+                            </div>
+                            
+                            <div class="speed-breakdown">
+                                <div class="breakdown-item">
+                                    <span class="breakdown-label">That's one cone every</span>
+                                    <span class="breakdown-value">${Math.round(60 / data.sessions.fastestRate.conesPerHour)} mins</span>
+                                </div>
+                                <div class="speed-rating ${data.sessions.fastestRate.conesPerHour >= 30 ? 'insane' : data.sessions.fastestRate.conesPerHour >= 20 ? 'rapid' : 'steady'}">
+                                    ${data.sessions.fastestRate.conesPerHour >= 30 ? '🚀 ABSOLUTELY COOKED' : 
+                                      data.sessions.fastestRate.conesPerHour >= 20 ? '💨 RAPID FIRE' : 
+                                      '🌿 STEADY PACE'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
-                <div class="session-stat-card">
-                    <div class="session-icon">🎯</div>
-                    <span class="session-label">Average per Session</span>
-                    <span class="session-value">${data.sessions.averageConesPerSession} cones</span>
-                </div>
-                ${data.sessions.longestSession ? `
-                <div class="session-stat-card">
-                    <div class="session-icon">⏱️</div>
-                    <span class="session-label">Longest Session</span>
-                    <span class="session-value">${Math.round(data.sessions.longestSession.duration / 60000)} mins</span>
-                    <div class="session-detail">${data.sessions.longestSession.coneCount} cones</div>
-                </div>
-                ` : ''}
-                ${data.records.lastBongTimestamp ? `
-                <div class="session-stat-card last-cone-card">
-                    <div class="session-icon">⏰</div>
-                    <span class="session-label">Last Cone</span>
-                    <span class="session-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
-                    <div class="time-since-indicator ${getTimeSinceClass(data.records.lastBongTimestamp)}">
-                        ${getTimeSinceEmoji(data.records.lastBongTimestamp)}
+            </div>
+            
+            <div class="session-footer">
+                <div class="footer-stats">
+                    <div class="footer-item">
+                        <span class="footer-icon">🎯</span>
+                        <span class="footer-label">Success Rate:</span>
+                        <span class="footer-value">100%</span>
+                        <span class="footer-note">(Never missed a cone)</span>
+                    </div>
+                    <div class="footer-item">
+                        <span class="footer-icon">🏅</span>
+                        <span class="footer-label">Rank:</span>
+                        <span class="footer-value">${avgPerDay >= 20 ? 'Cone Master' : avgPerDay >= 10 ? 'Veteran Stoner' : 'Apprentice'}</span>
                     </div>
                 </div>
-                ` : ''}
             </div>
         </div>
         ` : ''}
-        
-        <div class="stat-section">
-            <h3>🕑 Hourly Breakdown</h3>
-            <div class="hourly-chart">
-                <div class="hourly-grid">
-                    ${data.timePatterns.hourly.map((hour, index) => {
-                        const maxHourCount = Math.max(...data.timePatterns.hourly.map(h => h.count));
-                        const height = maxHourCount > 0 ? (hour.count / maxHourCount) * 100 : 0;
-                        const is420 = hour.hour === 4 || hour.hour === 16;
-                        const intensity = hour.count > 0 ? Math.min(hour.count / 10, 1) : 0;
-                        
-                        return `
-                        <div class="hour-bar-wrapper ${is420 ? 'special-hour' : ''}">
-                            <div class="hour-bar ${hour.count > 5 ? 'intense' : ''}" 
-                                 style="height: ${height}%; 
-                                        animation-delay: ${index * 0.05}s;
-                                        --glow-intensity: ${intensity};" 
-                                 title="${hour.count} cones at ${hour.hour}:00">
-                                ${hour.count > 0 ? `<span class="hour-count">${hour.count}</span>` : ''}
-                                ${is420 ? '<span class="four-twenty-marker">420</span>' : ''}
-                            </div>
-                            <span class="hour-label">${hour.hour}</span>
-                        </div>
-                    `}).join('')}
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>📊 Consumption Timeline</h3>
-            <div class="timeline-chart">
-                <div class="chart-container">
-                    ${data.dailyStats.slice(-10).map((day, index) => {
-                        const maxCount = Math.max(...data.dailyStats.slice(-10).map(d => d.count));
-                        return `
-                        <div class="day-bar" style="animation-delay: ${index * 0.05}s">
-                            <div class="bar-column" style="height: ${Math.max((day.count / maxCount) * 100, 5)}%">
-                                <span class="bar-value" style="${(day.count / maxCount) < 0.15 ? 'top: -25px;' : ''}">${day.count}</span>
-                            </div>
-                            <span class="bar-date">${new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        </div>
-                    `}).join('')}
-                </div>
-            </div>
-        </div>
     `;
     
     return html;
