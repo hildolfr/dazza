@@ -577,12 +577,12 @@ function renderFishingStats(data) {
         <div class="stat-section">
             <h3>Top Catches</h3>
             <div class="catch-list">
-                ${data.topCatches.map((catch, i) => `
+                ${data.topCatches.map((fishCatch, i) => `
                     <div class="catch-item ${i < 3 ? 'trophy' : ''}">
                         <span class="catch-rank">#${i + 1}</span>
-                        <span class="catch-weight">${catch.weight.toFixed(1)}kg</span>
-                        <span class="catch-type">${escapeHtml(catch.fish_type)}</span>
-                        <span class="catch-value">$${catch.amount}</span>
+                        <span class="catch-weight">${fishCatch.weight.toFixed(1)}kg</span>
+                        <span class="catch-type">${escapeHtml(fishCatch.fish_type)}</span>
+                        <span class="catch-value">$${fishCatch.amount}</span>
                     </div>
                 `).join('')}
             </div>
