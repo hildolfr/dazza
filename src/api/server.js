@@ -74,10 +74,19 @@ export class ApiServer extends EventEmitter {
         // Always allow GitHub Pages
         origins.push('https://hildolfr.github.io');
         
+        // Allow seg.tplinkdns.com (both HTTP and HTTPS)
+        origins.push('https://seg.tplinkdns.com');
+        origins.push('http://seg.tplinkdns.com');
+        origins.push(/^https?:\/\/seg\.tplinkdns\.com(:\d+)?$/);
+        
         // Allow localhost in development
         if (process.env.NODE_ENV !== 'production') {
             origins.push(/^http:\/\/localhost(:\d+)?$/);
+            origins.push(/^https:\/\/localhost(:\d+)?$/);
         }
+        
+        // Allow file:// protocol for local HTML files
+        origins.push(/^file:\/\//);
         
         // Add any custom origins from environment
         if (process.env.API_CORS_ORIGINS) {
