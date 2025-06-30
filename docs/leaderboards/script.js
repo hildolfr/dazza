@@ -421,19 +421,93 @@ function renderPisserStats(data) {
         </div>
     `;
     
+    if (data.characteristicStats && data.characteristicStats.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Dick Characteristics Used</h3>
+                <div class="characteristic-grid">
+                    ${data.characteristicStats.map(char => `
+                        <div class="characteristic-item">
+                            <span class="characteristic-name">${escapeHtml(char.characteristic)}</span>
+                            <span class="characteristic-count">${char.count} times</span>
+                        </div>
+                    `).join('')}
+                </div>
+                ${stats.rarest_characteristic ? `<div class="rarest-badge">🏆 Rarest: ${escapeHtml(stats.rarest_characteristic)}</div>` : ''}
+            </div>
+        `;
+    }
+    
+    if (data.locationStats && data.locationStats.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Performance by Location</h3>
+                <div class="location-stats">
+                    ${data.locationStats.map(loc => {
+                        const winRate = loc.matches > 0 ? ((loc.wins / loc.matches) * 100).toFixed(1) : 0;
+                        return `
+                            <div class="location-item">
+                                <div class="location-name">${escapeHtml(loc.location)}</div>
+                                <div class="location-data">
+                                    <span>${loc.matches} matches</span>
+                                    <span>${loc.wins}W (${winRate}%)</span>
+                                    <span>Avg: ${loc.avg_score.toFixed(0)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                ${stats.favorite_location ? `<div class="favorite-badge">⭐ Favorite: ${escapeHtml(stats.favorite_location)}</div>` : ''}
+            </div>
+        `;
+    }
+    
+    if (data.weatherStats && data.weatherStats.length > 0) {
+        html += `
+            <div class="stat-section">
+                <h3>Weather Performance</h3>
+                <div class="weather-stats">
+                    ${data.weatherStats.map(weather => {
+                        const winRate = weather.matches > 0 ? ((weather.wins / weather.matches) * 100).toFixed(1) : 0;
+                        return `
+                            <div class="weather-item">
+                                <div class="weather-name">${escapeHtml(weather.weather)}</div>
+                                <div class="weather-data">
+                                    <span>${weather.matches} matches (${winRate}% win)</span>
+                                    <span>📏 ${weather.avg_distance.toFixed(1)}m avg</span>
+                                    <span>💧 ${Math.round(weather.avg_volume)}mL avg</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
     if (data.recentMatches && data.recentMatches.length > 0) {
         html += `
             <div class="stat-section">
                 <h3>Recent Matches</h3>
                 <div class="match-list">
-                    ${data.recentMatches.map(match => `
+                    ${data.recentMatches.slice(0, 5).map(match => `
                         <div class="match-item ${match.won ? 'won' : 'lost'}">
-                            <span class="match-opponent">vs ${escapeHtml(match.opponent)}</span>
-                            <span class="match-result">${match.won ? 'W' : 'L'} ($${match.amount})</span>
-                            <span class="match-stats">
-                                📏${match.performance.distance.toFixed(1)}m 
-                                💧${Math.round(match.performance.volume)}mL
-                            </span>
+                            <div class="match-header">
+                                <span class="match-opponent">vs ${escapeHtml(match.opponent)}</span>
+                                <span class="match-result">${match.won ? 'W' : 'L'} ($${match.amount})</span>
+                            </div>
+                            <div class="match-details">
+                                <span class="match-characteristic">${escapeHtml(match.characteristic || 'Unknown')} vs ${escapeHtml(match.opponentCharacteristic || 'Unknown')}</span>
+                                ${match.location ? `<span class="match-location">📍 ${escapeHtml(match.location)}</span>` : ''}
+                                ${match.weather ? `<span class="match-weather">🌤️ ${escapeHtml(match.weather)}</span>` : ''}
+                            </div>
+                            <div class="match-stats">
+                                <span>📏 ${match.performance.distance.toFixed(1)}m</span>
+                                <span>💧 ${Math.round(match.performance.volume)}mL</span>
+                                <span>🎯 ${Math.round(match.performance.aim)}%</span>
+                                <span>⏱️ ${Math.round(match.performance.duration)}s</span>
+                                <span class="match-total">Total: ${match.performance.total}</span>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
