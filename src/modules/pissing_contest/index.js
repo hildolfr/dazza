@@ -523,10 +523,11 @@ export class PissingContestManager {
         const loser = challengerFailed ? challenger : challenged;
         const loserCond = challengerFailed ? challengerCond : challengedCond;
         
-        if (amount > 0) {
-            await this.bot.heistManager.transferMoney(loser, winner, amount);
-            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS $${amount}!`);
-        } else {
+        try {
+            if (amount > 0) {
+                await this.bot.heistManager.transferMoney(loser, winner, amount);
+                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS $${amount}!`);
+            } else {
             const bragMessages = [
                 "What a fuckin pussy!",
                 "Absolute embarrassment!",
@@ -544,31 +545,40 @@ export class PissingContestManager {
                 "Legendary failure!",
                 "Couldn't handle the pressure!"
             ];
-            const bragMessage = bragMessages[Math.floor(Math.random() * bragMessages.length)];
-            this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS by default! ${bragMessage}`);
+                const bragMessage = bragMessages[Math.floor(Math.random() * bragMessages.length)];
+                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS by default! ${bragMessage}`);
+            }
+            
+            // Update stats
+            await this.updateStats(winner, true, amount, null);
+            await this.updateStats(loser, false, amount, null);
+        } catch (error) {
+            console.error('Error handling pissing contest failure:', error);
+            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
         }
-        
-        // Update stats
-        await this.updateStats(winner, true, amount, null);
-        await this.updateStats(loser, false, amount, null);
     }
 
     // Handle match outcome
     async handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore) {
         const { amount } = challenge;
         
-        // Transfer money if betting
-        if (amount > 0) {
-            await this.bot.heistManager.transferMoney(loser, winner, amount);
-            this.bot.sendMessage(`💰 -${winner} wins $${amount} from -${loser}!`);
+        try {
+            // Transfer money if betting
+            if (amount > 0) {
+                await this.bot.heistManager.transferMoney(loser, winner, amount);
+                this.bot.sendMessage(`💰 -${winner} wins $${amount} from -${loser}!`);
+            }
+            
+            // Update stats
+            await this.updateStats(winner, true, amount, winnerStats);
+            await this.updateStats(loser, false, amount, loserStats);
+            
+            // Save match to database
+            await this.saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore);
+        } catch (error) {
+            console.error('Error handling pissing contest outcome:', error);
+            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
         }
-        
-        // Update stats
-        await this.updateStats(winner, true, amount, winnerStats);
-        await this.updateStats(loser, false, amount, loserStats);
-        
-        // Save match to database
-        await this.saveMatch(challenge, winner, winnerStats, loserStats, winnerScore, loserScore);
     }
 
     // Add Dazza commentary
@@ -818,14 +828,14 @@ export class PissingContestManager {
             
             await this.db.run(`
                 INSERT INTO pissing_contest_challenges (
-                    challenger, challenged, amount, status, created_at, completed_at,
+                    challenger, challenged, amount, status, created_at, expires_at, completed_at,
                     winner, challenger_distance, challenger_volume, challenger_aim,
                     challenger_duration, challenger_total, challenged_distance,
                     challenged_volume, challenged_aim, challenged_duration, challenged_total
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 challenge.challenger, challenge.challenged, challenge.amount,
-                'completed', challenge.created_at, Date.now(), winner,
+                'completed', challenge.created_at, challenge.expires_at, Date.now(), winner,
                 challengerStats.distance, challengerStats.volume, challengerStats.aim,
                 challengerStats.duration, winnerScore,
                 challengedStats.distance, challengedStats.volume, challengedStats.aim,
@@ -861,15 +871,25 @@ export class PissingContestManager {
         // Condition fines
         if (challengerCondition && challengerCondition.fine) {
             setTimeout(async () => {
-                await this.bot.heistManager.deductMoney(challenger, challengerCondition.fine);
-                this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`);
+                try {
+                    await this.bot.heistManager.deductMoney(challenger, challengerCondition.fine);
+                    this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`);
+                } catch (error) {
+                    console.error('Error deducting fine from challenger:', error);
+                    this.bot.sendMessage(`tried to fine -${challenger} but somethin went wrong`);
+                }
             }, 6000);
         }
         
         if (challengedCondition && challengedCondition.fine) {
             setTimeout(async () => {
-                await this.bot.heistManager.deductMoney(challenged, challengedCondition.fine);
-                this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`);
+                try {
+                    await this.bot.heistManager.deductMoney(challenged, challengedCondition.fine);
+                    this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`);
+                } catch (error) {
+                    console.error('Error deducting fine from challenged:', error);
+                    this.bot.sendMessage(`tried to fine -${challenged} but somethin went wrong`);
+                }
             }, 6500);
         }
     }

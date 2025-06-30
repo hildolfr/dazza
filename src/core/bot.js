@@ -16,6 +16,7 @@ import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
 import { VideoPayoutManager } from '../modules/video_payout/index.js';
 import { PissingContestManager } from '../modules/pissing_contest/index.js';
+import GalleryUpdater from '../modules/galleryUpdater.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 import { CashMonitor } from '../utils/cashMonitor.js';
 
@@ -35,6 +36,7 @@ export class CyTubeBot extends EventEmitter {
         this.db = new Database(config.database.path, config.bot.username);
         this.commands = null;
         this.heistManager = null; // Initialize after database
+        this.galleryUpdater = null; // Initialize after database
         this.logger = createLogger({
             level: config.logging?.level || 'info',
             console: config.logging?.console !== false
@@ -117,6 +119,10 @@ export class CyTubeBot extends EventEmitter {
             
             // Initialize PissingContestManager
             this.pissingContestManager = new PissingContestManager(this);
+            
+            // Initialize GalleryUpdater
+            this.galleryUpdater = new GalleryUpdater(this.db, this.logger);
+            this.galleryUpdater.start();
             
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
@@ -1659,6 +1665,10 @@ export class CyTubeBot extends EventEmitter {
         // Shutdown video payout manager
         if (this.videoPayoutManager) {
             await this.videoPayoutManager.shutdown();
+        }
+        
+        if (this.galleryUpdater) {
+            this.galleryUpdater.stop();
         }
         
         // Disconnect from server

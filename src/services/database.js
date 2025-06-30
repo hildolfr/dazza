@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import path from 'path';
 import { heistSchema } from '../modules/heist/schema.js';
 import { videoPayoutSchema } from '../modules/video_payout/schema.js';
+import { extractImageUrls } from '../utils/imageDetector.js';
 import { cooldownSchema } from '../utils/cooldownSchema.js';
 import MigrationRunner from '../migrations/runner.js';
 
@@ -250,6 +251,12 @@ class Database {
 
         // Update user stats
         await this.updateUserStats(username, timestamp);
+        
+        // Extract and save any image URLs
+        const imageUrls = extractImageUrls(message);
+        for (const url of imageUrls) {
+            await this.addUserImage(username, url);
+        }
         
         // Return the message ID for linking URLs
         return result.lastID;
@@ -864,6 +871,83 @@ class Database {
             recordType, username, value, characteristic, location, timestamp,
             username, value, characteristic, location, timestamp, value
         ]);
+    }
+
+    // User images methods
+    async addUserImage(username, url) {
+        const timestamp = Date.now();
+        
+        try {
+            await this.run(`
+                INSERT INTO user_images (username, url, timestamp)
+                VALUES (?, ?, ?)
+                ON CONFLICT(username, url) DO UPDATE SET
+                    timestamp = ?,
+                    is_active = 1,
+                    pruned_reason = NULL
+            `, [username, url, timestamp, timestamp]);
+            return { success: true };
+        } catch (error) {
+            console.error('Error adding user image:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async getUserImages(username = null, activeOnly = true) {
+        let query = `
+            SELECT username, url, timestamp, is_active, pruned_reason
+            FROM user_images
+        `;
+        const params = [];
+        const conditions = [];
+
+        if (username) {
+            conditions.push('LOWER(username) = LOWER(?)');
+            params.push(username);
+        }
+
+        if (activeOnly) {
+            conditions.push('is_active = 1');
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += ' ORDER BY timestamp DESC';
+
+        return await this.all(query, params);
+    }
+
+    async getAllUserImagesGrouped(activeOnly = true) {
+        const images = await this.getUserImages(null, activeOnly);
+        
+        const grouped = {};
+        for (const image of images) {
+            if (!grouped[image.username]) {
+                grouped[image.username] = [];
+            }
+            grouped[image.username].push(image);
+        }
+
+        return grouped;
+    }
+
+    async pruneUserImage(url, reason) {
+        await this.run(`
+            UPDATE user_images
+            SET is_active = 0, pruned_reason = ?
+            WHERE url = ?
+        `, [reason, url]);
+    }
+
+    async getPrunedImages() {
+        return await this.all(`
+            SELECT username, url, timestamp, pruned_reason
+            FROM user_images
+            WHERE is_active = 0
+            ORDER BY timestamp DESC
+        `);
     }
 
     close() {
