@@ -591,17 +591,15 @@ body {
 .match-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 .match-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
+    padding: 15px;
     background: white;
-    border-radius: 8px;
+    border-radius: 10px;
     border-left: 5px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .match-item.won {
@@ -614,15 +612,156 @@ body {
     background: rgba(206, 17, 38, 0.05);
 }
 
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
 .match-opponent {
     font-weight: bold;
+    font-size: 1.1rem;
 }
 
 .match-result {
     font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.match-details {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.match-characteristic {
+    font-style: italic;
+}
+
+.match-location,
+.match-weather {
+    white-space: nowrap;
 }
 
 .match-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #444;
+    flex-wrap: wrap;
+}
+
+.match-stats span {
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 5px;
+}
+
+.match-total {
+    font-weight: bold;
+    background: var(--vb-gold) !important;
+    color: var(--vb-dark);
+}
+
+/* Characteristic Stats */
+.characteristic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.characteristic-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.characteristic-name {
+    font-weight: bold;
+    color: var(--vb-dark);
+}
+
+.characteristic-count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.rarest-badge,
+.favorite-badge {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+    border-radius: 8px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Location Stats */
+.location-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.location-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.location-name {
+    font-weight: bold;
+    color: var(--vb-dark);
+    margin-bottom: 5px;
+}
+
+.location-data {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.location-data span {
+    background: #f8f8f8;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+/* Weather Stats */
+.weather-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.weather-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.weather-name {
+    font-weight: bold;
+    color: var(--vb-dark);
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.weather-data {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
     font-size: 0.9rem;
     color: #666;
 }

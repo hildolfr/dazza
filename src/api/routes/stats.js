@@ -637,13 +637,13 @@ export function createStatsRoutes(apiServer) {
                     );
                     
                     if (pissingStats) {
-                        // Get recent matches
+                        // Get recent matches with full details
                         const recentMatches = await apiServer.bot.db.all(`
                             SELECT * FROM pissing_contest_challenges 
                             WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
                             AND status = 'completed'
                             ORDER BY completed_at DESC
-                            LIMIT 5
+                            LIMIT 10
                         `, [normalizedUsername, normalizedUsername]);
                         
                         // Get records
@@ -652,6 +652,65 @@ export function createStatsRoutes(apiServer) {
                             WHERE LOWER(username) = ?
                         `, [normalizedUsername]);
                         
+                        // Get characteristic frequency
+                        const characteristicStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                CASE 
+                                    WHEN LOWER(challenger) = ? THEN challenger_characteristic
+                                    ELSE challenged_characteristic
+                                END as characteristic,
+                                COUNT(*) as count
+                            FROM pissing_contest_challenges
+                            WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
+                            AND status = 'completed'
+                            AND CASE 
+                                WHEN LOWER(challenger) = ? THEN challenger_characteristic
+                                ELSE challenged_characteristic
+                            END IS NOT NULL
+                            GROUP BY characteristic
+                            ORDER BY count DESC
+                        `, [normalizedUsername, normalizedUsername, normalizedUsername, normalizedUsername]);
+                        
+                        // Get location stats
+                        const locationStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                location,
+                                COUNT(*) as matches,
+                                SUM(CASE WHEN LOWER(winner) = ? THEN 1 ELSE 0 END) as wins,
+                                AVG(CASE 
+                                    WHEN LOWER(challenger) = ? THEN challenger_total
+                                    ELSE challenged_total
+                                END) as avg_score
+                            FROM pissing_contest_challenges
+                            WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
+                            AND status = 'completed'
+                            AND location IS NOT NULL
+                            GROUP BY location
+                            ORDER BY matches DESC
+                        `, [normalizedUsername, normalizedUsername, normalizedUsername, normalizedUsername]);
+                        
+                        // Get weather performance
+                        const weatherStats = await apiServer.bot.db.all(`
+                            SELECT 
+                                weather,
+                                COUNT(*) as matches,
+                                SUM(CASE WHEN LOWER(winner) = ? THEN 1 ELSE 0 END) as wins,
+                                AVG(CASE 
+                                    WHEN LOWER(challenger) = ? THEN challenger_distance
+                                    ELSE challenged_distance
+                                END) as avg_distance,
+                                AVG(CASE 
+                                    WHEN LOWER(challenger) = ? THEN challenger_volume
+                                    ELSE challenged_volume
+                                END) as avg_volume
+                            FROM pissing_contest_challenges
+                            WHERE (LOWER(challenger) = ? OR LOWER(challenged) = ?)
+                            AND status = 'completed'
+                            AND weather IS NOT NULL
+                            GROUP BY weather
+                            ORDER BY matches DESC
+                        `, [normalizedUsername, normalizedUsername, normalizedUsername, normalizedUsername, normalizedUsername]);
+                        
                         data = {
                             stats: pissingStats,
                             recentMatches: recentMatches.map(match => ({
@@ -659,14 +718,22 @@ export function createStatsRoutes(apiServer) {
                                 won: match.winner?.toLowerCase() === normalizedUsername,
                                 amount: match.amount,
                                 date: match.completed_at,
+                                characteristic: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_characteristic : match.challenged_characteristic,
+                                opponentCharacteristic: match.challenger.toLowerCase() === normalizedUsername ? match.challenged_characteristic : match.challenger_characteristic,
+                                location: match.location,
+                                weather: match.weather,
                                 performance: {
                                     distance: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_distance : match.challenged_distance,
                                     volume: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_volume : match.challenged_volume,
                                     aim: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_aim : match.challenged_aim,
-                                    duration: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_duration : match.challenged_duration
+                                    duration: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_duration : match.challenged_duration,
+                                    total: match.challenger.toLowerCase() === normalizedUsername ? match.challenger_total : match.challenged_total
                                 }
                             })),
-                            records: records
+                            records: records,
+                            characteristicStats: characteristicStats,
+                            locationStats: locationStats,
+                            weatherStats: weatherStats
                         };
                     }
                     break;
