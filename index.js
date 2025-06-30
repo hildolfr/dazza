@@ -20,17 +20,36 @@ async function main() {
     const bot = new CyTubeBot(config);
     
     // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-        console.log('\nReceived SIGINT, shutting down gracefully...');
-        await bot.shutdown();
-        process.exit(0);
-    });
+    let shutdownInProgress = false;
     
-    process.on('SIGTERM', async () => {
-        console.log('\nReceived SIGTERM, shutting down gracefully...');
-        await bot.shutdown();
-        process.exit(0);
-    });
+    const gracefulShutdown = async (signal) => {
+        if (shutdownInProgress) {
+            console.log('Shutdown already in progress...');
+            return;
+        }
+        
+        shutdownInProgress = true;
+        console.log(`\nReceived ${signal}, shutting down gracefully...`);
+        
+        // Set a hard timeout for shutdown
+        const shutdownTimeout = setTimeout(() => {
+            console.error('Shutdown timeout exceeded, forcing exit...');
+            process.exit(1);
+        }, 10000); // 10 second timeout
+        
+        try {
+            await bot.shutdown();
+            clearTimeout(shutdownTimeout);
+            process.exit(0);
+        } catch (error) {
+            console.error('Error during shutdown:', error);
+            clearTimeout(shutdownTimeout);
+            process.exit(1);
+        }
+    };
+    
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     
     // Handle uncaught errors
     process.on('uncaughtException', (error) => {
@@ -40,6 +59,21 @@ async function main() {
     
     process.on('unhandledRejection', (reason, promise) => {
         console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
+    
+    // Force exit if process doesn't terminate cleanly
+    process.on('exit', (code) => {
+        console.log(`Process exiting with code: ${code}`);
+    });
+    
+    // Additional safety for hanging processes
+    process.on('beforeExit', (code) => {
+        console.log(`Process about to exit with code: ${code}`);
+        // Force exit if there are still handles keeping the process alive
+        setTimeout(() => {
+            console.error('Force exiting due to hanging handles');
+            process.exit(code);
+        }, 1000);
     });
     
     try {
