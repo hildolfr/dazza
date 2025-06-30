@@ -235,6 +235,26 @@ h1 {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
+
+.lock-status {
+    font-size: 0.7em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.lock-status.locked {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+.lock-status.unlocked {
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
 `;
     }
 
@@ -374,6 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async generateGalleryHtml() {
         const activeImages = await this.db.getAllUserImagesGrouped(true);
         const prunedImages = await this.db.getPrunedImages();
+        const lockedGalleries = await this.db.getLockedGalleries();
+        const lockedUsers = new Set(lockedGalleries.map(g => g.username.toLowerCase()));
         
         let html = `<!DOCTYPE html>
 <html lang="en">
@@ -387,6 +409,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="header">
         <h1>🍺 Dazza's Fuckin' Art Gallery 🍺</h1>
         <p class="subtitle flash-text">ALL THE SHIT YOU CUNTS POST</p>
+        <p style="color: #ffff00; margin-top: 20px;">To delete images from unlocked galleries: Use !deleteimage &lt;url&gt; in chat</p>
+        <p style="color: #ff00ff; margin-top: 10px;">To lock/unlock your gallery: Use !gallery lock or !gallery unlock</p>
     </div>
 `;
 
@@ -399,9 +423,13 @@ document.addEventListener('DOMContentLoaded', function() {
             for (const username of users) {
                 const userImages = activeImages[username];
                 if (userImages.length > 0) {
+                    const isLocked = lockedUsers.has(username.toLowerCase());
+                    const lockIcon = isLocked ? '🔒' : '🔓';
+                    const lockStatus = isLocked ? 'LOCKED' : 'UNLOCKED';
+                    
                     html += `
     <div class="user-section">
-        <h2>${username}'s Collection (${userImages.length} ${userImages.length === 1 ? 'pic' : 'pics'})</h2>
+        <h2>${username}'s Collection (${userImages.length} ${userImages.length === 1 ? 'pic' : 'pics'}) <span class="lock-status ${lockStatus.toLowerCase()}">${lockIcon} ${lockStatus}</span></h2>
         <div class="gallery-grid">
 `;
                     
