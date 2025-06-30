@@ -4713,3 +4713,683 @@ body {
     color: var(--text-secondary);
     margin-top: 4px;
 }
+
+/* ============================================
+   STONER SECTION - MOST COOKED CUNTS
+   ============================================ */
+
+/* Main stoner section container */
+.stat-section.stoner-section {
+    position: relative;
+    background: linear-gradient(135deg, #1a2f1a 0%, #0d1f0d 50%, #1a2f1a 100%);
+    border: 2px solid rgba(76, 206, 172, 0.3);
+    box-shadow: 
+        0 0 50px rgba(76, 206, 172, 0.2),
+        inset 0 0 100px rgba(76, 206, 172, 0.05);
+    overflow: hidden;
+    animation: stonerGlow 10s ease-in-out infinite;
+}
+
+@keyframes stonerGlow {
+    0%, 100% { 
+        box-shadow: 
+            0 0 50px rgba(76, 206, 172, 0.2),
+            inset 0 0 100px rgba(76, 206, 172, 0.05);
+    }
+    50% { 
+        box-shadow: 
+            0 0 80px rgba(76, 206, 172, 0.4),
+            inset 0 0 150px rgba(76, 206, 172, 0.1);
+    }
+}
+
+/* Smoke effect overlay */
+.smoke-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.3;
+    pointer-events: none;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><filter id="smoke"><feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="2" result="turbulence"/><feColorMatrix in="turbulence" type="saturate" values="0"/></filter></defs><rect width="100%" height="100%" filter="url(%23smoke)" opacity="0.4"/></svg>');
+    animation: smokeFlow 20s ease-in-out infinite;
+}
+
+@keyframes smokeFlow {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-5%, -2%) scale(1.1); }
+    66% { transform: translate(3%, -5%) scale(1.05); }
+}
+
+/* Floating smoke particles */
+.stoner-section::before,
+.stoner-section::after {
+    content: '💨';
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0;
+    animation: floatSmoke 8s ease-in-out infinite;
+}
+
+.stoner-section::before {
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.stoner-section::after {
+    bottom: 30%;
+    right: 15%;
+    animation-delay: 4s;
+}
+
+@keyframes floatSmoke {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+    20% {
+        opacity: 0.6;
+    }
+    80% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(1.5);
+    }
+}
+
+/* Smoke cards with special effects */
+.smoke-card {
+    background: linear-gradient(145deg, rgba(76, 206, 172, 0.1), rgba(0, 0, 0, 0.3));
+    border: 1px solid rgba(76, 206, 172, 0.4);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+}
+
+.smoke-card:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 
+        0 10px 30px rgba(76, 206, 172, 0.4),
+        inset 0 0 20px rgba(76, 206, 172, 0.1);
+    border-color: rgba(76, 206, 172, 0.8);
+}
+
+/* Smoke wisp animation */
+.smoke-wisp {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    pointer-events: none;
+}
+
+.smoke-wisp::before,
+.smoke-wisp::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, rgba(76, 206, 172, 0.4) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: wisp 4s ease-in-out infinite;
+}
+
+.smoke-wisp::before {
+    left: 0;
+    animation-delay: 0s;
+}
+
+.smoke-wisp::after {
+    right: 0;
+    animation-delay: 2s;
+}
+
+@keyframes wisp {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-60px) translateX(20px) scale(2);
+        opacity: 0;
+    }
+}
+
+/* 420-themed badges */
+.header-badge.legendary {
+    background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700);
+    color: #000;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    animation: legendaryPulse 2s ease-in-out infinite;
+}
+
+@keyframes legendaryPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.9);
+    }
+}
+
+/* Enhanced stat values for stoner section */
+.stoner-section .stat-value.large-value {
+    background: linear-gradient(180deg, #4CCEAC, #2a7a5e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(76, 206, 172, 0.5));
+    animation: valueGlow 3s ease-in-out infinite;
+}
+
+@keyframes valueGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(76, 206, 172, 0.5)); }
+    50% { filter: drop-shadow(0 0 20px rgba(76, 206, 172, 0.8)); }
+}
+
+/* Time period enhancements */
+.stoner-section .time-period {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(76, 206, 172, 0.2);
+    transition: all 0.3s ease;
+}
+
+.stoner-section .time-period:hover {
+    background: rgba(76, 206, 172, 0.1);
+    border-color: rgba(76, 206, 172, 0.5);
+    transform: translateX(5px);
+}
+
+.stoner-section .time-period.morning .bar-fill {
+    background: linear-gradient(90deg, #87CEEB, #4CCEAC);
+}
+
+.stoner-section .time-period.afternoon .bar-fill {
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+}
+
+.stoner-section .time-period.evening .bar-fill {
+    background: linear-gradient(90deg, #9370DB, #4B0082);
+}
+
+.stoner-section .time-period.night .bar-fill {
+    background: linear-gradient(90deg, #191970, #4B0082);
+}
+
+/* Hourly chart enhancements */
+.stoner-section .hourly-chart {
+    background: radial-gradient(ellipse at center, rgba(76, 206, 172, 0.05) 0%, transparent 70%);
+    border: 1px solid rgba(76, 206, 172, 0.2);
+}
+
+.stoner-section .hour-bar {
+    background: linear-gradient(180deg, #4CCEAC, #2a7a5e);
+    box-shadow: 0 0 10px rgba(76, 206, 172, 0.4);
+    transition: all 0.3s ease;
+}
+
+.stoner-section .hour-bar:hover {
+    transform: scaleY(1.1);
+    box-shadow: 0 0 20px rgba(76, 206, 172, 0.8);
+}
+
+/* Session record cards */
+.stoner-section .record-card {
+    background: linear-gradient(145deg, rgba(76, 206, 172, 0.05), rgba(0, 0, 0, 0.4));
+    border: 1px solid rgba(76, 206, 172, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .record-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(76, 206, 172, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    opacity: 0;
+}
+
+.stoner-section .record-card:hover::before {
+    animation: recordShine 0.5s ease;
+}
+
+@keyframes recordShine {
+    0% {
+        transform: rotate(45deg) translateY(-100%);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: rotate(45deg) translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Breathing effect for session stats */
+.stoner-section .session-stat-card {
+    animation: breathe 4s ease-in-out infinite;
+}
+
+.stoner-section .session-stat-card:nth-child(2) { animation-delay: 1s; }
+.stoner-section .session-stat-card:nth-child(3) { animation-delay: 2s; }
+.stoner-section .session-stat-card:nth-child(4) { animation-delay: 3s; }
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* Consumption timeline enhancement */
+.stoner-section .timeline-chart {
+    background: linear-gradient(180deg, transparent, rgba(76, 206, 172, 0.05));
+}
+
+.stoner-section .bar-column {
+    background: linear-gradient(180deg, #4CCEAC, #2a7a5e);
+    box-shadow: 0 0 15px rgba(76, 206, 172, 0.5);
+}
+
+/* Streak glow effect */
+.streak-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+    animation: streakPulse 2s ease-in-out infinite;
+}
+
+@keyframes streakPulse {
+    0%, 100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0.8;
+    }
+}
+
+/* Floating particles */
+.floating-particle {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0;
+    animation: floatParticle 15s ease-in-out infinite;
+    pointer-events: none;
+    filter: blur(0.5px);
+}
+
+@keyframes floatParticle {
+    0% {
+        transform: translateY(100vh) rotate(0deg) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    90% {
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Special 420 mode */
+.stoner-section.special-420 {
+    background: linear-gradient(135deg, #2d4a2d 0%, #1a2f1a 25%, #FFD700 50%, #1a2f1a 75%, #2d4a2d 100%);
+    animation: special420Glow 2s ease-in-out infinite;
+}
+
+@keyframes special420Glow {
+    0%, 100% {
+        box-shadow: 
+            0 0 80px rgba(255, 215, 0, 0.4),
+            inset 0 0 150px rgba(255, 215, 0, 0.1);
+    }
+    50% {
+        box-shadow: 
+            0 0 120px rgba(255, 215, 0, 0.6),
+            inset 0 0 200px rgba(255, 215, 0, 0.2);
+    }
+}
+
+/* Enhanced hourly chart */
+.stoner-section .hour-bar-wrapper {
+    position: relative;
+}
+
+.stoner-section .hour-bar {
+    animation: barGrowStoner 0.8s ease-out forwards;
+    position: relative;
+}
+
+@keyframes barGrowStoner {
+    0% {
+        height: 0 !important;
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.stoner-section .hour-bar.intense {
+    animation: intensePulse 2s ease-in-out infinite;
+    box-shadow: 
+        0 0 20px rgba(76, 206, 172, calc(var(--glow-intensity) * 0.8)),
+        inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes intensePulse {
+    0%, 100% {
+        filter: brightness(1) hue-rotate(0deg);
+    }
+    50% {
+        filter: brightness(1.2) hue-rotate(10deg);
+    }
+}
+
+/* Special 4:20 hour marker */
+.hour-bar-wrapper.special-hour .hour-bar {
+    background: linear-gradient(180deg, #FFD700, #FFA500) !important;
+    box-shadow: 
+        0 0 25px rgba(255, 215, 0, 0.6),
+        inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.four-twenty-marker {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    animation: marker420Pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes marker420Pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.2); }
+}
+
+/* Enhanced time period hover effects */
+.stoner-section .time-period .bar-fill {
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .time-period .bar-fill::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: rotate(45deg) translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.stoner-section .time-period:hover .bar-fill::after {
+    transform: rotate(45deg) translateX(100%);
+}
+
+/* Session cards hover ripple effect */
+.stoner-section .session-stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .session-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(76, 206, 172, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.stoner-section .session-stat-card:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Consumption timeline enhanced animations */
+.stoner-section .day-bar {
+    position: relative;
+}
+
+.stoner-section .bar-column {
+    position: relative;
+    overflow: hidden;
+}
+
+.stoner-section .bar-column::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1));
+    transform: translateY(100%);
+    animation: fillUp 1s ease-out forwards;
+    animation-delay: inherit;
+}
+
+@keyframes fillUp {
+    to { transform: translateY(0); }
+}
+
+/* Record card hover effects */
+.stoner-section .record-card:hover {
+    transform: translateY(-5px) rotate(1deg);
+    box-shadow: 
+        0 15px 40px rgba(76, 206, 172, 0.4),
+        inset 0 0 30px rgba(76, 206, 172, 0.1);
+}
+
+/* Stat icon animations */
+.stoner-section .stat-icon {
+    display: inline-block;
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+.stoner-section .stat-item:nth-child(1) .stat-icon { animation-delay: 0s; }
+.stoner-section .stat-item:nth-child(2) .stat-icon { animation-delay: 0.5s; }
+.stoner-section .stat-item:nth-child(3) .stat-icon { animation-delay: 1s; }
+.stoner-section .stat-item:nth-child(4) .stat-icon { animation-delay: 1.5s; }
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Active streak effects */
+.stoner-section .record-card.active-streak {
+    background: linear-gradient(145deg, rgba(255, 69, 0, 0.1), rgba(0, 0, 0, 0.4));
+    border-color: rgba(255, 69, 0, 0.5);
+}
+
+.streak-flames {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 30px;
+    pointer-events: none;
+}
+
+.streak-flames::before,
+.streak-flames::after {
+    content: '🔥';
+    position: absolute;
+    bottom: 0;
+    font-size: 1.2rem;
+    animation: flameFlicker 1s ease-in-out infinite;
+}
+
+.streak-flames::before {
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.streak-flames::after {
+    right: 20%;
+    animation-delay: 0.5s;
+}
+
+@keyframes flameFlicker {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-5px) scale(1.1);
+        opacity: 1;
+    }
+}
+
+.hot-streak {
+    color: #FF4500 !important;
+    text-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
+    animation: hotStreakGlow 1s ease-in-out infinite;
+}
+
+@keyframes hotStreakGlow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+/* Achievement badge */
+.achievement-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1) rotate(-5deg);
+    }
+    50% {
+        transform: scale(1.1) rotate(5deg);
+    }
+}
+
+/* Enhanced daily indicator */
+.stoner-section .daily-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.stoner-section .daily-indicator.moderate {
+    background: #4CCEAC;
+    box-shadow: 0 0 10px rgba(76, 206, 172, 0.6);
+}
+
+.stoner-section .daily-indicator.high {
+    background: #FFA500;
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.6);
+    animation: indicatorPulse 2s ease-in-out infinite;
+}
+
+.stoner-section .daily-indicator.extreme {
+    background: #FF4500;
+    box-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
+    animation: indicatorPulse 1s ease-in-out infinite;
+}
+
+@keyframes indicatorPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.8; }
+}
+
+/* Responsive adjustments for stoner section */
+/* Time since indicator */
+.time-since-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.2rem;
+}
+
+.last-cone-card {
+    position: relative;
+}
+
+.time-since-indicator.very-recent {
+    animation: freshPulse 1s ease-in-out infinite;
+}
+
+.time-since-indicator.drought {
+    animation: droughtWarn 0.5s ease-in-out infinite;
+}
+
+@keyframes freshPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+@keyframes droughtWarn {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    75% { transform: scale(1.1) rotate(5deg); }
+}
+
+@media (max-width: 768px) {
+    .stoner-section .hour-bar-wrapper {
+        min-width: 15px;
+    }
+    
+    .floating-particle {
+        font-size: 1rem;
+    }
+    
+    .stoner-section .stat-icon {
+        font-size: 1.5rem;
+    }
+}
