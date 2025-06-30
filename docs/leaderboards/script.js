@@ -1989,278 +1989,307 @@ function renderBongStats(data, username) {
     const eveningBongs = data.timePatterns.evening.count;
     const nightBongs = data.timePatterns.night.count;
     
-    // Special 420 detection
-    const has420 = total === 420 || avgPerDay === 420 || 
-                   data.streaks.current === 420 || data.streaks.longest === 420;
-    
-    // Add floating particles for heavy smokers
-    const particleCount = avgPerDay >= 20 ? 8 : avgPerDay >= 10 ? 5 : 3;
-    let particles = '';
-    for (let i = 0; i < particleCount; i++) {
-        particles += `<div class="floating-particle" style="
-            left: ${Math.random() * 100}%;
-            animation-delay: ${i * 1.5}s;
-            animation-duration: ${10 + Math.random() * 5}s;
-        ">🍃</div>`;
-    }
-    
     let html = `
-        <div class="stat-section stoner-section ${has420 ? 'special-420' : ''}">
-            <div class="smoke-effect"></div>
-            ${particles}
-            <div class="section-header">
-                <h3>🌿 Cone Statistics</h3>
-                <div class="header-badge ${avgPerDay >= 20 ? 'legendary' : avgPerDay >= 10 ? 'heavy' : 'casual'}">
-                    ${avgPerDay >= 20 ? '👑 CONE KING' : avgPerDay >= 10 ? '💨 HEAVY SMOKER' : '🌱 CASUAL'}
+        <div class="stat-section bong-hud-section">
+            <div class="hud-container">
+                <div class="hud-header">
+                    <h3 class="hud-title">🌿 CONE COMMAND CENTER</h3>
+                    <div class="hud-badge tech-badge">DAZZA-TECH™ v4.20</div>
                 </div>
-            </div>
-            <div class="stat-grid fancy-grid">
-                <div class="stat-item glass-card smoke-card">
-                    <div class="stat-icon">🌿</div>
-                    <span class="stat-label">Total Cones</span>
-                    <span class="stat-value large-value">${total}</span>
-                    <div class="smoke-wisp"></div>
-                </div>
-                <div class="stat-item glass-card smoke-card">
-                    <div class="stat-icon">📅</div>
-                    <span class="stat-label">Daily Average</span>
-                    <span class="stat-value large-value">${avgPerDay}</span>
-                    <div class="daily-indicator ${avgPerDay >= 20 ? 'extreme' : avgPerDay >= 10 ? 'high' : 'moderate'}"></div>
-                </div>
-                <div class="stat-item glass-card smoke-card">
-                    <div class="stat-icon">🏆</div>
-                    <span class="stat-label">Record Day</span>
-                    <span class="stat-value large-value">${maxDay ? maxDay.count : 0}</span>
-                    <div class="record-date">${maxDay ? new Date(maxDay.date + 'T00:00:00').toLocaleDateString() : 'N/A'}</div>
-                </div>
-                <div class="stat-item glass-card smoke-card highlight-card">
-                    <div class="stat-icon">🔥</div>
-                    <span class="stat-label">Active Days</span>
-                    <span class="stat-value large-value">${daysActive}</span>
-                    <div class="streak-glow"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>⏰ Time Patterns</h3>
-            <div class="time-distribution">
-                <div class="time-period morning">
-                    <div class="period-header">
-                        <span class="period-icon">🌅</span>
-                        <span class="period-name">Morning (6am-12pm)</span>
-                    </div>
-                    <div class="period-stats">
-                        <span class="period-count">${morningBongs} cones</span>
-                        <div class="period-bar">
-                            <div class="bar-fill" style="width: ${data.timePatterns.morning.percentage}%"></div>
-                        </div>
-                        <span class="period-percent">${data.timePatterns.morning.percentage}%</span>
-                    </div>
-                </div>
-                <div class="time-period afternoon">
-                    <div class="period-header">
-                        <span class="period-icon">☀️</span>
-                        <span class="period-name">Afternoon (12pm-6pm)</span>
-                    </div>
-                    <div class="period-stats">
-                        <span class="period-count">${afternoonBongs} cones</span>
-                        <div class="period-bar">
-                            <div class="bar-fill" style="width: ${data.timePatterns.afternoon.percentage}%"></div>
-                        </div>
-                        <span class="period-percent">${data.timePatterns.afternoon.percentage}%</span>
-                    </div>
-                </div>
-                <div class="time-period evening">
-                    <div class="period-header">
-                        <span class="period-icon">🌙</span>
-                        <span class="period-name">Evening (6pm-12am)</span>
-                    </div>
-                    <div class="period-stats">
-                        <span class="period-count">${eveningBongs} cones</span>
-                        <div class="period-bar">
-                            <div class="bar-fill" style="width: ${data.timePatterns.evening.percentage}%"></div>
-                        </div>
-                        <span class="period-percent">${data.timePatterns.evening.percentage}%</span>
-                    </div>
-                </div>
-                <div class="time-period night">
-                    <div class="period-header">
-                        <span class="period-icon">🌛</span>
-                        <span class="period-name">Night (12am-6am)</span>
-                    </div>
-                    <div class="period-stats">
-                        <span class="period-count">${nightBongs} cones</span>
-                        <div class="period-bar">
-                            <div class="bar-fill" style="width: ${data.timePatterns.night.percentage}%"></div>
-                        </div>
-                        <span class="period-percent">${data.timePatterns.night.percentage}%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>🏆 Session Records</h3>
-            <div class="records-display">
-                ${data.sessions.fastestRate ? `
-                <div class="record-card">
-                    <div class="record-icon">⚡</div>
-                    <div class="record-info">
-                        <span class="record-label">Fastest Rate</span>
-                        <span class="record-value">${data.sessions.fastestRate.conesPerHour} cones/hour</span>
-                        <div class="record-date">${new Date(data.sessions.fastestRate.date).toLocaleDateString()}</div>
-                    </div>
-                </div>
-                ` : ''}
-                <div class="record-card ${data.streaks.current > 0 ? 'active-streak' : ''}">
-                    <div class="record-icon">${data.streaks.current > 0 ? '🔥' : '🎯'}</div>
-                    <div class="record-info">
-                        <span class="record-label">Current Streak</span>
-                        <span class="record-value ${data.streaks.current > 7 ? 'hot-streak' : ''}">${data.streaks.current} days</span>
-                        ${data.streaks.current > 0 ? '<div class="streak-flames"></div>' : ''}
-                    </div>
-                </div>
-                <div class="record-card">
-                    <div class="record-icon">🏆</div>
-                    <div class="record-info">
-                        <span class="record-label">Longest Streak</span>
-                        <span class="record-value">${data.streaks.longest} days</span>
-                        ${data.streaks.longest >= 30 ? '<span class="achievement-badge">LEGEND</span>' : ''}
-                    </div>
-                </div>
-                ${data.sessions.biggestSession ? `
-                <div class="record-card">
-                    <div class="record-icon">💨</div>
-                    <div class="record-info">
-                        <span class="record-label">Biggest Session</span>
-                        <span class="record-value">${data.sessions.biggestSession.coneCount} cones</span>
-                        <div class="record-date">${new Date(data.sessions.biggestSession.date).toLocaleDateString()}</div>
-                    </div>
-                </div>
-                ` : ''}
-                ${data.records.weeklyPeak ? `
-                <div class="record-card">
-                    <div class="record-icon">🌿</div>
-                    <div class="record-info">
-                        <span class="record-label">Weekly Peak</span>
-                        <span class="record-value">${data.records.weeklyPeak.count} cones</span>
-                        <div class="record-date">${new Date(data.records.weeklyPeak.date).toLocaleDateString()}</div>
-                    </div>
-                </div>
-                ` : ''}
-                <div class="record-card">
-                    <div class="record-icon">📊</div>
-                    <div class="record-info">
-                        <span class="record-label">Total Sessions</span>
-                        <span class="record-value">${data.sessions.total}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        ${data.sessions.total > 0 ? `
-        <div class="stat-section session-stats-section">
-            <div class="section-header">
-                <h3>💨 Sesh Analytics</h3>
-                <div class="header-badge tech-badge">POWERED BY DAZZA-TECH™</div>
-            </div>
-            
-            <div class="session-hud">
-                <div class="hud-grid">
-                    <div class="hud-panel main-stats">
+                
+                <div class="hud-scanner"></div>
+                
+                <!-- Main Stats Grid -->
+                <div class="bong-hud-grid">
+                    <div class="hud-panel main-metrics">
                         <div class="panel-header">
-                            <span class="panel-title">SESSION OVERVIEW</span>
-                            <div class="panel-status ${data.records.lastBongTimestamp && (Date.now() - data.records.lastBongTimestamp) < 3600000 ? 'active' : 'idle'}">
+                            <span class="panel-title">LIFETIME METRICS</span>
+                            <div class="panel-status ${avgPerDay >= 20 ? 'legendary' : avgPerDay >= 10 ? 'heavy' : 'moderate'}">
                                 <span class="status-dot"></span>
-                                ${data.records.lastBongTimestamp && (Date.now() - data.records.lastBongTimestamp) < 3600000 ? 'ACTIVE' : 'IDLE'}
+                                ${avgPerDay >= 20 ? 'CONE KING' : avgPerDay >= 10 ? 'HEAVY USER' : 'MODERATE'}
                             </div>
                         </div>
                         
-                        <div class="stat-matrix">
-                            <div class="matrix-item total-sessions">
-                                <div class="matrix-value-wrapper">
-                                    <div class="matrix-icon">🎮</div>
-                                    <div class="matrix-content">
-                                        <span class="matrix-label">Total Seshes</span>
-                                        <span class="matrix-value counter">${data.sessions.total}</span>
-                                    </div>
+                        <div class="metric-grid">
+                            <div class="metric-item total-cones">
+                                <div class="metric-header">
+                                    <span class="metric-icon">🌿</span>
+                                    <span class="metric-label">TOTAL CONES</span>
                                 </div>
-                                <div class="matrix-graph">
-                                    <svg viewBox="0 0 50 20" class="mini-graph">
-                                        <polyline points="0,15 10,10 20,12 30,8 40,5 50,10" 
-                                                  fill="none" 
-                                                  stroke="url(#tech-gradient)" 
-                                                  stroke-width="2"/>
-                                    </svg>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value counter">${total}</span>
+                                    ${total === 420 ? '<span class="special-420-badge">NICE</span>' : ''}
+                                </div>
+                                <div class="metric-bar">
+                                    <div class="bar-track">
+                                        <div class="bar-fill" style="width: ${Math.min((total / 1000) * 100, 100)}%"></div>
+                                    </div>
+                                    <span class="bar-label">${total >= 1000 ? 'LEGENDARY STATUS' : Math.round((total / 1000) * 100) + '% to 1000'}</span>
                                 </div>
                             </div>
                             
-                            <div class="matrix-item avg-session">
-                                <div class="matrix-value-wrapper">
-                                    <div class="matrix-icon">📊</div>
-                                    <div class="matrix-content">
-                                        <span class="matrix-label">Avg per Sesh</span>
-                                        <span class="matrix-value">${data.sessions.averageConesPerSession}</span>
-                                        <span class="matrix-unit">cones</span>
+                            <div class="metric-item daily-avg">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📊</span>
+                                    <span class="metric-label">DAILY AVERAGE</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${avgPerDay}</span>
+                                    <span class="metric-unit">per day</span>
+                                </div>
+                                <div class="intensity-meter">
+                                    <div class="intensity-track">
+                                        <div class="intensity-fill ${avgPerDay >= 20 ? 'extreme' : avgPerDay >= 10 ? 'high' : 'moderate'}" 
+                                             style="width: ${Math.min((avgPerDay / 30) * 100, 100)}%"></div>
                                     </div>
                                 </div>
-                                <div class="performance-meter">
-                                    <div class="meter-track">
-                                        <div class="meter-fill" style="width: ${Math.min((data.sessions.averageConesPerSession / 20) * 100, 100)}%"></div>
-                                    </div>
-                                    <span class="meter-label">${data.sessions.averageConesPerSession >= 15 ? 'LEGENDARY' : data.sessions.averageConesPerSession >= 10 ? 'SOLID' : 'CRUISY'}</span>
+                            </div>
+                            
+                            <div class="metric-item active-days">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📅</span>
+                                    <span class="metric-label">DAYS ACTIVE</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${daysActive}</span>
+                                    <span class="metric-unit">days</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    ${data.sessions.longestSession || data.sessions.biggestSession ? `
-                    <div class="hud-panel epic-sessions">
+                    <!-- Streak Panel -->
+                    <div class="hud-panel streak-panel">
                         <div class="panel-header">
-                            <span class="panel-title">EPIC SESHES</span>
-                            <div class="panel-badge">🏆 HALL OF FAME</div>
+                            <span class="panel-title">STREAK TRACKER</span>
+                            <div class="streak-status ${data.streaks.current > 0 ? 'active' : 'broken'}">
+                                ${data.streaks.current > 0 ? '🔥 ACTIVE' : '❄️ BROKEN'}
+                            </div>
                         </div>
                         
-                        <div class="epic-grid">
-                            ${data.sessions.longestSession ? `
-                            <div class="epic-item longest-sesh">
-                                <div class="epic-header">
-                                    <span class="epic-icon">⏱️</span>
-                                    <span class="epic-label">Marathon Sesh</span>
+                        <div class="streak-display">
+                            <div class="streak-item current">
+                                <div class="streak-icon-wrapper">
+                                    <span class="streak-icon">${data.streaks.current > 0 ? '🔥' : '💔'}</span>
                                 </div>
-                                <div class="epic-stats">
-                                    <div class="epic-main">
-                                        <span class="epic-value">${Math.round(data.sessions.longestSession.duration / 60000)}</span>
-                                        <span class="epic-unit">MINS</span>
+                                <div class="streak-info">
+                                    <span class="streak-label">Current Streak</span>
+                                    <span class="streak-value">${data.streaks.current}</span>
+                                    <span class="streak-unit">days</span>
+                                </div>
+                                ${data.streaks.current > 0 ? `
+                                <div class="streak-progress">
+                                    <div class="progress-track">
+                                        <div class="progress-fill flame" style="width: ${Math.min((data.streaks.current / data.streaks.longest) * 100, 100)}%"></div>
                                     </div>
-                                    <div class="epic-sub">
-                                        <span class="cone-count">${data.sessions.longestSession.coneCount} cones</span>
-                                        <span class="sesh-date">${new Date(data.sessions.longestSession.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
+                                    <span class="progress-label">${data.streaks.current >= data.streaks.longest ? 'PERSONAL BEST!' : Math.round((data.streaks.current / data.streaks.longest) * 100) + '% of best'}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="streak-item best">
+                                <div class="streak-icon-wrapper">
+                                    <span class="streak-icon">🏆</span>
+                                </div>
+                                <div class="streak-info">
+                                    <span class="streak-label">Longest Streak</span>
+                                    <span class="streak-value">${data.streaks.longest}</span>
+                                    <span class="streak-unit">days</span>
+                                </div>
+                                ${data.streaks.longest >= 30 ? '<div class="achievement-badge gold">LEGENDARY</div>' : 
+                                  data.streaks.longest >= 14 ? '<div class="achievement-badge silver">DEDICATED</div>' : 
+                                  data.streaks.longest >= 7 ? '<div class="achievement-badge bronze">CONSISTENT</div>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Analysis Panel -->
+                    <div class="hud-panel time-analysis">
+                        <div class="panel-header">
+                            <span class="panel-title">TIME ANALYSIS</span>
+                            <div class="analysis-icon">⏰</div>
+                        </div>
+                        
+                        <div class="time-breakdown">
+                            <div class="time-slot ${morningBongs > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌅</span>
+                                    <span class="slot-name">MORNING</span>
+                                    <span class="slot-time">6AM-12PM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill sunrise" style="width: ${data.timePatterns.morning.percentage}%"></div>
                                     </div>
-                                    <div class="epic-rank ${data.sessions.longestSession.duration >= 180000 ? 'god-tier' : 'epic-tier'}">
-                                        ${data.sessions.longestSession.duration >= 180000 ? '🔥 GOD TIER' : '⭐ EPIC'}
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${morningBongs}</span>
+                                        <span class="slot-percent">${data.timePatterns.morning.percentage}%</span>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="time-slot ${afternoonBongs > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">☀️</span>
+                                    <span class="slot-name">ARVO</span>
+                                    <span class="slot-time">12PM-6PM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill sunshine" style="width: ${data.timePatterns.afternoon.percentage}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${afternoonBongs}</span>
+                                        <span class="slot-percent">${data.timePatterns.afternoon.percentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-slot ${eveningBongs > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌆</span>
+                                    <span class="slot-name">EVENING</span>
+                                    <span class="slot-time">6PM-12AM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill sunset" style="width: ${data.timePatterns.evening.percentage}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${eveningBongs}</span>
+                                        <span class="slot-percent">${data.timePatterns.evening.percentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-slot ${nightBongs > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌙</span>
+                                    <span class="slot-name">LATE NIGHT</span>
+                                    <span class="slot-time">12AM-6AM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill moonlight" style="width: ${data.timePatterns.night.percentage}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${nightBongs}</span>
+                                        <span class="slot-percent">${data.timePatterns.night.percentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Records Panel -->
+                    <div class="hud-panel records-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">PERSONAL RECORDS</span>
+                            <div class="records-icon">🏆</div>
+                        </div>
+                        
+                        <div class="records-grid">
+                            ${maxDay ? `
+                            <div class="record-item record-day">
+                                <div class="record-header">
+                                    <span class="record-icon">📅</span>
+                                    <span class="record-label">BIGGEST DAY</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${maxDay.count}</span>
+                                    <span class="record-unit">cones</span>
+                                </div>
+                                <div class="record-date">${new Date(maxDay.date + 'T00:00:00').toLocaleDateString('en-AU')}</div>
+                                ${maxDay.count >= 50 ? '<div class="record-badge legendary">ABSOLUTELY COOKED</div>' : 
+                                  maxDay.count >= 30 ? '<div class="record-badge epic">PROPER SESH</div>' : 
+                                  maxDay.count >= 20 ? '<div class="record-badge rare">SOLID EFFORT</div>' : ''}
+                            </div>
+                            ` : ''}
+                            
+                            ${data.records.weeklyPeak ? `
+                            <div class="record-item weekly-peak">
+                                <div class="record-header">
+                                    <span class="record-icon">📈</span>
+                                    <span class="record-label">7-DAY PEAK</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${data.records.weeklyPeak.count}</span>
+                                    <span class="record-unit">in a day</span>
+                                </div>
+                                <div class="record-date">Last 7 days</div>
+                            </div>
+                            ` : ''}
+                            
+                            ${data.sessions.fastestRate ? `
+                            <div class="record-item fastest-rate">
+                                <div class="record-header">
+                                    <span class="record-icon">⚡</span>
+                                    <span class="record-label">FASTEST RATE</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${data.sessions.fastestRate.conesPerHour}</span>
+                                    <span class="record-unit">per hour</span>
+                                </div>
+                                <div class="record-detail">That's 1 every ${Math.round(60/data.sessions.fastestRate.conesPerHour)} mins!</div>
                             </div>
                             ` : ''}
                             
                             ${data.sessions.biggestSession ? `
-                            <div class="epic-item biggest-sesh">
-                                <div class="epic-header">
-                                    <span class="epic-icon">💨</span>
-                                    <span class="epic-label">Biggest Sesh</span>
+                            <div class="record-item biggest-sesh">
+                                <div class="record-header">
+                                    <span class="record-icon">💨</span>
+                                    <span class="record-label">BIGGEST SESH</span>
                                 </div>
-                                <div class="epic-stats">
-                                    <div class="epic-main">
-                                        <span class="epic-value">${data.sessions.biggestSession.coneCount}</span>
-                                        <span class="epic-unit">CONES</span>
-                                    </div>
-                                    <div class="epic-sub">
-                                        <span class="sesh-date">${new Date(data.sessions.biggestSession.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
-                                    </div>
-                                    <div class="epic-rank ${data.sessions.biggestSession.coneCount >= 50 ? 'legendary' : 'epic-tier'}">
-                                        ${data.sessions.biggestSession.coneCount >= 50 ? '👑 LEGENDARY' : '⭐ EPIC'}
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${data.sessions.biggestSession.coneCount}</span>
+                                    <span class="record-unit">cones</span>
+                                </div>
+                                <div class="record-date">Single session</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Session Stats Panel -->
+                    ${data.sessions.total > 0 ? `
+                    <div class="hud-panel session-overview">
+                        <div class="panel-header">
+                            <span class="panel-title">SESSION DATA</span>
+                            <div class="session-count">${data.sessions.total} TOTAL</div>
+                        </div>
+                        
+                        <div class="session-metrics">
+                            <div class="session-metric">
+                                <span class="metric-icon">🎯</span>
+                                <div class="metric-info">
+                                    <span class="metric-label">AVG PER SESH</span>
+                                    <span class="metric-value">${data.sessions.averageConesPerSession}</span>
+                                    <span class="metric-unit">cones</span>
+                                </div>
+                            </div>
+                            
+                            ${data.sessions.longestSession ? `
+                            <div class="session-metric">
+                                <span class="metric-icon">⏱️</span>
+                                <div class="metric-info">
+                                    <span class="metric-label">LONGEST SESH</span>
+                                    <span class="metric-value">${Math.round(data.sessions.longestSession.duration / 60000)}</span>
+                                    <span class="metric-unit">minutes</span>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${data.records.lastBongTimestamp ? `
+                            <div class="session-metric last-cone">
+                                <span class="metric-icon">⏰</span>
+                                <div class="metric-info">
+                                    <span class="metric-label">LAST CONE</span>
+                                    <span class="metric-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
+                                    <div class="freshness-indicator ${getTimeSinceClass(data.records.lastBongTimestamp)}">
+                                        ${(Date.now() - data.records.lastBongTimestamp) < 3600000 ? 'STILL COOKED' :
+                                          (Date.now() - data.records.lastBongTimestamp) < 14400000 ? 'COMING DOWN' :
+                                          (Date.now() - data.records.lastBongTimestamp) < 43200000 ? 'SOBERING UP' :
+                                          'DROUGHT MODE'}
                                     </div>
                                 </div>
                             </div>
@@ -2268,114 +2297,28 @@ function renderBongStats(data, username) {
                         </div>
                     </div>
                     ` : ''}
-                    
-                    ${data.records.lastBongTimestamp ? `
-                    <div class="hud-panel time-tracker">
-                        <div class="panel-header">
-                            <span class="panel-title">CONE TRACKER</span>
-                            <div class="live-indicator">
-                                <span class="pulse"></span>
-                                LIVE
-                            </div>
-                        </div>
-                        
-                        <div class="time-display">
-                            <div class="last-cone-info">
-                                <span class="time-label">Time Since Last Cone</span>
-                                <div class="time-counter">
-                                    <span class="time-value">${getTimeAgo(data.records.lastBongTimestamp)}</span>
-                                    <div class="time-visual">
-                                        <div class="time-bar ${getTimeSinceClass(data.records.lastBongTimestamp)}">
-                                            <div class="time-fill" style="width: ${Math.min((Date.now() - data.records.lastBongTimestamp) / 86400000 * 100, 100)}%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="cone-status">
-                                <div class="status-icon">${getTimeSinceEmoji(data.records.lastBongTimestamp)}</div>
-                                <div class="status-message">
-                                    ${(Date.now() - data.records.lastBongTimestamp) < 3600000 ? "You're cooked mate!" :
-                                      (Date.now() - data.records.lastBongTimestamp) < 14400000 ? "Cruisin' nicely" :
-                                      (Date.now() - data.records.lastBongTimestamp) < 43200000 ? "Sobering up..." :
-                                      "Drought warning!"}
-                                </div>
-                            </div>
-                            
-                            <div class="tolerance-meter">
-                                <span class="tolerance-label">Tolerance Level</span>
-                                <div class="tolerance-display">
-                                    <div class="tolerance-bar">
-                                        <div class="tolerance-fill" style="width: ${calculateToleranceLevel(data.records.totalCones, data.records.daysActive)}%">
-                                            <span class="tolerance-text">${getToleranceStatus(calculateToleranceLevel(data.records.totalCones, data.records.daysActive))}</span>
-                                        </div>
-                                    </div>
-                                    <div class="tolerance-icon">${getToleranceEmoji(calculateToleranceLevel(data.records.totalCones, data.records.daysActive))}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.sessions.fastestRate ? `
-                    <div class="hud-panel speed-stats">
-                        <div class="panel-header">
-                            <span class="panel-title">SPEED METRICS</span>
-                            <div class="panel-icon">⚡</div>
-                        </div>
-                        
-                        <div class="speed-display">
-                            <div class="speed-main">
-                                <div class="speedometer">
-                                    <svg viewBox="0 0 200 120" class="speed-gauge">
-                                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#333" stroke-width="10"/>
-                                        <path d="M 20 100 A 80 80 0 0 1 ${20 + (160 * Math.min(data.sessions.fastestRate.conesPerHour / 60, 1))} 100" 
-                                              fill="none" 
-                                              stroke="url(#speed-gradient)" 
-                                              stroke-width="10"
-                                              stroke-linecap="round"/>
-                                        <text x="100" y="90" text-anchor="middle" class="speed-value">${data.sessions.fastestRate.conesPerHour}</text>
-                                        <text x="100" y="110" text-anchor="middle" class="speed-unit">cones/hr</text>
-                                    </svg>
-                                </div>
-                                <div class="speed-label">Personal Best</div>
-                                <div class="speed-date">${new Date(data.sessions.fastestRate.date).toLocaleDateString('en-AU')}</div>
-                            </div>
-                            
-                            <div class="speed-breakdown">
-                                <div class="breakdown-item">
-                                    <span class="breakdown-label">That's one cone every</span>
-                                    <span class="breakdown-value">${Math.round(60 / data.sessions.fastestRate.conesPerHour)} mins</span>
-                                </div>
-                                <div class="speed-rating ${data.sessions.fastestRate.conesPerHour >= 30 ? 'insane' : data.sessions.fastestRate.conesPerHour >= 20 ? 'rapid' : 'steady'}">
-                                    ${data.sessions.fastestRate.conesPerHour >= 30 ? '🚀 ABSOLUTELY COOKED' : 
-                                      data.sessions.fastestRate.conesPerHour >= 20 ? '💨 RAPID FIRE' : 
-                                      '🌿 STEADY PACE'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
                 </div>
-            </div>
-            
-            <div class="session-footer">
-                <div class="footer-stats">
-                    <div class="footer-item">
-                        <span class="footer-icon">🎯</span>
-                        <span class="footer-label">Success Rate:</span>
-                        <span class="footer-value">100%</span>
-                        <span class="footer-note">(Never missed a cone)</span>
+                
+                <!-- Footer Stats Bar -->
+                <div class="hud-footer">
+                    <div class="footer-stat">
+                        <span class="stat-icon">🎖️</span>
+                        <span class="stat-label">RANK:</span>
+                        <span class="stat-value">${avgPerDay >= 20 ? 'CONE MASTER' : avgPerDay >= 10 ? 'VETERAN STONER' : avgPerDay >= 5 ? 'REGULAR USER' : 'CASUAL SMOKER'}</span>
                     </div>
-                    <div class="footer-item">
-                        <span class="footer-icon">🏅</span>
-                        <span class="footer-label">Rank:</span>
-                        <span class="footer-value">${avgPerDay >= 20 ? 'Cone Master' : avgPerDay >= 10 ? 'Veteran Stoner' : 'Apprentice'}</span>
+                    <div class="footer-stat">
+                        <span class="stat-icon">💪</span>
+                        <span class="stat-label">TOLERANCE:</span>
+                        <span class="stat-value">${calculateToleranceLevel(total, daysActive) >= 80 ? 'EXTREME' : calculateToleranceLevel(total, daysActive) >= 60 ? 'HIGH' : calculateToleranceLevel(total, daysActive) >= 40 ? 'MODERATE' : 'LOW'}</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-label">EFFICIENCY:</span>
+                        <span class="stat-value">${data.sessions.total > 0 ? Math.round((total / data.sessions.total)) : 0} CONES/SESH</span>
                     </div>
                 </div>
             </div>
         </div>
-        ` : ''}
     `;
     
     return html;
