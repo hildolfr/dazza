@@ -27,15 +27,15 @@ export default new Command({
                 }
                 
                 if (isLocking) {
-                    bot.sendMessage(`Locked -${message.username}'s gallery tighter than a fish's arsehole! No cunt's deletin' yer pics now!`);
+                    bot.sendPrivateMessage(message.username, `Locked your gallery tighter than a fish's arsehole! No cunt's deletin' yer pics now!`);
                 } else {
-                    bot.sendMessage(`Unlocked -${message.username}'s gallery! Any drongo can bin yer pics now, careful mate!`);
+                    bot.sendPrivateMessage(message.username, `Unlocked your gallery! Any drongo can bin yer pics now, careful mate!`);
                 }
                 
                 return { success: true };
             } catch (error) {
                 bot.logger.error('Gallery lock error:', error);
-                bot.sendMessage(`Fucked up the lock mechanism, try again later ${message.username}`);
+                bot.sendPrivateMessage(message.username, `Fucked up the lock mechanism, try again later`);
                 return { success: false };
             }
         }
