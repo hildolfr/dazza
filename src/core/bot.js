@@ -1779,15 +1779,19 @@ export class CyTubeBot extends EventEmitter {
             this.imageHealthChecker.stop();
         }
         
-        // Shutdown heist manager
+        // Shutdown managers in parallel
+        const shutdownPromises = [];
+        
         if (this.heistManager) {
-            await this.heistManager.shutdown();
+            shutdownPromises.push(this.heistManager.shutdown());
         }
         
-        // Shutdown video payout manager
         if (this.videoPayoutManager) {
-            await this.videoPayoutManager.shutdown();
+            shutdownPromises.push(this.videoPayoutManager.shutdown());
         }
+        
+        // Wait for all managers to shutdown
+        await Promise.all(shutdownPromises);
         
         // Stop gallery updater
         if (this.galleryUpdater) {
