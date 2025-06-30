@@ -1,6 +1,10 @@
 import express from 'express';
 import { Server as SocketIOServer } from 'socket.io';
 import http from 'http';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import { EventEmitter } from 'events';
 import { createCorsMiddleware } from './middleware/cors.js';
@@ -19,19 +23,48 @@ export class ApiServer extends EventEmitter {
         super();
         this.bot = bot;
         this.port = port;
+        this.httpsPort = parseInt(process.env.API_HTTPS_PORT || '3443');
         this.app = express();
-        this.server = http.createServer(this.app);
-        this.io = new SocketIOServer(this.server, {
-            cors: {
-                origin: this.getAllowedOrigins(),
-                methods: ["GET", "POST", "PUT", "DELETE"],
-                credentials: true
-            }
-        });
+        
+        // Set up HTTP server
+        this.httpServer = http.createServer(this.app);
+        
+        // Set up HTTPS server if certificates are available
+        this.httpsServer = null;
+        this.setupHttpsServer();
+        
+        // Socket.IO will be set up after servers are started
+        this.io = null;
         
         this.endpoints = new Set();
         this.upnpManager = null;
         this.upnpEnabled = process.env.ENABLE_UPNP !== 'false'; // Default to true
+    }
+
+    setupHttpsServer() {
+        try {
+            const __dirname = path.dirname(fileURLToPath(import.meta.url));
+            const sslPath = path.join(__dirname, '..', '..', 'ssl');
+            
+            // Check for SSL certificates
+            const keyPath = path.join(sslPath, 'server.key');
+            const certPath = path.join(sslPath, 'server.crt');
+            
+            if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+                const sslOptions = {
+                    key: fs.readFileSync(keyPath),
+                    cert: fs.readFileSync(certPath)
+                };
+                
+                this.httpsServer = https.createServer(sslOptions, this.app);
+                this.bot.logger.info('[API] HTTPS server configured with SSL certificates');
+            } else {
+                this.bot.logger.warn('[API] SSL certificates not found. HTTPS will not be available.');
+                this.bot.logger.info('[API] To enable HTTPS, place server.key and server.crt in the ssl/ directory');
+            }
+        } catch (error) {
+            this.bot.logger.error('[API] Failed to setup HTTPS server:', error);
+        }
     }
 
     getAllowedOrigins() {
@@ -57,12 +90,36 @@ export class ApiServer extends EventEmitter {
     async start() {
         this.setupMiddleware();
         this.setupRoutes();
-        this.setupWebSocket();
         
         return new Promise((resolve, reject) => {
-            this.server.listen(this.port, async () => {
-                this.bot.logger.info(`API server started on port ${this.port}`);
-                console.log(`[API] Server listening on http://localhost:${this.port}`);
+            // Start HTTP server
+            this.httpServer.listen(this.port, async () => {
+                this.bot.logger.info(`API HTTP server started on port ${this.port}`);
+                console.log(`[API] HTTP server listening on http://localhost:${this.port}`);
+                
+                // Set up Socket.IO with the HTTP server
+                this.io = new SocketIOServer(this.httpServer, {
+                    cors: {
+                        origin: this.getAllowedOrigins(),
+                        methods: ["GET", "POST", "PUT", "DELETE"],
+                        credentials: true
+                    }
+                });
+                
+                // Start HTTPS server if available
+                if (this.httpsServer) {
+                    // Attach Socket.IO to HTTPS server as well
+                    this.io.attach(this.httpsServer);
+                    
+                    this.httpsServer.listen(this.httpsPort, () => {
+                        this.bot.logger.info(`API HTTPS server started on port ${this.httpsPort}`);
+                        console.log(`[API] HTTPS server listening on https://localhost:${this.httpsPort}`);
+                    });
+                }
+                
+                // Set up WebSocket events after Socket.IO is initialized
+                this.setupWebSocket();
+                
                 console.log(`[API] Endpoints registered: ${this.endpoints.size}`);
                 console.log(`[API] CORS origins:`, this.getAllowedOrigins());
                 
@@ -161,13 +218,32 @@ export class ApiServer extends EventEmitter {
             
             // Close WebSocket server
             this.io.close(() => {
+                // Close both HTTP and HTTPS servers
+                let serversToClose = 1;
+                let serversClosed = 0;
+                
+                const checkAllClosed = () => {
+                    serversClosed++;
+                    if (serversClosed === serversToClose) {
+                        clearTimeout(forceShutdownTimer);
+                        this.bot.logger.info('API servers stopped');
+                        console.log('[API] All servers stopped');
+                        resolve();
+                    }
+                };
+                
                 // Close HTTP server
-                this.server.close(() => {
-                    clearTimeout(forceShutdownTimer);
-                    this.bot.logger.info('API server stopped');
-                    console.log('[API] Server stopped');
-                    resolve();
+                this.httpServer.close(() => {
+                    checkAllClosed();
                 });
+                
+                // Close HTTPS server if it exists
+                if (this.httpsServer) {
+                    serversToClose++;
+                    this.httpsServer.close(() => {
+                        checkAllClosed();
+                    });
+                }
             });
         });
     }
