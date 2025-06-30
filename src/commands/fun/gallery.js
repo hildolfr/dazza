@@ -49,9 +49,6 @@ export default new Command({
             `Oi ${message.username}, check out yer fuckin' art collection at: ${galleryUrl} - Updated every few minutes with all the shit you cunts post!`
         );
         
-        // Public acknowledgment 
-        bot.sendMessage(`Sent -${message.username} a link to their gallery, ya nosy cunts`);
-        
         return { success: true };
     }
 });
