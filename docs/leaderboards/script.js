@@ -3137,14 +3137,27 @@ async function loadUserQuote(username) {
     const quoteContainer = document.getElementById(`user-quote-${username}`);
     if (!quoteContainer) return;
     
+    console.log('Loading quote for user:', username);
+    
     try {
         const response = await fetch(`${API_BASE}/stats/users/${encodeURIComponent(username)}/quote`);
-        if (!response.ok) throw new Error('Failed to fetch quote');
+        console.log('Quote API response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                // User has no quotable messages
+                console.log('No quotable messages found for user:', username);
+                displayNoQuote(quoteContainer);
+                return;
+            }
+            throw new Error('Failed to fetch quote');
+        }
         
         const data = await response.json();
+        console.log('Quote API response data:', data);
         
-        if (data.success && data.quote) {
-            displayQuote(quoteContainer, data.quote);
+        if (data.success && data.data) {
+            displayQuote(quoteContainer, data.data);
         } else {
             displayNoQuote(quoteContainer);
         }
