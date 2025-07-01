@@ -85,14 +85,39 @@ export default new Command({
                 confirmMsg = `💰 DEV AWARD: $${amount} to ${canonicalTarget} (${reason}) | New balance: $${newBalance.balance}`;
             }
             
-            bot.sendPrivateMessage(message.username, confirmMsg);
+            // Send confirmation to admin (use message.roomId if available, or first active room)
+            const roomId = message.roomId || (bot.rooms && bot.rooms.size > 0 ? bot.rooms.keys().next().value : null);
+            if (bot.rooms && roomId) {
+                bot.sendPrivateMessage(message.username, confirmMsg, roomId);
+            } else {
+                bot.sendPrivateMessage(message.username, confirmMsg);
+            }
             
             // Also notify the recipient if they're not dazza and online
             if (targetUser.toLowerCase() !== bot.username.toLowerCase()) {
-                const onlineUsers = Array.from(bot.userlist.values());
-                const targetOnline = onlineUsers.find(u => u.name.toLowerCase() === canonicalTarget.toLowerCase());
+                // For multi-room bot, check if user is online in any room
+                let targetOnline = false;
+                
+                if (bot.rooms) {
+                    // Multi-room bot
+                    for (const [roomId, roomContext] of bot.rooms) {
+                        if (roomContext.hasUser(canonicalTarget)) {
+                            targetOnline = true;
+                            break;
+                        }
+                    }
+                } else if (bot.userlist) {
+                    // Single-room bot (backward compatibility)
+                    const onlineUsers = Array.from(bot.userlist.values());
+                    targetOnline = onlineUsers.find(u => u.name.toLowerCase() === canonicalTarget.toLowerCase());
+                }
+                
                 if (targetOnline) {
-                    bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`);
+                    if (bot.rooms && roomId) {
+                        bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`, roomId);
+                    } else {
+                        bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`);
+                    }
                 }
             }
             
@@ -103,7 +128,12 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Award command error:', error);
-            bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate');
+            // Send error message with room context
+            if (bot.rooms && roomId) {
+                bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate', roomId);
+            } else {
+                bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate');
+            }
             return { success: false };
         }
     }
