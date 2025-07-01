@@ -60,26 +60,27 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args[0]) {
-            bot.sendMessage('seen who mate?');
+            bot.sendMessage(message.roomId, 'seen who mate?');
             return { success: true };
         }
         
         const targetUser = args[0];
         
-        // Check if user is currently online
-        const onlineUser = bot.userlist.get(targetUser.toLowerCase());
+        // Check if user is currently online in this room
+        const roomUserlist = bot.getUserlistForRoom(message.roomId);
+        const onlineUser = roomUserlist.get(targetUser.toLowerCase());
         if (onlineUser) {
             const response = getRandomResponse(onlineResponses, { user: targetUser });
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
             return { success: true };
         }
         
         try {
-            const stats = await bot.db.getUserStats(targetUser);
+            const stats = await bot.db.getUserStats(targetUser, message.roomId);
             
             if (!stats) {
                 const response = getRandomResponse(neverSeenResponses, { user: targetUser });
-                bot.sendMessage(response);
+                bot.sendMessage(message.roomId, response);
                 return { success: true };
             }
             
@@ -88,12 +89,12 @@ export default new Command({
                 user: stats.username, 
                 time: lastSeenAgo 
             });
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
             
             return { success: true };
         } catch (error) {
             console.error('Seen command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

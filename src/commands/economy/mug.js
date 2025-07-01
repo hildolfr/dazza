@@ -151,7 +151,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -164,7 +164,7 @@ export default new Command({
             }
 
             if (args.length === 0) {
-                bot.sendMessage('who ya muggin? specify a target - !mug <username>');
+                bot.sendMessage(message.roomId, 'who ya muggin? specify a target - !mug <username>');
                 return { success: false };
             }
 
@@ -172,7 +172,7 @@ export default new Command({
             
             // Can't mug yourself
             if (targetUsername === message.username.toLowerCase()) {
-                bot.sendMessage(`-${message.username} tries to mug themselves... what a fuckin idiot`);
+                bot.sendMessage(message.roomId, `-${message.username} tries to mug themselves... what a fuckin idiot`);
                 return { success: false };
             }
 
@@ -192,7 +192,7 @@ export default new Command({
                         `-${message.username} you need ${hours}h ${minutes}m before your next crime spree`
                     ];
                     
-                    bot.sendMessage(cooldownMessages[Math.floor(Math.random() * cooldownMessages.length)]);
+                    bot.sendMessage(message.roomId, cooldownMessages[Math.floor(Math.random() * cooldownMessages.length)]);
                     return { success: false };
                 }
             }
@@ -216,12 +216,12 @@ export default new Command({
                         await bot.heistManager.updateUserEconomy('dazza', -amount, 0);
                         await bot.heistManager.updateUserEconomy(message.username, amount, 5); // +5 trust for balls
                         
-                        bot.sendMessage(`HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
+                        bot.sendMessage(message.roomId, `HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
                         
                         // Update mug stats
                         await updateMugStats(bot.db, message.username, targetUsername, true, amount);
                     } else {
-                        bot.sendMessage(`-${message.username} tried to mug dazza but he's broke as usual`);
+                        bot.sendMessage(message.roomId, `-${message.username} tried to mug dazza but he's broke as usual`);
                     }
                 } else {
                     // Dazza reversal - he mugs you back
@@ -239,12 +239,12 @@ export default new Command({
                         reversalMsg = reversalMsg.replace('-attacker', `-${message.username}`);
                         reversalMsg = reversalMsg.replace('-amount', reversalAmount);
                         
-                        bot.sendMessage(`${reversalMsg} (-${message.username} -2 trust)`);
+                        bot.sendMessage(message.roomId, `${reversalMsg} (-${message.username} -2 trust)`);
                         
                         // Update stats
                         await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount);
                     } else {
-                        bot.sendMessage(`*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
+                        bot.sendMessage(message.roomId, `*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
                         await updateMugStats(bot.db, message.username, 'dazza', false, 0);
                     }
                 }
@@ -255,7 +255,7 @@ export default new Command({
             // Check if target exists in the channel
             const targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
             if (!targetInChannel) {
-                bot.sendMessage(`can't find ${targetUsername} in here, they probably legged it`);
+                bot.sendMessage(message.roomId, `can't find ${targetUsername} in here, they probably legged it`);
                 return { success: false };
             }
 
@@ -265,7 +265,7 @@ export default new Command({
             
             // Check if victim is broke
             if (victimEcon.balance <= 0) {
-                bot.sendMessage(`-${targetUsername} is already broke as fuck, nothing to mug`);
+                bot.sendMessage(message.roomId, `-${targetUsername} is already broke as fuck, nothing to mug`);
                 return { success: false };
             }
 
@@ -273,7 +273,7 @@ export default new Command({
             const victimAFK = bot.isUserAFK(targetUsername);
             
             // Announce the mugging attempt (ping the victim)
-            bot.sendMessage(`-${message.username} is trying to mug ${targetUsername}!`);
+            bot.sendMessage(message.roomId, `-${message.username} is trying to mug ${targetUsername}!`);
             
             // Set up response window (60 seconds)
             let victimResponded = false;
@@ -289,7 +289,7 @@ export default new Command({
                             `shit! -${targetUsername} saw ya -${message.username}! they're ready to defend`,
                             `-${targetUsername} spotted the mugging attempt! odds just turned against -${message.username}`
                         ];
-                        bot.sendMessage(alertMessages[Math.floor(Math.random() * alertMessages.length)]);
+                        bot.sendMessage(message.roomId, alertMessages[Math.floor(Math.random() * alertMessages.length)]);
                     }
                 }
             };
@@ -321,7 +321,7 @@ export default new Command({
                         .replace('-victim', `-${targetUsername}`)
                         .replace('-fine', fine);
                     
-                    bot.sendMessage(`${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
+                    bot.sendMessage(message.roomId, `${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
                     await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
                     return { success: true };
@@ -352,7 +352,7 @@ export default new Command({
                         .replace('-amount', mugAmount)
                         .replace('-victim', `-${targetUsername}`);
                     
-                    bot.sendMessage(`${successMsg} (-${message.username} +2 trust, -${targetUsername} -1 trust)`);
+                    bot.sendMessage(message.roomId, `${successMsg} (-${message.username} +2 trust, -${targetUsername} -1 trust)`);
                     
                     // Mock if zeroed out
                     if (newVictimBalance.balance === 0) {
@@ -360,7 +360,7 @@ export default new Command({
                             const mockMsg = brokeVictimMockery[Math.floor(Math.random() * brokeVictimMockery.length)]
                                 .replace('-victim', `-${targetUsername}`)
                                 .replace('-attacker', `-${message.username}`);
-                            bot.sendMessage(mockMsg);
+                            bot.sendMessage(message.roomId, mockMsg);
                         }, 2000);
                     }
                     
@@ -380,7 +380,7 @@ export default new Command({
                     .replace('-victim', `-${targetUsername}`)
                     .replace('-fine', fine);
                 
-                bot.sendMessage(`${failMsg} (-${message.username} -2 trust)`);
+                bot.sendMessage(message.roomId, `${failMsg} (-${message.username} -2 trust)`);
                 
                 await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
             }
@@ -389,7 +389,7 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Mug command error:', error);
-            bot.sendMessage('something went wrong with the mugging');
+            bot.sendMessage(message.roomId, 'something went wrong with the mugging');
             return { success: false };
         }
     }

@@ -22,7 +22,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendMessage('heist system not initialized yet');
+                bot.sendMessage(message.roomId, 'heist system not initialized yet');
                 return { success: false };
             }
 
@@ -32,7 +32,7 @@ export default new Command({
             
             // Allow forcing from IDLE or COOLDOWN states
             if (currentState !== states.IDLE && currentState !== states.COOLDOWN) {
-                bot.sendMessage(`can't force heist - already in ${currentState} state`);
+                bot.sendMessage(message.roomId, `can't force heist - already in ${currentState} state`);
                 return { success: false };
             }
             
@@ -54,16 +54,16 @@ export default new Command({
             }
 
             // Force start the heist
-            bot.logger.info(`Heist force-triggered by ${message.username}`);
-            await bot.heistManager.startHeist();
+            bot.logger.info(`Heist force-triggered by ${message.username} in room ${message.roomId}`);
+            await bot.heistManager.startHeist(message.roomId);
 
             // The heist manager will handle scheduling the next one after completion
-            bot.sendMessage('forced heist trigger - testing mode activated');
+            bot.sendMessage(message.roomId, 'forced heist trigger - testing mode activated');
 
             return { success: true };
         } catch (error) {
             bot.logger.error('Force heist command error:', error);
-            bot.sendMessage('failed to force trigger heist: ' + error.message);
+            bot.sendMessage(message.roomId, 'failed to force trigger heist: ' + error.message);
             return { success: false };
         }
     }

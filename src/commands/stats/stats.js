@@ -13,18 +13,18 @@ export default new Command({
         const targetUser = args[0] || message.username;
         
         try {
-            const stats = await bot.db.getUserStats(targetUser);
+            const stats = await bot.db.getUserStats(targetUser, message.roomId);
             
             if (!stats) {
-                bot.sendMessage(`never heard of ${targetUser} mate`);
+                bot.sendMessage(message.roomId, `never heard of ${targetUser} mate`);
                 return { success: true };
             }
             
             const firstSeenAgo = formatDuration(Date.now() - stats.first_seen);
             const lastSeenAgo = formatDuration(Date.now() - stats.last_seen);
             
-            // Get bong count for user
-            const bongCount = await bot.db.getUserBongCount(targetUser);
+            // Get bong count for user in this room
+            const bongCount = await bot.db.getUserBongCount(targetUser, message.roomId);
             
             // Array of crude responses that dynamically incorporate stats
             const responses = [
@@ -53,12 +53,12 @@ export default new Command({
             
             // Pick a random response
             const response = responses[Math.floor(Math.random() * responses.length)];
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
             
             return { success: true };
         } catch (error) {
             console.error('Stats command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

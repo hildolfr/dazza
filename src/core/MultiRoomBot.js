@@ -228,8 +228,18 @@ export class MultiRoomBot extends EventEmitter {
             await connection.connect();
             await connection.joinChannel(roomConfig.channel || roomId);
             
+            // Login if credentials are provided
+            if (this.config.bot.username && this.config.bot.password) {
+                await connection.login(this.config.bot.username, this.config.bot.password);
+                this.logger.info(`Logged in to room: ${roomId}`);
+                
+                // Wait 2 seconds after login before processing messages
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
             roomContext.connected = true;
             roomContext.joinedChannel = true;
+            roomContext.authenticated = true;
             
             this.logger.info(`Successfully joined room: ${roomId}`);
         } catch (error) {
@@ -357,6 +367,17 @@ export class MultiRoomBot extends EventEmitter {
     }
     
     /**
+     * Get userlist for a specific room
+     */
+    getUserlistForRoom(roomId) {
+        const roomContext = this.rooms.get(roomId);
+        if (!roomContext) {
+            return new Map();
+        }
+        return roomContext.userlist;
+    }
+    
+    /**
      * Execute a command in a specific room context
      */
     async executeCommand(roomId, commandName, message, args) {
@@ -475,7 +496,7 @@ export class MultiRoomBot extends EventEmitter {
      */
     async checkReminders() {
         try {
-            const reminders = await this.db.getAndDeleteDueReminders();
+            const reminders = await this.db.getDueReminders();
             
             for (const reminder of reminders) {
                 const roomContext = this.rooms.get(reminder.room_id);
@@ -484,12 +505,29 @@ export class MultiRoomBot extends EventEmitter {
                     continue;
                 }
                 
-                // Check if user is in the room
-                if (roomContext.hasUser(reminder.username)) {
+                let delivered = false;
+                
+                // Check if it's a self-reminder
+                if (reminder.to_user === '@me') {
                     const timeAgo = formatDuration(Date.now() - reminder.set_at);
                     this.sendMessage(reminder.room_id, 
-                        `Oi -${reminder.username}, ${timeAgo} ago you wanted me to remind ya: ${reminder.message}`
+                        `Oi -${reminder.from_user}, ${timeAgo} ago you wanted me to remind ya: ${reminder.message}`
                     );
+                    delivered = true;
+                } else {
+                    // Check if target user is in the room
+                    if (roomContext.hasUser(reminder.to_user)) {
+                        const timeAgo = formatDuration(Date.now() - reminder.set_at);
+                        this.sendMessage(reminder.room_id, 
+                            `-${reminder.to_user} oi listen up, -${reminder.from_user} wanted me to tell ya: ${reminder.message}`
+                        );
+                        delivered = true;
+                    }
+                }
+                
+                // Only mark as delivered if actually sent
+                if (delivered) {
+                    await this.db.markReminderDelivered(reminder.id);
                 }
             }
         } catch (error) {

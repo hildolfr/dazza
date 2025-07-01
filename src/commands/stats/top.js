@@ -43,17 +43,17 @@ export default new Command({
             const publicMessage = publicAcks[Math.floor(Math.random() * publicAcks.length)];
             
             // Send PM with the URL
-            bot.sendPrivateMessage(message.username, pmMessage);
+            bot.sendPrivateMessage(message.username, pmMessage, message.roomId);
             
             // If command was used in public chat, acknowledge it
             if (!message.isPM) {
-                bot.sendMessage(publicMessage);
+                bot.sendMessage(message.roomId, publicMessage);
             }
             
             return { success: true };
         } catch (error) {
             console.error('Top command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

@@ -46,9 +46,17 @@ export const videoPayoutSchema = {
                 start_time INTEGER NOT NULL,
                 end_time INTEGER,
                 duration INTEGER,
+                room_id TEXT DEFAULT 'default',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        
+        // Add room_id column if it doesn't exist (for migration)
+        try {
+            await db.run(`ALTER TABLE video_sessions ADD COLUMN room_id TEXT DEFAULT 'default'`);
+        } catch (e) {
+            // Column already exists, ignore error
+        }
 
         // Track user participation in video sessions
         await db.run(`
@@ -67,6 +75,7 @@ export const videoPayoutSchema = {
 
         // Create indexes for performance
         await db.run('CREATE INDEX IF NOT EXISTS idx_video_sessions_start_time ON video_sessions(start_time)');
+        await db.run('CREATE INDEX IF NOT EXISTS idx_video_sessions_room_id ON video_sessions(room_id)');
         await db.run('CREATE INDEX IF NOT EXISTS idx_video_watchers_session_id ON video_watchers(session_id)');
         await db.run('CREATE INDEX IF NOT EXISTS idx_video_watchers_username ON video_watchers(username)');
         await db.run('CREATE INDEX IF NOT EXISTS idx_video_watchers_rewarded ON video_watchers(rewarded)');

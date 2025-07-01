@@ -10,7 +10,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         try {
-            const stats = await bot.db.getChannelStats();
+            const stats = await bot.db.getChannelStats(message.roomId);
             
             const statsMessage = [
                 `Channel's fuckin stats:`,
@@ -22,12 +22,12 @@ export default new Command({
                 `${stats.totalBongs} total bongs ripped`
             ].filter(s => s).join(' | ');
             
-            bot.sendMessage(statsMessage);
+            bot.sendMessage(message.roomId, statsMessage);
             
             return { success: true };
         } catch (error) {
             console.error('Channelstats command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

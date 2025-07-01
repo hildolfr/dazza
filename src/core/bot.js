@@ -1203,7 +1203,29 @@ export class CyTubeBot extends EventEmitter {
         }
     }
 
-    sendMessage(message, context = null) {
+    /**
+     * Get userlist for a specific room (compatibility method for multi-room support)
+     * Single room bot always returns the main userlist
+     */
+    getUserlistForRoom(roomId) {
+        return this.userlist;
+    }
+
+    sendMessage(messageOrRoomId, messageOrContext = null, optionalContext = null) {
+        // Handle both old format (message, context) and new format (roomId, message, context)
+        let message, context;
+        
+        // If first param looks like a room ID (contains 'fatpizza' or similar), use new format
+        if (typeof messageOrRoomId === 'string' && (messageOrRoomId.includes('fatpizza') || messageOrRoomId.includes('/'))) {
+            // New format: (roomId, message, context)
+            message = messageOrContext;
+            context = optionalContext;
+        } else {
+            // Old format: (message, context)
+            message = messageOrRoomId;
+            context = messageOrContext;
+        }
+        
         // Check if we're in a PM context and should send PM response
         if (context && context.isPM && context.pmResponses) {
             this.sendPrivateMessage(context.username, message);
@@ -1919,7 +1941,22 @@ export class CyTubeBot extends EventEmitter {
         }
     }
     
-    sendPrivateMessage(toUser, message) {
+    sendPrivateMessage(toUserOrToUser, messageOrRoomId = null, optionalMessage = null) {
+        // Handle both old format (toUser, message) and new format (toUser, message, roomId)
+        let toUser, message;
+        
+        // Determine format based on number of arguments and their types
+        if (optionalMessage !== null) {
+            // New format: (toUser, message, roomId)
+            toUser = toUserOrToUser;
+            message = messageOrRoomId;
+            // roomId is ignored in single-room bot
+        } else {
+            // Old format: (toUser, message)
+            toUser = toUserOrToUser;
+            message = messageOrRoomId;
+        }
+        
         if (!this.connection.isConnected()) {
             this.logger.error('Cannot send PM: not connected');
             return;

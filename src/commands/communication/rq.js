@@ -10,21 +10,21 @@ export default new Command({
     
     async handler(bot, message, args) {
         try {
-            const quote = await bot.db.getRandomMessage();
+            const quote = await bot.db.getRandomMessage(message.roomId);
             
             if (!quote) {
-                bot.sendMessage('fuck all quotes saved yet, buncha quiet cunts in here');
+                bot.sendMessage(message.roomId, 'fuck all quotes saved yet, buncha quiet cunts in here');
                 return { success: true };
             }
             
             const timestamp = formatTimestamp(quote.timestamp);
             const fancyQuote = toFancyText(quote.message);
-            bot.sendMessage(`"${fancyQuote}" - -${quote.username} (${timestamp})`);
+            bot.sendMessage(message.roomId, `"${fancyQuote}" - -${quote.username} (${timestamp})`);
             
             return { success: true };
         } catch (error) {
             console.error('RQ command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

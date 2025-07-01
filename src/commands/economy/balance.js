@@ -25,7 +25,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -44,7 +44,7 @@ export default new Command({
                 ];
                 
                 // Send public acknowledgment
-                bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
+                bot.sendMessage(message.roomId, publicResponses[Math.floor(Math.random() * publicResponses.length)]);
             }
             
             // Format private message with balance details
@@ -78,7 +78,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

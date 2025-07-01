@@ -21,7 +21,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -32,7 +32,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', ''));
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -46,7 +46,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', ''));
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -63,7 +63,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
                 } else {
-                    bot.sendMessage(selectedMsg);
+                    bot.sendMessage(message.roomId, selectedMsg);
                 }
                 return { success: false };
             }
@@ -127,7 +127,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, dazzaResponse.replace(/-/g, ''));
                 } else {
-                    bot.sendMessage(dazzaResponse);
+                    bot.sendMessage(message.roomId, dazzaResponse);
                 }
                 
                 return { success: true };
@@ -146,7 +146,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
                 } else {
-                    bot.sendMessage(selectedMsg);
+                    bot.sendMessage(message.roomId, selectedMsg);
                 }
                 return { success: false };
             }
@@ -210,7 +210,7 @@ export default new Command({
                     bot.sendPrivateMessage(properTargetUsername, `💰 ${message.username} just sent you $${amount}! Your new balance: $${newTargetBalance.balance}`);
                 }
             } else {
-                bot.sendMessage(successMsg);
+                bot.sendMessage(message.roomId, successMsg);
             }
 
             return { success: true };
