@@ -30,6 +30,13 @@ export const RoomEventHandlers = {
         // Update room activity
         await this.db.run('UPDATE rooms SET last_active = ? WHERE id = ?', [Date.now(), roomId]);
         
+        // Handle video payout userlist update for this room
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserlistUpdate(roomId).catch(err =>
+                this.logger.error(`Failed to update video payout userlist for room ${roomId}`, { error: err.message })
+            );
+        }
+        
         // Emit event
         this.emit('room:userlist', { roomId, users });
     },
@@ -68,6 +75,13 @@ export const RoomEventHandlers = {
         // Check if we should greet the user
         await this.checkAndGreetUser(roomId, user);
         
+        // Handle video payout for this room
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserJoin(user.name, roomId).catch(err =>
+                this.logger.error(`Failed to track user join for video payout in room ${roomId}`, { error: err.message, user: user.name })
+            );
+        }
+        
         // Emit event
         this.emit('room:userJoin', { roomId, user });
     },
@@ -99,6 +113,13 @@ export const RoomEventHandlers = {
         `, [Date.now(), roomId, canonicalUsername]);
         
         this.logger.info(`User left room ${roomId}: ${username}`);
+        
+        // Handle video payout for this room
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleUserLeave(username, roomId).catch(err =>
+                this.logger.error(`Failed to track user leave for video payout in room ${roomId}`, { error: err.message, user: username })
+            );
+        }
         
         // Emit event
         this.emit('room:userLeave', { roomId, username });
@@ -212,9 +233,15 @@ export const RoomEventHandlers = {
         
         this.logger.info(`Media changed in room ${roomId}: ${media.title}`);
         
-        // Emit events for video payout system
+        // Handle video payout for this room
+        if (this.videoPayoutManager) {
+            this.videoPayoutManager.handleMediaChange(media, roomId).catch(err =>
+                this.logger.error(`Failed to handle media change for video payout in room ${roomId}`, { error: err.message })
+            );
+        }
+        
+        // Emit events for other systems
         this.emit('room:mediaChange', { roomId, media });
-        this.videoPayoutManager.emit('changeMedia', { roomId, media });
         
         // Emit event for API
         this.emit('media:change', {
@@ -279,9 +306,6 @@ export const RoomEventHandlers = {
      */
     handleQueue(roomId, data) {
         this.logger.debug(`Queue event in room ${roomId}:`, data);
-        
-        // Emit event for video payout system
-        this.videoPayoutManager.emit('queue', { roomId, ...data });
         
         // Emit general event
         this.emit('room:queue', { roomId, data });

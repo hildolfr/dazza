@@ -22,12 +22,13 @@ export default new Command({
                     COUNT(*) as total_messages
                 FROM messages
                 WHERE timestamp >= ?
+                AND room_id = ?
                 GROUP BY day_of_week, hour
                 ORDER BY total_messages DESC
-            `, [oneWeekAgo]);
+            `, [oneWeekAgo, message.roomId]);
             
             if (hourlyActivity.length === 0) {
-                bot.sendMessage(`not enough data to show peak times -${message.username}`);
+                bot.sendMessage(message.roomId, `not enough data to show peak times -${message.username}`);
                 return { success: true };
             }
             
@@ -56,15 +57,15 @@ export default new Command({
                 `Slidin' into ya DMs with the peak hours -${message.username}`
             ];
             
-            bot.sendMessage(publicResponses[Math.floor(Math.random() * publicResponses.length)]);
+            bot.sendMessage(message.roomId, publicResponses[Math.floor(Math.random() * publicResponses.length)]);
             
             // Send actual results via PM
-            bot.sendPrivateMessage(message.username, response);
+            bot.sendPrivateMessage(message.username, response, message.roomId);
             return { success: true };
             
         } catch (error) {
             bot.logger.error('Error in peak command:', error);
-            bot.sendMessage("fucked up checkin' the peak times");
+            bot.sendMessage(message.roomId, "fucked up checkin' the peak times");
             return { success: false };
         }
     }

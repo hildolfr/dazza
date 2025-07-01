@@ -9,16 +9,14 @@ export class VideoPayoutManager extends EventEmitter {
         this.bot = bot;
         this.logger = createLogger('VideoPayoutManager');
         
-        // Current session tracking
-        this.currentSession = null;
-        this.currentWatchers = new Map(); // username -> join_time
-        this.firstMediaChangeIgnored = false;
+        // Current session tracking - per room
+        this.roomSessions = new Map(); // roomId -> { currentSession, currentWatchers, firstMediaChangeIgnored }
         
-        // Reconciliation tracking
-        this.reconciliationTimeout = null;
-        this.reconciliationAttempts = 0;
-        this.maxReconciliationAttempts = 3;
-        this.lastUserlistUpdate = Date.now();
+        // Initialize default room for backward compatibility
+        this.initRoom('default');
+        
+        // Reconciliation tracking - per room
+        this.roomReconciliation = new Map(); // roomId -> { timeout, attempts, lastUpdate }
         
         // Configuration
         this.config = {
@@ -28,73 +26,127 @@ export class VideoPayoutManager extends EventEmitter {
         };
     }
 
+    initRoom(roomId) {
+        if (!this.roomSessions.has(roomId)) {
+            this.roomSessions.set(roomId, {
+                currentSession: null,
+                currentWatchers: new Map(),
+                firstMediaChangeIgnored: false
+            });
+            
+            this.roomReconciliation.set(roomId, {
+                timeout: null,
+                attempts: 0,
+                lastUpdate: Date.now()
+            });
+        }
+    }
+    
+    getRoomData(roomId) {
+        // Ensure room is initialized
+        this.initRoom(roomId);
+        return this.roomSessions.get(roomId);
+    }
+    
+    getRoomReconciliation(roomId) {
+        // Ensure room is initialized
+        this.initRoom(roomId);
+        return this.roomReconciliation.get(roomId);
+    }
+    
     async init() {
         // Check for any incomplete sessions from previous run
         const incompleteSessions = await this.db.all(`
             SELECT * FROM video_sessions 
             WHERE end_time IS NULL 
-            ORDER BY start_time DESC 
-            LIMIT 1
+            ORDER BY start_time DESC
         `);
 
         if (incompleteSessions.length > 0) {
-            const session = incompleteSessions[0];
-            const sessionAge = Date.now() - session.start_time;
-            const TWO_HOURS = 2 * 60 * 60 * 1000;
+            // Group sessions by room
+            const sessionsByRoom = new Map();
             
-            // Check if session is stale (older than 2 hours)
-            if (sessionAge > TWO_HOURS) {
-                this.logger.info(`Found stale video session (${Math.round(sessionAge / 60000)} minutes old), marking as abandoned: ${session.media_title}`);
-                
-                // Mark session as ended without rewards
-                await this.db.run(
-                    'UPDATE video_sessions SET end_time = ?, duration = ? WHERE id = ?',
-                    [Date.now(), sessionAge, session.id]
-                );
-                
-                // Mark all watchers as not rewarded due to stale session
-                await this.db.run(
-                    'UPDATE video_watchers SET leave_time = ? WHERE session_id = ? AND leave_time IS NULL',
-                    [Date.now(), session.id]
-                );
-                
-                this.logger.info('Stale session cleaned up, starting fresh');
-            } else {
-                this.logger.info(`Resuming video session (${Math.round(sessionAge / 60000)} minutes old): ${session.media_title} (ID: ${session.id})`);
-                
-                // Restore session
-                this.currentSession = {
-                    id: session.id,
-                    startTime: session.start_time,
-                    mediaInfo: {
-                        id: session.media_id,
-                        title: session.media_title
-                    }
-                };
-                
-                // Restore watchers who haven't left
-                const watchers = await this.db.all(`
-                    SELECT DISTINCT username, join_time 
-                    FROM video_watchers 
-                    WHERE session_id = ? AND leave_time IS NULL AND rewarded = 0
-                `, [session.id]);
-                
-                for (const watcher of watchers) {
-                    // Check if they're still in the channel
-                    const userlist = this.bot.getUserlist();
-                    if (userlist.has(watcher.username.toLowerCase())) {
-                        this.currentWatchers.set(watcher.username, watcher.join_time);
-                        this.logger.debug(`Restored watcher: ${watcher.username}`);
-                    } else {
-                        // Mark them as left since they're not in channel
-                        await this.removeWatcher(watcher.username);
-                    }
+            for (const session of incompleteSessions) {
+                const roomId = session.room_id || 'default';
+                if (!sessionsByRoom.has(roomId)) {
+                    sessionsByRoom.set(roomId, []);
                 }
+                sessionsByRoom.get(roomId).push(session);
+            }
+            
+            // Process each room's incomplete sessions
+            for (const [roomId, sessions] of sessionsByRoom) {
+                const session = sessions[0]; // Take the most recent
+                const sessionAge = Date.now() - session.start_time;
+                const TWO_HOURS = 2 * 60 * 60 * 1000;
                 
-                this.logger.info(`Restored ${this.currentWatchers.size} active watchers`);
+                // Initialize room
+                this.initRoom(roomId);
+                const roomData = this.getRoomData(roomId);
                 
-                // Don't ignore first media change since we're resuming
-                this.firstMediaChangeIgnored = true;
+                // Check if session is stale (older than 2 hours)
+                if (sessionAge > TWO_HOURS) {
+                    this.logger.info(`[${roomId}] Found stale video session (${Math.round(sessionAge / 60000)} minutes old), marking as abandoned: ${session.media_title}`);
+                    
+                    // Mark session as ended without rewards
+                    await this.db.run(
+                        'UPDATE video_sessions SET end_time = ?, duration = ? WHERE id = ?',
+                        [Date.now(), sessionAge, session.id]
+                    );
+                    
+                    // Mark all watchers as not rewarded due to stale session
+                    await this.db.run(
+                        'UPDATE video_watchers SET leave_time = ? WHERE session_id = ? AND leave_time IS NULL',
+                        [Date.now(), session.id]
+                    );
+                    
+                    this.logger.info(`[${roomId}] Stale session cleaned up, starting fresh`);
+                } else {
+                    this.logger.info(`[${roomId}] Resuming video session (${Math.round(sessionAge / 60000)} minutes old): ${session.media_title} (ID: ${session.id})`);
+                    
+                    // Restore session
+                    roomData.currentSession = {
+                        id: session.id,
+                        startTime: session.start_time,
+                        mediaInfo: {
+                            id: session.media_id,
+                            title: session.media_title
+                        }
+                    };
+                
+                    // Restore watchers who haven't left
+                    const watchers = await this.db.all(`
+                        SELECT DISTINCT username, join_time 
+                        FROM video_watchers 
+                        WHERE session_id = ? AND leave_time IS NULL AND rewarded = 0
+                    `, [session.id]);
+                    
+                    for (const watcher of watchers) {
+                        // Check if they're still in the channel
+                        let userlist;
+                        if (this.bot.getUserlist) {
+                            // Single room bot
+                            userlist = this.bot.getUserlist();
+                        } else if (this.bot.getRoom) {
+                            // Multi-room bot
+                            const room = this.bot.getRoom(roomId);
+                            userlist = room ? room.userlist : null;
+                        }
+                        
+                        if (userlist && userlist.has(watcher.username.toLowerCase())) {
+                            roomData.currentWatchers.set(watcher.username, watcher.join_time);
+                            this.logger.debug(`[${roomId}] Restored watcher: ${watcher.username}`);
+                        } else {
+                            // Mark them as left since they're not in channel
+                            await this.removeWatcher(watcher.username, roomId);
+                        }
+                    }
+                    
+                    this.logger.info(`[${roomId}] Restored ${roomData.currentWatchers.size} active watchers`);
+                    
+                    // Don't ignore first media change since we're resuming
+                    roomData.firstMediaChangeIgnored = true;
+                }
             }
         }
         
@@ -109,124 +161,134 @@ export class VideoPayoutManager extends EventEmitter {
                lowerUsername.startsWith('[') && lowerUsername.endsWith(']');
     }
 
-    async handleMediaChange(mediaInfo) {
+    async handleMediaChange(mediaInfo, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
         // Ignore the first media change as requested
-        if (!this.firstMediaChangeIgnored) {
-            this.firstMediaChangeIgnored = true;
-            this.logger.debug('Ignoring first media change');
+        if (!roomData.firstMediaChangeIgnored) {
+            roomData.firstMediaChangeIgnored = true;
+            this.logger.debug(`[${roomId}] Ignoring first media change`);
             return;
         }
 
         // End current session and start new one
-        if (this.currentSession) {
-            await this.endSession();
+        if (roomData.currentSession) {
+            await this.endSession(roomId);
         }
 
-        await this.startSession(mediaInfo);
+        await this.startSession(mediaInfo, roomId);
     }
 
-    async startSession(mediaInfo) {
+    async startSession(mediaInfo, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
         const startTime = Date.now();
         
-        // Create new session
+        // Create new session with room_id
         const result = await this.db.run(
-            'INSERT INTO video_sessions (media_id, media_title, start_time) VALUES (?, ?, ?)',
-            [mediaInfo.id || 'unknown', mediaInfo.title || 'Untitled', startTime]
+            'INSERT INTO video_sessions (media_id, media_title, start_time, room_id) VALUES (?, ?, ?, ?)',
+            [mediaInfo.id || 'unknown', mediaInfo.title || 'Untitled', startTime, roomId]
         );
 
-        this.currentSession = {
+        roomData.currentSession = {
             id: result.lastID,
             startTime: startTime,
             mediaInfo: mediaInfo
         };
 
         // Clear existing watchers for new session
-        this.currentWatchers.clear();
+        roomData.currentWatchers.clear();
         
         // Initial reconciliation (might be incomplete due to race condition)
-        await this.reconcileWatchers('initial');
+        await this.reconcileWatchers('initial', roomId);
         
         // Schedule additional reconciliation attempts
-        this.scheduleReconciliation();
+        this.scheduleReconciliation(roomId);
 
-        this.logger.info(`Started new video session: ${mediaInfo.title || 'Untitled'} with ${this.currentWatchers.size} watchers (reconciliation pending)`);
+        this.logger.info(`[${roomId}] Started new video session: ${mediaInfo.title || 'Untitled'} with ${roomData.currentWatchers.size} watchers (reconciliation pending)`);
     }
 
-    async endSession() {
-        if (!this.currentSession) return;
+    async endSession(roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        const reconciliation = this.getRoomReconciliation(roomId);
+        
+        if (!roomData.currentSession) return;
 
         // Clear any pending reconciliation
-        if (this.reconciliationTimeout) {
-            clearTimeout(this.reconciliationTimeout);
-            this.reconciliationTimeout = null;
+        if (reconciliation.timeout) {
+            clearTimeout(reconciliation.timeout);
+            reconciliation.timeout = null;
         }
 
         const endTime = Date.now();
-        const duration = endTime - this.currentSession.startTime;
-        const halfwayMark = this.currentSession.startTime + (duration / 2);
+        const duration = endTime - roomData.currentSession.startTime;
+        const halfwayMark = roomData.currentSession.startTime + (duration / 2);
 
         // Update session end time and duration
         await this.db.run(
             'UPDATE video_sessions SET end_time = ?, duration = ? WHERE id = ?',
-            [endTime, duration, this.currentSession.id]
+            [endTime, duration, roomData.currentSession.id]
         );
 
         // Process rewards for eligible watchers
         let rewardCount = 0;
         let totalPayout = 0;
 
-        for (const [username, joinTime] of this.currentWatchers) {
+        for (const [username, joinTime] of roomData.currentWatchers) {
             // Check if user joined before halfway mark
             if (joinTime <= halfwayMark) {
-                const reward = await this.rewardUser(username, this.currentSession.id);
+                const reward = await this.rewardUser(username, roomData.currentSession.id);
                 if (reward > 0) {
                     rewardCount++;
                     totalPayout += reward;
                 }
             } else {
-                this.logger.debug(`Skipping ${username} - joined after halfway mark`);
+                this.logger.debug(`[${roomId}] Skipping ${username} - joined after halfway mark`);
             }
         }
 
-        this.logger.info(`Session ended: ${rewardCount} users rewarded, total payout: $${totalPayout}`);
-        this.currentSession = null;
-        this.currentWatchers.clear();
+        this.logger.info(`[${roomId}] Session ended: ${rewardCount} users rewarded, total payout: $${totalPayout}`);
+        roomData.currentSession = null;
+        roomData.currentWatchers.clear();
     }
 
-    async addWatcher(username, joinTime) {
-        if (!this.currentSession || this.isSystemUser(username)) return;
+    async addWatcher(username, joinTime, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
+        if (!roomData.currentSession || this.isSystemUser(username)) return;
 
         const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         
         // Check if watcher already exists for this session
         const existing = await this.db.get(
             'SELECT id FROM video_watchers WHERE session_id = ? AND username = ? AND leave_time IS NULL',
-            [this.currentSession.id, canonicalUsername]
+            [roomData.currentSession.id, canonicalUsername]
         );
         
         // Only insert if not already present
         if (!existing) {
             await this.db.run(
                 'INSERT INTO video_watchers (session_id, username, join_time) VALUES (?, ?, ?)',
-                [this.currentSession.id, canonicalUsername, joinTime]
+                [roomData.currentSession.id, canonicalUsername, joinTime]
             );
         }
 
-        this.currentWatchers.set(username, joinTime);
+        roomData.currentWatchers.set(username, joinTime);
     }
 
-    async removeWatcher(username) {
-        if (!this.currentSession || !this.currentWatchers.has(username)) return;
+    async removeWatcher(username, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
+        if (!roomData.currentSession || !roomData.currentWatchers.has(username)) return;
 
         const leaveTime = Date.now();
         const canonicalUsername = await normalizeUsernameForDb(this.bot, username);
         
         await this.db.run(
             'UPDATE video_watchers SET leave_time = ? WHERE session_id = ? AND LOWER(username) = LOWER(?) AND leave_time IS NULL',
-            [leaveTime, this.currentSession.id, canonicalUsername]
+            [leaveTime, roomData.currentSession.id, canonicalUsername]
         );
 
-        this.currentWatchers.delete(username);
+        roomData.currentWatchers.delete(username);
     }
 
     async rewardUser(username, sessionId) {
@@ -252,23 +314,27 @@ export class VideoPayoutManager extends EventEmitter {
         return rewardAmount;
     }
 
-    async handleUserJoin(username) {
-        if (!this.currentSession || this.isSystemUser(username)) return;
+    async handleUserJoin(username, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
+        if (!roomData.currentSession || this.isSystemUser(username)) return;
 
         // Just add the watcher with current time
         // The reconciliation process will handle race conditions
         const joinTime = Date.now();
-        if (!this.currentWatchers.has(username)) {
-            this.currentWatchers.set(username, joinTime);
-            await this.addWatcher(username, joinTime);
-            this.logger.debug(`${username} joined video session`);
+        if (!roomData.currentWatchers.has(username)) {
+            roomData.currentWatchers.set(username, joinTime);
+            await this.addWatcher(username, joinTime, roomId);
+            this.logger.debug(`[${roomId}] ${username} joined video session`);
         }
     }
 
-    async handleUserLeave(username) {
-        if (this.currentWatchers.has(username)) {
-            await this.removeWatcher(username);
-            this.logger.debug(`${username} left video session`);
+    async handleUserLeave(username, roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
+        if (roomData.currentWatchers.has(username)) {
+            await this.removeWatcher(username, roomId);
+            this.logger.debug(`[${roomId}] ${username} left video session`);
         }
     }
 
@@ -306,10 +372,24 @@ export class VideoPayoutManager extends EventEmitter {
         }
     }
     
-    async reconcileWatchers(source = 'reconciliation') {
-        if (!this.currentSession) return;
+    async reconcileWatchers(source = 'reconciliation', roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        
+        if (!roomData.currentSession) return;
 
-        const userlist = this.bot.getUserlist();
+        // Get userlist for the room
+        let userlist;
+        if (this.bot.getUserlist) {
+            // Single room bot
+            userlist = this.bot.getUserlist();
+        } else if (this.bot.getRoom) {
+            // Multi-room bot
+            const room = this.bot.getRoom(roomId);
+            userlist = room ? room.userlist : null;
+        }
+        
+        if (!userlist) return;
+        
         const currentUsers = new Set();
         let addedCount = 0;
         let removedCount = 0;
@@ -323,75 +403,92 @@ export class VideoPayoutManager extends EventEmitter {
 
         // Add new watchers who aren't tracked yet
         for (const username of currentUsers) {
-            if (!this.currentWatchers.has(username)) {
+            if (!roomData.currentWatchers.has(username)) {
                 // Use session start time for reconciled users to ensure they're eligible
                 // This handles the race condition where users were present but not tracked
-                const joinTime = this.currentSession.startTime;
-                this.currentWatchers.set(username, joinTime);
-                await this.addWatcher(username, joinTime);
+                const joinTime = roomData.currentSession.startTime;
+                roomData.currentWatchers.set(username, joinTime);
+                await this.addWatcher(username, joinTime, roomId);
                 addedCount++;
-                this.logger.debug(`Added watcher during ${source}: ${username}`);
+                this.logger.debug(`[${roomId}] Added watcher during ${source}: ${username}`);
             }
         }
 
         // Remove watchers who left
-        for (const [username, joinTime] of this.currentWatchers) {
+        for (const [username, joinTime] of roomData.currentWatchers) {
             if (!currentUsers.has(username)) {
-                await this.removeWatcher(username);
+                await this.removeWatcher(username, roomId);
                 removedCount++;
-                this.logger.debug(`Removed watcher during ${source}: ${username}`);
+                this.logger.debug(`[${roomId}] Removed watcher during ${source}: ${username}`);
             }
         }
 
         if (addedCount > 0 || removedCount > 0) {
-            this.logger.info(`Reconciliation (${source}): ${this.currentWatchers.size} watchers (+${addedCount}/-${removedCount})`);
+            this.logger.info(`[${roomId}] Reconciliation (${source}): ${roomData.currentWatchers.size} watchers (+${addedCount}/-${removedCount})`);
         }
     }
     
-    scheduleReconciliation() {
-        this.reconciliationAttempts = 0;
+    scheduleReconciliation(roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        const reconciliation = this.getRoomReconciliation(roomId);
+        
+        reconciliation.attempts = 0;
         
         const attemptReconciliation = async () => {
-            if (!this.currentSession || this.reconciliationAttempts >= this.maxReconciliationAttempts) {
+            if (!roomData.currentSession || reconciliation.attempts >= this.maxReconciliationAttempts) {
                 return;
             }
 
-            this.reconciliationAttempts++;
-            await this.reconcileWatchers(`attempt ${this.reconciliationAttempts}`);
+            reconciliation.attempts++;
+            await this.reconcileWatchers(`attempt ${reconciliation.attempts}`, roomId);
 
             // Schedule next attempt with exponential backoff
-            if (this.reconciliationAttempts < this.maxReconciliationAttempts) {
-                const delay = Math.pow(2, this.reconciliationAttempts) * 1000; // 2s, 4s, 8s
-                this.reconciliationTimeout = setTimeout(attemptReconciliation, delay);
+            if (reconciliation.attempts < this.maxReconciliationAttempts) {
+                const delay = Math.pow(2, reconciliation.attempts) * 1000; // 2s, 4s, 8s
+                reconciliation.timeout = setTimeout(attemptReconciliation, delay);
             }
         };
 
         // First reconciliation after 2 seconds
-        this.reconciliationTimeout = setTimeout(attemptReconciliation, 2000);
+        reconciliation.timeout = setTimeout(attemptReconciliation, 2000);
     }
     
-    async handleUserlistUpdate() {
-        this.lastUserlistUpdate = Date.now();
+    async handleUserlistUpdate(roomId = 'default') {
+        const roomData = this.getRoomData(roomId);
+        const reconciliation = this.getRoomReconciliation(roomId);
+        
+        reconciliation.lastUpdate = Date.now();
         
         // Reconcile whenever we get a userlist update
-        if (this.currentSession) {
-            await this.reconcileWatchers('userlist_update');
+        if (roomData.currentSession) {
+            await this.reconcileWatchers('userlist_update', roomId);
             
             // Cancel remaining scheduled reconciliations if we have watchers
-            if (this.currentWatchers.size > 0 && this.reconciliationTimeout) {
-                clearTimeout(this.reconciliationTimeout);
-                this.reconciliationTimeout = null;
-                this.logger.debug('Cancelled remaining reconciliation attempts - userlist updated');
+            if (roomData.currentWatchers.size > 0 && reconciliation.timeout) {
+                clearTimeout(reconciliation.timeout);
+                reconciliation.timeout = null;
+                this.logger.debug(`[${roomId}] Cancelled remaining reconciliation attempts - userlist updated`);
             }
         }
     }
     
     // Clean shutdown - preserve state but don't reward yet
     async shutdown() {
-        if (this.currentSession) {
-            this.logger.info(`Preserving video session state for: ${this.currentSession.mediaInfo.title}`);
-            // Don't end the session, just save current state
-            // The session will be resumed on next startup
+        // Clear all reconciliation timeouts
+        for (const [roomId, reconciliation] of this.roomReconciliation) {
+            if (reconciliation.timeout) {
+                clearTimeout(reconciliation.timeout);
+                reconciliation.timeout = null;
+            }
+        }
+        
+        // Log preserved sessions
+        for (const [roomId, roomData] of this.roomSessions) {
+            if (roomData.currentSession) {
+                this.logger.info(`[${roomId}] Preserving video session state for: ${roomData.currentSession.mediaInfo.title}`);
+                // Don't end the session, just save current state
+                // The session will be resumed on next startup
+            }
         }
     }
 }

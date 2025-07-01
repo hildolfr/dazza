@@ -28,14 +28,14 @@ const coinFlipCommand = {
 
             if (!bot.heistManager) {
                 const msg = 'coin flip table\'s broken mate';
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
 
             if (!bot.db) {
                 bot.logger.error('Coin flip: Database not available');
                 const msg = 'database is cooked mate, try again later';
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
 
@@ -44,14 +44,14 @@ const coinFlipCommand = {
             // Otherwise it's a new flip
             if (args.length === 0) {
                 const msg = 'gotta bet somethin mate - !coin_flip <amount> [username]';
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
 
             const amount = parseInt(args[0]);
             if (isNaN(amount) || amount < 1) {
                 const msg = 'invalid bet amount ya drongo';
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
 
@@ -64,13 +64,13 @@ const coinFlipCommand = {
                     username: message.username
                 });
                 const msg = 'couldn\'t check ya balance mate, try again';
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
             
             if (userBalance.balance < amount) {
                 const msg = `ya need $${amount} to flip mate, you've only got $${userBalance.balance}`;
-                bot.sendMessage(msg, message.isPM ? message.username : null);
+                bot.sendMessage(message.roomId, msg);
                 return { success: false };
             }
 
@@ -82,14 +82,14 @@ const coinFlipCommand = {
                 // Can't challenge yourself
                 if (challengedUser === message.username.toLowerCase()) {
                     const msg = 'can\'t flip against yaself ya numpty';
-                    bot.sendMessage(msg, message.isPM ? message.username : null);
+                    bot.sendMessage(message.roomId, msg);
                     return { success: false };
                 }
 
                 // Can't challenge bots
                 if (challengedUser === bot.username.toLowerCase() || challengedUser.startsWith('[')) {
                     const msg = 'bots don\'t gamble mate, try a real person';
-                    bot.sendMessage(msg, message.isPM ? message.username : null);
+                    bot.sendMessage(message.roomId, msg);
                     return { success: false };
                 }
 
@@ -107,7 +107,7 @@ const coinFlipCommand = {
                 args: args,
                 isPM: message?.isPM
             });
-            bot.sendMessage('coin dropped down a drain mate');
+            bot.sendMessage(message.roomId, 'coin dropped down a drain mate');
             return { success: false };
         }
     },
@@ -128,7 +128,7 @@ const coinFlipCommand = {
 
                 if (existingChallenge) {
                     await bot.db.run('ROLLBACK');
-                    bot.sendMessage('ya already got a challenge pending mate, wait for that one first');
+                    bot.sendMessage(message.roomId, 'ya already got a challenge pending mate, wait for that one first');
                     return { success: false };
                 }
 
@@ -136,7 +136,7 @@ const coinFlipCommand = {
                 const challengerBalance = await bot.heistManager.getUserBalance(message.username);
                 if (challengerBalance.balance < amount) {
                     await bot.db.run('ROLLBACK');
-                    bot.sendMessage(`ya don't have enough money mate, need $${amount} but only got $${challengerBalance.balance}`);
+                    bot.sendMessage(message.roomId, `ya don't have enough money mate, need $${amount} but only got $${challengerBalance.balance}`);
                     return { success: false };
                 }
 
@@ -144,7 +144,7 @@ const coinFlipCommand = {
                 const challengedBalance = await bot.heistManager.getUserBalance(challengedUser);
                 if (challengedBalance.balance < amount) {
                     await bot.db.run('ROLLBACK');
-                    bot.sendMessage(`-${challengedUser} is too broke for a $${amount} flip (only has $${challengedBalance.balance})`);
+                    bot.sendMessage(message.roomId, `-${challengedUser} is too broke for a $${amount} flip (only has $${challengedBalance.balance}`);
                     return { success: false };
                 }
 
@@ -156,7 +156,7 @@ const coinFlipCommand = {
                 
                 if (deductResult.changes === 0) {
                     await bot.db.run('ROLLBACK');
-                    bot.sendMessage('couldn\'t deduct ya bet mate, try again');
+                    bot.sendMessage(message.roomId, 'couldn\'t deduct ya bet mate, try again');
                     return { success: false };
                 }
 
@@ -192,7 +192,7 @@ const coinFlipCommand = {
                     `$${amount} on the line! -${message.username} wants to flip against -${challengedUser}! heads or tails?`
                 ];
 
-                bot.sendMessage(announcements[Math.floor(Math.random() * announcements.length)]);
+                bot.sendMessage(message.roomId, announcements[Math.floor(Math.random() * announcements.length)]);
 
                 // Set timeout to cancel challenge
                 setTimeout(async () => {
@@ -227,7 +227,7 @@ const coinFlipCommand = {
                                 `times up! -${challengedUser} didn't respond, -${message.username} keeps their $${amount}`
                             ];
 
-                            bot.sendMessage(timeoutMessages[Math.floor(Math.random() * timeoutMessages.length)]);
+                            bot.sendMessage(message.roomId, timeoutMessages[Math.floor(Math.random() * timeoutMessages.length)]);
                         } else {
                             await bot.db.run('ROLLBACK');
                         }
@@ -248,7 +248,7 @@ const coinFlipCommand = {
 
         } catch (error) {
             bot.logger.error('Error creating coin flip challenge:', error);
-            bot.sendMessage('challenge board broke mate');
+            bot.sendMessage(message.roomId, 'challenge board broke mate');
             return { success: false };
         }
     },
@@ -278,7 +278,7 @@ const coinFlipCommand = {
 
                 if (!challenge) {
                     await bot.db.run('ROLLBACK');
-                    bot.sendMessage('no pending coin flip for ya mate');
+                    bot.sendMessage(message.roomId, 'no pending coin flip for ya mate');
                     return { success: false };
                 }
 
@@ -303,7 +303,7 @@ const coinFlipCommand = {
                     
                     await bot.db.run('COMMIT');
 
-                    bot.sendMessage(`-${message.username} is too broke now! only has $${userBalance ? userBalance.balance : 0}, need $${challenge.amount}. refunding -${challenge.challenger}`);
+                    bot.sendMessage(message.roomId, `-${message.username} is too broke now! only has $${userBalance ? userBalance.balance : 0}, need $${challenge.amount}. refunding -${challenge.challenger}`);
                     return { success: false };
                 }
 
@@ -327,7 +327,7 @@ const coinFlipCommand = {
                     
                     await bot.db.run('COMMIT');
                     
-                    bot.sendMessage('couldn\'t deduct from ya balance mate, challenge cancelled');
+                    bot.sendMessage(message.roomId, 'couldn\'t deduct from ya balance mate, challenge cancelled');
                     return { success: false };
                 }
 
@@ -372,7 +372,7 @@ const coinFlipCommand = {
                     `coin says ${result}! ${winnerTag} pockets $${prize} while ${loserTag} cries!`
                 ];
 
-                bot.sendMessage(resultMessages[Math.floor(Math.random() * resultMessages.length)]);
+                bot.sendMessage(message.roomId, resultMessages[Math.floor(Math.random() * resultMessages.length)]);
 
                 // Add snide commentary
                 if (Math.random() < 0.4) {
@@ -384,7 +384,7 @@ const coinFlipCommand = {
                             `another victim of the flip`,
                             `${winnerTag} laughin all the way to the bottlo`
                         ];
-                        bot.sendMessage(comments[Math.floor(Math.random() * comments.length)]);
+                        bot.sendMessage(message.roomId, comments[Math.floor(Math.random() * comments.length)]);
                     }, 2000);
                 }
 
@@ -397,7 +397,7 @@ const coinFlipCommand = {
 
         } catch (error) {
             bot.logger.error('Error handling coin flip response:', error);
-            bot.sendMessage('coin flip machine exploded');
+            bot.sendMessage(message.roomId, 'coin flip machine exploded');
             return { success: false };
         }
     },
@@ -416,7 +416,7 @@ const coinFlipCommand = {
                 if (deductResult.changes === 0) {
                     await bot.db.run('ROLLBACK');
                     const balance = await bot.heistManager.getUserBalance(message.username);
-                    bot.sendMessage(`ya don't have enough money mate, need $${amount} but only got $${balance.balance}`);
+                    bot.sendMessage(message.roomId, `ya don't have enough money mate, need $${amount} but only got $${balance.balance}`);
                     return { success: false };
                 }
 
@@ -428,7 +428,7 @@ const coinFlipCommand = {
                         `-${message.username} tosses $${amount} in the air...`,
                         `$${amount} coin flip! -${message.username} vs the house...`
                     ];
-                    bot.sendMessage(announcements[Math.floor(Math.random() * announcements.length)]);
+                    bot.sendMessage(message.roomId, announcements[Math.floor(Math.random() * announcements.length)]);
                 }
 
                 // Player always calls it
@@ -457,7 +457,7 @@ const coinFlipCommand = {
                     // Public win announcement for big wins
                     if (!message.isPM && amount >= 100) {
                         setTimeout(() => {
-                            bot.sendMessage(`fuckin hell! ${message.username} just won $${winnings} on a coin flip!`);
+                            bot.sendMessage(message.roomId, `fuckin hell! ${message.username} just won $${winnings} on a coin flip!`);
                         }, 1500);
                     }
                 } else {
@@ -501,7 +501,7 @@ const coinFlipCommand = {
 
         } catch (error) {
             bot.logger.error('Error in house coin flip:', error);
-            bot.sendMessage('coin vanished into thin air mate');
+            bot.sendMessage(message.roomId, 'coin vanished into thin air mate');
             return { success: false };
         }
     },

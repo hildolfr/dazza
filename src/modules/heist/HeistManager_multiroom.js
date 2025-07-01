@@ -496,12 +496,12 @@ export class HeistManager extends EventEmitter {
             
             if (hasTrustScore) {
                 await this.db.run(
-                    'INSERT INTO user_economy (username, balance, trust_score) VALUES (?, 0, 50)',
+                    'INSERT OR IGNORE INTO user_economy (username, balance, trust_score) VALUES (?, 0, 50)',
                     [normalizedUsername]
                 );
             } else {
                 await this.db.run(
-                    'INSERT INTO user_economy (username, balance) VALUES (?, 0)',
+                    'INSERT OR IGNORE INTO user_economy (username, balance) VALUES (?, 0)',
                     [normalizedUsername]
                 );
             }
