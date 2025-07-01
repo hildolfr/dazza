@@ -196,13 +196,13 @@ export class ChatStreakCalculator extends BatchJob {
                 END as range,
                 COUNT(*) as count
             FROM user_chat_streaks
-            GROUP BY range
+            GROUP BY 1
             ORDER BY 
-                CASE range
-                    WHEN '0 (Broken)' THEN 1
-                    WHEN '1-6 days' THEN 2
-                    WHEN '7-29 days' THEN 3
-                    WHEN '30-99 days' THEN 4
+                CASE 
+                    WHEN range = '0 (Broken)' THEN 1
+                    WHEN range = '1-6 days' THEN 2
+                    WHEN range = '7-29 days' THEN 3
+                    WHEN range = '30-99 days' THEN 4
                     ELSE 5
                 END
         `);

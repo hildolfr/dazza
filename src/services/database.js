@@ -1174,6 +1174,23 @@ class Database {
         }
     }
 
+    async cleanup() {
+        try {
+            // Rollback any pending transactions
+            await this.run('ROLLBACK').catch(() => {
+                // Ignore error if no transaction is active
+            });
+            
+            // Force a checkpoint to ensure all changes are written to disk
+            await this.run('PRAGMA wal_checkpoint(TRUNCATE)').catch(() => {
+                // Ignore error if WAL mode is not enabled
+            });
+        } catch (error) {
+            // Log but don't throw - cleanup should be best effort
+            console.warn('Database cleanup warning:', error.message);
+        }
+    }
+
     close() {
         if (this.db) {
             this.db.close();

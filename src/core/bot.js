@@ -986,6 +986,18 @@ export class CyTubeBot extends EventEmitter {
             this.cashMonitor.stop();
         }
         
+        // Pause batch scheduler to prevent SQL errors during disconnect
+        if (this.batchScheduler && this.batchScheduler.isRunning) {
+            this.logger.info('Pausing batch scheduler during disconnect');
+            await this.batchScheduler.stop();
+        }
+        
+        // Clean up database state (rollback transactions, etc.)
+        if (this.db && this.db.cleanup) {
+            this.logger.debug('Cleaning up database state');
+            await this.db.cleanup();
+        }
+        
         // Clear all pending mention timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
@@ -1049,6 +1061,12 @@ export class CyTubeBot extends EventEmitter {
             }
             
             this.logger.info('Reconnection successful');
+            
+            // Restart batch scheduler after successful reconnection
+            if (this.batchScheduler && !this.batchScheduler.isRunning) {
+                this.logger.info('Restarting batch scheduler after reconnection');
+                await this.batchScheduler.start();
+            }
         } catch (error) {
             this.logger.error('Reconnection failed', { error: error.message });
             
