@@ -6,10 +6,8 @@
 import { chatWidgetStyles } from './chat-widget-styles.js';
 import { createTemplate, createMessageTemplate, createStatusTemplate } from './chat-widget-template.js';
 import { ChatMessages } from './chat-widget-messages.js';
-
-// Import API and Socket as global since they're not ES modules
-const ChatAPI = window.ChatAPI;
-const ChatSocket = window.ChatSocket;
+import { ChatAPI } from './chat-widget-api.js';
+import { ChatSocket } from './chat-widget-socket.js';
 
 class ChatWidget extends HTMLElement {
     constructor() {
@@ -333,7 +331,7 @@ class ChatWidget extends HTMLElement {
         // Show error in messages area
         if (this._placeholderElement) {
             this._placeholderElement.innerHTML = `
-                <div class="error-icon"> </div>
+                <div class="error-icon">ï¿½</div>
                 <p class="error-message">${error.message || 'Failed to connect to chat'}</p>
                 <button class="retry-button">Retry Connection</button>
             `;
@@ -467,8 +465,7 @@ class ChatWidget extends HTMLElement {
     }
 }
 
-// Register the custom element
-customElements.define('chat-widget', ChatWidget);
+// Don't register here - let index.js handle registration
 
 // Export for use in other modules
 export default ChatWidget;

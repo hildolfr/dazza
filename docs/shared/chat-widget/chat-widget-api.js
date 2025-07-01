@@ -191,8 +191,9 @@ class ChatAPI {
 }
 
 // Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ChatAPI;
-} else {
+export { ChatAPI };
+
+// Also expose globally for non-module usage
+if (typeof window !== 'undefined') {
     window.ChatAPI = ChatAPI;
 }
