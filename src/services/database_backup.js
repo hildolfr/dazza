@@ -1,10 +1,10 @@
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
-import { heistSchema } from '../modules/heist/schema_compat.js';
-import { videoPayoutSchema } from '../modules/video_payout/schema_compat.js';
+import { heistSchema } from '../modules/heist/schema.js';
+import { videoPayoutSchema } from '../modules/video_payout/schema.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
-import { cooldownSchema } from '../utils/cooldownSchema_compat.js';
+import { cooldownSchema } from '../utils/cooldownSchema.js';
 import MigrationRunner from '../migrations/runner.js';
 
 class Database {
@@ -60,10 +60,7 @@ class Database {
     }
 
     async createTables() {
-        console.log('Starting createTables...');
-        
         // Create messages table
-        console.log('Creating messages table...');
         await this.run(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,34 +214,13 @@ class Database {
         await this.run('CREATE INDEX IF NOT EXISTS idx_private_messages_timestamp ON private_messages(timestamp)');
 
         // Initialize heist schema
-        console.log('Initializing heist schema...');
-        try {
-            await heistSchema.initialize(this);
-            console.log('Heist schema initialized successfully');
-        } catch (error) {
-            console.error('Error initializing heist schema:', error.message);
-            throw error;
-        }
+        await heistSchema.initialize(this);
 
         // Initialize video payout schema
-        console.log('Initializing video payout schema...');
-        try {
-            await videoPayoutSchema.initialize(this);
-            console.log('Video payout schema initialized successfully');
-        } catch (error) {
-            console.error('Error initializing video payout schema:', error.message);
-            throw error;
-        }
+        await videoPayoutSchema.initialize(this);
 
         // Initialize cooldown schema
-        console.log('Initializing cooldown schema...');
-        try {
-            await cooldownSchema.initialize(this);
-            console.log('Cooldown schema initialized successfully');
-        } catch (error) {
-            console.error('Error initializing cooldown schema:', error.message);
-            throw error;
-        }
+        await cooldownSchema.initialize(this);
 
         // Add migration for tells table via_pm column
         try {

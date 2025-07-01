@@ -30,7 +30,7 @@ export class CyTubeBot extends EventEmitter {
     constructor(config) {
         super();
         this.config = config;
-        this.connection = new CyTubeConnection(config);
+        this.connection = new CyTubeConnection(config.cytube.channel, config);
         this.personality = new DazzaPersonality();
         this.cooldowns = new CooldownManager();
         this.memoryManager = new MemoryManager();

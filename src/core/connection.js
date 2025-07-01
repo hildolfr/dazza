@@ -2,14 +2,15 @@ import { io } from 'socket.io-client';
 import EventEmitter from 'events';
 
 export class CyTubeConnection extends EventEmitter {
-    constructor(config) {
+    constructor(roomId, config) {
         super();
+        this.roomId = roomId;
         this.config = config;
         this.socket = null;
         this.connected = false;
         this.authenticated = false;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 10;
+        this.maxReconnectAttempts = config.maxReconnectAttempts || 10;
         this.reconnectDelay = 5000;
         this.connectionState = 'disconnected'; // disconnected, connecting, connected, reconnecting
         this.reconnectTimer = null;
