@@ -958,11 +958,12 @@ class Database {
             await this.run(`
                 INSERT INTO user_images (username, url, timestamp)
                 VALUES (?, ?, ?)
-                ON CONFLICT(username, url) DO UPDATE SET
+                ON CONFLICT(url) DO UPDATE SET
+                    username = ?,
                     timestamp = ?,
                     is_active = 1,
                     pruned_reason = NULL
-            `, [username, url, timestamp, timestamp]);
+            `, [username, url, timestamp, username, timestamp]);
             
             // Emit event for real-time updates
             if (this.bot && this.bot.apiServer) {
