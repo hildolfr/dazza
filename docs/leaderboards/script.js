@@ -8,14 +8,12 @@ const WS_URL = window.location.protocol === 'https:'
     ? 'https://seg.tplinkdns.com:3001' 
     : 'http://seg.tplinkdns.com:3001';
 const UPDATE_INTERVAL = 30000; // 30 seconds
-const CHAT_HISTORY_SIZE = 10;
 
 // State
 let currentCategory = 'all';
 let leaderboardData = {};
 let socket = null;
 let updateTimer = null;
-let chatMessages = [];
 let wsConnected = false;
 
 // DOM Elements
@@ -28,9 +26,6 @@ const elements = {
     modal: document.getElementById('user-modal'),
     modalContent: document.getElementById('user-details'),
     modalClose: document.querySelector('.modal-close'),
-    chatMessages: document.getElementById('chat-messages'),
-    chatWidget: document.querySelector('.chat-widget'),
-    chatToggle: document.querySelector('.chat-toggle'),
     toastContainer: document.getElementById('toast-container')
 };
 
@@ -39,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
     loadLeaderboards();
     initializeWebSocket();
-    initializeChat();
     startAutoUpdate();
     initializeQuoteRotator();
 });
@@ -62,10 +56,6 @@ function initializeEventListeners() {
     elements.modal.addEventListener('click', (e) => {
         if (e.target === elements.modal) closeModal();
     });
-
-    // Chat widget toggle
-    elements.chatToggle.addEventListener('click', toggleChat);
-    elements.chatWidget.querySelector('.chat-header').addEventListener('click', toggleChat);
 }
 
 // API Functions
@@ -149,69 +139,12 @@ function initializeWebSocket() {
             }
         });
 
-        socket.on('chat:message', (data) => {
-            addChatMessage(data);
-        });
-
         socket.on('error', (error) => {
             console.error('WebSocket error:', error);
         });
     } catch (error) {
         console.error('Failed to initialize WebSocket:', error);
     }
-}
-
-// Chat Functions
-async function initializeChat() {
-    try {
-        const response = await fetch(`${API_BASE}/chat/recent?limit=${CHAT_HISTORY_SIZE}`, {
-            method: 'GET',
-            headers: { 
-                'Accept': 'application/json',
-                'Origin': window.location.origin
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data.messages) {
-                chatMessages = data.data.messages;
-                renderChatMessages();
-            }
-        }
-    } catch (error) {
-        console.error('Failed to load chat history:', error);
-    }
-}
-
-function addChatMessage(message) {
-    chatMessages.push(message);
-    if (chatMessages.length > CHAT_HISTORY_SIZE) {
-        chatMessages.shift();
-    }
-    renderChatMessages();
-}
-
-function renderChatMessages() {
-    if (chatMessages.length === 0) {
-        elements.chatMessages.innerHTML = '<div class="chat-loading">No messages yet...</div>';
-        return;
-    }
-
-    elements.chatMessages.innerHTML = chatMessages.map(msg => `
-        <div class="chat-message">
-            <span class="chat-username">${escapeHtml(msg.username)}:</span>
-            <span class="chat-text">${escapeHtml(msg.message)}</span>
-            <span class="chat-time">${msg.timeAgo || 'now'}</span>
-        </div>
-    `).join('');
-
-    // Auto-scroll to bottom
-    elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-}
-
-function toggleChat() {
-    elements.chatWidget.classList.toggle('minimized');
 }
 
 // Render Functions

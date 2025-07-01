@@ -160,22 +160,15 @@
         </div>
     </div>
 
-    <!-- Mini Chat Widget -->
-    <div class="chat-widget">
-        <div class="chat-header">
-            <span class="chat-title">LIVE CHAT</span>
-            <span class="chat-toggle">−</span>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="chat-loading">Connecting to chat...</div>
-        </div>
-    </div>
-
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Chat Widget -->
+    <dazza-chat-widget position="bottom-right" theme="vb"></dazza-chat-widget>
+
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="../shared/chat-widget/index.js"></script>
     <script src="script.js"></script>
     
     <!-- SVG Definitions -->

@@ -554,6 +554,7 @@ h1 {
     <!-- Toggle Button for Pruned Images -->
     <button class="pruned-toggle-btn" id="prunedToggle">View Graveyard</button>
     
+    <script src="../shared/chat-widget/index.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
 // Configuration - Both HTTP and HTTPS use port 3001
@@ -1229,5 +1230,7 @@ setInterval(function() {
     }
 }, 3000);
 </script>
+
+<dazza-chat-widget position="bottom-right" theme="vb"></dazza-chat-widget>
 </body>
 </html>
