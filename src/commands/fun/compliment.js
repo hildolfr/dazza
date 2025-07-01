@@ -20,7 +20,7 @@ export default new Command({
                 'yeah nah I\'m pretty good ay',
                 'thanks mate, have a cone on me'
             ];
-            bot.sendMessage(selfLove[Math.floor(Math.random() * selfLove.length)]);
+            bot.sendMessage(message.roomId, selfLove[Math.floor(Math.random() * selfLove.length)]);
             return { success: true };
         }
         
@@ -77,7 +77,7 @@ export default new Command({
         ];
         
         const compliment = compliments[Math.floor(Math.random() * compliments.length)];
-        bot.sendMessage(compliment);
+        bot.sendMessage(message.roomId, compliment);
         
         return { success: true };
     }

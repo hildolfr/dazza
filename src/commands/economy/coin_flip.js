@@ -166,9 +166,9 @@ const coinFlipCommand = {
 
                 const result = await bot.db.run(
                     `INSERT INTO coin_flip_challenges 
-                    (challenger, challenged, amount, status, created_at, expires_at) 
-                    VALUES (?, ?, ?, ?, ?, ?)`,
-                    [message.username, challengedUser, amount, 'pending', now, expiresAt]
+                    (challenger, challenged, amount, status, room_id, created_at, expires_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [message.username, challengedUser, amount, 'pending', message.roomId || 'fatpizza', now, expiresAt]
                 );
                 
                 challengeId = result.lastID;
@@ -358,8 +358,8 @@ const coinFlipCommand = {
                 await bot.db.run('COMMIT');
 
                 // Update stats for both players (outside transaction for performance)
-                await this.updateStats(bot, challenge.challenger, challengerChoice === result, challenge.amount);
-                await this.updateStats(bot, message.username, choice === result, challenge.amount);
+                await this.updateStats(bot, challenge.challenger, challengerChoice === result, challenge.amount, message.roomId || 'fatpizza');
+                await this.updateStats(bot, message.username, choice === result, challenge.amount, message.roomId || 'fatpizza');
 
                 // Announce result
                 const winnerTag = `-${winner}`;
@@ -487,10 +487,10 @@ const coinFlipCommand = {
                 bot.sendPrivateMessage(message.username, resultMessage);
 
                 // Update stats (outside transaction for performance)
-                await this.updateStats(bot, message.username, won, amount);
+                await this.updateStats(bot, message.username, won, amount, message.roomId || 'fatpizza');
 
                 // Track house stats under "dazza"
-                await this.updateStats(bot, 'dazza', !won, amount);
+                await this.updateStats(bot, 'dazza', !won, amount, message.roomId || 'fatpizza');
 
                 return { success: true };
                 
@@ -506,23 +506,24 @@ const coinFlipCommand = {
         }
     },
 
-    async updateStats(bot, username, won, amount) {
+    async updateStats(bot, username, won, amount, roomId = 'fatpizza') {
         try {
             const stats = await bot.db.get(
-                'SELECT * FROM coin_flip_stats WHERE username = ?',
-                [username]
+                'SELECT * FROM coin_flip_stats WHERE username = ? AND room_id = ?',
+                [username, roomId]
             );
 
             if (!stats) {
                 // Create new stats entry
                 await bot.db.run(
                     `INSERT INTO coin_flip_stats 
-                    (username, total_flips, heads_count, tails_count, wins, losses, 
+                    (username, room_id, total_flips, heads_count, tails_count, wins, losses, 
                      total_wagered, total_won, total_lost, biggest_win, biggest_loss, 
                      current_streak, best_streak, last_played) 
-                    VALUES (?, 1, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES (?, ?, 1, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         username,
+                        roomId,
                         won ? 1 : 0,
                         won ? 0 : 1,
                         amount,
@@ -569,11 +570,11 @@ const coinFlipCommand = {
                         current_streak = ?,
                         best_streak = ?,
                         last_played = ?
-                    WHERE username = ?`,
+                    WHERE username = ? AND room_id = ?`,
                     [
                         newWins, newLosses, amount, newTotalWon, newTotalLost,
                         newBiggestWin, newBiggestLoss, newStreak, newBestStreak,
-                        Date.now(), username
+                        Date.now(), username, roomId
                     ]
                 );
             }

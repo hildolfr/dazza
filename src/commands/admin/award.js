@@ -72,9 +72,9 @@ export default new Command({
             // Log the transaction for accountability
             await bot.db.run(`
                 INSERT INTO economy_transactions 
-                (username, amount, trust_change, transaction_type, description, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            `, [canonicalTarget, amount, 0, 'dev_award', `Awarded by hildolfr: ${reason}`, Date.now()]);
+                (username, amount, trust_change, transaction_type, description, room_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [canonicalTarget, amount, 0, 'dev_award', `Awarded by hildolfr: ${reason}`, message.roomId || 'fatpizza', Date.now()]);
             
             // Send confirmation via PM
             let confirmMsg;

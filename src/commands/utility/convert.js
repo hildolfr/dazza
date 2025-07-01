@@ -10,7 +10,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (args.length < 4 || args[2] !== 'to') {
-            bot.sendMessage('usage: !convert <value> <from> to <to> (e.g., !convert 10 km to miles)');
+            bot.sendMessage(message.roomId, 'usage: !convert <value> <from> to <to> (e.g., !convert 10 km to miles)');
             return { success: true };
         }
         
@@ -19,7 +19,7 @@ export default new Command({
         const toUnit = args[3].toLowerCase();
         
         if (isNaN(value)) {
-            bot.sendMessage('that ain\'t a number mate');
+            bot.sendMessage(message.roomId, 'that ain\'t a number mate');
             return { success: true };
         }
         
@@ -54,7 +54,7 @@ export default new Command({
         const conversion = conversions[key];
         
         if (!conversion) {
-            bot.sendMessage('dunno how to convert that mate');
+            bot.sendMessage(message.roomId, 'dunno how to convert that mate');
             return { success: true };
         }
         
@@ -161,7 +161,7 @@ export default new Command({
         
         // Pick a random response
         const response = responses[Math.floor(Math.random() * responses.length)];
-        bot.sendMessage(response);
+        bot.sendMessage(message.roomId, response);
         
         return { success: true };
     }

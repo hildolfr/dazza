@@ -219,9 +219,9 @@ export default new Command({
                         `, [message.username, Date.now(), Date.now()]);
                         
                         await bot.db.run(`
-                            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                            VALUES (?, ?, 'couch_coins', ?, ?)
-                        `, [message.username, -actualCost, 'Bad event while searching', Date.now()]);
+                            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                            VALUES (?, ?, 'couch_coins', ?, ?, ?)
+                        `, [message.username, -actualCost, 'Bad event while searching', message.roomId || 'fatpizza', Date.now()]);
                     }
                 } else {
                     // User is broke, can't charge them
@@ -304,9 +304,9 @@ export default new Command({
                     `, [message.username, Date.now(), Date.now()]);
                     
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'couch_coins', 'Found nothing', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'couch_coins', 'Found nothing', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
             } else {
                 // Found money!
@@ -363,9 +363,9 @@ export default new Command({
                     `, [message.username, amount, amount, Date.now(), amount, bestFind, Date.now()]);
                     
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, ?, 'couch_coins', ?, ?)
-                    `, [message.username, amount, `Found in ${location}`, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, ?, 'couch_coins', ?, ?, ?)
+                    `, [message.username, amount, `Found in ${location}`, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 // Public announcement for big finds

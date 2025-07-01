@@ -80,7 +80,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args.length) {
-            bot.sendMessage('define what mate?');
+            bot.sendMessage(message.roomId, 'define what mate?');
             return { success: true };
         }
         
@@ -89,7 +89,7 @@ export default new Command({
         
         // Check for special dirty word responses
         if (dirtyWordResponses[word]) {
-            bot.sendMessage(dirtyWordResponses[word].replace('{user}', user));
+            bot.sendMessage(message.roomId, dirtyWordResponses[word].replace('{user}', user));
             return { success: true };
         }
         
@@ -111,15 +111,15 @@ export default new Command({
             
             // Add some crude commentary for certain keywords in definitions
             if (definition.match(/love|romantic|relationship/i)) {
-                bot.sendMessage(`${intro} ${definition}${outro} (gay)`);
+                bot.sendMessage(message.roomId, `${intro} ${definition}${outro} (gay)`);
             } else if (definition.match(/intelligent|smart|clever/i)) {
-                bot.sendMessage(`${intro} ${definition}${outro} (unlike you)`);
+                bot.sendMessage(message.roomId, `${intro} ${definition}${outro} (unlike you)`);
             } else if (definition.match(/work|job|employment/i)) {
-                bot.sendMessage(`${intro} ${definition}${outro} (somethin you'd know nothin about)`);
+                bot.sendMessage(message.roomId, `${intro} ${definition}${outro} (somethin you'd know nothin about)`);
             } else if (definition.match(/money|rich|wealth/i)) {
-                bot.sendMessage(`${intro} ${definition}${outro} (must be nice ay)`);
+                bot.sendMessage(message.roomId, `${intro} ${definition}${outro} (must be nice ay)`);
             } else {
-                bot.sendMessage(`${intro} ${definition}${outro}`);
+                bot.sendMessage(message.roomId, `${intro} ${definition}${outro}`);
             }
             
             return { success: true };
@@ -128,7 +128,7 @@ export default new Command({
             const noDefMsg = noDefResponses[Math.floor(Math.random() * noDefResponses.length)]
                 .replace('{user}', user)
                 .replace('{word}', word);
-            bot.sendMessage(noDefMsg);
+            bot.sendMessage(message.roomId, noDefMsg);
             return { success: true };
         }
     }

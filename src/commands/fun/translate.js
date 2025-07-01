@@ -81,7 +81,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args.length) {
-            bot.sendMessage('translate what ya galah?');
+            bot.sendMessage(message.roomId, 'translate what ya galah?');
             return { success: true };
         }
         
@@ -106,7 +106,7 @@ export default new Command({
         response = response.replace('{username}', `-${message.username}`);
         
         // Send both the crude response and translation
-        bot.sendMessage(`${response} ... ${translated}`);
+        bot.sendMessage(message.roomId, `${response} ... ${translated}`);
         
         return { success: true };
     }

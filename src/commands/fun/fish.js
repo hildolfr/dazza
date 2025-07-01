@@ -138,7 +138,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, cooldownMsg);
                     } else {
-                        bot.sendMessage(cooldownMsg);
+                        bot.sendMessage(message.roomId, cooldownMsg);
                     }
                     return { success: false };
                 }
@@ -148,7 +148,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -165,7 +165,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -176,7 +176,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -198,7 +198,7 @@ export default new Command({
                     `🎣 -${message.username} throws in a line, I'll PM ya what bites`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
             
             // Determine catch
@@ -246,8 +246,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -267,8 +267,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -343,8 +343,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -367,8 +367,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -383,8 +383,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -403,8 +403,8 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
                         bot.logger.error('Failed to log fishing transaction:', error);
@@ -438,7 +438,7 @@ export default new Command({
             // Handle public announcements and forced sharing
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -480,7 +480,7 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
@@ -497,7 +497,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

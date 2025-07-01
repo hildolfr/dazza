@@ -1025,36 +1025,36 @@ class Database {
     }
 
     // Bladder management for pissing contest
-    async updateBladder(username, drinkAmount = 1) {
+    async updateBladder(username, drinkAmount = 1, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(`
-            INSERT INTO user_bladder (username, current_amount, last_drink_time, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(username) DO UPDATE SET
+            INSERT INTO user_bladder (username, room_id, current_amount, last_drink_time, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(username, room_id) DO UPDATE SET
                 current_amount = current_amount + ?,
                 last_drink_time = ?,
                 updated_at = ?
-        `, [username, drinkAmount, timestamp, timestamp, drinkAmount, timestamp, timestamp]);
+        `, [username, roomId, drinkAmount, timestamp, timestamp, drinkAmount, timestamp, timestamp]);
     }
 
-    async getBladderState(username) {
+    async getBladderState(username, roomId = 'fatpizza') {
         const result = await this.get(
-            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?)',
-            [username]
+            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?) AND room_id = ?',
+            [username, roomId]
         );
         
         return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
     }
 
-    async resetBladder(username) {
+    async resetBladder(username, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(`
             UPDATE user_bladder
             SET current_amount = 0, last_piss_time = ?, updated_at = ?
-            WHERE LOWER(username) = LOWER(?)
-        `, [timestamp, timestamp, username]);
+            WHERE LOWER(username) = LOWER(?) AND room_id = ?
+        `, [timestamp, timestamp, username, roomId]);
     }
 
     // Pissing contest stats

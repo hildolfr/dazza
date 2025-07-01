@@ -128,7 +128,7 @@ export default new Command({
             
             // If command was sent in public chat, acknowledge it
             if (!message.isPM) {
-                bot.sendMessage(`oi ${username}, check ya PMs for cooldown info`);
+                bot.sendMessage(message.roomId, `oi ${username}, check ya PMs for cooldown info`);
             }
             
             return { success: true };

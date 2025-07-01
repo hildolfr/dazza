@@ -371,8 +371,8 @@ export class PissingContestManager {
         const { challenger, challenged, amount } = challenge;
         
         // Get bladder states
-        const challengerBladder = await this.getBladderState(challenger);
-        const challengedBladder = await this.getBladderState(challenged);
+        const challengerBladder = await this.getBladderState(challenger, challenge.roomId);
+        const challengedBladder = await this.getBladderState(challenged, challenge.roomId);
         
         // Calculate base stats for each player
         let challengerStats = this.calculateBaseStats(challengerBladder);
@@ -778,16 +778,12 @@ export class PissingContestManager {
     }
 
     // Get bladder state from database
-    async getBladderState(username) {
+    async getBladderState(username, roomId = 'fatpizza') {
         const normalized = await normalizeUsernameForDb(this.bot, username);
         
         try {
-            const row = await this.db.get(
-                'SELECT current_amount FROM user_bladder WHERE username = ?',
-                [normalized]
-            );
-            
-            return row ? row.current_amount : 0;
+            const bladderState = await this.db.getBladderState(normalized, roomId);
+            return bladderState.current_amount || 0;
         } catch (error) {
             console.error('Error getting bladder state:', error);
             return 0;

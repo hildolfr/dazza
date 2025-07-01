@@ -103,7 +103,7 @@ export default new Command({
                 'oi specify a location ya donkey',
                 'where? use ya words mate'
             ];
-            bot.sendMessage(noArgsResponses[Math.floor(Math.random() * noArgsResponses.length)]);
+            bot.sendMessage(message.roomId, noArgsResponses[Math.floor(Math.random() * noArgsResponses.length)]);
             return { success: true };
         }
         
@@ -150,14 +150,14 @@ export default new Command({
                 `${location}'s lookin' like ${weather}. ${crudeResponse}`
             ];
             
-            bot.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+            bot.sendMessage(message.roomId, responses[Math.floor(Math.random() * responses.length)]);
             return { success: true };
         } catch (error) {
             console.error('Weather error:', error);
             if (error.message === 'Unknown location') {
-                bot.sendMessage(unknownLocationResponses[Math.floor(Math.random() * unknownLocationResponses.length)]);
+                bot.sendMessage(message.roomId, unknownLocationResponses[Math.floor(Math.random() * unknownLocationResponses.length)]);
             } else {
-                bot.sendMessage(errorResponses[Math.floor(Math.random() * errorResponses.length)]);
+                bot.sendMessage(message.roomId, errorResponses[Math.floor(Math.random() * errorResponses.length)]);
             }
             return { success: true };
         }

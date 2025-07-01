@@ -29,7 +29,7 @@ export default new Command({
         ];
         
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        bot.sendMessage(randomResponse);
+        bot.sendMessage(message.roomId, randomResponse);
         
         return { success: true };
     }

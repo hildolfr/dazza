@@ -126,7 +126,7 @@ export default new Command({
             `oi im ${mood}, ${reason}`
         ];
         
-        bot.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+        bot.sendMessage(message.roomId, responses[Math.floor(Math.random() * responses.length)]);
         
         return { success: true };
     }
