@@ -169,6 +169,40 @@ class ChatAPI {
     }
 
     /**
+     * Fetch channel statistics including user count
+     * @returns {Promise<Object>} Response object with channel stats
+     */
+    async fetchChannelStats() {
+        const endpoint = `${this.apiBase}/stats/channel`;
+        
+        try {
+            const data = await this._fetchWithRetry(endpoint, {
+                method: 'GET',
+                headers: this._getHeaders()
+            });
+
+            if (data.success && data.data) {
+                return {
+                    success: true,
+                    data: data.data
+                };
+            }
+
+            return {
+                success: false,
+                error: 'Invalid response format',
+                data: null
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message || 'Failed to fetch channel stats',
+                data: null
+            };
+        }
+    }
+
+    /**
      * Test API connectivity
      * @returns {Promise<Object>} Connection status
      */

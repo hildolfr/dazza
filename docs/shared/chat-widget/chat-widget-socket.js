@@ -130,6 +130,11 @@ class ChatSocket extends EventTarget {
         this.socket.on('stats:user:update', (data) => {
             this.emit('statsUpdate', data);
         });
+        
+        // Handle user count updates
+        this.socket.on('chat:usercount', (data) => {
+            this.emit('usercount', data);
+        });
     }
     
     /**

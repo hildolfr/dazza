@@ -21,6 +21,7 @@ class ChatWidget extends HTMLElement {
         this._isConnected = false;
         this._messageCount = 0;
         this._unreadCount = 0;
+        this._userCount = { total: 0, active: 0, afk: 0 };
         
         // Module instances (will be initialized in connectedCallback)
         this.api = null;
@@ -34,6 +35,7 @@ class ChatWidget extends HTMLElement {
         this._handleSocketDisconnect = this._handleSocketDisconnect.bind(this);
         this._handleSocketError = this._handleSocketError.bind(this);
         this._handleRetryConnection = this._handleRetryConnection.bind(this);
+        this._handleUserCount = this._handleUserCount.bind(this);
     }
     
     /**
@@ -125,6 +127,8 @@ class ChatWidget extends HTMLElement {
         this._placeholderElement = this.shadowRoot.querySelector('.chat-placeholder');
         this._notificationBadge = this.shadowRoot.querySelector('.chat-notification-badge');
         this._badgeCount = this.shadowRoot.querySelector('.badge-count');
+        this._userCountElement = this.shadowRoot.querySelector('.chat-user-count');
+        this._userCountText = this.shadowRoot.querySelector('.user-count-text');
     }
     
     /**
@@ -165,6 +169,7 @@ class ChatWidget extends HTMLElement {
         this.socket.addEventListener('disconnected', this._handleSocketDisconnect);
         this.socket.addEventListener('error', this._handleSocketError);
         this.socket.addEventListener('message', this._handleSocketMessage);
+        this.socket.addEventListener('usercount', this._handleUserCount);
         
         // Retry button if it exists
         const retryBtn = this.shadowRoot.querySelector('.retry-button');
@@ -181,18 +186,30 @@ class ChatWidget extends HTMLElement {
             // Update status
             this._updateConnectionStatus('connecting');
             
-            // Load initial messages
-            const result = await this.api.fetchRecentMessages(20);
+            // Load initial messages and channel stats in parallel
+            const [messagesResult, channelStats] = await Promise.all([
+                this.api.fetchRecentMessages(20),
+                this.api.fetchChannelStats()
+            ]);
             
-            if (result.success && result.messages.length > 0) {
+            if (messagesResult.success && messagesResult.messages.length > 0) {
                 // Remove placeholder
                 if (this._placeholderElement) {
                     this._placeholderElement.style.display = 'none';
                 }
                 
                 // Add messages
-                this.messages.setMessages(result.messages);
-                this._messageCount = result.messages.length;
+                this.messages.setMessages(messagesResult.messages);
+                this._messageCount = messagesResult.messages.length;
+            }
+            
+            // Update user count if available
+            if (channelStats.success && channelStats.data) {
+                this._updateUserCount({
+                    total: channelStats.data.currentUsers || 0,
+                    active: channelStats.data.activeUsers || 0,
+                    afk: channelStats.data.afkUsers || 0
+                });
             }
             
             // Connect WebSocket
@@ -310,6 +327,35 @@ class ChatWidget extends HTMLElement {
      */
     _handleRetryConnection() {
         this._connect();
+    }
+    
+    /**
+     * Handle user count update from WebSocket
+     */
+    _handleUserCount(event) {
+        const data = event.detail;
+        console.log('[ChatWidget] User count update:', data);
+        this._updateUserCount(data);
+    }
+    
+    /**
+     * Update user count display
+     */
+    _updateUserCount(data) {
+        this._userCount = data;
+        
+        if (this._userCountElement && this._userCountText) {
+            // Show the user count element
+            this._userCountElement.style.display = 'inline-flex';
+            
+            // Update the count text
+            this._userCountText.textContent = data.total || '0';
+            
+            // Add tooltip with active/afk breakdown
+            const activeCount = data.active || 0;
+            const afkCount = data.afk || 0;
+            this._userCountElement.title = `${activeCount} active, ${afkCount} AFK`;
+        }
     }
     
     /**

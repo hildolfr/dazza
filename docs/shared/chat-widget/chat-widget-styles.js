@@ -112,13 +112,78 @@ export const chatWidgetStyles = `
     pointer-events: none;
   }
 
+  .chat-header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+  }
+
   .chat-title {
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
     font-size: 0.9rem;
-    position: relative;
-    z-index: 1;
+  }
+  
+  .chat-user-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  
+  .chat-user-count:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .user-count-icon {
+    font-size: 0.9rem;
+  }
+  
+  .user-count-text {
+    font-weight: 600;
+  }
+  
+  .chat-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    margin-left: auto;
+  }
+  
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffcd00;
+    transition: all 0.3s ease;
+  }
+  
+  .chat-status[data-status="connected"] .status-dot {
+    background: #4caf50;
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  }
+  
+  .chat-status[data-status="connecting"] .status-dot {
+    background: #ffcd00;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  .chat-status[data-status="disconnected"] .status-dot,
+  .chat-status[data-status="error"] .status-dot {
+    background: #f44336;
+  }
+  
+  .status-text {
+    opacity: 0.9;
   }
 
   .chat-toggle {

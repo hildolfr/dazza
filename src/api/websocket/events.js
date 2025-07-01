@@ -121,6 +121,17 @@ export function setupWebSocketEvents(apiServer) {
         });
     });
     
+    // When userlist is loaded
+    registerBotListener('userlist:loaded', () => {
+        const currentUsers = bot.userlist ? bot.userlist.size : 0;
+        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        apiServer.broadcastToTopic('chat', 'chat:usercount', {
+            total: currentUsers,
+            active: currentUsers - afkUsers,
+            afk: afkUsers
+        });
+    });
+    
     registerBotListener('disconnected', () => {
         apiServer.broadcastToTopic('bot', 'bot:disconnected', {});
     });
@@ -171,10 +182,28 @@ export function setupWebSocketEvents(apiServer) {
     // When users join/leave
     registerBotListener('user:join', (username) => {
         apiServer.broadcastToTopic('chat', 'chat:user:join', { username });
+        
+        // Also broadcast updated user count
+        const currentUsers = bot.userlist ? bot.userlist.size : 0;
+        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        apiServer.broadcastToTopic('chat', 'chat:usercount', {
+            total: currentUsers,
+            active: currentUsers - afkUsers,
+            afk: afkUsers
+        });
     });
     
     registerBotListener('user:leave', (username) => {
         apiServer.broadcastToTopic('chat', 'chat:user:leave', { username });
+        
+        // Also broadcast updated user count
+        const currentUsers = bot.userlist ? bot.userlist.size : 0;
+        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        apiServer.broadcastToTopic('chat', 'chat:usercount', {
+            total: currentUsers,
+            active: currentUsers - afkUsers,
+            afk: afkUsers
+        });
     });
     
     // Media events

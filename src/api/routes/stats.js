@@ -534,6 +534,10 @@ export function createStatsRoutes(apiServer) {
             }
         }
         
+        // Get current user count from bot's userlist
+        const currentUsers = apiServer.bot.userlist ? apiServer.bot.userlist.size : 0;
+        const afkUsers = apiServer.bot.getAFKUsers ? apiServer.bot.getAFKUsers().length : 0;
+        
         res.json({
             success: true,
             data: {
@@ -543,6 +547,9 @@ export function createStatsRoutes(apiServer) {
                 currentVideo,
                 videoId,
                 uptime,
+                currentUsers,
+                activeUsers: currentUsers - afkUsers,
+                afkUsers,
                 stats: {
                     totalBongs: totalBongs.count,
                     totalDrinks: totalDrinks.count
