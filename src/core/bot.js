@@ -1690,6 +1690,33 @@ export class CyTubeBot extends EventEmitter {
             this.logger.debug('PM logging failed - table may not exist yet');
         }
         
+        // Extract and store image URLs from PMs
+        try {
+            const imageUrls = extractImageUrls(data.msg);
+            if (imageUrls.length > 0) {
+                this.logger.info(`[PM] Found ${imageUrls.length} image(s) from ${data.username}`);
+                
+                for (const url of imageUrls) {
+                    await this.db.addUserImage(data.username, url);
+                    this.logger.debug(`[PM] Added image to gallery: ${url} from ${data.username}`);
+                }
+                
+                // Emit WebSocket event for real-time gallery updates
+                if (this.apiServer) {
+                    for (const url of imageUrls) {
+                        this.apiServer.emit('gallery:image:added', {
+                            username: data.username,
+                            url: url,
+                            timestamp: Date.now(),
+                            source: 'pm'
+                        });
+                    }
+                }
+            }
+        } catch (err) {
+            this.logger.error('[PM] Failed to extract/store images:', err);
+        }
+        
         // Check if message is a command
         const isCommand = data.msg.startsWith(this.config.bot.commandPrefix || '!');
         
