@@ -133,7 +133,7 @@ export class MultiRoomBot extends EventEmitter {
             
             // Initialize API server
             if (this.config.api?.enabled) {
-                this.apiServer = new ApiServer(this.config.api, this);
+                this.apiServer = new ApiServer(this, this.config.api.port);
                 await this.apiServer.start();
             }
             

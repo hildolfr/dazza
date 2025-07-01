@@ -1,0 +1,86 @@
+[DazzaChatWidget] Auto-initializing 1 widget(s) index.js:134:15
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+WebSocket connection error: Error: websocket error
+    c socket.io.min.js:6
+    r socket.io.min.js:6
+    l socket.io.min.js:6
+    i transport.js:7
+    value transport.js:38
+    onerror websocket.js:69
+gallery:825:17
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/chat/recent?limit=20. (Reason: CORS request did not succeed). Status code: (null).
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/gallery/images. (Reason: CORS request did not succeed). Status code: (null).
+Failed to load gallery: TypeError: NetworkError when attempting to fetch resource. gallery:624:17
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/stats/channel. (Reason: CORS request did not succeed). Status code: (null).
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/chat/recent?limit=20. (Reason: CORS request did not succeed). Status code: (null).
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/stats/channel. (Reason: CORS request did not succeed). Status code: (null).
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/chat/recent?limit=20. (Reason: CORS request did not succeed). Status code: (null). 2
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/stats/channel. (Reason: CORS request did not succeed). Status code: (null). 2
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/chat/recent?limit=20. (Reason: CORS request did not succeed). Status code: (null). 2
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://seg.tplinkdns.com:3001/api/v1/stats/channel. (Reason: CORS request did not succeed). Status code: (null). 2
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+Failed to connect: Error: websocket error
+    r socket.io.min.js:6
+    l socket.io.min.js:6
+    i transport.js:7
+    value transport.js:38
+    onerror websocket.js:69
+chat-widget-socket.js:82:21
+ChatWidget socket error: 
+Object { error: Error }
+chat-widget.js:297:17
+ChatWidget connection error: Error: websocket error
+    r socket.io.min.js:6
+    l socket.io.min.js:6
+    i transport.js:7
+    value transport.js:38
+    onerror websocket.js:69
+chat-widget.js:222:21
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+WebSocket connection error: Error: websocket error
+    r socket.io.min.js:6
+    l socket.io.min.js:6
+    i transport.js:7
+    value transport.js:38
+    onerror websocket.js:69
+    value websocket.js:69
+    value websocket.js:50
+    value transport.js:46
+    value socket.js:170
+    a socket.js:111
+    value manager.js:108
+    r manager.js:328
+gallery:825:17
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426
+WebSocket connection error: Error: websocket error
+    r socket.io.min.js:6
+    l socket.io.min.js:6
+    i transport.js:7
+    value transport.js:38
+    onerror websocket.js:69
+    value websocket.js:69
+    value websocket.js:50
+    value transport.js:46
+    value socket.js:170
+    a socket.js:111
+    value manager.js:108
+    r manager.js:328
+    setTimeout handler*value manager.js:321
+    r manager.js:331
+    o manager.js:123
+    emit index.mjs:136
+    value socket.js:541
+    emit index.mjs:136
+    value transport.js:38
+    onerror websocket.js:69
+    value websocket.js:69
+    value websocket.js:50
+    value transport.js:46
+    value socket.js:170
+    a socket.js:111
+    value manager.js:108
+    r manager.js:328
+gallery:825:17
+Firefox can’t establish a connection to the server at wss://seg.tplinkdns.com:3001/socket.io/?EIO=4&transport=websocket. socket.io.min.js:6:17426

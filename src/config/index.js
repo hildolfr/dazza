@@ -78,5 +78,9 @@ export default {
         minMessages: 5,                        // Need at least 5 messages in period
         startingBalance: 1000,                 // New users start with $1000
         startingTrust: 50                      // New users start with 50 trust
+    },
+    api: {
+        enabled: true,
+        port: 3001
     }
 };

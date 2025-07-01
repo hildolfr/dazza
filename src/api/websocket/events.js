@@ -27,7 +27,8 @@ export function setupWebSocketEvents(apiServer) {
             bot: {
                 connected: bot.connection?.connected || false,
                 channel: bot.connection?.channel || null,
-                username: bot.connection?.username || null
+                username: bot.connection?.username || null,
+                room: bot.connection?.room || 'fatpizza'
             }
         });
         
@@ -42,7 +43,14 @@ export function setupWebSocketEvents(apiServer) {
             }
             
             const validTopics = ['gallery', 'stats', 'chat', 'bot'];
-            const subscribedTopics = topics.filter(topic => validTopics.includes(topic));
+            const subscribedTopics = topics.filter(topic => {
+                // Support room-specific subscriptions like 'chat:fatpizza' or 'stats:room2'
+                if (topic.includes(':')) {
+                    const [topicType] = topic.split(':');
+                    return validTopics.includes(topicType);
+                }
+                return validTopics.includes(topic);
+            });
             
             subscribedTopics.forEach(topic => {
                 socket.join(topic);
@@ -117,18 +125,31 @@ export function setupWebSocketEvents(apiServer) {
     registerBotListener('connected', () => {
         apiServer.broadcastToTopic('bot', 'bot:connected', {
             channel: bot.connection.channel,
-            username: bot.connection.username
+            username: bot.connection.username,
+            room: bot.connection.room || 'fatpizza'
         });
     });
     
     // When userlist is loaded
-    registerBotListener('userlist:loaded', () => {
+    registerBotListener('userlist:loaded', (data) => {
+        const room = data?.room || bot.connection?.room || 'fatpizza';
         const currentUsers = bot.userlist ? bot.userlist.size : 0;
         const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        
+        // Broadcast to room-specific topic if available
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:usercount', {
+            total: currentUsers,
+            active: currentUsers - afkUsers,
+            afk: afkUsers,
+            room: room
+        });
+        
+        // Also broadcast to general chat topic for backward compatibility
         apiServer.broadcastToTopic('chat', 'chat:usercount', {
             total: currentUsers,
             active: currentUsers - afkUsers,
-            afk: afkUsers
+            afk: afkUsers,
+            room: room
         });
     });
     
@@ -157,12 +178,20 @@ export function setupWebSocketEvents(apiServer) {
     
     // When user stats change
     registerBotListener('stats:user:update', (data) => {
-        apiServer.broadcastToTopic('stats', 'stats:user:update', data);
+        const room = data.room || bot.connection?.room || 'fatpizza';
+        const payload = { ...data, room };
+        
+        apiServer.broadcastToTopic(`stats:${room}`, 'stats:user:update', payload);
+        apiServer.broadcastToTopic('stats', 'stats:user:update', payload);
     });
     
     // When channel stats change
     registerBotListener('stats:channel:update', (data) => {
-        apiServer.broadcastToTopic('stats', 'stats:channel:activity', data);
+        const room = data.room || bot.connection?.room || 'fatpizza';
+        const payload = { ...data, room };
+        
+        apiServer.broadcastToTopic(`stats:${room}`, 'stats:channel:activity', payload);
+        apiServer.broadcastToTopic('stats', 'stats:channel:activity', payload);
     });
     
     // Chat-related events (if enabled)
@@ -171,49 +200,78 @@ export function setupWebSocketEvents(apiServer) {
     registerBotListener('chat:message', (data) => {
         // Only broadcast non-sensitive messages
         if (!data.message.startsWith('!') && !data.isPM) {
-            apiServer.broadcastToTopic('chat', 'chat:message', {
+            const room = data.room || bot.connection?.room || 'fatpizza';
+            const payload = {
                 username: data.username,
                 message: data.message.substring(0, 500), // Limit message length
-                timestamp: data.timestamp
-            });
+                timestamp: data.timestamp,
+                room: room
+            };
+            
+            // Broadcast to room-specific topic
+            apiServer.broadcastToTopic(`chat:${room}`, 'chat:message', payload);
+            
+            // Also broadcast to general chat topic for backward compatibility
+            apiServer.broadcastToTopic('chat', 'chat:message', payload);
         }
     });
     
     // When users join/leave
-    registerBotListener('user:join', (username) => {
-        apiServer.broadcastToTopic('chat', 'chat:user:join', { username });
+    registerBotListener('user:join', (data) => {
+        const username = typeof data === 'string' ? data : data.username;
+        const room = (typeof data === 'object' && data.room) ? data.room : bot.connection?.room || 'fatpizza';
+        
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:user:join', { username, room });
+        apiServer.broadcastToTopic('chat', 'chat:user:join', { username, room });
         
         // Also broadcast updated user count
         const currentUsers = bot.userlist ? bot.userlist.size : 0;
         const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
-        apiServer.broadcastToTopic('chat', 'chat:usercount', {
+        const userCountPayload = {
             total: currentUsers,
             active: currentUsers - afkUsers,
-            afk: afkUsers
-        });
+            afk: afkUsers,
+            room: room
+        };
+        
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:usercount', userCountPayload);
+        apiServer.broadcastToTopic('chat', 'chat:usercount', userCountPayload);
     });
     
-    registerBotListener('user:leave', (username) => {
-        apiServer.broadcastToTopic('chat', 'chat:user:leave', { username });
+    registerBotListener('user:leave', (data) => {
+        const username = typeof data === 'string' ? data : data.username;
+        const room = (typeof data === 'object' && data.room) ? data.room : bot.connection?.room || 'fatpizza';
+        
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:user:leave', { username, room });
+        apiServer.broadcastToTopic('chat', 'chat:user:leave', { username, room });
         
         // Also broadcast updated user count
         const currentUsers = bot.userlist ? bot.userlist.size : 0;
         const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
-        apiServer.broadcastToTopic('chat', 'chat:usercount', {
+        const userCountPayload = {
             total: currentUsers,
             active: currentUsers - afkUsers,
-            afk: afkUsers
-        });
+            afk: afkUsers,
+            room: room
+        };
+        
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:usercount', userCountPayload);
+        apiServer.broadcastToTopic('chat', 'chat:usercount', userCountPayload);
     });
     
     // Media events
     registerBotListener('media:change', (media) => {
-        apiServer.broadcastToTopic('chat', 'chat:media:change', {
+        const room = media.room || bot.connection?.room || 'fatpizza';
+        const payload = {
             title: media.title,
             id: media.id,
             type: media.type,
-            duration: media.duration
-        });
+            duration: media.duration,
+            room: room
+        };
+        
+        apiServer.broadcastToTopic(`chat:${room}`, 'chat:media:change', payload);
+        apiServer.broadcastToTopic('chat', 'chat:media:change', payload);
     });
     
     // Periodic stats broadcast
