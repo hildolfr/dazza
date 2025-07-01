@@ -417,8 +417,8 @@ export const RoomEventHandlers = {
         const room = this.getRoom(roomId);
         if (!room) return;
         
-        const urls = detectUrls(data.msg);
-        if (urls.length === 0) return;
+        const urlResult = detectUrls(data.msg);
+        if (!urlResult.hasUrls) return;
         
         // Check cooldown
         const now = Date.now();
@@ -427,7 +427,7 @@ export const RoomEventHandlers = {
         }
         
         // Get first URL
-        const url = urls[0];
+        const url = urlResult.urls[0];
         
         try {
             // Fetch title and get comment
@@ -502,9 +502,10 @@ export const RoomEventHandlers = {
         
         // Respond with AI
         try {
-            const context = room.messageHistory.slice(-5).map(m => 
-                `${m.username}: ${m.message}`
-            ).join('\n');
+            const context = room.messageHistory.slice(-5).map(m => ({
+                username: m.username,
+                message: m.message
+            }));
             
             const response = await this.ollama.generateResponse(data.msg, context, data.username);
             
