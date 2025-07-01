@@ -112,3 +112,10 @@ The bot uses SQLite database (`cytube_stats.db`) for persistence with the follow
 
 ## Timezone Configuration
 - We shall calculate timezones assuming UTC+10, eastern australia. Server time is UTC-8.
+
+## Version Control Guidelines
+- We will add relevant files to gitignore, add the files we need, commit & push after every set of changes in our codebase
+- A set is defined as a group of changes that are all towards a similar goal or purpose
+
+## Commit Message Guidelines
+- We will write thorough git commit messages to allow for future debugging and issue troubleshooting using them as a guide.
