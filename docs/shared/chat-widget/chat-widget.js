@@ -196,9 +196,11 @@ class ChatWidget extends HTMLElement {
             }
             
             // Connect WebSocket
+            console.log('[ChatWidget] Connecting to WebSocket...');
             await this.socket.connect();
             
             // Subscribe to chat events
+            console.log('[ChatWidget] Subscribing to chat events...');
             this.socket.subscribe(['chat']);
             
         } catch (error) {
@@ -286,6 +288,7 @@ class ChatWidget extends HTMLElement {
      */
     _handleSocketMessage(event) {
         const messageData = event.detail;
+        console.log('[ChatWidget] Received message:', messageData);
         
         // Add message to display
         this.messages.addMessage(messageData);

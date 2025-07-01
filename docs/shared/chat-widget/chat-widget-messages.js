@@ -40,8 +40,11 @@ export class ChatMessages {
      * @param {Object} messageData - Message object with username, message, timestamp properties
      */
     addMessage(messageData) {
+        console.log('[ChatMessages] Adding message:', messageData);
+        
         // Filter message if needed
         if (this.shouldFilterMessage(messageData)) {
+            console.log('[ChatMessages] Message filtered out');
             return;
         }
         
