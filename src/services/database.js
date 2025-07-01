@@ -743,11 +743,6 @@ class Database {
             messageId,
             timestamp
         ]);
-        
-        // If it's an image URL, also add to user_images
-        if (urlData.type === 'image') {
-            await this.addUserImage(username, urlData.url, timestamp);
-        }
     }
 
     async getRecentUrls(limit = 50) {
