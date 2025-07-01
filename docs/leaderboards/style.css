@@ -8472,4 +8472,284 @@ EOF < /dev/null
         font-size: 1rem;
     }
 }
+
+/* Achievements Panel in HUD */
+.achievements-panel {
+    grid-column: span 2;
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+}
+
+.achievements-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.achievement-count {
+    padding: 3px 12px;
+    background: rgba(255, 199, 44, 0.1);
+    color: var(--vb-gold);
+    border: 1px solid rgba(255, 199, 44, 0.3);
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.achievements-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+.achievement-badge {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    animation: badgeFadeIn 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes badgeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.achievement-badge:hover {
+    transform: translateY(-5px) scale(1.05);
+    border-color: rgba(0, 212, 255, 0.5);
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.badge-glow {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+}
+
+.achievement-badge:hover .badge-glow {
+    opacity: 1;
+}
+
+.achievement-badge.bronze .badge-glow {
+    background: radial-gradient(circle, rgba(205, 127, 50, 0.4) 0%, transparent 70%);
+}
+
+.achievement-badge.silver .badge-glow {
+    background: radial-gradient(circle, rgba(192, 192, 192, 0.4) 0%, transparent 70%);
+}
+
+.achievement-badge.gold .badge-glow {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+}
+
+.achievement-badge.legendary .badge-glow {
+    background: radial-gradient(circle, rgba(255, 0, 255, 0.4) 0%, transparent 70%);
+}
+
+.badge-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px currentColor);
+}
+
+.achievement-badge.bronze .badge-icon {
+    color: #CD7F32;
+}
+
+.achievement-badge.silver .badge-icon {
+    color: #C0C0C0;
+}
+
+.achievement-badge.gold .badge-icon {
+    color: #FFD700;
+}
+
+.achievement-badge.legendary .badge-icon {
+    color: #FF00FF;
+    animation: legendaryPulse 2s infinite;
+}
+
+@keyframes legendaryPulse {
+    0%, 100% { filter: drop-shadow(0 0 10px #FF00FF); }
+    50% { filter: drop-shadow(0 0 20px #FF00FF) drop-shadow(0 0 30px #FF00FF); }
+}
+
+.badge-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.badge-name {
+    font-size: 0.85rem;
+    color: #00D4FF;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-tier {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.badge-tier.bronze {
+    background: rgba(205, 127, 50, 0.2);
+    color: #CD7F32;
+    border: 1px solid rgba(205, 127, 50, 0.5);
+}
+
+.badge-tier.silver {
+    background: rgba(192, 192, 192, 0.2);
+    color: #C0C0C0;
+    border: 1px solid rgba(192, 192, 192, 0.5);
+}
+
+.badge-tier.gold {
+    background: rgba(255, 215, 0, 0.2);
+    color: #FFD700;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.badge-tier.legendary {
+    background: rgba(255, 0, 255, 0.2);
+    color: #FF00FF;
+    border: 1px solid rgba(255, 0, 255, 0.5);
+}
+
+.badge-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    border-radius: 8px;
+    padding: 10px 15px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 10;
+    min-width: 200px;
+    max-width: 250px;
+}
+
+.achievement-badge:hover .badge-tooltip {
+    opacity: 1;
+}
+
+.badge-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(0, 212, 255, 0.5);
+}
+
+.tooltip-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.4;
+}
+
+/* Achievements Overflow */
+.achievements-overflow {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 212, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.overflow-text {
+    color: var(--vb-gold);
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.overflow-bar {
+    width: 150px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.overflow-bar .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00D4FF, var(--vb-gold));
+    transition: width 0.5s;
+}
+
+/* Empty State for Achievements */
+.achievements-panel.empty {
+    opacity: 0.7;
+}
+
+.achievements-empty {
+    padding: 40px;
+    text-align: center;
+}
+
+.achievements-empty .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.achievements-empty .empty-message {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.achievements-empty .empty-hint {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .achievements-panel {
+        grid-column: span 1;
+    }
+    
+    .achievements-hud-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 15px;
+    }
+    
+    .badge-icon {
+        font-size: 2rem;
+    }
+    
+    .badge-name {
+        font-size: 0.75rem;
+    }
+}
 EOF < /dev/null
