@@ -944,9 +944,13 @@ class Database {
                     WHERE username = ? 
                     AND is_active = 1
                     AND url != ?
-                    ORDER BY timestamp ASC
-                    LIMIT ?
-                `, [username, url, imagesToRemove]);
+                    AND id IN (
+                        SELECT id FROM user_images
+                        WHERE username = ? AND is_active = 1 AND url != ?
+                        ORDER BY timestamp ASC
+                        LIMIT ?
+                    )
+                `, [username, url, username, url, imagesToRemove]);
                 
                 console.log(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
             }
