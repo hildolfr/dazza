@@ -409,7 +409,12 @@ export class MultiRoomBot extends EventEmitter {
             return;
         }
         
-        connection.pm(toUser, message);
+        // Send PM using socket emit (same as single-room bot)
+        connection.socket.emit('pm', {
+            to: toUser,
+            msg: message,
+            meta: {}
+        });
     }
     
     /**
