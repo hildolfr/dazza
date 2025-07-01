@@ -4,6 +4,7 @@ import { DazzaPersonality } from './character.js';
 import { CooldownManager } from '../utils/cooldowns.js';
 import { PersistentCooldownManager } from '../utils/persistentCooldowns.js';
 import { MemoryManager } from '../utils/memoryManager.js';
+import { MemoryMonitor } from '../utils/MemoryMonitor.js';
 import { RateLimiter } from '../utils/rateLimiter.js';
 import { formatDuration, formatTimestamp } from '../utils/formatting.js';
 import { truncateMessage, MAX_MESSAGE_LENGTH } from '../utils/messageValidator.js';
@@ -94,6 +95,9 @@ export class CyTubeBot extends EventEmitter {
         // Batch processing scheduler
         this.batchScheduler = null;
         
+        // Memory monitoring
+        this.memoryMonitor = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -141,7 +145,23 @@ export class CyTubeBot extends EventEmitter {
             this.imageHealthChecker.start();
             
             // Initialize CashMonitor (10 second interval)
-            this.cashMonitor = new CashMonitor(this.db, this.logger, 10000);
+            this.cashMonitor = new CashMonitor(this.db, this.logger, 60000); // Changed from 10s to 60s to reduce performance impact
+            
+            // Initialize Memory Monitor
+            this.memoryMonitor = new MemoryMonitor({
+                warningThreshold: 0.85,
+                criticalThreshold: 0.95,
+                checkInterval: 60000, // Check every minute
+                leakDetectionWindow: 10,
+                leakGrowthThreshold: 0.05
+            });
+            
+            // Setup memory monitor event handlers
+            this.setupMemoryMonitorHandlers();
+            
+            // Start memory monitoring
+            this.memoryMonitor.start();
+            this.logger.info('Memory monitor started');
             
             // Initialize Batch Scheduler for chat analytics
             this.batchScheduler = new BatchScheduler(this.db, this.logger);
@@ -320,6 +340,97 @@ export class CyTubeBot extends EventEmitter {
     setupVideoPayoutHandlers() {
         // Nothing to set up here - video payout works silently
         // All event handling is done through the existing handlers
+    }
+    
+    setupMemoryMonitorHandlers() {
+        // Track key data structures
+        this.memoryMonitor.trackDataStructure('userlist', this.userlist);
+        this.memoryMonitor.trackDataStructure('processedMessages', this.processedMessages);
+        this.memoryMonitor.trackDataStructure('lastGreetings', this.lastGreetings);
+        this.memoryMonitor.trackDataStructure('recentMentions', this.recentMentions);
+        this.memoryMonitor.trackDataStructure('messageHistory', this.messageHistory);
+        this.memoryMonitor.trackDataStructure('pendingMentionTimeouts', this.pendingMentionTimeouts);
+        this.memoryMonitor.trackDataStructure('userDepartureTimes', this.userDepartureTimes);
+        
+        // Handle memory warnings
+        this.memoryMonitor.on('warning', (data) => {
+            this.logger.warn('Memory warning', data);
+            // Log to console for immediate visibility
+            console.warn(`⚠️  Memory Warning: Heap at ${data.heapPercent}% (${data.heapUsedMB}MB / ${data.heapLimitMB}MB)`);
+        });
+        
+        // Handle critical memory situations
+        this.memoryMonitor.on('critical', (data) => {
+            this.logger.error('Memory critical', data);
+            console.error(`🚨 CRITICAL: Memory at ${data.heapPercent}% - ${data.suggestion}`);
+            
+            // Try to free up memory
+            if (global.gc) {
+                this.logger.info('Forcing garbage collection due to critical memory');
+                this.memoryMonitor.forceGC();
+            }
+            
+            // Clear some non-essential caches
+            this.clearNonEssentialCaches();
+        });
+        
+        // Handle memory leak detection
+        this.memoryMonitor.on('leak-detected', (data) => {
+            this.logger.error('Potential memory leak detected', data);
+            console.error(`💧 Memory Leak Detected: ${data.suggestion}`);
+            console.error(`   Average growth: ${data.avgGrowthPercent}% per sample`);
+            console.error(`   Total increase: ${data.totalIncreaseMB}MB over ${data.windowSizeMinutes} minutes`);
+        });
+        
+        // Log when GC is forced
+        this.memoryMonitor.on('gc-forced', (data) => {
+            this.logger.info('Garbage collection forced', data);
+        });
+    }
+    
+    clearNonEssentialCaches() {
+        // Clear old processed messages
+        if (this.processedMessages.size > 100) {
+            const toKeep = 100;
+            const toDelete = this.processedMessages.size - toKeep;
+            const iterator = this.processedMessages.values();
+            for (let i = 0; i < toDelete; i++) {
+                this.processedMessages.delete(iterator.next().value);
+            }
+            this.logger.info(`Cleared ${toDelete} old processed messages`);
+        }
+        
+        // Clear old greetings
+        const oneHourAgo = Date.now() - 3600000;
+        let clearedGreetings = 0;
+        for (const [user, time] of this.lastGreetings.entries()) {
+            if (time < oneHourAgo) {
+                this.lastGreetings.delete(user);
+                clearedGreetings++;
+            }
+        }
+        if (clearedGreetings > 0) {
+            this.logger.info(`Cleared ${clearedGreetings} old greeting records`);
+        }
+        
+        // Clear old departure times
+        let clearedDepartures = 0;
+        for (const [user, time] of this.userDepartureTimes.entries()) {
+            if (time < oneHourAgo) {
+                this.userDepartureTimes.delete(user);
+                clearedDepartures++;
+            }
+        }
+        if (clearedDepartures > 0) {
+            this.logger.info(`Cleared ${clearedDepartures} old departure records`);
+        }
+        
+        // Trim message history if it's too large
+        if (this.messageHistory.length > this.maxHistorySize) {
+            const removed = this.messageHistory.length - this.maxHistorySize;
+            this.messageHistory = this.messageHistory.slice(-this.maxHistorySize);
+            this.logger.info(`Trimmed ${removed} old messages from history`);
+        }
     }
 
     async handleChatMessage(data) {
@@ -1323,11 +1434,27 @@ export class CyTubeBot extends EventEmitter {
         
         // Log stats periodically
         this.statsInterval = setInterval(() => {
-            this.logger.info('Bot stats', {
+            const memStats = this.memoryMonitor ? this.memoryMonitor.getStats() : null;
+            
+            const stats = {
                 uptime: this.getUptime(),
                 usersOnline: this.userlist.size,
                 memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
-            });
+            };
+            
+            // Add detailed memory stats if available
+            if (memStats) {
+                stats.memory = {
+                    heap: `${memStats.current.heapUsedMB}/${memStats.current.heapTotalMB}MB (${memStats.current.heapPercent}%)`,
+                    rss: `${memStats.current.rssMB}MB`,
+                    external: `${memStats.current.externalMB}MB`,
+                    trend: memStats.trend,
+                    gcCount: memStats.gc.count,
+                    dataStructures: memStats.dataStructures
+                };
+            }
+            
+            this.logger.info('Bot stats', stats);
         }, 5 * 60 * 1000); // Every 5 minutes
         
         // Start memory cleanup for greeting map
@@ -1849,6 +1976,11 @@ export class CyTubeBot extends EventEmitter {
         // Stop cash monitor
         if (this.cashMonitor) {
             this.cashMonitor.stop();
+        }
+        
+        // Stop memory monitor
+        if (this.memoryMonitor) {
+            this.memoryMonitor.stop();
         }
         
         // Stop image health checker

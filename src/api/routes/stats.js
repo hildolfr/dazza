@@ -518,6 +518,22 @@ export function createStatsRoutes(apiServer) {
         // Calculate bot uptime
         const uptime = apiServer.bot.startTime ? Math.floor((Date.now() - apiServer.bot.startTime) / 1000) : 0;
         
+        // Get memory stats if available
+        let memoryStats = null;
+        if (apiServer.bot.memoryMonitor) {
+            const memStats = apiServer.bot.memoryMonitor.getStats();
+            if (memStats) {
+                memoryStats = {
+                    current: memStats.current,
+                    average: memStats.average,
+                    peak: memStats.peak,
+                    trend: memStats.trend,
+                    gc: memStats.gc,
+                    dataStructures: memStats.dataStructures
+                };
+            }
+        }
+        
         res.json({
             success: true,
             data: {
@@ -534,7 +550,8 @@ export function createStatsRoutes(apiServer) {
                 connection: {
                     connected: apiServer.bot.connection?.connected || false,
                     channel: apiServer.bot.connection?.channel || null
-                }
+                },
+                memory: memoryStats
             }
         });
     }));
@@ -1338,6 +1355,36 @@ export function createStatsRoutes(apiServer) {
         });
     }));
 
+    // GET /api/v1/stats/memory - Get detailed memory statistics
+    router.get('/memory', asyncHandler(async (req, res) => {
+        if (!apiServer.bot.memoryMonitor) {
+            return res.json({
+                success: false,
+                error: 'Memory monitor not available'
+            });
+        }
+        
+        const stats = apiServer.bot.memoryMonitor.getStats();
+        const history = apiServer.bot.memoryMonitor.getHistory();
+        const heapSpaces = apiServer.bot.memoryMonitor.getHeapSpaceDetails();
+        
+        res.json({
+            success: true,
+            data: {
+                current: stats ? stats.current : null,
+                average: stats ? stats.average : null,
+                peak: stats ? stats.peak : null,
+                trend: stats ? stats.trend : null,
+                gc: stats ? stats.gc : null,
+                dataStructures: stats ? stats.dataStructures : null,
+                heapSpaces: heapSpaces || [],
+                history: history || [],
+                uptime: stats ? stats.uptime : 0,
+                samples: stats ? stats.samples : 0
+            }
+        });
+    }));
+    
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/category/:category');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/all');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/:type');
@@ -1345,6 +1392,7 @@ export function createStatsRoutes(apiServer) {
     apiServer.registerEndpoint('GET', '/api/v1/stats/daily/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/recent/activity');
     apiServer.registerEndpoint('GET', '/api/v1/stats/batch/status');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/memory');
     
     return router;
 }

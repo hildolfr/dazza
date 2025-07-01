@@ -4,6 +4,9 @@ export function setupWebSocketEvents(apiServer) {
     // Track connected clients for logging
     const clients = new Map();
     
+    // Store bot event listeners for cleanup
+    const botEventListeners = [];
+    
     io.on('connection', (socket) => {
         const clientInfo = {
             id: socket.id,
@@ -104,51 +107,57 @@ export function setupWebSocketEvents(apiServer) {
     
     // Bot-related events
     
+    // Helper function to register bot event listeners
+    const registerBotListener = (event, handler) => {
+        bot.on(event, handler);
+        botEventListeners.push({ event, handler });
+    };
+    
     // When bot connects/disconnects
-    bot.on('connected', () => {
+    registerBotListener('connected', () => {
         apiServer.broadcastToTopic('bot', 'bot:connected', {
             channel: bot.connection.channel,
             username: bot.connection.username
         });
     });
     
-    bot.on('disconnected', () => {
+    registerBotListener('disconnected', () => {
         apiServer.broadcastToTopic('bot', 'bot:disconnected', {});
     });
     
     // Gallery-related events
     
     // When an image is added
-    bot.on('gallery:image:added', (data) => {
+    registerBotListener('gallery:image:added', (data) => {
         apiServer.broadcastToTopic('gallery', 'gallery:image:added', data);
     });
     
     // When an image is restored
-    bot.on('gallery:image:restored', (data) => {
+    registerBotListener('gallery:image:restored', (data) => {
         apiServer.broadcastToTopic('gallery', 'gallery:image:restored', data);
     });
     
     // When gallery is updated
-    bot.on('gallery:updated', (username) => {
+    registerBotListener('gallery:updated', (username) => {
         apiServer.broadcastToTopic('gallery', 'gallery:updated', { username });
     });
     
     // Stats-related events
     
     // When user stats change
-    bot.on('stats:user:update', (data) => {
+    registerBotListener('stats:user:update', (data) => {
         apiServer.broadcastToTopic('stats', 'stats:user:update', data);
     });
     
     // When channel stats change
-    bot.on('stats:channel:update', (data) => {
+    registerBotListener('stats:channel:update', (data) => {
         apiServer.broadcastToTopic('stats', 'stats:channel:activity', data);
     });
     
     // Chat-related events (if enabled)
     
     // When a message is received
-    bot.on('chat:message', (data) => {
+    registerBotListener('chat:message', (data) => {
         // Only broadcast non-sensitive messages
         if (!data.message.startsWith('!') && !data.isPM) {
             apiServer.broadcastToTopic('chat', 'chat:message', {
@@ -160,16 +169,16 @@ export function setupWebSocketEvents(apiServer) {
     });
     
     // When users join/leave
-    bot.on('user:join', (username) => {
+    registerBotListener('user:join', (username) => {
         apiServer.broadcastToTopic('chat', 'chat:user:join', { username });
     });
     
-    bot.on('user:leave', (username) => {
+    registerBotListener('user:leave', (username) => {
         apiServer.broadcastToTopic('chat', 'chat:user:leave', { username });
     });
     
     // Media events
-    bot.on('media:change', (media) => {
+    registerBotListener('media:change', (media) => {
         apiServer.broadcastToTopic('chat', 'chat:media:change', {
             title: media.title,
             id: media.id,
@@ -192,9 +201,20 @@ export function setupWebSocketEvents(apiServer) {
         }
     }, 30000); // Every 30 seconds
     
-    // Store interval for cleanup
+    // Store cleanup function for both interval and event listeners
     apiServer.websocketCleanup = () => {
+        // Clear the stats broadcast interval
         clearInterval(statsBroadcastInterval);
+        
+        // Remove all bot event listeners
+        botEventListeners.forEach(({ event, handler }) => {
+            bot.removeListener(event, handler);
+        });
+        
+        // Clear the array
+        botEventListeners.length = 0;
+        
+        bot.logger.debug('[API] WebSocket cleanup completed - removed all bot event listeners');
     };
     
     // API-specific events that can be emitted from routes
@@ -205,7 +225,7 @@ export function setupWebSocketEvents(apiServer) {
     });
     
     // Batch gallery images deletion (called from database)
-    bot.on('gallery:images:deleted', (data) => {
+    registerBotListener('gallery:images:deleted', (data) => {
         apiServer.broadcastToTopic('gallery', 'gallery:images:deleted', data);
     });
     
