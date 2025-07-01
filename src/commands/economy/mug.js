@@ -216,7 +216,7 @@ export default new Command({
                         await bot.heistManager.updateUserEconomy('dazza', -amount, 0);
                         await bot.heistManager.updateUserEconomy(message.username, amount, 5); // +5 trust for balls
                         
-                        bot.sendMessage(`HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary!`);
+                        bot.sendMessage(`HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
                         
                         // Update mug stats
                         await updateMugStats(bot.db, message.username, targetUsername, true, amount);
@@ -239,7 +239,7 @@ export default new Command({
                         reversalMsg = reversalMsg.replace('-attacker', `-${message.username}`);
                         reversalMsg = reversalMsg.replace('-amount', reversalAmount);
                         
-                        bot.sendMessage(reversalMsg);
+                        bot.sendMessage(`${reversalMsg} (-${message.username} -2 trust)`);
                         
                         // Update stats
                         await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount);
@@ -277,9 +277,20 @@ export default new Command({
             
             // Set up response window (60 seconds)
             let victimResponded = false;
+            let responseAlertSent = false;
             const responseHandler = (msg) => {
-                if (msg.username.toLowerCase() === targetUsername.toLowerCase()) {
+                if (msg.username.toLowerCase() === targetUsername.toLowerCase() && !victimResponded) {
                     victimResponded = true;
+                    if (!responseAlertSent) {
+                        responseAlertSent = true;
+                        const alertMessages = [
+                            `oi -${targetUsername} noticed -${message.username} coming! this'll be harder now`,
+                            `-${targetUsername}'s awake and alert! -${message.username} better watch out`,
+                            `shit! -${targetUsername} saw ya -${message.username}! they're ready to defend`,
+                            `-${targetUsername} spotted the mugging attempt! odds just turned against -${message.username}`
+                        ];
+                        bot.sendMessage(alertMessages[Math.floor(Math.random() * alertMessages.length)]);
+                    }
                 }
             };
             
@@ -310,7 +321,7 @@ export default new Command({
                         .replace('-victim', `-${targetUsername}`)
                         .replace('-fine', fine);
                     
-                    bot.sendMessage(defendMsg);
+                    bot.sendMessage(`${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
                     await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
                     return { success: true };
@@ -341,7 +352,7 @@ export default new Command({
                         .replace('-amount', mugAmount)
                         .replace('-victim', `-${targetUsername}`);
                     
-                    bot.sendMessage(successMsg);
+                    bot.sendMessage(`${successMsg} (-${message.username} +2 trust, -${targetUsername} -1 trust)`);
                     
                     // Mock if zeroed out
                     if (newVictimBalance.balance === 0) {
@@ -369,7 +380,7 @@ export default new Command({
                     .replace('-victim', `-${targetUsername}`)
                     .replace('-fine', fine);
                 
-                bot.sendMessage(failMsg);
+                bot.sendMessage(`${failMsg} (-${message.username} -2 trust)`);
                 
                 await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
             }
