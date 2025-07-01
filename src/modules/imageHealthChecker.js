@@ -48,7 +48,7 @@ export class ImageHealthChecker {
 
     isConnected() {
         // Check if the bot is connected to the server
-        if (!this.bot.connected) {
+        if (!this.bot.connection || !this.bot.connection.isConnected()) {
             this.bot.logger.warn('[ImageHealthChecker] Bot is not connected, skipping health check');
             return false;
         }
@@ -68,13 +68,18 @@ export class ImageHealthChecker {
             this.bot.logger.info('[ImageHealthChecker] Starting image health check');
             
             // Get active images that haven't been checked recently
+            // Prioritize images that haven't been checked in a while
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
             const images = await this.bot.db.all(`
                 SELECT url, username, id, failure_count, first_failure_at, last_check_at
                 FROM user_images
                 WHERE is_active = 1
-                ORDER BY RANDOM()
+                AND (last_check_at IS NULL OR last_check_at < ?)
+                ORDER BY 
+                    CASE WHEN last_check_at IS NULL THEN 0 ELSE last_check_at END ASC,
+                    id ASC
                 LIMIT ?
-            `, [this.batchSize]);
+            `, [oneHourAgo, this.batchSize]);
 
             if (images.length === 0) {
                 this.bot.logger.debug('[ImageHealthChecker] No images to check');
@@ -228,7 +233,31 @@ export class ImageHealthChecker {
                 const image = images[i];
                 
                 if (result.accessible) {
-                    // Image is back online - restore it
+                    // Check if user is already at the 25 image limit
+                    const activeCount = await this.bot.db.get(`
+                        SELECT COUNT(*) as count
+                        FROM user_images
+                        WHERE username = ? AND is_active = 1
+                    `, [image.username]);
+                    
+                    if (activeCount.count >= 25) {
+                        this.bot.logger.info(`[ImageHealthChecker] Cannot restore image for ${image.username} - already has 25 images`);
+                        // Keep it in recheck queue with longer interval
+                        const recheckCount = (image.recheck_count || 0) + 1;
+                        const nextInterval = 24 * 60 * 60 * 1000; // Check again in 24 hours
+                        const nextCheckAt = now + nextInterval;
+                        
+                        await this.bot.db.run(`
+                            UPDATE user_images 
+                            SET recheck_count = ?,
+                                last_check_at = ?,
+                                next_check_at = ?
+                            WHERE id = ?
+                        `, [recheckCount, now, nextCheckAt, image.id]);
+                        continue;
+                    }
+                    
+                    // Image is back online and user has room - restore it
                     restoredCount++;
                     
                     await this.bot.db.run(`
@@ -399,6 +428,21 @@ export class ImageHealthChecker {
             const now = Date.now();
             
             if (result[0].accessible) {
+                // Check if user is already at the 25 image limit
+                const activeCount = await this.bot.db.get(`
+                    SELECT COUNT(*) as count
+                    FROM user_images
+                    WHERE username = ? AND is_active = 1
+                `, [image.username]);
+                
+                if (activeCount.count >= 25) {
+                    return { 
+                        success: false, 
+                        accessible: true, 
+                        error: 'Gallery is full (25 images). Cannot restore image.' 
+                    };
+                }
+                
                 // Restore the image
                 await this.bot.db.run(`
                     UPDATE user_images 

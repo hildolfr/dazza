@@ -438,10 +438,13 @@ export class CyTubeBot extends EventEmitter {
                 for (const restored of logResult.restoredImages) {
                     this.logger.info(`Restored previously dead image: ${restored.url}`);
                 }
-                // Notify in chat about restored image (Dazza style)
-                setTimeout(() => {
-                    this.sendMessage(`Oi fucken' oath! That pic's back from the dead! Thought it carked it but she's alive again!`);
-                }, 2000);
+            }
+            
+            // Check if any restorations failed due to gallery being full
+            if (logResult.failedRestorations && logResult.failedRestorations.length > 0) {
+                for (const failed of logResult.failedRestorations) {
+                    this.logger.warn(`Failed to restore image (gallery full): ${failed.url}`);
+                }
             }
             
             
