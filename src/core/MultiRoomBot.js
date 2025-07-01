@@ -378,6 +378,33 @@ export class MultiRoomBot extends EventEmitter {
     }
     
     /**
+     * Check if user is an admin
+     */
+    isAdmin(username) {
+        return this.admins.has(username.toLowerCase());
+    }
+    
+    /**
+     * Send private message to user
+     */
+    sendPrivateMessage(toUser, message, roomId = null) {
+        // For multi-room bot, we can't send PMs without room context
+        // Log a warning if roomId is not provided
+        if (!roomId) {
+            this.logger.warn(`Cannot send PM to ${toUser} without room context`);
+            return;
+        }
+        
+        const roomContext = this.rooms.get(roomId);
+        if (!roomContext || !roomContext.connection) {
+            this.logger.warn(`Cannot send PM - room ${roomId} not connected`);
+            return;
+        }
+        
+        roomContext.connection.pm(toUser, message);
+    }
+    
+    /**
      * Execute a command in a specific room context
      */
     async executeCommand(roomId, commandName, message, args) {

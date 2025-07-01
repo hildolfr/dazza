@@ -431,14 +431,14 @@ export const RoomEventHandlers = {
         
         try {
             // Fetch title and get comment
-            const result = await fetchUrlTitleAndComment(url, this.personality);
+            const comment = await fetchUrlTitleAndComment(url, data.username);
             
-            if (result && result.comment) {
+            if (comment) {
                 // Send comment with random delay
                 const delay = Math.floor(Math.random() * 3000) + 1000; // 1-4 seconds
                 
                 setTimeout(() => {
-                    this.sendMessage(roomId, result.comment);
+                    this.sendMessage(roomId, comment);
                     
                     // Update cooldown with random time
                     room.lastUrlCommentTime = Date.now();
