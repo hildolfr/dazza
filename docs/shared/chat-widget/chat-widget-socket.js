@@ -61,6 +61,23 @@ class ChatSocket extends EventTarget {
             // Set up event handlers
             this.setupEventHandlers();
             
+            // Wait for connection to be established
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Connection timeout'));
+                }, 10000); // 10 second timeout
+                
+                this.socket.once('connect', () => {
+                    clearTimeout(timeout);
+                    resolve();
+                });
+                
+                this.socket.once('connect_error', (error) => {
+                    clearTimeout(timeout);
+                    reject(error);
+                });
+            });
+            
         } catch (error) {
             console.error('Failed to connect:', error);
             this.emit('error', { error });
