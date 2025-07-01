@@ -1,6 +1,42 @@
 import fetch from 'node-fetch';
 import { URL } from 'url';
 
+// Configuration
+const DEFAULT_TIMEOUT = 10000; // 10 seconds
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+// Helper function to delay execution
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to fetch with retry and exponential backoff
+async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
+    let lastError;
+    
+    for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            return response;
+        } catch (error) {
+            lastError = error;
+            
+            // Don't retry on certain errors
+            if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+                throw error;
+            }
+            
+            // If we have more retries, wait with exponential backoff
+            if (attempt < retries - 1) {
+                const delayMs = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+                console.debug(`[ImageMetadata] Retry ${attempt + 1}/${retries - 1} for ${url} after ${delayMs}ms`);
+                await delay(delayMs);
+            }
+        }
+    }
+    
+    throw lastError;
+}
+
 // Simple metadata extraction without external dependencies
 export async function extractImageMetadata(imageUrl) {
     try {
@@ -15,9 +51,9 @@ export async function extractImageMetadata(imageUrl) {
         };
 
         // Make a HEAD request to get metadata without downloading the full image
-        const response = await fetch(imageUrl, {
+        const response = await fetchWithRetry(imageUrl, {
             method: 'HEAD',
-            timeout: 5000,
+            timeout: DEFAULT_TIMEOUT,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Dazza Bot) AppleWebKit/537.36'
             }
@@ -86,9 +122,9 @@ function estimateDimensions(url) {
 // Check if an image URL is still accessible
 export async function checkImageHealth(imageUrl) {
     try {
-        const response = await fetch(imageUrl, {
+        const response = await fetchWithRetry(imageUrl, {
             method: 'HEAD',
-            timeout: 5000,
+            timeout: DEFAULT_TIMEOUT,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Dazza Bot) AppleWebKit/537.36'
             }
@@ -101,6 +137,9 @@ export async function checkImageHealth(imageUrl) {
             error: response.ok ? null : `HTTP ${response.status}`
         };
     } catch (error) {
+        // Log more details for debugging
+        console.debug(`[ImageMetadata] Health check failed for ${imageUrl}: ${error.message}`);
+        
         return {
             accessible: false,
             statusCode: null,

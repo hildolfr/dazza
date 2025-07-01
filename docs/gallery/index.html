@@ -278,6 +278,220 @@ h1 {
     pointer-events: none;
 }
 
+/* Pruned Images Modal Styles */
+.pruned-modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    overflow-y: auto;
+}
+
+.pruned-modal.active {
+    display: block;
+}
+
+.pruned-modal-content {
+    background: #1a1a1a;
+    margin: 5% auto;
+    padding: 30px;
+    border: 3px solid #ff0000;
+    width: 90%;
+    max-width: 1200px;
+    box-shadow: 0 0 30px #ff0000;
+    position: relative;
+}
+
+.pruned-modal-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pruned-modal-header h2 {
+    color: #ff0000;
+    font-size: 2.5em;
+    text-shadow: 0 0 15px #ff0000;
+    margin-bottom: 10px;
+}
+
+.pruned-subtitle {
+    color: #ffff00;
+    font-size: 1.1em;
+}
+
+.pruned-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.pruned-item {
+    border: 2px solid #666;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.pruned-item:hover {
+    border-color: #ff00ff;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+.pruned-item.has-gravestone {
+    border-color: #333;
+    opacity: 0.7;
+}
+
+.gravestone-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.5em;
+    filter: grayscale(100%);
+}
+
+.pruned-image-thumb {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border: 1px solid #444;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.pruned-info {
+    font-size: 0.8em;
+    color: #aaa;
+}
+
+.pruned-info div {
+    margin-bottom: 5px;
+}
+
+.pruned-username {
+    color: #ff00ff;
+    font-weight: bold;
+}
+
+.pruned-reason {
+    color: #ff6666;
+}
+
+.pruned-time {
+    color: #00ffff;
+}
+
+.recheck-btn {
+    width: 100%;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+.recheck-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.recheck-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recheck-btn.checking {
+    background: rgba(255, 255, 0, 0.2);
+    border-color: #ffff00;
+    color: #ffff00;
+}
+
+.recheck-btn.success {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
+.recheck-btn.failed {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    color: #ff0000;
+}
+
+.pruned-toggle-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255, 0, 0, 0.2);
+    border: 2px solid #ff0000;
+    color: #ff0000;
+    padding: 15px 25px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.pruned-toggle-btn:hover {
+    background: rgba(255, 0, 0, 0.4);
+    box-shadow: 0 0 30px #ff0000;
+    transform: scale(1.05);
+}
+
+.pruned-loading {
+    text-align: center;
+    padding: 50px;
+    color: #ffff00;
+    font-size: 1.2em;
+}
+
+.pruned-empty {
+    text-align: center;
+    padding: 50px;
+    color: #666;
+    font-size: 1.1em;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #ff0000;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    color: #ff00ff;
+    transform: rotate(90deg);
+    transition: all 0.3s ease;
+}
+
 </style>
 </head>
 <body>
@@ -306,6 +520,23 @@ h1 {
         <div class="modal-content" id="modalImage"></div>
     </div>
     
+    <!-- Pruned Images Modal -->
+    <div class="pruned-modal" id="prunedModal">
+        <div class="pruned-modal-content">
+            <button class="modal-close-btn" id="closePrunedModal">&times;</button>
+            <div class="pruned-modal-header">
+                <h2>THE GRAVEYARD</h2>
+                <p class="pruned-subtitle">Dead links from the last 6 months - Click RECHECK to resurrect 'em!</p>
+            </div>
+            <div id="prunedLoading" class="pruned-loading">Loading dead images...</div>
+            <div id="prunedEmpty" class="pruned-empty" style="display: none;">No dead images found. Everything's still kickin'!</div>
+            <div id="prunedList" class="pruned-list" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Toggle Button for Pruned Images -->
+    <button class="pruned-toggle-btn" id="prunedToggle">View Graveyard</button>
+    
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
 // Configuration - Both HTTP and HTTPS use port 3001
@@ -319,6 +550,7 @@ const WS_URL = window.location.protocol === 'https:'
 // State
 let socket = null;
 let galleryData = {};
+let prunedData = [];
 let isConnected = false;
 
 // DOM elements
@@ -331,11 +563,20 @@ const modal = document.getElementById('imageModal');
 const modalContent = document.getElementById('modalImage');
 const closeBtn = document.querySelector('.close');
 
+// Pruned modal elements
+const prunedModal = document.getElementById('prunedModal');
+const prunedToggle = document.getElementById('prunedToggle');
+const closePrunedModal = document.getElementById('closePrunedModal');
+const prunedLoading = document.getElementById('prunedLoading');
+const prunedEmpty = document.getElementById('prunedEmpty');
+const prunedList = document.getElementById('prunedList');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadGallery();
     setupWebSocket();
     setupModalHandlers();
+    setupPrunedModalHandlers();
 });
 
 // Load gallery data from API
@@ -367,6 +608,178 @@ async function loadGallery() {
     }
 }
 
+// Load pruned images data
+async function loadPrunedImages() {
+    prunedLoading.style.display = 'block';
+    prunedEmpty.style.display = 'none';
+    prunedList.style.display = 'none';
+    
+    try {
+        const response = await fetch(`${API_BASE}/gallery/pruned`, {
+            headers: {
+                'Origin': window.location.origin
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            prunedData = data.data.images;
+            renderPrunedImages();
+        } else {
+            throw new Error(data.message || 'Failed to load pruned images');
+        }
+    } catch (error) {
+        console.error('Failed to load pruned images:', error);
+        prunedLoading.innerHTML = '<span style="color: #ff0000;">Failed to load dead images: ' + error.message + '</span>';
+    }
+}
+
+// Render pruned images
+function renderPrunedImages() {
+    prunedLoading.style.display = 'none';
+    
+    if (prunedData.length === 0) {
+        prunedEmpty.style.display = 'block';
+        prunedList.style.display = 'none';
+        return;
+    }
+    
+    prunedEmpty.style.display = 'none';
+    prunedList.style.display = 'grid';
+    prunedList.innerHTML = '';
+    
+    prunedData.forEach(image => {
+        const item = createPrunedImageElement(image);
+        prunedList.appendChild(item);
+    });
+}
+
+// Create pruned image element
+function createPrunedImageElement(image) {
+    const div = document.createElement('div');
+    div.className = 'pruned-item';
+    if (image.hasGravestone) {
+        div.classList.add('has-gravestone');
+    }
+    
+    const postedDate = new Date(image.timestamp).toLocaleString();
+    const prunedDate = new Date(image.lastCheckAt).toLocaleString();
+    
+    div.innerHTML = `
+        ${image.hasGravestone ? '<span class="gravestone-badge">⚰️</span>' : ''}
+        <img class="pruned-image-thumb" 
+             src="${image.url}" 
+             alt="Dead image"
+             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkRlYWQgSW1hZ2U8L3RleHQ+PC9zdmc+'"
+             data-url="${image.url}">
+        <div class="pruned-info">
+            <div class="pruned-username">User: ${image.username}</div>
+            <div class="pruned-reason">Reason: ${image.prunedReason}</div>
+            <div class="pruned-time">Posted: ${postedDate}</div>
+            <div class="pruned-time">Died: ${prunedDate}</div>
+            <div style="color: #999;">Failed ${image.failureCount} times</div>
+        </div>
+        <button class="recheck-btn" data-id="${image.id}">RECHECK</button>
+    `;
+    
+    // Add event listeners
+    const img = div.querySelector('.pruned-image-thumb');
+    img.addEventListener('click', () => {
+        modalContent.innerHTML = `<img src="${image.url}" alt="Dead image">`;
+        modal.classList.add('active');
+    });
+    
+    const recheckBtn = div.querySelector('.recheck-btn');
+    recheckBtn.addEventListener('click', () => handleRecheck(image.id, recheckBtn));
+    
+    return div;
+}
+
+// Handle recheck
+async function handleRecheck(imageId, button) {
+    button.disabled = true;
+    button.classList.add('checking');
+    button.textContent = 'CHECKING...';
+    
+    try {
+        const response = await fetch(`${API_BASE}/gallery/pruned/${imageId}/recheck`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.data.accessible) {
+                button.classList.remove('checking');
+                button.classList.add('success');
+                button.textContent = 'RESTORED!';
+                
+                // Remove from list after delay
+                setTimeout(() => {
+                    button.closest('.pruned-item').style.opacity = '0';
+                    setTimeout(() => {
+                        button.closest('.pruned-item').remove();
+                        // Check if list is empty
+                        if (prunedList.children.length === 0) {
+                            prunedEmpty.style.display = 'block';
+                            prunedList.style.display = 'none';
+                        }
+                    }, 500);
+                }, 2000);
+            } else {
+                button.classList.remove('checking');
+                button.classList.add('failed');
+                button.textContent = 'STILL DEAD';
+                
+                setTimeout(() => {
+                    button.classList.remove('failed');
+                    button.textContent = 'RECHECK';
+                    button.disabled = false;
+                }, 3000);
+            }
+        } else {
+            throw new Error(data.message || 'Recheck failed');
+        }
+    } catch (error) {
+        console.error('Recheck failed:', error);
+        button.classList.remove('checking');
+        button.classList.add('failed');
+        button.textContent = 'ERROR';
+        
+        setTimeout(() => {
+            button.classList.remove('failed');
+            button.textContent = 'RECHECK';
+            button.disabled = false;
+        }, 3000);
+    }
+}
+
+// Setup pruned modal handlers
+function setupPrunedModalHandlers() {
+    prunedToggle.addEventListener('click', () => {
+        prunedModal.classList.add('active');
+        loadPrunedImages();
+    });
+    
+    closePrunedModal.addEventListener('click', () => {
+        prunedModal.classList.remove('active');
+    });
+    
+    prunedModal.addEventListener('click', (e) => {
+        if (e.target === prunedModal) {
+            prunedModal.classList.remove('active');
+        }
+    });
+}
 
 // Setup WebSocket connection
 function setupWebSocket() {
@@ -411,6 +824,10 @@ function setupWebSocket() {
     socket.on('gallery:image:deleted', (data) => {
         handleImageDeleted(data);
     });
+    
+    socket.on('gallery:image:restored', (data) => {
+        handleImageRestored(data);
+    });
 
     socket.on('gallery:lock:changed', (data) => {
         if (data.isLocked) {
@@ -425,6 +842,29 @@ function setupWebSocket() {
     });
 }
 
+// Handle image restoration
+function handleImageRestored(data) {
+    // If pruned modal is open, remove the restored image
+    if (prunedModal.classList.contains('active')) {
+        const prunedItem = prunedList.querySelector(`[data-id="${data.id}"]`);
+        if (prunedItem) {
+            prunedItem.closest('.pruned-item').remove();
+            // Update pruned data
+            prunedData = prunedData.filter(img => img.id !== data.id);
+            if (prunedData.length === 0) {
+                prunedEmpty.style.display = 'block';
+                prunedList.style.display = 'none';
+            }
+        }
+    }
+    
+    // Add back to gallery
+    handleImageAdded({
+        username: data.username,
+        url: data.url,
+        timestamp: data.timestamp
+    });
+}
 
 // Handle real-time image addition
 function handleImageAdded(data) {
@@ -443,9 +883,6 @@ function handleImageAdded(data) {
     
     // Re-render just that user's section
     renderUserSection(data.username);
-    
-    // Update stats
-    loadStats();
 }
 
 // Handle real-time image deletion

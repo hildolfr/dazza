@@ -513,6 +513,106 @@ export function createGalleryRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/gallery/pruned - Get recently pruned images
+    router.get('/pruned', asyncHandler(async (req, res) => {
+        const { limit = 100, offset = 0 } = req.query;
+        const sixMonthsAgo = Date.now() - (6 * 30 * 24 * 60 * 60 * 1000); // Rough 6 months
+        
+        const prunedImages = await apiServer.bot.db.all(`
+            SELECT 
+                id,
+                username,
+                url,
+                timestamp,
+                pruned_reason as prunedReason,
+                failure_count as failureCount,
+                first_failure_at as firstFailureAt,
+                last_check_at as lastCheckAt,
+                next_check_at as nextCheckAt,
+                recheck_count as recheckCount,
+                created_at as createdAt
+            FROM user_images 
+            WHERE is_active = 0 
+            AND pruned_reason IS NOT NULL
+            AND timestamp >= ?
+            ORDER BY last_check_at DESC, timestamp DESC
+            LIMIT ? OFFSET ?
+        `, [sixMonthsAgo, parseInt(limit), parseInt(offset)]);
+        
+        const total = await apiServer.bot.db.get(
+            `SELECT COUNT(*) as count FROM user_images 
+             WHERE is_active = 0 AND pruned_reason IS NOT NULL AND timestamp >= ?`,
+            [sixMonthsAgo]
+        );
+        
+        // Calculate gravestone threshold (48 hours from first failure)
+        const gravestoneThreshold = 48 * 60 * 60 * 1000;
+        const now = Date.now();
+        
+        res.json({
+            success: true,
+            data: {
+                images: prunedImages.map(img => ({
+                    id: img.id,
+                    username: img.username,
+                    url: img.url,
+                    timestamp: img.timestamp,
+                    prunedReason: img.prunedReason,
+                    failureCount: img.failureCount,
+                    firstFailureAt: img.firstFailureAt,
+                    lastCheckAt: img.lastCheckAt,
+                    nextCheckAt: img.nextCheckAt,
+                    recheckCount: img.recheckCount,
+                    createdAt: img.createdAt,
+                    // Add gravestone flag if it's been dead for over 48 hours
+                    hasGravestone: img.firstFailureAt && (now - img.firstFailureAt) > gravestoneThreshold
+                })),
+                pagination: {
+                    total: total.count,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                }
+            }
+        });
+    }));
+    
+    // POST /api/v1/gallery/pruned/:id/recheck - Manually recheck a pruned image
+    router.post('/pruned/:id/recheck', asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        
+        if (!id) {
+            throw new ValidationError('Image ID is required', 'id');
+        }
+        
+        try {
+            const result = await apiServer.bot.imageHealthChecker.recheckImage(parseInt(id));
+            
+            if (result.accessible) {
+                res.json({
+                    success: true,
+                    data: {
+                        message: 'Image is accessible and has been restored',
+                        accessible: true
+                    }
+                });
+            } else {
+                res.json({
+                    success: true,
+                    data: {
+                        message: 'Image is still inaccessible',
+                        accessible: false,
+                        error: result.error
+                    }
+                });
+            }
+        } catch (error) {
+            if (error.message === 'Image not found') {
+                throw new NotFoundError('Image');
+            }
+            throw error;
+        }
+    }));
+    
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/gallery/images');
     apiServer.registerEndpoint('DELETE', '/api/v1/gallery/images');
@@ -524,6 +624,8 @@ export function createGalleryRoutes(apiServer) {
     apiServer.registerEndpoint('POST', '/api/v1/gallery/images/metadata');
     apiServer.registerEndpoint('POST', '/api/v1/gallery/health-check');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/stats');
+    apiServer.registerEndpoint('GET', '/api/v1/gallery/pruned');
+    apiServer.registerEndpoint('POST', '/api/v1/gallery/pruned/:id/recheck');
     
     return router;
 }
