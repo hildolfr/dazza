@@ -1392,7 +1392,91 @@ export function createStatsRoutes(apiServer) {
         });
     }));
     
+    // GET /api/v1/stats/users/:username/quote - Get random quote from user
+    router.get('/users/:username/quote', asyncHandler(async (req, res) => {
+        const { username } = req.params;
+        
+        if (!username) {
+            throw new ValidationError('Username is required', 'username');
+        }
+        
+        // Get a random message from the user that's not a bot command
+        const quote = await apiServer.bot.db.get(`
+            SELECT username, message, timestamp 
+            FROM messages 
+            WHERE LOWER(username) = LOWER(?)
+            AND message NOT LIKE '!%'
+            AND LENGTH(message) > 10
+            ORDER BY RANDOM() 
+            LIMIT 1
+        `, [username]);
+        
+        if (!quote) {
+            throw new NotFoundError('No quotable messages found for user');
+        }
+        
+        res.json({
+            success: true,
+            data: {
+                username: quote.username,
+                message: quote.message,
+                timestamp: quote.timestamp,
+                date: new Date(quote.timestamp).toISOString()
+            }
+        });
+    }));
+    
+    // GET /api/v1/stats/quotes/batch - Get random quotes for multiple users
+    router.post('/quotes/batch', asyncHandler(async (req, res) => {
+        const { usernames } = req.body;
+        
+        if (!usernames || !Array.isArray(usernames)) {
+            throw new ValidationError('Usernames array is required', 'usernames');
+        }
+        
+        if (usernames.length > 10) {
+            throw new ValidationError('Maximum 10 usernames allowed per request', 'usernames');
+        }
+        
+        const quotes = {};
+        
+        // Get quotes for each user in parallel
+        await Promise.all(usernames.map(async (username) => {
+            try {
+                const quote = await apiServer.bot.db.get(`
+                    SELECT username, message, timestamp 
+                    FROM messages 
+                    WHERE LOWER(username) = LOWER(?)
+                    AND message NOT LIKE '!%'
+                    AND LENGTH(message) > 10
+                    ORDER BY RANDOM() 
+                    LIMIT 1
+                `, [username]);
+                
+                if (quote) {
+                    quotes[username.toLowerCase()] = {
+                        username: quote.username,
+                        message: quote.message,
+                        timestamp: quote.timestamp,
+                        date: new Date(quote.timestamp).toISOString()
+                    };
+                }
+            } catch (error) {
+                console.error(`Error getting quote for ${username}:`, error);
+            }
+        }));
+        
+        res.json({
+            success: true,
+            data: {
+                quotes
+            }
+        });
+    }));
+    
     apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/category/:category');
+    apiServer.registerEndpoint('GET', '/api/v1/stats/users/:username/quote');
+    apiServer.registerEndpoint('POST', '/api/v1/stats/quotes/batch');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/all');
     apiServer.registerEndpoint('GET', '/api/v1/stats/leaderboard/:type');
     apiServer.registerEndpoint('GET', '/api/v1/stats/channel');
