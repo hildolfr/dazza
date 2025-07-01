@@ -31,7 +31,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(`${message.username}: ${errorMsg}`);
+                    bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                 }
                 return { success: false };
             }
@@ -50,7 +50,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, cooldownMsg);
                     } else {
-                        bot.sendMessage(cooldownMsg);
+                        bot.sendMessage(message.roomId, cooldownMsg);
                     }
                     return { success: false };
                 }
@@ -72,7 +72,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, errorMsg);
                     } else {
-                        bot.sendMessage(`${message.username}: ${errorMsg}`);
+                        bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                     }
                     return { success: false };
                 } else {
@@ -82,7 +82,7 @@ export default new Command({
                         if (message.isPM) {
                             bot.sendPrivateMessage(message.username, errorMsg);
                         } else {
-                            bot.sendMessage(`${message.username}: ${errorMsg}`);
+                            bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
                         return { success: false };
                     }
@@ -92,7 +92,7 @@ export default new Command({
                         if (message.isPM) {
                             bot.sendPrivateMessage(message.username, errorMsg);
                         } else {
-                            bot.sendMessage(`${message.username}: ${errorMsg}`);
+                            bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
                         return { success: false };
                     }
@@ -116,19 +116,19 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, ackMessage);
             } else {
-                bot.sendMessage(ackMessage);
+                bot.sendMessage(message.roomId, ackMessage);
             }
             
             // Schedule the clear
             setTimeout(async () => {
                 // Send the /clear command
-                bot.sendMessage('/clear');
+                bot.sendMessage(message.roomId, '/clear');
                 
                 // If there's a reason, announce it after clearing
                 if (reason) {
                     // Wait a tiny bit to ensure clear happens first
                     setTimeout(() => {
-                        bot.sendMessage(`Oi, chat got wiped by -${message.username}: ${reason}`);
+                        bot.sendMessage(message.roomId, `Oi, chat got wiped by -${message.username}: ${reason}`);
                     }, 100);
                 }
             }, delayMs);
@@ -142,7 +142,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(`${message.username}: ${errorMsg}`);
+                bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
             }
             
             return { success: false };
