@@ -3338,5 +3338,5 @@ function initializeQuoteRotator() {
         
         // Add active to new quote
         quotes[currentIndex].classList.add('active');
-    }, 4000); // Change quote every 4 seconds
+    }, 15000); // Change quote every 15 seconds
 }
