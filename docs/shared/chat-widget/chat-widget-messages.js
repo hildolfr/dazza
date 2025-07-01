@@ -40,11 +40,8 @@ export class ChatMessages {
      * @param {Object} messageData - Message object with username, message, timestamp properties
      */
     addMessage(messageData) {
-        console.log('[ChatMessages] Adding message:', messageData);
-        
         // Filter message if needed
         if (this.shouldFilterMessage(messageData)) {
-            console.log('[ChatMessages] Message filtered out');
             return;
         }
         
@@ -228,7 +225,7 @@ export class ChatMessages {
         
         this._timeUpdateInterval = setInterval(() => {
             if (this.messages.length > 0) {
-                this._render();
+                this._updateTimestampsOnly();
             }
         }, 30000); // Update every 30 seconds
     }
@@ -241,6 +238,25 @@ export class ChatMessages {
             clearInterval(this._timeUpdateInterval);
             this._timeUpdateInterval = null;
         }
+    }
+    
+    /**
+     * Update only the timestamp elements without re-rendering everything
+     * @private
+     */
+    _updateTimestampsOnly() {
+        const now = Date.now();
+        const timeElements = this.messagesElement.querySelectorAll('.chat-time');
+        
+        timeElements.forEach((element, index) => {
+            if (this.messages[index]) {
+                const newTimeAgo = this.formatTime(this.messages[index].timestamp, now);
+                if (element.textContent !== newTimeAgo) {
+                    element.textContent = newTimeAgo;
+                    this.messages[index].timeAgo = newTimeAgo;
+                }
+            }
+        });
     }
     
     /**
