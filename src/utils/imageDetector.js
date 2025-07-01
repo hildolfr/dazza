@@ -12,11 +12,17 @@ export function extractImageUrls(message) {
     const matches = message.match(IMAGE_REGEX);
     
     if (matches) {
+        // Use a Set to automatically deduplicate URLs
+        const uniqueUrls = new Set();
+        
         for (const url of matches) {
             // Clean up the URL - remove any trailing punctuation
             const cleanUrl = url.replace(/[.,;:!?)]+$/, '');
-            urls.push(cleanUrl);
+            uniqueUrls.add(cleanUrl);
         }
+        
+        // Convert Set back to array
+        urls.push(...uniqueUrls);
     }
     
     return urls;
