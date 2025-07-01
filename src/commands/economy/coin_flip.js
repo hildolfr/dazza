@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 const coinFlipCommand = {
 
@@ -478,13 +479,13 @@ const coinFlipCommand = {
                                 `the house always wins eventually`
                             ];
                             const taunt = taunts[Math.floor(Math.random() * taunts.length)];
-                            bot.sendPrivateMessage(message.username, taunt);
+                            sendPM(bot, message.username, taunt, message.roomContext || message.roomId);
                         }, 2000);
                     }
                 }
 
                 // Always send detailed result via PM
-                bot.sendPrivateMessage(message.username, resultMessage);
+                sendPM(bot, message.username, resultMessage, message.roomContext || message.roomId);
 
                 // Update stats (outside transaction for performance)
                 await this.updateStats(bot, message.username, won, amount, message.roomId || 'fatpizza');

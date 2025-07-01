@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Dole payment excuses/reasons when you get paid
 const paymentReasons = [
@@ -115,7 +116,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'Centrelink system is down for maintenance (surprise surprise)';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -141,7 +142,7 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, '')); // Remove - prefixes in PMs
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId); // Remove - prefixes in PMs
                     } else {
                         bot.sendMessage(message.roomId, selectedMsg);
                     }
@@ -238,7 +239,7 @@ export default new Command({
             }
             
             // Send the PM with all details
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Handle public announcements
             if (publicAnnouncement) {
