@@ -3,26 +3,45 @@
  * Handles finding the appropriate room context when not provided
  */
 export function sendPM(bot, toUser, message, roomContext) {
-    // If roomContext is provided, use it
-    if (roomContext) {
-        const roomId = typeof roomContext === 'string' ? roomContext : roomContext.roomId;
-        bot.sendPrivateMessage(toUser, message, roomId);
-        return;
-    }
-    
-    // For multi-room bot, try to find a room where the user exists
+    // For multi-room bot, we need to find a connected room
     if (bot.rooms && bot.rooms.size > 0) {
-        // First, try to find a room where the target user is present
-        for (const [roomId, room] of bot.rooms) {
-            if (room.hasUser && room.hasUser(toUser)) {
-                bot.sendPrivateMessage(toUser, message, roomId);
-                return;
+        let targetRoomId = null;
+        
+        // If roomContext is provided, extract roomId and verify it's connected
+        if (roomContext) {
+            const providedRoomId = typeof roomContext === 'string' ? roomContext : roomContext.roomId;
+            const room = bot.rooms.get(providedRoomId);
+            if (room && room.connected) {
+                targetRoomId = providedRoomId;
             }
         }
         
-        // If user not found in any room, use the first available room
-        const firstRoomId = bot.rooms.keys().next().value;
-        bot.sendPrivateMessage(toUser, message, firstRoomId);
+        // If no valid room found yet, try to find a connected room where the user exists
+        if (!targetRoomId) {
+            for (const [roomId, room] of bot.rooms) {
+                if (room.connected && room.hasUser && room.hasUser(toUser)) {
+                    targetRoomId = roomId;
+                    break;
+                }
+            }
+        }
+        
+        // If still no room found, use the first connected room
+        if (!targetRoomId) {
+            for (const [roomId, room] of bot.rooms) {
+                if (room.connected) {
+                    targetRoomId = roomId;
+                    break;
+                }
+            }
+        }
+        
+        // Send PM if we found a connected room
+        if (targetRoomId) {
+            bot.sendPrivateMessage(toUser, message, targetRoomId);
+        } else {
+            bot.logger.warn(`Cannot send PM to ${toUser} - no connected rooms available`);
+        }
     } else {
         // Single-room bot or fallback
         bot.sendPrivateMessage(toUser, message);
