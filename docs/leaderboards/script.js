@@ -2685,18 +2685,10 @@ function renderTalkerStats(data, username) {
     // Calculate WPM (Words Per Minute during active sessions)
     const wpm = data.sessionAnalysis?.words_per_minute || Math.round(avgWordsPerMessage * messagesPerHour / 60);
     
-    // Weekly pattern data
-    const weeklyData = data.weeklyPattern || {
-        'Mon': Math.round(messageCount * 0.12),
-        'Tue': Math.round(messageCount * 0.13),
-        'Wed': Math.round(messageCount * 0.15),
-        'Thu': Math.round(messageCount * 0.14),
-        'Fri': Math.round(messageCount * 0.18),
-        'Sat': Math.round(messageCount * 0.16),
-        'Sun': Math.round(messageCount * 0.12)
-    };
+    // Weekly pattern data - use hourly data to show 24-hour pattern instead
+    const hourlyData = data.activeHours?.hourlyData || [];
+    const maxHourCount = hourlyData.length > 0 ? Math.max(...hourlyData.map(h => h.message_count)) : 0;
     
-    const maxDayCount = Math.max(...Object.values(weeklyData));
     
     let html = `
         <div class="stat-section yapper-hud-section">
@@ -2877,25 +2869,36 @@ function renderTalkerStats(data, username) {
                         </div>
                     </div>
                     
-                    <!-- Weekly Pattern -->
-                    <div class="hud-panel weekly-pattern">
+                    <!-- 24-Hour Activity Pattern -->
+                    <div class="hud-panel hourly-pattern">
                         <div class="panel-header">
-                            <span class="panel-title">WEEKLY PATTERN</span>
+                            <span class="panel-title">24-HOUR ACTIVITY</span>
+                            <div class="pattern-legend">Messages by Hour</div>
                         </div>
                         
-                        <div class="weekly-chart">
-                            ${Object.entries(weeklyData).map(([day, count]) => {
-                                const percentage = maxDayCount > 0 ? (count / maxDayCount) * 100 : 0;
-                                const isWeekend = day === 'Sat' || day === 'Sun';
+                        <div class="hourly-chart">
+                            ${hourlyData.length > 0 ? hourlyData.map((hour) => {
+                                const percentage = maxHourCount > 0 ? (hour.message_count / maxHourCount) * 100 : 0;
+                                const isNight = hour.hour >= 0 && hour.hour < 6;
+                                const isMorning = hour.hour >= 6 && hour.hour < 12;
+                                const isAfternoon = hour.hour >= 12 && hour.hour < 18;
+                                const isEvening = hour.hour >= 18 && hour.hour <= 23;
+                                
+                                let barClass = 'hour-bar';
+                                if (isNight) barClass += ' night-bar';
+                                else if (isMorning) barClass += ' morning-bar';
+                                else if (isAfternoon) barClass += ' afternoon-bar';
+                                else if (isEvening) barClass += ' evening-bar';
+                                
                                 return `
-                                <div class="day-column">
-                                    <div class="day-bar ${isWeekend ? 'weekend-bar' : 'weekday-bar'}" style="height: ${percentage}%">
-                                        <span class="bar-value">${count}</span>
+                                <div class="hour-column" title="${hour.hour}:00 - ${hour.message_count} messages">
+                                    <div class="${barClass}" style="height: ${percentage}%">
+                                        <span class="bar-value">${hour.message_count}</span>
                                     </div>
-                                    <span class="day-label">${day}</span>
+                                    ${hour.hour % 6 === 0 ? `<span class="hour-label">${hour.hour}</span>` : ''}
                                 </div>
                                 `;
-                            }).join('')}
+                            }).join('') : '<div class="no-data">No hourly data available</div>'}
                         </div>
                     </div>
                     
@@ -3140,7 +3143,7 @@ async function loadUserQuote(username) {
         
         const data = await response.json();
         
-        if (data.quote) {
+        if (data.success && data.quote) {
             displayQuote(quoteContainer, data.quote);
         } else {
             displayNoQuote(quoteContainer);
