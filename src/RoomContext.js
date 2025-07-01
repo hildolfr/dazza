@@ -1,4 +1,4 @@
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
 /**
  * RoomContext manages state and operations for a specific room
@@ -166,4 +166,4 @@ class RoomContext extends EventEmitter {
     }
 }
 
-module.exports = RoomContext;
+export default RoomContext;

@@ -5,8 +5,7 @@
  * and sets existing data to 'fatpizza' as the default room.
  */
 
-module.exports = {
-    up: async (db) => {
+export const up = async (db) => {
         // Start transaction
         await db.run('BEGIN TRANSACTION');
         
@@ -148,11 +147,10 @@ module.exports = {
             await db.run('ROLLBACK');
             throw error;
         }
-    },
-    
-    down: async (db) => {
-        // This is a major structural change - down migration would lose data
-        // Only implement if absolutely necessary
-        throw new Error('Down migration not implemented for room support - would result in data loss');
     }
+
+export const down = async (db) => {
+    // This is a major structural change - down migration would lose data
+    // Only implement if absolutely necessary
+    throw new Error('Down migration not implemented for room support - would result in data loss');
 };

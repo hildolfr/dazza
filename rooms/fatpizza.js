@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     channel: 'fatpizza',
     enabled: true,
     // Room-specific configuration overrides can be added here
