@@ -2664,6 +2664,7 @@ function renderTalkerStats(data, username) {
     const daysActive = data.chatStreaks?.total_active_days || allTime.days_active || 1;
     const avgMessagesPerDay = Math.round(messageCount / daysActive);
     const activityLevel = calculateActivityLevel(avgMessagesPerDay);
+    const messagesPerHour = data.sessionAnalysis?.messages_per_hour || Math.round(messageCount / (daysActive * 8)); // Assume 8 active hours per day
     
     // Use real data from activeHours
     const morningMessages = data.activeHours?.morning || Math.round(messageCount * 0.2);
@@ -2671,187 +2672,507 @@ function renderTalkerStats(data, username) {
     const eveningMessages = data.activeHours?.evening || Math.round(messageCount * 0.35);
     const lateNightMessages = data.activeHours?.night || Math.round(messageCount * 0.15);
     
+    // Calculate peak hour
+    const peakHour = data.timePatterns?.peak_hour || '9PM';
+    
+    // Calculate status
+    let currentStatus = 'LURKING';
+    if (avgMessagesPerDay >= 200) currentStatus = 'LEGENDARY';
+    else if (avgMessagesPerDay >= 100) currentStatus = 'YAPPING';
+    else if (avgMessagesPerDay >= 50) currentStatus = 'CHATTY';
+    else if (avgMessagesPerDay >= 20) currentStatus = 'ACTIVE';
+    
+    // Calculate WPM (Words Per Minute during active sessions)
+    const wpm = data.sessionAnalysis?.words_per_minute || Math.round(avgWordsPerMessage * messagesPerHour / 60);
+    
+    // Weekly pattern data
+    const weeklyData = data.weeklyPattern || {
+        'Mon': Math.round(messageCount * 0.12),
+        'Tue': Math.round(messageCount * 0.13),
+        'Wed': Math.round(messageCount * 0.15),
+        'Thu': Math.round(messageCount * 0.14),
+        'Fri': Math.round(messageCount * 0.18),
+        'Sat': Math.round(messageCount * 0.16),
+        'Sun': Math.round(messageCount * 0.12)
+    };
+    
+    const maxDayCount = Math.max(...Object.values(weeklyData));
+    
     let html = `
-        <div class="stat-section chat-section">
-            <div class="chat-bubble-bg"></div>
-            <div class="section-header">
-                <h3>💬 Chat Statistics</h3>
-                <div class="header-badge ${avgMessagesPerDay >= 100 ? 'legendary' : avgMessagesPerDay >= 50 ? 'chatterbox' : 'active'}">
-                    ${avgMessagesPerDay >= 100 ? '👑 CHAT LEGEND' : avgMessagesPerDay >= 50 ? '🗣️ CHATTERBOX' : '💬 ACTIVE TALKER'}
+        <div class="stat-section yapper-hud-section">
+            <div class="hud-container">
+                <div class="hud-header">
+                    <h3 class="hud-title">💬 YAPPER COMMAND CENTER</h3>
+                    <div class="hud-badge tech-badge">YAPPER-TECH™ v2.0</div>
                 </div>
-            </div>
-            <div class="stat-grid fancy-grid">
-                <div class="stat-item glass-card chat-card">
-                    <div class="stat-icon">💬</div>
-                    <span class="stat-label">Total Messages</span>
-                    <span class="stat-value large-value">${messageCount.toLocaleString()}</span>
-                    <div class="message-sparkle"></div>
-                </div>
-                <div class="stat-item glass-card chat-card">
-                    <div class="stat-icon">📝</div>
-                    <span class="stat-label">Words Typed</span>
-                    <span class="stat-value large-value">${totalWords.toLocaleString()}</span>
-                    <div class="word-count-glow"></div>
-                </div>
-                <div class="stat-item glass-card chat-card">
-                    <div class="stat-icon">📊</div>
-                    <span class="stat-label">Daily Average</span>
-                    <span class="stat-value large-value">${avgMessagesPerDay}</span>
-                    <div class="activity-indicator ${activityLevel}"></div>
-                </div>
-                <div class="stat-item glass-card chat-card highlight-card">
-                    <div class="stat-icon">🔥</div>
-                    <span class="stat-label">Chat Streak</span>
-                    <span class="stat-value large-value">${data.chatStreaks?.current_streak || 0} days</span>
-                    <div class="streak-fire"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>⏰ Active Hours</h3>
-            <div class="time-heatmap">
-                <div class="heatmap-grid">
-                    <div class="time-slot morning ${morningMessages > messageCount * 0.15 ? 'hot' : 'warm'}">
-                        <div class="slot-header">
-                            <span class="slot-icon">🌅</span>
-                            <span class="slot-name">Morning</span>
-                            <span class="slot-time">6AM - 12PM</span>
-                        </div>
-                        <div class="slot-stats">
-                            <div class="slot-bar">
-                                <div class="bar-fill" style="width: ${(morningMessages / messageCount) * 100}%"></div>
+                
+                <div class="hud-scanner yapper-scanner"></div>
+                
+                <!-- Main Stats Grid -->
+                <div class="yapper-hud-grid">
+                    <div class="hud-panel main-metrics">
+                        <div class="panel-header">
+                            <span class="panel-title">LIFETIME METRICS</span>
+                            <div class="panel-status ${currentStatus.toLowerCase()}">
+                                <span class="status-dot"></span>
+                                ${currentStatus}
                             </div>
-                            <span class="slot-count">${morningMessages} msgs</span>
                         </div>
-                    </div>
-                    <div class="time-slot afternoon ${afternoonMessages > messageCount * 0.25 ? 'hot' : 'warm'}">
-                        <div class="slot-header">
-                            <span class="slot-icon">☀️</span>
-                            <span class="slot-name">Afternoon</span>
-                            <span class="slot-time">12PM - 6PM</span>
-                        </div>
-                        <div class="slot-stats">
-                            <div class="slot-bar">
-                                <div class="bar-fill" style="width: ${(afternoonMessages / messageCount) * 100}%"></div>
+                        
+                        <div class="metric-grid">
+                            <div class="metric-item total-messages">
+                                <div class="metric-header">
+                                    <span class="metric-icon">💬</span>
+                                    <span class="metric-label">TOTAL MESSAGES</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value counter">${messageCount.toLocaleString()}</span>
+                                </div>
+                                <div class="metric-bar">
+                                    <div class="bar-track">
+                                        <div class="bar-fill yapper-gradient" style="width: ${Math.min((messageCount / 10000) * 100, 100)}%"></div>
+                                    </div>
+                                    <span class="bar-label">${messageCount >= 10000 ? 'LEGENDARY STATUS' : Math.round((messageCount / 10000) * 100) + '% to 10K'}</span>
+                                </div>
                             </div>
-                            <span class="slot-count">${afternoonMessages} msgs</span>
-                        </div>
-                    </div>
-                    <div class="time-slot evening ${eveningMessages > messageCount * 0.3 ? 'hot' : 'warm'}">
-                        <div class="slot-header">
-                            <span class="slot-icon">🌆</span>
-                            <span class="slot-name">Evening</span>
-                            <span class="slot-time">6PM - 12AM</span>
-                        </div>
-                        <div class="slot-stats">
-                            <div class="slot-bar">
-                                <div class="bar-fill" style="width: ${(eveningMessages / messageCount) * 100}%"></div>
+                            
+                            <div class="metric-item daily-avg">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📊</span>
+                                    <span class="metric-label">MESSAGES/DAY</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${avgMessagesPerDay}</span>
+                                    <span class="metric-unit">avg</span>
+                                </div>
+                                <div class="intensity-meter">
+                                    <div class="intensity-track">
+                                        <div class="intensity-fill ${activityLevel}" style="width: ${Math.min((avgMessagesPerDay / 200) * 100, 100)}%"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="slot-count">${eveningMessages} msgs</span>
-                        </div>
-                    </div>
-                    <div class="time-slot night ${lateNightMessages > messageCount * 0.1 ? 'hot' : 'cool'}">
-                        <div class="slot-header">
-                            <span class="slot-icon">🌙</span>
-                            <span class="slot-name">Late Night</span>
-                            <span class="slot-time">12AM - 6AM</span>
-                        </div>
-                        <div class="slot-stats">
-                            <div class="slot-bar">
-                                <div class="bar-fill" style="width: ${(lateNightMessages / messageCount) * 100}%"></div>
+                            
+                            <div class="metric-item active-days">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📅</span>
+                                    <span class="metric-label">DAYS ACTIVE</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${daysActive}</span>
+                                    <span class="metric-unit">days</span>
+                                </div>
                             </div>
-                            <span class="slot-count">${lateNightMessages} msgs</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>📊 Message Analysis</h3>
-            <div class="analysis-grid">
-                <div class="analysis-card">
-                    <div class="analysis-header">
-                        <span class="analysis-icon">📏</span>
-                        <span class="analysis-title">Message Stats</span>
+                    
+                    <!-- Streak Tracker -->
+                    <div class="hud-panel streak-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">STREAK TRACKER</span>
+                            <div class="streak-status ${data.chatStreaks?.current_streak > 0 ? 'active' : 'broken'}">
+                                ${data.chatStreaks?.current_streak > 0 ? '🔥 ACTIVE' : '❄️ BROKEN'}
+                            </div>
+                        </div>
+                        
+                        <div class="streak-display">
+                            <div class="streak-item current">
+                                <div class="streak-icon-wrapper">
+                                    <span class="streak-icon">${data.chatStreaks?.current_streak > 0 ? '🔥' : '💔'}</span>
+                                </div>
+                                <div class="streak-info">
+                                    <span class="streak-label">Current Streak</span>
+                                    <span class="streak-value">${data.chatStreaks?.current_streak || 0}</span>
+                                    <span class="streak-unit">days</span>
+                                </div>
+                            </div>
+                            
+                            <div class="streak-item best">
+                                <div class="streak-icon-wrapper">
+                                    <span class="streak-icon">🏆</span>
+                                </div>
+                                <div class="streak-info">
+                                    <span class="streak-label">Longest Streak</span>
+                                    <span class="streak-value">${data.chatStreaks?.longest_streak || 0}</span>
+                                    <span class="streak-unit">days</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="analysis-stats">
-                        <div class="analysis-stat">
-                            <span class="stat-label">Average Length:</span>
-                            <span class="stat-value">${Math.round(data.messageAnalysis?.avg_message_length || 0)} chars</span>
+                    
+                    <!-- Time Heatmap -->
+                    <div class="hud-panel time-analysis">
+                        <div class="panel-header">
+                            <span class="panel-title">TIME ANALYSIS</span>
+                            <div class="peak-indicator">⚡ PEAK: ${peakHour}</div>
                         </div>
-                        <div class="analysis-stat">
-                            <span class="stat-label">Vocabulary Size:</span>
-                            <span class="stat-value">${data.messageAnalysis?.vocabulary_size || 0} unique words</span>
+                        
+                        <div class="time-breakdown">
+                            <div class="time-slot ${morningMessages > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌅</span>
+                                    <span class="slot-name">MORNING</span>
+                                    <span class="slot-time">6AM-12PM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill cyber-blue" style="width: ${(morningMessages / messageCount) * 100}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${morningMessages}</span>
+                                        <span class="slot-percent">${Math.round((morningMessages / messageCount) * 100)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-slot ${afternoonMessages > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">☀️</span>
+                                    <span class="slot-name">ARVO</span>
+                                    <span class="slot-time">12PM-6PM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill cyber-cyan" style="width: ${(afternoonMessages / messageCount) * 100}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${afternoonMessages}</span>
+                                        <span class="slot-percent">${Math.round((afternoonMessages / messageCount) * 100)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-slot ${eveningMessages > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌆</span>
+                                    <span class="slot-name">EVENING</span>
+                                    <span class="slot-time">6PM-12AM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill cyber-green" style="width: ${(eveningMessages / messageCount) * 100}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${eveningMessages}</span>
+                                        <span class="slot-percent">${Math.round((eveningMessages / messageCount) * 100)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="time-slot ${lateNightMessages > 0 ? 'active' : 'inactive'}">
+                                <div class="slot-header">
+                                    <span class="slot-icon">🌙</span>
+                                    <span class="slot-name">LATE NIGHT</span>
+                                    <span class="slot-time">12AM-6AM</span>
+                                </div>
+                                <div class="slot-meter">
+                                    <div class="meter-track">
+                                        <div class="meter-fill cyber-yellow" style="width: ${(lateNightMessages / messageCount) * 100}%"></div>
+                                    </div>
+                                    <div class="slot-stats">
+                                        <span class="slot-count">${lateNightMessages}</span>
+                                        <span class="slot-percent">${Math.round((lateNightMessages / messageCount) * 100)}%</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="analysis-stat">
-                            <span class="stat-label">Longest Message:</span>
-                            <span class="stat-value">${data.messageAnalysis?.longest_message || 0} chars</span>
+                    </div>
+                    
+                    <!-- Weekly Pattern -->
+                    <div class="hud-panel weekly-pattern">
+                        <div class="panel-header">
+                            <span class="panel-title">WEEKLY PATTERN</span>
+                        </div>
+                        
+                        <div class="weekly-chart">
+                            ${Object.entries(weeklyData).map(([day, count]) => {
+                                const percentage = maxDayCount > 0 ? (count / maxDayCount) * 100 : 0;
+                                const isWeekend = day === 'Sat' || day === 'Sun';
+                                return `
+                                <div class="day-column">
+                                    <div class="day-bar ${isWeekend ? 'weekend-bar' : 'weekday-bar'}" style="height: ${percentage}%">
+                                        <span class="bar-value">${count}</span>
+                                    </div>
+                                    <span class="day-label">${day}</span>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Session Waveform -->
+                    <div class="hud-panel session-waveform">
+                        <div class="panel-header">
+                            <span class="panel-title">SESSION WAVEFORM</span>
+                        </div>
+                        
+                        <div class="waveform-display">
+                            <canvas class="waveform-canvas" id="session-waveform"></canvas>
+                            <div class="waveform-stats">
+                                <span class="wave-stat">AVG SESSION: ${data.sessionAnalysis?.avg_session_length || '45'} min</span>
+                                <span class="wave-stat">MARATHON CHATS: ${data.sessionAnalysis?.marathon_count || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Velocity Gauge -->
+                    <div class="hud-panel velocity-gauge">
+                        <div class="panel-header">
+                            <span class="panel-title">CHAT VELOCITY</span>
+                        </div>
+                        
+                        <div class="gauge-container">
+                            <div class="circular-gauge">
+                                <svg viewBox="0 0 200 200">
+                                    <circle cx="100" cy="100" r="90" class="gauge-track"/>
+                                    <circle cx="100" cy="100" r="90" class="gauge-fill" 
+                                            style="stroke-dasharray: ${Math.min(messagesPerHour / 100, 1) * 565} 565"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <span class="gauge-value">${messagesPerHour}</span>
+                                    <span class="gauge-label">msgs/hr</span>
+                                </div>
+                            </div>
+                            <div class="gauge-red-zone" style="opacity: ${messagesPerHour > 80 ? '1' : '0.3'}">
+                                ${messagesPerHour > 80 ? '🔥 EXTREME YAPPING!' : 'Red Zone: 80+ msgs/hr'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Dashboard -->
+                    <div class="hud-panel analytics-dashboard">
+                        <div class="panel-header">
+                            <span class="panel-title">MESSAGE ANALYTICS</span>
+                        </div>
+                        
+                        <div class="analytics-grid">
+                            <div class="analytic-item">
+                                <span class="analytic-icon">📝</span>
+                                <div class="analytic-info">
+                                    <span class="analytic-label">TOTAL CHARACTERS</span>
+                                    <span class="analytic-value counter">${(totalWords * 5).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="analytic-item">
+                                <span class="analytic-icon">😄</span>
+                                <div class="analytic-info">
+                                    <span class="analytic-label">EMOJI USAGE</span>
+                                    <span class="analytic-value">${data.messageAnalysis?.emoji_count || 0}</span>
+                                    <span class="analytic-sub">${(data.messageAnalysis?.emoji_usage_rate || 0).toFixed(1)}% of msgs</span>
+                                </div>
+                            </div>
+                            
+                            <div class="analytic-item">
+                                <span class="analytic-icon">📢</span>
+                                <div class="analytic-info">
+                                    <span class="analytic-label">CAPS LOCK</span>
+                                    <span class="analytic-value">${data.messageAnalysis?.caps_count || 0}</span>
+                                    <span class="analytic-sub">${(data.messageAnalysis?.caps_usage_rate || 0).toFixed(1)}% of msgs</span>
+                                </div>
+                            </div>
+                            
+                            <div class="analytic-item">
+                                <span class="analytic-icon">❓</span>
+                                <div class="analytic-info">
+                                    <span class="analytic-label">QUESTIONS</span>
+                                    <span class="analytic-value">${data.messageAnalysis?.question_count || 0}</span>
+                                    <span class="analytic-sub">${((data.messageAnalysis?.question_count || 0) / messageCount * 100).toFixed(1)}% ratio</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Random Quote Display -->
+                    <div class="hud-panel quote-display-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">RANDOM TRANSMISSION</span>
+                            <button class="refresh-quote-btn" onclick="refreshUserQuote('${username}')">
+                                <span class="refresh-icon">🔄</span>
+                            </button>
+                        </div>
+                        
+                        <div class="quote-display" id="user-quote-${username}">
+                            <div class="quote-loading">
+                                <div class="quote-scanner"></div>
+                                <span class="loading-text">INTERCEPTING TRANSMISSION...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="analysis-card">
-                    <div class="analysis-header">
-                        <span class="analysis-icon">🎯</span>
-                        <span class="analysis-title">Message Style</span>
+                <!-- Footer Stats Bar -->
+                <div class="hud-footer">
+                    <div class="footer-stat">
+                        <span class="stat-icon">🎖️</span>
+                        <span class="stat-label">RANK:</span>
+                        <span class="stat-value">${currentStatus === 'LEGENDARY' ? 'LEGENDARY YAPPER' : 
+                                                   currentStatus === 'YAPPING' ? 'CHAT WARRIOR' : 
+                                                   currentStatus === 'CHATTY' ? 'CONVERSATION KING' : 
+                                                   currentStatus === 'ACTIVE' ? 'ACTIVE TALKER' : 'QUIET OBSERVER'}</span>
                     </div>
-                    <div class="style-stats">
-                        <div class="style-item">
-                            <span class="style-icon">😄</span>
-                            <span class="style-label">Emoji Usage:</span>
-                            <span class="style-value">${data.messageAnalysis?.emoji_count || 0} total (${(data.messageAnalysis?.emoji_usage_rate || 0).toFixed(1)}%)</span>
-                        </div>
-                        <div class="style-item">
-                            <span class="style-icon">📢</span>
-                            <span class="style-label">CAPS Messages:</span>
-                            <span class="style-value">${data.messageAnalysis?.caps_count || 0} (${(data.messageAnalysis?.caps_usage_rate || 0).toFixed(1)}%)</span>
-                        </div>
-                        <div class="style-item">
-                            <span class="style-icon">❓</span>
-                            <span class="style-label">Questions Asked:</span>
-                            <span class="style-value">${data.messageAnalysis?.question_count || 0}</span>
-                        </div>
-                        <div class="style-item">
-                            <span class="style-icon">🔗</span>
-                            <span class="style-label">Links Shared:</span>
-                            <span class="style-value">${data.messageAnalysis?.url_count || 0}</span>
-                        </div>
+                    <div class="footer-stat">
+                        <span class="stat-icon">⚡</span>
+                        <span class="stat-label">WPM:</span>
+                        <span class="stat-value">${wpm}</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-label">PERCENTILE:</span>
+                        <span class="stat-value">95%ile</span>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Achievements Section (keeping the original) -->
+        ${data.achievements && data.achievements.length > 0 ? `
         <div class="stat-section">
             <h3>🏆 Chat Achievements</h3>
-            ${data.achievements && data.achievements.length > 0 ? `
-                <div class="achievements-grid">
-                    ${data.achievements.slice(0, 8).map(achievement => `
-                        <div class="achievement unlocked ${achievement.achievement_level}">
-                            <div class="achievement-icon">${achievement.icon || '🏆'}</div>
-                            <div class="achievement-info">
-                                <span class="achievement-name">${escapeHtml(achievement.name)}</span>
-                                <span class="achievement-desc">${escapeHtml(achievement.description || achievement.details || '')}</span>
-                                <span class="achievement-tier">${achievement.achievement_level.toUpperCase()}</span>
-                            </div>
+            <div class="achievements-grid">
+                ${data.achievements.slice(0, 8).map(achievement => `
+                    <div class="achievement unlocked ${achievement.achievement_level}">
+                        <div class="achievement-icon">${achievement.icon || '🏆'}</div>
+                        <div class="achievement-info">
+                            <span class="achievement-name">${escapeHtml(achievement.name)}</span>
+                            <span class="achievement-desc">${escapeHtml(achievement.description || achievement.details || '')}</span>
+                            <span class="achievement-tier">${achievement.achievement_level.toUpperCase()}</span>
                         </div>
-                    `).join('')}
-                </div>
-                ${data.achievements.length > 8 ? `
-                    <div class="achievement-summary">
-                        <span>+${data.achievements.length - 8} more achievements</span>
                     </div>
-                ` : ''}
-            ` : `
-                <div class="no-achievements">
-                    <span>Keep chatting to unlock achievements!</span>
+                `).join('')}
+            </div>
+            ${data.achievements.length > 8 ? `
+                <div class="achievement-summary">
+                    <span>+${data.achievements.length - 8} more achievements</span>
                 </div>
-            `}
+            ` : ''}
+        </div>
+        ` : ''}
+    `;
+    
+    // Initialize waveform after rendering
+    setTimeout(() => {
+        const canvas = document.getElementById('session-waveform');
+        if (canvas) {
+            initializeWaveform(canvas, data.sessionData || generateMockSessionData());
+        }
+        
+        // Load user quote
+        loadUserQuote(username);
+    }, 100);
+    
+    return html;
+}
+
+// Helper functions for Yapper HUD
+function initializeWaveform(canvas, sessionData) {
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width = canvas.offsetWidth;
+    const height = canvas.height = canvas.offsetHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Set style
+    ctx.strokeStyle = '#00D4FF';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00D4FF';
+    
+    // Draw waveform
+    ctx.beginPath();
+    const points = 100;
+    for (let i = 0; i < points; i++) {
+        const x = (i / points) * width;
+        const intensity = sessionData ? (sessionData[i] || Math.random()) : Math.random();
+        const y = height / 2 + (Math.sin(i * 0.1) * intensity * height * 0.3);
+        
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.stroke();
+}
+
+function generateMockSessionData() {
+    const data = [];
+    for (let i = 0; i < 100; i++) {
+        data.push(Math.random() * 0.5 + 0.5);
+    }
+    return data;
+}
+
+// Quote display functions
+async function loadUserQuote(username) {
+    const quoteContainer = document.getElementById(`user-quote-${username}`);
+    if (!quoteContainer) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/stats/users/${encodeURIComponent(username)}/quote`);
+        if (!response.ok) throw new Error('Failed to fetch quote');
+        
+        const data = await response.json();
+        
+        if (data.quote) {
+            displayQuote(quoteContainer, data.quote);
+        } else {
+            displayNoQuote(quoteContainer);
+        }
+    } catch (error) {
+        console.error('Error loading quote:', error);
+        displayQuoteError(quoteContainer);
+    }
+}
+
+function displayQuote(container, quote) {
+    const timeAgo = getTimeAgo(new Date(quote.timestamp));
+    
+    container.innerHTML = `
+        <div class="quote-content">
+            <div class="quote-text">"${escapeHtml(quote.message)}"</div>
+            <div class="quote-meta">
+                <span class="quote-author">- ${escapeHtml(quote.username)}</span>
+                <span class="quote-time">${timeAgo}</span>
+            </div>
+        </div>
+    `;
+}
+
+function displayNoQuote(container) {
+    container.innerHTML = `
+        <div class="quote-empty">
+            <span class="empty-icon">📡</span>
+            <span class="empty-text">NO TRANSMISSIONS INTERCEPTED</span>
+        </div>
+    `;
+}
+
+function displayQuoteError(container) {
+    container.innerHTML = `
+        <div class="quote-error">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">TRANSMISSION ERROR</span>
+        </div>
+    `;
+}
+
+async function refreshUserQuote(username) {
+    const quoteContainer = document.getElementById(`user-quote-${username}`);
+    if (!quoteContainer) return;
+    
+    // Show loading state
+    quoteContainer.innerHTML = `
+        <div class="quote-loading">
+            <div class="quote-scanner"></div>
+            <span class="loading-text">INTERCEPTING TRANSMISSION...</span>
         </div>
     `;
     
-    return html;
+    // Small delay for effect
+    setTimeout(() => loadUserQuote(username), 500);
 }
 
 function renderQuotedStats(data, username) {
