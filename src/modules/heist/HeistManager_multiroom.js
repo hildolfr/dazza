@@ -548,7 +548,7 @@ export class HeistManager extends EventEmitter {
 
     async setConfig(key, value) {
         await this.db.run(
-            'INSERT OR REPLACE INTO heist_config (key, value) VALUES (?, ?)',
+            'INSERT OR REPLACE INTO heist_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
             [key, value]
         );
     }

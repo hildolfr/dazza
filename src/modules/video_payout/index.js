@@ -12,11 +12,11 @@ export class VideoPayoutManager extends EventEmitter {
         // Current session tracking - per room
         this.roomSessions = new Map(); // roomId -> { currentSession, currentWatchers, firstMediaChangeIgnored }
         
-        // Initialize default room for backward compatibility
-        this.initRoom('default');
-        
         // Reconciliation tracking - per room
         this.roomReconciliation = new Map(); // roomId -> { timeout, attempts, lastUpdate }
+        
+        // Initialize default room for backward compatibility
+        this.initRoom('default');
         
         // Configuration
         this.config = {
