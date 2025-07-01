@@ -217,6 +217,8 @@ export const RoomEventHandlers = {
         if (data.msg.startsWith('!')) {
             await this.handleCommand(roomId, {
                 ...data,
+                isPM: true,
+                roomId: roomId,
                 meta: { ...data.meta, pm: true }
             });
         }

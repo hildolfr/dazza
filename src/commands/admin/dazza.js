@@ -1,13 +1,5 @@
 import { Command } from '../base.js';
-
-// Helper function to send PMs with room context
-function sendPM(bot, recipient, text, roomId) {
-    if (roomId) {
-        bot.sendPrivateMessage(recipient, text, roomId);
-    } else {
-        bot.sendPrivateMessage(recipient, text);
-    }
-}
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'dazza',
@@ -26,7 +18,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                sendPM(bot, message.username, 'economy system not ready yet mate', message.roomId);
+                sendPM(bot, message.username, 'economy system not ready yet mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -52,12 +44,12 @@ export default new Command({
                 responses.push(`dazza's down to $${dazzaBalance.balance}, must've hit the pokies again`);
             }
 
-            sendPM(bot, message.username, responses[Math.floor(Math.random() * responses.length)], message.roomId);
+            sendPM(bot, message.username, responses[Math.floor(Math.random() * responses.length)], message.roomContext || message.roomId);
 
             return { success: true };
         } catch (error) {
             bot.logger.error('Dazza balance command error:', error);
-            sendPM(bot, message.username, 'failed to check dazza\'s stash', message.roomId);
+            sendPM(bot, message.username, 'failed to check dazza\'s stash', message.roomContext || message.roomId);
             return { success: false };
         }
     }
