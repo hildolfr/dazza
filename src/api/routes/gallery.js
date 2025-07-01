@@ -32,7 +32,12 @@ export function createGalleryRoutes(apiServer) {
         
         // Find the image in database
         const image = await apiServer.bot.db.get(
-            'SELECT * FROM user_images WHERE url = ? AND username = ? AND is_active = 1',
+            `SELECT 
+                ui.*,
+                gl.is_locked 
+            FROM user_images ui
+            LEFT JOIN user_gallery_locks gl ON ui.username = gl.username
+            WHERE ui.url = ? AND ui.username = ? AND ui.is_active = 1`,
             [url, username.toLowerCase()]
         );
         
@@ -41,12 +46,7 @@ export function createGalleryRoutes(apiServer) {
         }
         
         // Check if user's gallery is locked
-        const lockStatus = await apiServer.bot.db.get(
-            'SELECT is_locked FROM user_gallery_locks WHERE username = ?',
-            [image.username]
-        );
-        
-        if (lockStatus && lockStatus.is_locked) {
+        if (image.is_locked) {
             throw new ForbiddenError(`Gallery for user ${image.username} is locked`);
         }
         
@@ -57,12 +57,13 @@ export function createGalleryRoutes(apiServer) {
         );
         
         // Log the deletion
-        apiServer.bot.logger.info(`[API] Image deleted: ${url} (user: ${image.username}, reason: ${reason})`);
+        apiServer.bot.logger.info(`[API] Image deleted: ${url} (user: ${image.username}, originalPoster: ${image.original_poster}, reason: ${reason})`);
         
         // Broadcast deletion event via WebSocket
         apiServer.broadcast('gallery:image:deleted', {
             url,
             username: image.username,
+            originalPoster: image.original_poster,
             reason,
             timestamp: Date.now()
         });
@@ -72,7 +73,8 @@ export function createGalleryRoutes(apiServer) {
             data: {
                 message: 'Image marked as deleted',
                 url,
-                username: image.username
+                username: image.username,
+                originalPoster: image.original_poster
             }
         });
     }));
@@ -229,7 +231,10 @@ export function createGalleryRoutes(apiServer) {
                 timestamp,
                 is_active as isActive,
                 pruned_reason as prunedReason,
-                created_at as createdAt
+                created_at as createdAt,
+                original_poster as originalPoster,
+                most_recent_poster as mostRecentPoster,
+                original_timestamp as originalTimestamp
             FROM user_images 
             WHERE username = ? ${activeClause}
             ORDER BY timestamp DESC
@@ -251,7 +256,11 @@ export function createGalleryRoutes(apiServer) {
                     timestamp: img.timestamp,
                     isActive: Boolean(img.isActive),
                     prunedReason: img.prunedReason,
-                    createdAt: img.createdAt
+                    createdAt: img.createdAt,
+                    originalPoster: img.originalPoster,
+                    mostRecentPoster: img.mostRecentPoster,
+                    originalTimestamp: img.originalTimestamp,
+                    isSharedFrom: img.originalPoster !== normalizedUsername ? img.originalPoster : null
                 })),
                 pagination: {
                     total: total.count,
@@ -279,7 +288,10 @@ export function createGalleryRoutes(apiServer) {
                     ui.timestamp,
                     ui.is_active as isActive,
                     'added' as activityType,
-                    ui.created_at as activityTime
+                    ui.created_at as activityTime,
+                    ui.original_poster as originalPoster,
+                    ui.most_recent_poster as mostRecentPoster,
+                    ui.original_timestamp as originalTimestamp
                 FROM user_images ui
                 WHERE ui.is_active = 1
                 ORDER BY ui.timestamp DESC
@@ -297,7 +309,10 @@ export function createGalleryRoutes(apiServer) {
                     ui.is_active as isActive,
                     ui.pruned_reason as reason,
                     'deleted' as activityType,
-                    ui.created_at as activityTime
+                    ui.created_at as activityTime,
+                    ui.original_poster as originalPoster,
+                    ui.most_recent_poster as mostRecentPoster,
+                    ui.original_timestamp as originalTimestamp
                 FROM user_images ui
                 WHERE ui.is_active = 0
                 AND ui.pruned_reason IS NOT NULL
@@ -320,7 +335,10 @@ export function createGalleryRoutes(apiServer) {
                             WHEN ui.is_active = 1 THEN 'added'
                             ELSE 'deleted'
                         END as activityType,
-                        ui.timestamp as activityTime
+                        ui.timestamp as activityTime,
+                        ui.original_poster as originalPoster,
+                        ui.most_recent_poster as mostRecentPoster,
+                        ui.original_timestamp as originalTimestamp
                     FROM user_images ui
                     WHERE ui.is_active = 1
                     
@@ -334,7 +352,10 @@ export function createGalleryRoutes(apiServer) {
                         ui.is_active as isActive,
                         ui.pruned_reason as reason,
                         'deleted' as activityType,
-                        ui.created_at as activityTime
+                        ui.created_at as activityTime,
+                        ui.original_poster as originalPoster,
+                        ui.most_recent_poster as mostRecentPoster,
+                        ui.original_timestamp as originalTimestamp
                     FROM user_images ui
                     WHERE ui.is_active = 0
                     AND ui.pruned_reason IS NOT NULL
@@ -372,7 +393,11 @@ export function createGalleryRoutes(apiServer) {
                     isActive: Boolean(activity.isActive),
                     activityType: activity.activityType,
                     activityTime: activity.activityTime,
-                    reason: activity.reason
+                    reason: activity.reason,
+                    originalPoster: activity.originalPoster,
+                    mostRecentPoster: activity.mostRecentPoster,
+                    originalTimestamp: activity.originalTimestamp,
+                    isSharedFrom: activity.originalPoster !== activity.username ? activity.originalPoster : null
                 })),
                 pagination: {
                     total: total.count,
@@ -442,6 +467,9 @@ export function createGalleryRoutes(apiServer) {
                 ui.username,
                 ui.url,
                 ui.timestamp,
+                ui.original_poster,
+                ui.most_recent_poster,
+                ui.original_timestamp,
                 COALESCE(gl.is_locked, 0) as is_locked
             FROM user_images ui
             LEFT JOIN user_gallery_locks gl ON ui.username = gl.username
@@ -460,7 +488,11 @@ export function createGalleryRoutes(apiServer) {
             }
             groupedGalleries[img.username].images.push({
                 url: img.url,
-                timestamp: img.timestamp
+                timestamp: img.timestamp,
+                originalPoster: img.original_poster,
+                mostRecentPoster: img.most_recent_poster,
+                originalTimestamp: img.original_timestamp,
+                isSharedFrom: img.original_poster !== img.username ? img.original_poster : null
             });
         });
         
@@ -530,7 +562,10 @@ export function createGalleryRoutes(apiServer) {
                 last_check_at as lastCheckAt,
                 next_check_at as nextCheckAt,
                 recheck_count as recheckCount,
-                created_at as createdAt
+                created_at as createdAt,
+                original_poster as originalPoster,
+                most_recent_poster as mostRecentPoster,
+                original_timestamp as originalTimestamp
             FROM user_images 
             WHERE is_active = 0 
             AND pruned_reason IS NOT NULL
@@ -564,6 +599,10 @@ export function createGalleryRoutes(apiServer) {
                     nextCheckAt: img.nextCheckAt,
                     recheckCount: img.recheckCount,
                     createdAt: img.createdAt,
+                    originalPoster: img.originalPoster,
+                    mostRecentPoster: img.mostRecentPoster,
+                    originalTimestamp: img.originalTimestamp,
+                    isSharedFrom: img.originalPoster !== img.username ? img.originalPoster : null,
                     // Add gravestone flag if it's been dead for over 48 hours
                     hasGravestone: img.firstFailureAt && (now - img.firstFailureAt) > gravestoneThreshold
                 })),
@@ -613,6 +652,62 @@ export function createGalleryRoutes(apiServer) {
         }
     }));
     
+    // GET /api/v1/gallery/images/by-url - Get all instances of an image URL across galleries
+    router.get('/images/by-url', asyncHandler(async (req, res) => {
+        const { url } = req.query;
+        
+        if (!url) {
+            throw new ValidationError('URL is required', 'url');
+        }
+        
+        const images = await apiServer.bot.db.all(`
+            SELECT 
+                ui.id,
+                ui.username,
+                ui.url,
+                ui.timestamp,
+                ui.is_active as isActive,
+                ui.pruned_reason as prunedReason,
+                ui.created_at as createdAt,
+                ui.original_poster as originalPoster,
+                ui.most_recent_poster as mostRecentPoster,
+                ui.original_timestamp as originalTimestamp,
+                COALESCE(gl.is_locked, 0) as isLocked
+            FROM user_images ui
+            LEFT JOIN user_gallery_locks gl ON ui.username = gl.username
+            WHERE ui.url = ?
+            ORDER BY ui.original_timestamp ASC, ui.timestamp ASC
+        `, [url]);
+        
+        if (images.length === 0) {
+            throw new NotFoundError('Image with specified URL');
+        }
+        
+        // Find the original poster (earliest instance)
+        const originalInstance = images[0];
+        
+        res.json({
+            success: true,
+            data: {
+                url,
+                originalPoster: originalInstance.originalPoster,
+                originalTimestamp: originalInstance.originalTimestamp,
+                instances: images.map(img => ({
+                    id: img.id,
+                    username: img.username,
+                    timestamp: img.timestamp,
+                    isActive: Boolean(img.isActive),
+                    isLocked: Boolean(img.isLocked),
+                    prunedReason: img.prunedReason,
+                    createdAt: img.createdAt,
+                    isOriginal: img.username === originalInstance.originalPoster && img.timestamp === originalInstance.originalTimestamp
+                })),
+                totalInstances: images.length,
+                activeInstances: images.filter(img => img.isActive).length
+            }
+        });
+    }));
+    
     // Register endpoints
     apiServer.registerEndpoint('GET', '/api/v1/gallery/images');
     apiServer.registerEndpoint('DELETE', '/api/v1/gallery/images');
@@ -620,6 +715,7 @@ export function createGalleryRoutes(apiServer) {
     apiServer.registerEndpoint('GET', '/api/v1/gallery/locks/:username');
     apiServer.registerEndpoint('PUT', '/api/v1/gallery/locks/:username');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/images/:username');
+    apiServer.registerEndpoint('GET', '/api/v1/gallery/images/by-url');
     apiServer.registerEndpoint('GET', '/api/v1/gallery/activity');
     apiServer.registerEndpoint('POST', '/api/v1/gallery/images/metadata');
     apiServer.registerEndpoint('POST', '/api/v1/gallery/health-check');

@@ -123,6 +123,11 @@ export function setupWebSocketEvents(apiServer) {
         apiServer.broadcastToTopic('gallery', 'gallery:image:added', data);
     });
     
+    // When an image is restored
+    bot.on('gallery:image:restored', (data) => {
+        apiServer.broadcastToTopic('gallery', 'gallery:image:restored', data);
+    });
+    
     // When gallery is updated
     bot.on('gallery:updated', (username) => {
         apiServer.broadcastToTopic('gallery', 'gallery:updated', { username });
@@ -194,9 +199,14 @@ export function setupWebSocketEvents(apiServer) {
     
     // API-specific events that can be emitted from routes
     
-    // Gallery image deletion (called from route)
+    // Single gallery image deletion (called from route)
     apiServer.on('gallery:image:deleted', (data) => {
         apiServer.broadcastToTopic('gallery', 'gallery:image:deleted', data);
+    });
+    
+    // Batch gallery images deletion (called from database)
+    bot.on('gallery:images:deleted', (data) => {
+        apiServer.broadcastToTopic('gallery', 'gallery:images:deleted', data);
     });
     
     // Gallery lock change (called from route)
