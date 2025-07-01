@@ -29,10 +29,13 @@ export class MigrationRunner {
     }
     
     async getMigrationFiles() {
+        console.log(`Looking for migrations in: ${__dirname}`);
         const files = await fs.readdir(__dirname);
-        return files
+        const migrationFiles = files
             .filter(f => f.endsWith('.js') && f !== 'runner.js')
             .sort(); // Sort by filename (which includes date)
+        console.log(`Found migration files: ${migrationFiles.join(', ')}`);
+        return migrationFiles;
     }
     
     async getAppliedMigrations() {
@@ -78,6 +81,8 @@ export class MigrationRunner {
                 
             } catch (error) {
                 console.error(`✗ Migration ${filename} failed:`, error);
+                console.error('Error details:', error.message);
+                console.error('Error stack:', error.stack);
                 throw error; // Stop on first error
             }
         }

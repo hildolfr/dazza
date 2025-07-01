@@ -1,4 +1,41 @@
 export const videoPayoutSchema = {
+    // SQL for creating video_payouts table  
+    createVideoPayoutsTable: `
+        CREATE TABLE IF NOT EXISTS video_payouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            video_id TEXT NOT NULL,
+            payout_amount INTEGER NOT NULL,
+            queued_at INTEGER NOT NULL,
+            processed_at INTEGER,
+            status TEXT DEFAULT 'queued',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(username, video_id)
+        )
+    `,
+
+    // SQL for creating payout_history table
+    createPayoutHistoryTable: `
+        CREATE TABLE IF NOT EXISTS payout_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            video_id TEXT NOT NULL,
+            video_title TEXT,
+            payout_amount INTEGER NOT NULL,
+            processed_at INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `,
+
+    // Index creation SQL
+    createVideoPayoutsUserIndex: 'CREATE INDEX IF NOT EXISTS idx_video_payouts_username ON video_payouts(username)',
+    createVideoPayoutsVideoIndex: 'CREATE INDEX IF NOT EXISTS idx_video_payouts_video_id ON video_payouts(video_id)',
+    createVideoPayoutsQueuedIndex: 'CREATE INDEX IF NOT EXISTS idx_video_payouts_queued ON video_payouts(status, queued_at)',
+    createVideoPayoutsTimestampIndex: 'CREATE INDEX IF NOT EXISTS idx_video_payouts_timestamp ON video_payouts(created_at)',
+    createPayoutHistoryUserIndex: 'CREATE INDEX IF NOT EXISTS idx_payout_history_username ON payout_history(username)',
+    createPayoutHistoryTimestampIndex: 'CREATE INDEX IF NOT EXISTS idx_payout_history_timestamp ON payout_history(processed_at)',
+
+    // Keep the initialize method for backward compatibility
     async initialize(db) {
         // Track individual video sessions
         await db.run(`
