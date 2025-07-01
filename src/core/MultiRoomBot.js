@@ -403,12 +403,13 @@ export class MultiRoomBot extends EventEmitter {
         }
         
         const roomContext = this.rooms.get(roomId);
-        if (!roomContext || !roomContext.connection) {
+        const connection = this.connections.get(roomId);
+        if (!roomContext || !connection || !roomContext.connected) {
             this.logger.warn(`Cannot send PM - room ${roomId} not connected`);
             return;
         }
         
-        roomContext.connection.pm(toUser, message);
+        connection.pm(toUser, message);
     }
     
     /**
