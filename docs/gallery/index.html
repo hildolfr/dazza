@@ -114,10 +114,26 @@ h1 {
     height: 250px;
 }
 
+.image-item.shared-image {
+    border-color: #00ffff;
+}
+
 .image-item:hover {
     transform: scale(1.05) rotate(2deg);
     border-color: #ff00ff;
     box-shadow: 0 0 20px #ff00ff;
+}
+
+.sharing-info {
+    background: rgba(0, 255, 255, 0.2);
+    color: #00ffff;
+    padding: 4px 8px;
+    font-size: 0.75em;
+    text-align: center;
+    border-bottom: 1px solid #00ffff;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .image-item img, .image-item video {
@@ -825,6 +841,10 @@ function setupWebSocket() {
         handleImageDeleted(data);
     });
     
+    socket.on('gallery:images:deleted', (data) => {
+        handleBatchImagesDeletion(data);
+    });
+    
     socket.on('gallery:image:restored', (data) => {
         handleImageRestored(data);
     });
@@ -862,7 +882,10 @@ function handleImageRestored(data) {
     handleImageAdded({
         username: data.username,
         url: data.url,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
+        originalPoster: data.originalPoster,
+        mostRecentPoster: data.mostRecentPoster,
+        originalTimestamp: data.originalTimestamp
     });
 }
 
@@ -878,7 +901,11 @@ function handleImageAdded(data) {
     // Add new image to the beginning
     galleryData.galleries[data.username].images.unshift({
         url: data.url,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
+        originalPoster: data.originalPoster,
+        mostRecentPoster: data.mostRecentPoster,
+        originalTimestamp: data.originalTimestamp,
+        isSharedFrom: data.originalPoster !== data.username ? data.originalPoster : null
     });
     
     // Re-render just that user's section
@@ -892,6 +919,19 @@ function handleImageDeleted(data) {
             galleryData.galleries[data.username].images.filter(img => img.url !== data.url);
         
         // Re-render that user's section
+        renderUserSection(data.username);
+    }
+}
+
+// Handle batch images deletion
+function handleBatchImagesDeletion(data) {
+    if (galleryData.galleries[data.username]) {
+        // Filter out all deleted images at once
+        const deletedUrls = new Set(data.deletedImages.map(img => img.url));
+        galleryData.galleries[data.username].images = 
+            galleryData.galleries[data.username].images.filter(img => !deletedUrls.has(img.url));
+        
+        // Re-render that user's section once
         renderUserSection(data.username);
     }
 }
@@ -997,13 +1037,29 @@ function createImageElement(image, username, isLocked) {
         hour12: true
     });
     
+    // Format sharing info if this is a shared image
+    let sharingInfo = '';
+    if (image.isSharedFrom) {
+        const originalDate = new Date(image.originalTimestamp);
+        const originalFormatted = originalDate.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        sharingInfo = `<div class="sharing-info">Shared from ${image.isSharedFrom} (${originalFormatted})</div>`;
+    }
+    
     const deleteButton = !isLocked ? 
         `<button class="delete-btn" data-url="${image.url}" data-username="${username}">DELETE</button>` : '';
     
     return `
-        <div class="image-item" data-url="${image.url}">
+        <div class="image-item ${image.isSharedFrom ? 'shared-image' : ''}" data-url="${image.url}">
             <img src="${image.url}" alt="Posted by ${username}" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIExvYWQgRXJyb3I8L3RleHQ+PC9zdmc+'">
             <div class="image-controls">
+                ${sharingInfo}
                 <div class="timestamp">${formattedDate}</div>
                 <div class="control-buttons">
                     <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
