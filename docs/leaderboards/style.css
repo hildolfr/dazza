@@ -210,7 +210,7 @@ body {
     font-style: italic;
     opacity: 0;
     transform: translateY(20px);
-    transition: all 0.5s ease;
+    transition: all 1.5s ease;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
@@ -323,7 +323,7 @@ body {
 /* Flies */
 .fly {
     position: absolute;
-    font-size: 12px;
+    font-size: 24px;
 }
 
 .fly::before {
@@ -404,15 +404,23 @@ body {
     position: absolute;
     bottom: 20px;
     left: 30px;
-    background: linear-gradient(135deg, #00008b 0%, #ff0000 50%, #00008b 100%);
-    color: #fff;
-    padding: 10px 20px;
-    font-size: 1.2rem;
+    background: linear-gradient(135deg, #00843d 0%, #ffcd00 50%, #00843d 100%);
+    color: #00843d;
+    padding: 15px 30px;
+    font-size: 1.8rem;
     font-weight: bold;
     border-radius: 5px;
     transform: rotate(-15deg);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     animation: badgeWobble 3s ease-in-out infinite;
+    letter-spacing: 2px;
+    text-shadow: 
+        -2px -2px 0 #ffcd00,
+        2px -2px 0 #ffcd00,
+        -2px 2px 0 #ffcd00,
+        2px 2px 0 #ffcd00,
+        0 0 10px rgba(255, 205, 0, 0.5);
+    border: 3px solid #ffcd00;
 }
 
 @keyframes badgeWobble {
@@ -424,9 +432,10 @@ body {
     position: absolute;
     bottom: 30px;
     right: 150px;
-    font-size: 2rem;
+    font-size: 5rem;
     transform: rotate(25deg);
     animation: thongFlip 4s ease-in-out infinite;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes thongFlip {
@@ -438,8 +447,9 @@ body {
     position: absolute;
     top: 40px;
     left: 150px;
-    font-size: 2.5rem;
+    font-size: 6rem;
     animation: pieSpin 6s linear infinite;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes pieSpin {
