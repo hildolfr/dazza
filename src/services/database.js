@@ -317,20 +317,37 @@ class Database {
 
         // Update user stats for join events
         if (eventType === 'join') {
-            await this.updateUserStats(username, timestamp, roomId);
+            await this.updateUserStats(username, timestamp, roomId, false);
         }
     }
 
-    async updateUserStats(username, timestamp, roomId = null) {
+    async updateUserStats(username, timestamp, roomId = null, incrementMessage = true) {
+        // Ensure timestamp is valid
+        if (!timestamp) {
+            timestamp = Date.now();
+        }
+        
         // User stats are global across all rooms, so we don't filter by room
-        await this.run(`
-            INSERT INTO user_stats (username, first_seen, last_seen, message_count)
-            VALUES (?, ?, ?, 1)
-            ON CONFLICT(username) DO UPDATE SET
-                last_seen = ?,
-                message_count = message_count + 1,
-                updated_at = CURRENT_TIMESTAMP
-        `, [username, timestamp, timestamp, timestamp]);
+        if (incrementMessage) {
+            // For messages, increment the message count
+            await this.run(`
+                INSERT INTO user_stats (username, first_seen, last_seen, message_count)
+                VALUES (?, ?, ?, 1)
+                ON CONFLICT(username) DO UPDATE SET
+                    last_seen = ?,
+                    message_count = message_count + 1,
+                    updated_at = CURRENT_TIMESTAMP
+            `, [username, timestamp, timestamp, timestamp]);
+        } else {
+            // For join events, just update last_seen without incrementing message count
+            await this.run(`
+                INSERT INTO user_stats (username, first_seen, last_seen, message_count)
+                VALUES (?, ?, ?, 0)
+                ON CONFLICT(username) DO UPDATE SET
+                    last_seen = ?,
+                    updated_at = CURRENT_TIMESTAMP
+            `, [username, timestamp, timestamp, timestamp]);
+        }
     }
 
     async getUserStats(username, roomId = null) {
