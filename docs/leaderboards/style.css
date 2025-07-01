@@ -8064,62 +8064,91 @@ EOF < /dev/null
     font-weight: bold;
 }
 
-/* Weekly Pattern Panel */
-.weekly-pattern .weekly-chart {
+/* 24-Hour Activity Pattern Panel */
+.hourly-pattern .pattern-legend {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+.hourly-pattern .hourly-chart {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     height: 150px;
     padding: 10px;
+    position: relative;
 }
 
-.day-column {
+.hour-column {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: flex-end;
     position: relative;
-}
-
-.day-bar {
-    width: 80%;
-    background: linear-gradient(180deg, #00D4FF, #00954F);
-    border-radius: 5px 5px 0 0;
-    position: relative;
-    transition: all 0.3s;
     cursor: pointer;
 }
 
-.day-bar.weekend-bar {
+.hour-bar {
+    width: 90%;
+    border-radius: 2px 2px 0 0;
+    position: relative;
+    transition: all 0.3s;
+    min-height: 2px;
+}
+
+.hour-bar.night-bar {
+    background: linear-gradient(180deg, #4169e1, #1e3a8a);
+}
+
+.hour-bar.morning-bar {
+    background: linear-gradient(180deg, #ffa500, #ff6347);
+}
+
+.hour-bar.afternoon-bar {
+    background: linear-gradient(180deg, #00D4FF, #00CED1);
+}
+
+.hour-bar.evening-bar {
     background: linear-gradient(180deg, #FFC72C, #FF8C00);
 }
 
-.day-bar:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.5);
+.hour-column:hover .hour-bar {
+    transform: scaleY(1.1);
+    box-shadow: 0 -5px 20px rgba(0, 212, 255, 0.5);
 }
 
-.day-bar .bar-value {
+.hour-bar .bar-value {
     position: absolute;
-    top: -25px;
+    top: -20px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--vb-gold);
     font-weight: bold;
     opacity: 0;
     transition: opacity 0.3s;
+    white-space: nowrap;
 }
 
-.day-bar:hover .bar-value {
+.hour-column:hover .bar-value {
     opacity: 1;
 }
 
-.day-label {
-    font-size: 0.75rem;
+.hour-label {
+    font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
+    margin-top: 5px;
+    position: absolute;
+    bottom: -20px;
+}
+
+.hourly-chart .no-data {
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 40px;
 }
 
 /* Session Waveform Panel */
@@ -8451,8 +8480,12 @@ EOF < /dev/null
         grid-template-columns: 1fr;
     }
     
-    .weekly-chart {
+    .hourly-chart {
         height: 120px;
+    }
+    
+    .hour-column:nth-child(odd) .hour-label {
+        display: none;
     }
     
     .circular-gauge {
