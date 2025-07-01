@@ -382,9 +382,7 @@ export class ImageHealthChecker {
     
     // Manual recheck for specific image
     async recheckImage(imageId) {
-        if (!this.isConnected()) {
-            throw new Error('Bot is not connected');
-        }
+        // Manual rechecks don't require bot connection - they're triggered from web interface
         
         try {
             const image = await this.bot.db.get(`
@@ -415,7 +413,7 @@ export class ImageHealthChecker {
                 `, [now, imageId]);
                 
                 if (this.bot.apiServer) {
-                    this.bot.emit('gallery:image:restored', {
+                    this.bot.apiServer.emit('gallery:image:restored', {
                         id: image.id,
                         url: image.url,
                         username: image.username,
