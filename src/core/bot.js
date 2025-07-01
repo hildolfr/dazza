@@ -671,7 +671,7 @@ export class CyTubeBot extends EventEmitter {
             // Check for pissing contest responses (yes/no)
             const lowerMsg = data.msg.toLowerCase().trim();
             if (this.pissingContestManager) {
-                const challenge = this.pissingContestManager.findChallengeForUser(data.username);
+                const challenge = this.pissingContestManager.findChallengeForUser(data.username, this.connection.roomId);
                 if (challenge) {
                     // Check if it's an accept/decline phrase
                     const acceptPhrases = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay',
@@ -683,13 +683,13 @@ export class CyTubeBot extends EventEmitter {
                         'maybe later', 'busy', 'can\'t'];
                     
                     if (acceptPhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.acceptChallenge(data.username);
+                        const result = await this.pissingContestManager.acceptChallenge(data.username, this.connection.roomId);
                         if (!result.success) {
                             this.sendMessage(result.message);
                         }
                         return;
                     } else if (declinePhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.declineChallenge(data.username);
+                        const result = await this.pissingContestManager.declineChallenge(data.username, this.connection.roomId);
                         this.sendMessage(result.message);
                         return;
                     }

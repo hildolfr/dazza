@@ -174,7 +174,7 @@ export default new Command({
             }
 
             // Public acknowledgment
-            bot.sendMessage(`${message.username} bought a mystery esky for $${cost}! *watches nervously*`);
+            bot.sendMessage(message.roomId, `${message.username} bought a mystery esky for $${cost}! *watches nervously*`);
 
             // Deduct the cost
             await bot.heistManager.updateUserEconomy(message.username, -cost, 0);
@@ -277,7 +277,7 @@ export default new Command({
                 // Send public announcement if applicable
                 if (publicAnnouncement) {
                     setTimeout(() => {
-                        bot.sendMessage(publicAnnouncement);
+                        bot.sendMessage(message.roomId, publicAnnouncement);
                     }, 1000);
                 }
                 

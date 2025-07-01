@@ -106,7 +106,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -131,7 +131,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -146,7 +146,7 @@ export default new Command({
                     `-${message.username} reckons they can make a quick buck`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
             
             // Roll for failure (10% chance)
@@ -259,7 +259,7 @@ export default new Command({
                         announcement += `scored $${amount} cash in hand! Living the dream!`;
                     }
                     
-                    bot.sendMessage(announcement);
+                    bot.sendMessage(message.roomId, announcement);
                 }, 2000);
             }
             
@@ -279,7 +279,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

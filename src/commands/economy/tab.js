@@ -77,7 +77,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, cooldownMsg);
                     } else {
-                        bot.sendMessage(cooldownMsg);
+                        bot.sendMessage(message.roomId, cooldownMsg);
                     }
                     return { success: false };
                 }
@@ -87,7 +87,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -99,7 +99,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -111,7 +111,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -129,7 +129,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, selectedInsult.replace(/-/g, '')); // Remove all - prefixes in PMs
                 } else {
-                    bot.sendMessage(selectedInsult);
+                    bot.sendMessage(message.roomId, selectedInsult);
                 }
                 return { success: false };
             }
@@ -141,7 +141,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -175,7 +175,7 @@ export default new Command({
                     `🏁 -${message.username} backs the ${raceType}s with $${amount}, I'll PM ya the action`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
 
             // User's selection (random)
@@ -255,7 +255,7 @@ export default new Command({
             // Handle public announcements
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -297,7 +297,7 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
@@ -314,7 +314,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

@@ -154,7 +154,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -182,7 +182,7 @@ export default new Command({
                         `-${message.username} one beg every 2 days mate, ${hours}h ${minutes}m left`
                     ];
                     
-                    bot.sendMessage(waitMessages[Math.floor(Math.random() * waitMessages.length)]);
+                    bot.sendMessage(message.roomId, waitMessages[Math.floor(Math.random() * waitMessages.length)]);
                     return { success: false };
                 }
             }
@@ -191,7 +191,7 @@ export default new Command({
             const dazzaBalance = await bot.heistManager.getUserBalance('dazza');
             if (dazzaBalance.balance < 20) {
                 const brokeMsg = dazzaBrokeMessages[Math.floor(Math.random() * dazzaBrokeMessages.length)];
-                bot.sendMessage(brokeMsg);
+                bot.sendMessage(message.roomId, brokeMsg);
                 
                 // Still record the attempt
                 if (bot.db) {
@@ -218,7 +218,7 @@ export default new Command({
                 if (userEcon.balance <= 0) {
                     // User is broke, mock them instead
                     const mockeryMsg = brokeUserMockery[Math.floor(Math.random() * brokeUserMockery.length)];
-                    bot.sendMessage(mockeryMsg.replace('-username', `-${message.username}`));
+                    bot.sendMessage(message.roomId, mockeryMsg.replace('-username', `-${message.username}`));
                     
                     // Log the attempted robbery
                     if (bot.db) {
@@ -254,7 +254,7 @@ export default new Command({
                         robberyMsg = robberyMsg.replace('-username', `-${message.username}`);
                         robberyMsg = robberyMsg.replace('-amount', robberyAmount);
                         
-                        bot.sendMessage(robberyMsg);
+                        bot.sendMessage(message.roomId, robberyMsg);
                         
                         // Log the robbery
                         if (bot.db) {
@@ -265,7 +265,7 @@ export default new Command({
                         }
                     } catch (error) {
                         bot.logger.error('Error during robbery:', error);
-                        bot.sendMessage('somethin went wrong with the robbery, lucky escape for ya');
+                        bot.sendMessage(message.roomId, 'somethin went wrong with the robbery, lucky escape for ya');
                     }
                     
                     return { success: true };
@@ -291,7 +291,7 @@ export default new Command({
                     successMsg = successMsg.replace('-username', `-${message.username}`);
                     successMsg = successMsg.replace('-amount', payout);
                     
-                    bot.sendMessage(successMsg);
+                    bot.sendMessage(message.roomId, successMsg);
                     
                     // Log the transaction
                     if (bot.db) {
@@ -302,7 +302,7 @@ export default new Command({
                     }
                 } else {
                     // Rolled success but $0 payout
-                    bot.sendMessage(`*looks at -${message.username}* here's fuck all mate, exactly what you deserve`);
+                    bot.sendMessage(message.roomId, `*looks at -${message.username}* here's fuck all mate, exactly what you deserve`);
                 }
             } else {
                 // Failure
@@ -310,7 +310,7 @@ export default new Command({
                 let failureMsg = failureMsgs[Math.floor(Math.random() * failureMsgs.length)];
                 failureMsg = failureMsg.replace('-username', `-${message.username}`);
                 
-                bot.sendMessage(failureMsg);
+                bot.sendMessage(message.roomId, failureMsg);
                 
                 // Log failed attempt
                 if (bot.db) {
@@ -325,7 +325,7 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Beg command error:', error);
-            bot.sendMessage('somethin went wrong with the begging mate');
+            bot.sendMessage(message.roomId, 'somethin went wrong with the begging mate');
             return { success: false };
         }
     }
