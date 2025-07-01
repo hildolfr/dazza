@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { createLogger } from '../../utils/logger.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 const logger = createLogger('SummaryCommand');
 
@@ -64,7 +65,7 @@ export default new Command({
             });
             
             if (humanMessages.length === 0) {
-                bot.sendPrivateMessage(message.username, `No chat messages found in the last ${hours} hour${hours === 1 ? '' : 's'}.`);
+                sendPM(bot, message.username, `No chat messages found in the last ${hours} hour${hours === 1 ? '' : 's'}.`, message);
                 return { success: true };
             }
             
@@ -107,14 +108,14 @@ export default new Command({
             const summaryMessages = await bot.ollama.generateSummary(chatLog, hours);
             
             if (!summaryMessages || summaryMessages.length === 0) {
-                bot.sendPrivateMessage(message.username, 'Failed to generate summary. Too cooked to think straight.');
+                sendPM(bot, message.username, 'Failed to generate summary. Too cooked to think straight.', message);
                 return { success: false };
             }
             
             // Send summary via PM - up to 2 messages
             for (let i = 0; i < summaryMessages.length && i < 2; i++) {
                 setTimeout(() => {
-                    bot.sendPrivateMessage(message.username, summaryMessages[i]);
+                    sendPM(bot, message.username, summaryMessages[i], message);
                 }, i * 1000); // 1 second delay between messages
             }
             

@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Hardcoded allowed users (case-insensitive)
 const ALLOWED_USERS = ['Spazztik', 'hildolfr', 'ilovechinks'];
@@ -28,7 +29,7 @@ export default new Command({
             if (!isAllowed) {
                 const errorMsg = "you're not the boss of me cunt";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                 }
@@ -50,7 +51,7 @@ export default new Command({
                     // First arg is not a number - error
                     const errorMsg = "that's not a fuckin' number ya drongo";
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, errorMsg);
+                        sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                     } else {
                         bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                     }
@@ -60,7 +61,7 @@ export default new Command({
                     if (parsedTime < 0) {
                         const errorMsg = "mate ya can't go back in time, use a positive number ya numpty";
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, errorMsg);
+                            sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                         } else {
                             bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
@@ -70,7 +71,7 @@ export default new Command({
                     if (parsedTime > 60) {
                         const errorMsg = "fuck off, I'm not waitin' more than a minute. 60 seconds max";
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, errorMsg);
+                            sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                         } else {
                             bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
@@ -94,7 +95,7 @@ export default new Command({
                 `alright ${message.username}, clearin' chat in ${delay} seconds`;
                 
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, ackMessage);
+                sendPM(bot, message.username, ackMessage, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, ackMessage);
             }
@@ -120,7 +121,7 @@ export default new Command({
             const errorMsg = 'somethin went wrong with the clear mate';
             
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
             }

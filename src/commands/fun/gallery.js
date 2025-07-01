@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'gallery',
@@ -28,15 +29,15 @@ export default new Command({
                 }
                 
                 if (isLocking) {
-                    bot.sendPrivateMessage(message.username, `Locked your gallery tighter than a fish's arsehole! No cunt's deletin' yer pics now!`);
+                    sendPM(bot, message.username, `Locked your gallery tighter than a fish's arsehole! No cunt's deletin' yer pics now!`, message);
                 } else {
-                    bot.sendPrivateMessage(message.username, `Unlocked your gallery! Any drongo can bin yer pics now, careful mate!`);
+                    sendPM(bot, message.username, `Unlocked your gallery! Any drongo can bin yer pics now, careful mate!`, message);
                 }
                 
                 return { success: true };
             } catch (error) {
                 bot.logger.error('Gallery lock error:', error);
-                bot.sendPrivateMessage(message.username, `Fucked up the lock mechanism, try again later`);
+                sendPM(bot, message.username, `Fucked up the lock mechanism, try again later`, message);
                 return { success: false };
             }
         }
@@ -45,9 +46,11 @@ export default new Command({
         const galleryUrl = 'https://hildolfr.github.io/dazza/gallery/';
         
         // Send a private message to the user
-        bot.sendPrivateMessage(
+        sendPM(
+            bot,
             message.username,
-            `Oi ${message.username}, check out yer fuckin' art collection at: ${galleryUrl} - Updated every few minutes with all the shit you cunts post!`
+            `Oi ${message.username}, check out yer fuckin' art collection at: ${galleryUrl} - Updated every few minutes with all the shit you cunts post!`,
+            message
         );
         
         return { success: true };
