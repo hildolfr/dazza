@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Location descriptions for finding coins
 const locations = [
@@ -131,7 +132,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = "couch is at the tip mate, try again later";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -157,7 +158,7 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
                         bot.sendMessage(message.roomId, selectedMsg);
                     }
@@ -203,7 +204,7 @@ export default new Command({
                     const newBalance = await bot.heistManager.getUserBalance(message.username);
                     pmMessage += `Balance: $${newBalance.balance}`;
                     
-                    bot.sendPrivateMessage(message.username, pmMessage);
+                    sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                     
                     // Update stats
                     if (bot.db) {
@@ -229,7 +230,7 @@ export default new Command({
                     pmMessage += `📄 ${badEvent.message.replace('-amount', `$${cost}`)}\n\n`;
                     pmMessage += "Lucky you're broke or that woulda cost ya!";
                     
-                    bot.sendPrivateMessage(message.username, pmMessage);
+                    sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                     
                     // Still update search count
                     if (bot.db) {
@@ -377,7 +378,7 @@ export default new Command({
             }
 
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             return { success: true };
             
@@ -385,7 +386,7 @@ export default new Command({
             bot.logger.error('Couch coins command error:', error);
             const errorMsg = 'couch search system fucked itself. typical.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }
