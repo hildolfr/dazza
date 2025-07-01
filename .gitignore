@@ -38,6 +38,9 @@ yarn-error.log*
 # Archive directory (if you want to exclude it from git)
 # archive/
 
+# Runtime data files
+data/batch_state.json
+
 # SSL certificates
 ssl/*.key
 ssl/*.crt
