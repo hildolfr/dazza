@@ -2260,253 +2260,303 @@ function renderBongStats(data, username) {
 
 function renderDrinkStats(data, username) {
     const total = data.dailyStats.reduce((sum, d) => sum + d.count, 0);
-    const avgPerDay = data.avgPerDay;
+    const avgPerDay = parseFloat(data.avgPerDay);
     const daysActive = data.dailyStats.length;
     const maxDay = data.dailyStats.reduce((max, d) => d.count > max.count ? d : max, data.dailyStats[0]);
-    const drunkLevel = calculateDrunkLevel(avgPerDay);
     
-    // Calculate drinking patterns
-    const weekdayDrinks = Math.round(total * 0.4);
-    const weekendDrinks = Math.round(total * 0.6);
-    const beerCount = Math.round(total * 0.7);
-    const spiritsCount = Math.round(total * 0.2);
-    const wineCount = Math.round(total * 0.1);
+    // Calculate week patterns from real data
+    const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const weekPatterns = Array(7).fill(0);
+    
+    data.dailyStats.forEach(day => {
+        const date = new Date(day.date + 'T00:00:00');
+        const dow = date.getDay();
+        weekPatterns[dow] += day.count;
+    });
+    
+    const weekdayDrinks = weekPatterns[1] + weekPatterns[2] + weekPatterns[3] + weekPatterns[4] + weekPatterns[5];
+    const weekendDrinks = weekPatterns[0] + weekPatterns[6];
+    
+    // Find personal best week (last 7 days max)
+    let weeklyMax = 0;
+    if (data.dailyStats.length >= 7) {
+        for (let i = 0; i <= data.dailyStats.length - 7; i++) {
+            const weekSum = data.dailyStats.slice(i, i + 7).reduce((sum, d) => sum + d.count, 0);
+            weeklyMax = Math.max(weeklyMax, weekSum);
+        }
+    }
+    
+    // Calculate drinking intensity
+    const intensityLevel = avgPerDay >= 15 ? 'legendary' : avgPerDay >= 10 ? 'extreme' : avgPerDay >= 5 ? 'heavy' : avgPerDay >= 3 ? 'moderate' : 'casual';
     
     let html = `
-        <div class="stat-section drunk-section">
-            <div class="beer-bubbles"></div>
-            <div class="section-header">
-                <h3>🍺 Drinking Statistics</h3>
-                <div class="header-badge ${avgPerDay >= 10 ? 'alcoholic' : avgPerDay >= 5 ? 'heavy' : 'social'}">
-                    ${avgPerDay >= 10 ? '🏆 PISS WRECK' : avgPerDay >= 5 ? '🍻 HEAVY DRINKER' : '🍺 SOCIAL DRINKER'}
+        <div class="stat-section drink-hud-section">
+            <div class="hud-container">
+                <div class="hud-header">
+                    <h3 class="hud-title">🍺 PUB COMMAND CENTER</h3>
+                    <div class="hud-badge tech-badge">PISSHEAD-TECH™ v1.0</div>
                 </div>
-            </div>
-            <div class="stat-grid fancy-grid">
-                <div class="stat-item glass-card beer-card">
-                    <div class="stat-icon">🍺</div>
-                    <span class="stat-label">Total Drinks</span>
-                    <span class="stat-value large-value">${total}</span>
-                    <div class="beer-foam"></div>
-                </div>
-                <div class="stat-item glass-card beer-card">
-                    <div class="stat-icon">📊</div>
-                    <span class="stat-label">Daily Average</span>
-                    <span class="stat-value large-value">${avgPerDay}</span>
-                    <div class="drunk-indicator ${avgPerDay >= 10 ? 'wasted' : avgPerDay >= 5 ? 'drunk' : 'tipsy'}"></div>
-                </div>
-                <div class="stat-item glass-card beer-card">
-                    <div class="stat-icon">🎯</div>
-                    <span class="stat-label">Biggest Session</span>
-                    <span class="stat-value large-value">${maxDay ? maxDay.count : 0}</span>
-                    <div class="record-date">${maxDay ? new Date(maxDay.date).toLocaleDateString() : 'N/A'}</div>
-                </div>
-                <div class="stat-item glass-card beer-card highlight-card">
-                    <div class="stat-icon">📅</div>
-                    <span class="stat-label">Drinking Days</span>
-                    <span class="stat-value large-value">${daysActive}</span>
-                    <div class="calendar-glow"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>📅 Drinking Patterns</h3>
-            <div class="pattern-display">
-                <div class="pattern-split">
-                    <div class="pattern-card weekday">
-                        <div class="pattern-header">
-                            <span class="pattern-icon">💼</span>
-                            <span class="pattern-name">Weekdays</span>
-                        </div>
-                        <div class="pattern-stats">
-                            <span class="pattern-count">${weekdayDrinks} drinks</span>
-                            <div class="pattern-bar">
-                                <div class="bar-fill" style="width: ${(weekdayDrinks / total) * 100}%"></div>
-                            </div>
-                            <span class="pattern-percent">${((weekdayDrinks / total) * 100).toFixed(1)}%</span>
-                        </div>
-                    </div>
-                    <div class="pattern-card weekend">
-                        <div class="pattern-header">
-                            <span class="pattern-icon">🎉</span>
-                            <span class="pattern-name">Weekends</span>
-                        </div>
-                        <div class="pattern-stats">
-                            <span class="pattern-count">${weekendDrinks} drinks</span>
-                            <div class="pattern-bar">
-                                <div class="bar-fill" style="width: ${(weekendDrinks / total) * 100}%"></div>
-                            </div>
-                            <span class="pattern-percent">${((weekendDrinks / total) * 100).toFixed(1)}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="drink-types">
-                    <h4>Beverage Breakdown</h4>
-                    <div class="type-grid">
-                        <div class="drink-type">
-                            <span class="type-icon">🍺</span>
-                            <span class="type-name">Beer</span>
-                            <span class="type-count">${beerCount}</span>
-                            <div class="type-bar">
-                                <div class="bar-fill beer" style="width: ${(beerCount / total) * 100}%"></div>
+                
+                <div class="hud-scanner"></div>
+                
+                <!-- Main Stats Grid -->
+                <div class="drink-hud-grid">
+                    <div class="hud-panel main-metrics">
+                        <div class="panel-header">
+                            <span class="panel-title">LIFETIME METRICS</span>
+                            <div class="panel-status ${intensityLevel}">
+                                <span class="status-dot"></span>
+                                ${intensityLevel === 'legendary' ? 'ABSOLUTE UNIT' : 
+                                  intensityLevel === 'extreme' ? 'PISS WRECK' : 
+                                  intensityLevel === 'heavy' ? 'HEAVY DRINKER' : 
+                                  intensityLevel === 'moderate' ? 'REGULAR' : 'LIGHTWEIGHT'}
                             </div>
                         </div>
-                        <div class="drink-type">
-                            <span class="type-icon">🥃</span>
-                            <span class="type-name">Spirits</span>
-                            <span class="type-count">${spiritsCount}</span>
-                            <div class="type-bar">
-                                <div class="bar-fill spirits" style="width: ${(spiritsCount / total) * 100}%"></div>
+                        
+                        <div class="metric-grid">
+                            <div class="metric-item total-drinks">
+                                <div class="metric-header">
+                                    <span class="metric-icon">🍺</span>
+                                    <span class="metric-label">TOTAL DRINKS</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value counter">${total}</span>
+                                    ${total === 69 || total === 420 ? '<span class="special-420-badge">NICE</span>' : ''}
+                                </div>
+                                <div class="metric-bar">
+                                    <div class="bar-track">
+                                        <div class="bar-fill" style="width: ${Math.min((total / 1000) * 100, 100)}%"></div>
+                                    </div>
+                                    <span class="bar-label">${total >= 1000 ? 'LEGENDARY STATUS' : Math.round((total / 1000) * 100) + '% to 1000'}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="drink-type">
-                            <span class="type-icon">🍷</span>
-                            <span class="type-name">Wine</span>
-                            <span class="type-count">${wineCount}</span>
-                            <div class="type-bar">
-                                <div class="bar-fill wine" style="width: ${(wineCount / total) * 100}%"></div>
+                            
+                            <div class="metric-item daily-avg">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📊</span>
+                                    <span class="metric-label">DAILY AVERAGE</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${avgPerDay}</span>
+                                    <span class="metric-unit">per day</span>
+                                </div>
+                                <div class="intensity-meter">
+                                    <div class="intensity-track">
+                                        <div class="intensity-fill ${intensityLevel}" style="width: ${Math.min((avgPerDay / 20) * 100, 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-item active-days">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📅</span>
+                                    <span class="metric-label">DRINKING DAYS</span>
+                                </div>
+                                <div class="metric-value-wrapper">
+                                    <span class="metric-value">${daysActive}</span>
+                                    <span class="metric-unit">days</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>🏅 Drinking Records</h3>
-            <div class="records-display">
-                <div class="record-card">
-                    <div class="record-icon">🍻</div>
-                    <div class="record-info">
-                        <span class="record-label">Longest Bender</span>
-                        <span class="record-value">${Math.min(Math.round(daysActive * 0.15), 7)} days</span>
-                    </div>
-                </div>
-                <div class="record-card">
-                    <div class="record-icon">⚡</div>
-                    <div class="record-info">
-                        <span class="record-label">Fastest Hour</span>
-                        <span class="record-value">${Math.max(3, Math.round(maxDay ? maxDay.count / 8 : 3))} drinks</span>
-                    </div>
-                </div>
-                <div class="record-card">
-                    <div class="record-icon">💰</div>
-                    <div class="record-info">
-                        <span class="record-label">Most Expensive Night</span>
-                        <span class="record-value">$${Math.round(maxDay ? maxDay.count * 8 : 50)}</span>
-                    </div>
-                </div>
-                <div class="record-card">
-                    <div class="record-icon">🏆</div>
-                    <div class="record-info">
-                        <span class="record-label">Weekly Record</span>
-                        <span class="record-value">${Math.round(avgPerDay * 7 * 1.5)} drinks</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>🥴 Intoxication Meter</h3>
-            <div class="drunk-display">
-                <div class="drunk-meter">
-                    <div class="meter-header">
-                        <span class="meter-title">Average Drunk Level</span>
-                        <span class="meter-emoji">${getDrunkEmoji(drunkLevel)}</span>
-                    </div>
-                    <div class="drunk-gauge">
-                        <div class="gauge-container">
-                            <div class="drunk-levels">
-                                <span class="level sober">SOBER</span>
-                                <span class="level tipsy">TIPSY</span>
-                                <span class="level drunk">DRUNK</span>
-                                <span class="level wasted">WASTED</span>
+                    
+                    <!-- Records Panel -->
+                    <div class="hud-panel records-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">PERSONAL RECORDS</span>
+                            <div class="records-icon">🏆</div>
+                        </div>
+                        
+                        <div class="records-grid">
+                            ${maxDay ? `
+                            <div class="record-item record-day">
+                                <div class="record-header">
+                                    <span class="record-icon">🍻</span>
+                                    <span class="record-label">BIGGEST DAY</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${maxDay.count}</span>
+                                    <span class="record-unit">drinks</span>
+                                </div>
+                                <div class="record-date">${new Date(maxDay.date + 'T00:00:00').toLocaleDateString('en-AU')}</div>
+                                ${maxDay.count >= 20 ? '<div class="record-badge legendary">ABSOLUTELY MUNTED</div>' : 
+                                  maxDay.count >= 15 ? '<div class="record-badge epic">PROPER PISSED</div>' : 
+                                  maxDay.count >= 10 ? '<div class="record-badge rare">SOLID EFFORT</div>' : ''}
                             </div>
-                            <div class="drunk-bar">
-                                <div class="bar-fill drunk-gradient" style="width: ${drunkLevel}%">
-                                    <div class="drunk-bubble"></div>
+                            ` : ''}
+                            
+                            ${weeklyMax > 0 ? `
+                            <div class="record-item weekly-best">
+                                <div class="record-header">
+                                    <span class="record-icon">📈</span>
+                                    <span class="record-label">BEST WEEK</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${weeklyMax}</span>
+                                    <span class="record-unit">drinks</span>
+                                </div>
+                                <div class="record-detail">7 day total</div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="record-item consistency">
+                                <div class="record-header">
+                                    <span class="record-icon">🎯</span>
+                                    <span class="record-label">CONSISTENCY</span>
+                                </div>
+                                <div class="record-value-wrapper">
+                                    <span class="record-value">${Math.round((daysActive / Math.max(30, daysActive)) * 100)}</span>
+                                    <span class="record-unit">%</span>
+                                </div>
+                                <div class="record-detail">of last ${Math.max(30, daysActive)} days</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Week Pattern Analysis -->
+                    <div class="hud-panel pattern-analysis">
+                        <div class="panel-header">
+                            <span class="panel-title">WEEKLY PATTERN</span>
+                            <div class="analysis-icon">📊</div>
+                        </div>
+                        
+                        <div class="week-breakdown">
+                            ${dayOfWeek.map((day, index) => {
+                                const dayTotal = weekPatterns[index];
+                                const isWeekend = index === 0 || index === 6;
+                                const maxDayCount = Math.max(...weekPatterns);
+                                const percentage = maxDayCount > 0 ? (dayTotal / maxDayCount * 100) : 0;
+                                
+                                return `
+                                <div class="day-slot ${dayTotal > 0 ? 'active' : 'inactive'} ${isWeekend ? 'weekend' : 'weekday'}">
+                                    <div class="slot-header">
+                                        <span class="slot-name">${day.substring(0, 3).toUpperCase()}</span>
+                                    </div>
+                                    <div class="slot-meter">
+                                        <div class="meter-track">
+                                            <div class="meter-fill ${isWeekend ? 'weekend-fill' : 'weekday-fill'}" style="width: ${percentage}%"></div>
+                                        </div>
+                                        <div class="slot-stats">
+                                            <span class="slot-count">${dayTotal}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="pattern-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">WEEKDAY TOTAL:</span>
+                                <span class="summary-value">${weekdayDrinks}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">WEEKEND TOTAL:</span>
+                                <span class="summary-value">${weekendDrinks}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Intoxication Status -->
+                    <div class="hud-panel intox-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">INTOXICATION ANALYSIS</span>
+                            <div class="intox-icon">🥴</div>
+                        </div>
+                        
+                        <div class="intox-display">
+                            <div class="intox-meter">
+                                <div class="meter-header">
+                                    <span class="meter-title">AVERAGE STATE</span>
+                                    <span class="meter-emoji">${getDrunkEmoji(calculateDrunkLevel(avgPerDay))}</span>
+                                </div>
+                                <div class="circular-progress large">
+                                    <svg viewBox="0 0 120 120">
+                                        <circle cx="60" cy="60" r="54" class="progress-track"/>
+                                        <circle cx="60" cy="60" r="54" class="progress-fill drunk-gradient" 
+                                                style="stroke-dasharray: ${calculateDrunkLevel(avgPerDay) * 3.39} ${339 - (calculateDrunkLevel(avgPerDay) * 3.39)}"/>
+                                    </svg>
+                                    <div class="progress-center">
+                                        <span class="progress-value">${calculateDrunkLevel(avgPerDay)}%</span>
+                                        <span class="progress-label">Pissed</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="intox-levels">
+                                <div class="level-item ${avgPerDay >= 15 ? 'active' : ''}">
+                                    <span class="level-icon">💀</span>
+                                    <span class="level-name">MUNTED</span>
+                                    <span class="level-desc">15+ daily</span>
+                                </div>
+                                <div class="level-item ${avgPerDay >= 10 && avgPerDay < 15 ? 'active' : ''}">
+                                    <span class="level-icon">🥴</span>
+                                    <span class="level-name">WASTED</span>
+                                    <span class="level-desc">10-15 daily</span>
+                                </div>
+                                <div class="level-item ${avgPerDay >= 5 && avgPerDay < 10 ? 'active' : ''}">
+                                    <span class="level-icon">🍻</span>
+                                    <span class="level-name">DRUNK</span>
+                                    <span class="level-desc">5-10 daily</span>
+                                </div>
+                                <div class="level-item ${avgPerDay < 5 ? 'active' : ''}">
+                                    <span class="level-icon">🍺</span>
+                                    <span class="level-name">TIPSY</span>
+                                    <span class="level-desc"><5 daily</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="drunk-stats">
-                    <div class="drunk-stat">
-                        <span class="drunk-label">Hangover Days:</span>
-                        <span class="drunk-value">${Math.round(daysActive * 0.3)}</span>
+                
+                <!-- Timeline Chart -->
+                <div class="hud-panel timeline-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">RECENT ACTIVITY</span>
+                        <div class="timeline-icon">📈</div>
                     </div>
-                    <div class="drunk-stat">
-                        <span class="drunk-label">Blackout Nights:</span>
-                        <span class="drunk-value">${Math.round(daysActive * 0.05)}</span>
-                    </div>
-                    <div class="drunk-stat">
-                        <span class="drunk-label">Recovery Time:</span>
-                        <span class="drunk-value">${getRecoveryTime(avgPerDay)}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>🎉 Social Drinking</h3>
-            <div class="social-display">
-                <div class="social-grid">
-                    <div class="social-card">
-                        <div class="social-icon">👥</div>
-                        <div class="social-info">
-                            <span class="social-label">Drinking Buddies</span>
-                            <span class="social-value">${Math.round(total * 0.7)} shared</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 70%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">🎊</div>
-                        <div class="social-info">
-                            <span class="social-label">Party Nights</span>
-                            <span class="social-value">${Math.round(daysActive * 0.2)}</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 20%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">🏡</div>
-                        <div class="social-info">
-                            <span class="social-label">Home Sessions</span>
-                            <span class="social-value">${Math.round(total * 0.3)} drinks</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 30%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-card">
-                        <div class="social-icon">🍻</div>
-                        <div class="social-info">
-                            <span class="social-label">Rounds Shouted</span>
-                            <span class="social-value">${Math.round(daysActive * 0.15)}</span>
-                            <div class="social-bar">
-                                <div class="bar-fill" style="width: 15%"></div>
-                            </div>
+                    
+                    <div class="timeline-chart">
+                        <div class="chart-container">
+                            ${data.dailyStats.slice(-10).map((day, index) => {
+                                const height = maxDay ? (day.count / maxDay.count) * 100 : 0;
+                                const isWeekend = new Date(day.date + 'T00:00:00').getDay() % 6 === 0;
+                                
+                                return `
+                                <div class="day-bar" style="animation-delay: ${index * 0.05}s">
+                                    <div class="bar-column drink-bar ${isWeekend ? 'weekend-bar' : ''}" style="height: ${height}%">
+                                        <span class="bar-value">${day.count}</span>
+                                    </div>
+                                    <span class="bar-date">${new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="stat-section">
-            <h3>📈 Drinking Timeline</h3>
-            <div class="timeline-chart">
-                <div class="chart-container">
-                    ${data.dailyStats.slice(-10).map((day, index) => `
-                        <div class="day-bar" style="animation-delay: ${index * 0.05}s">
-                            <div class="bar-column drunk-bar" style="height: ${(day.count / maxDay.count) * 100}%">
-                                <span class="bar-value">${day.count}</span>
-                            </div>
-                            <span class="bar-date">${new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        </div>
-                    `).join('')}
+                
+                <!-- Footer Stats Bar -->
+                <div class="hud-footer">
+                    <div class="footer-stat">
+                        <span class="stat-icon">🎖️</span>
+                        <span class="stat-label">RANK:</span>
+                        <span class="stat-value">${intensityLevel === 'legendary' ? 'BEER BARON' : 
+                                                   intensityLevel === 'extreme' ? 'PUB LEGEND' : 
+                                                   intensityLevel === 'heavy' ? 'REGULAR PISSER' : 
+                                                   intensityLevel === 'moderate' ? 'SOCIAL DRINKER' : 'LIGHTWEIGHT'}</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-icon">💪</span>
+                        <span class="stat-label">TOLERANCE:</span>
+                        <span class="stat-value">${avgPerDay >= 15 ? 'IRON LIVER' : 
+                                                   avgPerDay >= 10 ? 'HIGH' : 
+                                                   avgPerDay >= 5 ? 'MODERATE' : 'LOW'}</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-label">CONSISTENCY:</span>
+                        <span class="stat-value">${daysActive > 0 ? Math.round((total / daysActive)) : 0} DRINKS/DAY</span>
+                    </div>
                 </div>
             </div>
         </div>
