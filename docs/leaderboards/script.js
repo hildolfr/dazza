@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeWebSocket();
     initializeChat();
     startAutoUpdate();
+    initializeQuoteRotator();
 });
 
 // Event Listeners
@@ -3321,3 +3322,21 @@ window.addEventListener('beforeunload', () => {
     if (socket) socket.close();
     if (updateTimer) clearInterval(updateTimer);
 });
+
+// Quote Rotator
+function initializeQuoteRotator() {
+    const quotes = document.querySelectorAll('.bogan-quote');
+    let currentIndex = 0;
+    
+    // Start rotation
+    setInterval(() => {
+        // Remove active from current
+        quotes[currentIndex].classList.remove('active');
+        
+        // Move to next quote
+        currentIndex = (currentIndex + 1) % quotes.length;
+        
+        // Add active to new quote
+        quotes[currentIndex].classList.add('active');
+    }, 4000); // Change quote every 4 seconds
+}
