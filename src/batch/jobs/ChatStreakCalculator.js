@@ -199,10 +199,10 @@ export class ChatStreakCalculator extends BatchJob {
             GROUP BY 1
             ORDER BY 
                 CASE 
-                    WHEN range = '0 (Broken)' THEN 1
-                    WHEN range = '1-6 days' THEN 2
-                    WHEN range = '7-29 days' THEN 3
-                    WHEN range = '30-99 days' THEN 4
+                    WHEN current_streak = 0 THEN 1
+                    WHEN current_streak BETWEEN 1 AND 6 THEN 2
+                    WHEN current_streak BETWEEN 7 AND 29 THEN 3
+                    WHEN current_streak BETWEEN 30 AND 99 THEN 4
                     ELSE 5
                 END
         `);
