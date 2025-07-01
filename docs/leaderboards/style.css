@@ -617,7 +617,7 @@ body {
 /* Can bottom */
 .can-bottom {
     position: absolute;
-    bottom: -5px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     width: 75px;
