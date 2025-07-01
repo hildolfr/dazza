@@ -1,4 +1,4 @@
-import { CyTubeBot } from './src/core/bot.js';
+import { CyTubeBot } from './src/core/MultiRoomBot.js';
 import config from './src/config/index.js';
 import { ConfigValidator } from './src/config/validator.js';
 

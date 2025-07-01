@@ -15,7 +15,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
-                bot.sendMessage(msg);
+                bot.sendMessage(message.roomId, msg);
             }
             return { success: true };
         }
@@ -29,7 +29,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
-                bot.sendMessage(msg);
+                bot.sendMessage(message.roomId, msg);
             }
             return { success: true };
         }
@@ -40,16 +40,16 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, msg);
             } else {
-                bot.sendMessage(msg);
+                bot.sendMessage(message.roomId, msg);
             }
             return { success: true };
         }
         
         // Check if user is online
-        const onlineUser = bot.userlist.get(targetUser.toLowerCase());
+        const onlineUser = message.roomContext.userlist.get(targetUser.toLowerCase());
         if (onlineUser) {
             // Check if they're AFK
-            if (bot.isUserAFK(targetUser)) {
+            if (message.roomContext.isUserAFK(targetUser)) {
                 // User is AFK, proceed with saving the message
                 const afkResponses = [
                     `${targetUser}'s afk right now, I'll tell 'em when they get back`,
@@ -74,7 +74,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, msg.replace('-', '')); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(msg);
+                    bot.sendMessage(message.roomId, msg);
                 }
                 return { success: true };
             }
@@ -98,7 +98,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, msg.replace(/-/g, '')); // Remove all - prefixes in PMs
                 } else {
-                    bot.sendMessage(msg);
+                    bot.sendMessage(message.roomId, msg);
                 }
                 return { success: true };
             }
@@ -106,12 +106,12 @@ export default new Command({
             // Store tell with normalized usernames and PM flag if sent via PM
             const canonicalFrom = await getCanonicalUsername(bot, message.username);
             const canonicalTo = await getCanonicalUsername(bot, targetUser);
-            await bot.db.addTell(canonicalFrom, canonicalTo, tellMessage, message.isPM || false);
+            await bot.db.addTell(canonicalFrom, canonicalTo, tellMessage, message.isPM || false, message.roomId);
             
             // Only send public confirmation if not initiated via PM
             if (!message.isPM) {
                 // Use appropriate confirmation based on whether user is AFK or not
-                if (onlineUser && bot.isUserAFK(targetUser)) {
+                if (onlineUser && message.roomContext.isUserAFK(targetUser)) {
                     const afkResponses = [
                         `-${targetUser}'s afk right now, I'll tell 'em when they get back`,
                         `looks like -${targetUser}'s gone for a dart, I'll pass it on when they return`,
@@ -119,7 +119,7 @@ export default new Command({
                         `-${targetUser}'s not at their desk, I'll tell 'em when they wake up`,
                         `-${targetUser}'s afk, might be on the dunny. I'll give 'em the message`
                     ];
-                    bot.sendMessage(afkResponses[Math.floor(Math.random() * afkResponses.length)]);
+                    bot.sendMessage(message.roomId, afkResponses[Math.floor(Math.random() * afkResponses.length)]);
                 } else {
                     const confirmResponses = [
                         `no worries mate, I'll tell -${targetUser} when they rock up`,
@@ -128,7 +128,7 @@ export default new Command({
                         `roger that, -${targetUser} will get the memo`,
                         `sweet as, I'll let -${targetUser} know`
                     ];
-                    bot.sendMessage(confirmResponses[Math.floor(Math.random() * confirmResponses.length)]);
+                    bot.sendMessage(message.roomId, confirmResponses[Math.floor(Math.random() * confirmResponses.length)]);
                 }
             } else {
                 // PM confirmation for PM-initiated tells
@@ -142,7 +142,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

@@ -30,6 +30,7 @@ import BatchScheduler from '../batch/BatchScheduler.js';
 import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
 import RoomContext from '../RoomContext.js';
 import { applyRoomEventHandlers } from './roomEventHandlers.js';
+import { setupHeistHandlers } from './heistEventHandlers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -105,6 +106,7 @@ export class MultiRoomBot extends EventEmitter {
             // Initialize global managers
             this.heistManager = new HeistManager(this.db, this);
             await this.heistManager.init();
+            setupHeistHandlers(this);
             
             this.videoPayoutManager = new VideoPayoutManager(this.db, this);
             await this.videoPayoutManager.init();
@@ -125,7 +127,7 @@ export class MultiRoomBot extends EventEmitter {
             // Initialize batch scheduler
             if (this.config.batch?.enabled !== false) {
                 this.batchScheduler = new BatchScheduler(this.db, this.logger);
-                registerChatAnalyzers(this.batchScheduler);
+                registerChatAnalyzers(this.batchScheduler, this.db, this.logger);
                 this.batchScheduler.start();
             }
             
@@ -166,8 +168,6 @@ export class MultiRoomBot extends EventEmitter {
                 const roomConfigPath = path.join(roomsDir, file);
                 
                 try {
-                    // Clear require cache to allow hot-reloading
-                    delete require.cache[require.resolve(roomConfigPath)];
                     const roomConfig = await import(roomConfigPath);
                     
                     if (roomConfig.default?.enabled || roomConfig.enabled) {
@@ -338,6 +338,22 @@ export class MultiRoomBot extends EventEmitter {
         }
         
         connection.sendChatMessage(message);
+    }
+    
+    /**
+     * Get combined userlist from all rooms (for compatibility)
+     */
+    getUserlist() {
+        const allUsers = new Map();
+        for (const [roomId, context] of this.rooms) {
+            for (const [username, user] of context.userlist) {
+                // If user exists in multiple rooms, keep the first one
+                if (!allUsers.has(username)) {
+                    allUsers.set(username, { ...user, roomId });
+                }
+            }
+        }
+        return allUsers;
     }
     
     /**

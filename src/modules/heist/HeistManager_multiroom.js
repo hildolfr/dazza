@@ -490,10 +490,21 @@ export class HeistManager extends EventEmitter {
         );
         
         if (!user) {
-            await this.db.run(
-                'INSERT INTO user_economy (username, balance, trust_score) VALUES (?, 0, 50)',
-                [normalizedUsername]
-            );
+            // Check if trust_score column exists
+            const tableInfo = await this.db.all(`PRAGMA table_info(user_economy)`);
+            const hasTrustScore = tableInfo.some(col => col.name === 'trust_score');
+            
+            if (hasTrustScore) {
+                await this.db.run(
+                    'INSERT INTO user_economy (username, balance, trust_score) VALUES (?, 0, 50)',
+                    [normalizedUsername]
+                );
+            } else {
+                await this.db.run(
+                    'INSERT INTO user_economy (username, balance) VALUES (?, 0)',
+                    [normalizedUsername]
+                );
+            }
         }
         
         return user;
@@ -511,10 +522,19 @@ export class HeistManager extends EventEmitter {
     async modifyUserTrust(username, amount) {
         const normalizedUsername = normalizeUsernameForDb(username);
         
-        await this.db.run(
-            'UPDATE user_economy SET trust_score = MAX(0, MIN(100, trust_score + ?)) WHERE username = ?',
-            [amount, normalizedUsername]
-        );
+        // Check if trust_score column exists
+        const tableInfo = await this.db.all(`PRAGMA table_info(user_economy)`);
+        const hasTrustScore = tableInfo.some(col => col.name === 'trust_score');
+        
+        if (hasTrustScore) {
+            await this.db.run(
+                'UPDATE user_economy SET trust_score = MAX(0, MIN(100, trust_score + ?)) WHERE username = ?',
+                [amount, normalizedUsername]
+            );
+        } else {
+            // Column doesn't exist yet, skip the update
+            this.logger.debug('trust_score column not yet available, skipping trust update');
+        }
     }
 
     // Config management
