@@ -28,7 +28,7 @@ export function createTemplate(options = {}) {
                     </span>
                 </div>
                 <button class="chat-toggle" aria-label="Toggle chat">
-                    <span class="toggle-icon">${startMinimized ? '+' : ''}</span>
+                    <span class="toggle-icon">${startMinimized ? '+' : '−'}</span>
                 </button>
             </div>
             

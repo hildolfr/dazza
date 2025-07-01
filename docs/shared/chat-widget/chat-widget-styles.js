@@ -15,6 +15,13 @@ export const chatWidgetStyles = `
     --vb-dark: #1a1a1a;
     --header-height: 50px;
     --message-slide-distance: 100%;
+    
+    /* Ensure host doesn't affect page layout */
+    display: block;
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: visible;
   }
 
   /* Reset styles for Shadow DOM */
@@ -25,9 +32,11 @@ export const chatWidgetStyles = `
   }
 
   /* Main chat widget container */
-  .chat-widget {
+  .chat-container {
     position: fixed;
     width: var(--chat-width);
+    height: auto;
+    max-height: calc(var(--chat-height) + var(--header-height));
     background: var(--chat-bg-color);
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -35,36 +44,40 @@ export const chatWidgetStyles = `
     z-index: 1000;
     transition: all 0.3s ease;
     font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Position variants */
-  .chat-widget[data-position="bottom-right"] {
+  .chat-container[data-position="bottom-right"] {
     bottom: 20px;
     right: 20px;
   }
 
-  .chat-widget[data-position="bottom-left"] {
+  .chat-container[data-position="bottom-left"] {
     bottom: 20px;
     left: 20px;
   }
 
-  .chat-widget[data-position="top-right"] {
+  .chat-container[data-position="top-right"] {
     top: 20px;
     right: 20px;
   }
 
-  .chat-widget[data-position="top-left"] {
+  .chat-container[data-position="top-left"] {
     top: 20px;
     left: 20px;
   }
 
   /* Minimized state */
-  .chat-widget.minimized {
-    height: var(--header-height);
+  .chat-container.minimized {
+    height: var(--header-height) !important;
+    max-height: var(--header-height) !important;
   }
 
-  .chat-widget.minimized .chat-messages,
-  .chat-widget.minimized .chat-loading {
+  .chat-container.minimized .chat-body,
+  .chat-container.minimized .chat-messages,
+  .chat-container.minimized .chat-placeholder {
     display: none;
   }
 
@@ -109,6 +122,9 @@ export const chatWidgetStyles = `
   }
 
   .chat-toggle {
+    background: none;
+    border: none;
+    color: white;
     font-size: 1.5rem;
     cursor: pointer;
     transition: transform 0.3s ease;
@@ -119,15 +135,35 @@ export const chatWidgetStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
   }
 
-  .chat-widget.minimized .chat-toggle {
-    transform: rotate(180deg);
+  .chat-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  .toggle-icon {
+    display: block;
+    line-height: 1;
+  }
+
+  .chat-container.minimized .chat-toggle .toggle-icon {
+    transform: rotate(45deg);
+  }
+
+  /* Chat body container */
+  .chat-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--chat-height);
+    overflow: hidden;
   }
 
   /* Messages container */
   .chat-messages {
-    height: var(--chat-height);
+    flex: 1;
     overflow-y: auto;
     padding: 15px;
     background: #fafafa;

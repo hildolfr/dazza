@@ -230,7 +230,7 @@ class ChatWidget extends HTMLElement {
         // Update toggle button text
         const toggleIcon = this._toggleBtn.querySelector('.toggle-icon');
         if (toggleIcon) {
-            toggleIcon.textContent = this._isMinimized ? '+' : '';
+            toggleIcon.textContent = this._isMinimized ? '+' : '−';
         }
         
         // Clear unread count when maximizing
