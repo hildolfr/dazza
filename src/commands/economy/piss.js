@@ -86,7 +86,8 @@ export default new Command({
         const result = await bot.pissingContestManager.createChallenge(
             message.username,
             targetUser,
-            amount
+            amount,
+            message.roomId
         );
         
         if (!result.success) {

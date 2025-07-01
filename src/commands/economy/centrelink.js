@@ -117,7 +117,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -143,7 +143,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, '')); // Remove - prefixes in PMs
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -158,7 +158,7 @@ export default new Command({
                     `Running -${message.username} through the system, PMing the outcome`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
             
             // Check for rare payments first (0.5-1% chance)
@@ -243,7 +243,7 @@ export default new Command({
             // Handle public announcements
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -285,7 +285,7 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
@@ -302,7 +302,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

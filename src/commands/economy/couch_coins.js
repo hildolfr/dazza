@@ -133,7 +133,7 @@ export default new Command({
                 if (message.isPM) {
                     bot.sendPrivateMessage(message.username, errorMsg);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -159,7 +159,7 @@ export default new Command({
                     if (message.isPM) {
                         bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -174,7 +174,7 @@ export default new Command({
                     `-${message.username} is excavating the sacred couch`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
 
             // Get user's current balance for desperation check
@@ -371,7 +371,7 @@ export default new Command({
                 // Public announcement for big finds
                 if (publicAnnouncement && !message.isPM) {
                     setTimeout(() => {
-                        bot.sendMessage(`🚨 COUCH JACKPOT! ${message.username} just found $${amount} ${location}! Lucky bastard!`);
+                        bot.sendMessage(message.roomId, `🚨 COUCH JACKPOT! ${message.username} just found $${amount} ${location}! Lucky bastard!`);
                     }, 2000);
                 }
             }
@@ -387,7 +387,7 @@ export default new Command({
             if (message.isPM) {
                 bot.sendPrivateMessage(message.username, errorMsg);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

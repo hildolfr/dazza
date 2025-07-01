@@ -171,9 +171,9 @@ export default new Command({
                     if (winnings >= amount * 10) {
                         setTimeout(() => {
                             if (winnings >= amount * 50) {
-                                bot.sendMessage(`🎰💰 HOLY FUCK! ${message.username} JUST HIT THE JACKPOT! $${winnings} ON A $${amount} SCRATCHIE! 💰🎰`);
+                                bot.sendMessage(message.roomId, `🎰💰 HOLY FUCK! ${message.username} JUST HIT THE JACKPOT! $${winnings} ON A $${amount} SCRATCHIE! 💰🎰`);
                             } else {
-                                bot.sendMessage(`🎉 BIG WIN! ${message.username} just won $${winnings} on a $${amount} scratchie! ${winnings / amount}x return!`);
+                                bot.sendMessage(message.roomId, `🎉 BIG WIN! ${message.username} just won $${winnings} on a $${amount} scratchie! ${winnings / amount}x return!`);
                             }
                         }, 1000);
                     }
