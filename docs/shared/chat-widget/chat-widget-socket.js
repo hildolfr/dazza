@@ -195,11 +195,9 @@ class ChatSocket extends EventTarget {
 }
 
 // Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ChatSocket;
-}
+export { ChatSocket };
 
-// Also make available globally for browser usage
+// Also expose globally for non-module usage
 if (typeof window !== 'undefined') {
     window.ChatSocket = ChatSocket;
 }

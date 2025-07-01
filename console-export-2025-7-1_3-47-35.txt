@@ -1,0 +1,2 @@
+Uncaught SyntaxError: import declarations may only appear at top level of a module index.js:47:1
+WebSocket connected script.js:127:21
