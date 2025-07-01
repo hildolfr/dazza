@@ -301,7 +301,7 @@ export default new Command({
             bot.logger.error('Centrelink command error:', error);
             const errorMsg = 'Centrelink computer crashed. Standard Monday really.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }
