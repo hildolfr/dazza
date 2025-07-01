@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Widget Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #006a4e;
+            margin-bottom: 15px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            background: #006a4e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #005a3e;
+        }
+        .demo-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Widget Demo</h1>
+        
+        <div class="section">
+            <h2>Live Example</h2>
+            <p>The chat widget is loaded in the bottom-right corner of this page. You can interact with it using the controls below or by clicking on the widget header.</p>
+        </div>
+        
+        <div class="section">
+            <h2>Widget Controls</h2>
+            <div class="demo-controls">
+                <button onclick="toggleWidget()">Toggle Minimize/Maximize</button>
+                <button onclick="changePosition('bottom-left')">Move to Bottom Left</button>
+                <button onclick="changePosition('bottom-right')">Move to Bottom Right</button>
+                <button onclick="changePosition('top-left')">Move to Top Left</button>
+                <button onclick="changePosition('top-right')">Move to Top Right</button>
+                <button onclick="changeTheme('dark')">Dark Theme</button>
+                <button onclick="changeTheme('light')">Light Theme</button>
+                <button onclick="getStatus()">Get Status</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Basic Usage</h2>
+            <pre><code>&lt;!-- Load required scripts --&gt;
+&lt;script src="chat-widget-api.js"&gt;&lt;/script&gt;
+&lt;script src="chat-widget-socket.js"&gt;&lt;/script&gt;
+
+&lt;!-- Load the chat widget module --&gt;
+&lt;script type="module"&gt;
+    import './chat-widget.js';
+&lt;/script&gt;
+
+&lt;!-- Add the chat widget element --&gt;
+&lt;chat-widget 
+    position="bottom-right"
+    theme="light"
+    start-minimized="false"&gt;
+&lt;/chat-widget&gt;</code></pre>
+        </div>
+        
+        <div class="section">
+            <h2>JavaScript API</h2>
+            <pre><code>// Get widget reference
+const widget = document.querySelector('chat-widget');
+
+// Minimize/maximize
+widget.minimize();
+widget.maximize();
+
+// Check status
+console.log(widget.connected);    // true/false
+console.log(widget.minimized);    // true/false
+console.log(widget.messageCount); // number
+
+// Listen to events
+widget.addEventListener('chat-connected', (e) => {
+    console.log('Connected!', e.detail);
+});
+
+widget.addEventListener('chat-message-received', (e) => {
+    console.log('New message:', e.detail);
+});
+
+widget.addEventListener('chat-disconnected', (e) => {
+    console.log('Disconnected!', e.detail);
+});</code></pre>
+        </div>
+        
+        <div class="section">
+            <h2>Configuration Options</h2>
+            <ul>
+                <li><strong>position</strong>: Widget position (bottom-right, bottom-left, top-right, top-left)</li>
+                <li><strong>theme</strong>: Color theme (light, dark)</li>
+                <li><strong>start-minimized</strong>: Start in minimized state (true/false)</li>
+                <li><strong>api-url</strong>: Custom API endpoint URL</li>
+                <li><strong>ws-url</strong>: Custom WebSocket URL</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Auto-Initialization</h2>
+            <p>You can also auto-initialize the widget using data attributes:</p>
+            <pre><code>&lt;div data-chat-widget-auto
+     data-position="bottom-right"
+     data-theme="light"
+     data-start-minimized="false"&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="chat-widget-api.js"></script>
+    <script src="chat-widget-socket.js"></script>
+    
+    <!-- Load and use the chat widget -->
+    <script type="module">
+        import './chat-widget.js';
+        
+        // Create and add widget
+        const widget = document.createElement('chat-widget');
+        widget.setAttribute('position', 'bottom-right');
+        widget.setAttribute('theme', 'light');
+        widget.setAttribute('start-minimized', 'false');
+        document.body.appendChild(widget);
+        
+        // Make widget available globally for demo controls
+        window.chatWidget = widget;
+        
+        // Add event listeners
+        widget.addEventListener('chat-connected', (e) => {
+            console.log('Chat connected!', e.detail);
+        });
+        
+        widget.addEventListener('chat-message-received', (e) => {
+            console.log('New message:', e.detail);
+        });
+        
+        widget.addEventListener('chat-disconnected', (e) => {
+            console.log('Chat disconnected!', e.detail);
+        });
+    </script>
+    
+    <!-- Demo control functions -->
+    <script>
+        function toggleWidget() {
+            const widget = window.chatWidget;
+            if (widget.minimized) {
+                widget.maximize();
+            } else {
+                widget.minimize();
+            }
+        }
+        
+        function changePosition(position) {
+            window.chatWidget.setAttribute('position', position);
+        }
+        
+        function changeTheme(theme) {
+            window.chatWidget.setAttribute('theme', theme);
+        }
+        
+        function getStatus() {
+            const widget = window.chatWidget;
+            alert(`Connected: ${widget.connected}\nMinimized: ${widget.minimized}\nMessages: ${widget.messageCount}`);
+        }
+    </script>
+</body>
+</html>

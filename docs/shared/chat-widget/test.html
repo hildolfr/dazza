@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dazza Chat Widget Test Page</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #006a4e;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #00513a;
+        }
+        .position-buttons button {
+            background: #ffcd00;
+            color: #333;
+        }
+        .position-buttons button:hover {
+            background: #e5b700;
+        }
+        h1 {
+            color: #006a4e;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .demo-messages {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍺 Dazza Chat Widget Test Page</h1>
+    
+    <div class="controls">
+        <h2>Widget Controls</h2>
+        
+        <h3>Visibility</h3>
+        <button onclick="toggleWidget()">Toggle Widget</button>
+        <button onclick="minimizeWidget()">Minimize</button>
+        <button onclick="maximizeWidget()">Maximize</button>
+        
+        <h3>Position</h3>
+        <div class="position-buttons">
+            <button onclick="setPosition('bottom-right')">Bottom Right</button>
+            <button onclick="setPosition('bottom-left')">Bottom Left</button>
+            <button onclick="setPosition('top-right')">Top Right</button>
+            <button onclick="setPosition('top-left')">Top Left</button>
+        </div>
+        
+        <h3>Theme</h3>
+        <button onclick="setTheme('vb')">VB Theme</button>
+        <button onclick="setTheme('default')">Default Theme</button>
+        
+        <h3>Widget Management</h3>
+        <button onclick="createWidget()">Create Widget</button>
+        <button onclick="removeWidget()">Remove Widget</button>
+        
+        <div class="status" id="status">
+            Widget Status: <span id="widget-status">Loading...</span><br>
+            Connection: <span id="connection-status">Unknown</span><br>
+            Messages: <span id="message-count">0</span>
+        </div>
+    </div>
+    
+    <div class="demo-messages">
+        <h2>Instructions</h2>
+        <p>This page demonstrates the Dazza Chat Widget Web Component functionality:</p>
+        <ul>
+            <li>Use the buttons above to control the widget</li>
+            <li>The widget connects to the live chat at wss://localhost:3001</li>
+            <li>Messages from the chat room will appear in real-time</li>
+            <li>Try different positions and themes</li>
+            <li>The widget remembers its minimized state</li>
+        </ul>
+        
+        <h3>Event Log</h3>
+        <div id="event-log" style="max-height: 200px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+            <div>Waiting for events...</div>
+        </div>
+    </div>
+
+    <!-- Socket.IO required for the chat widget -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Chat Widget Script -->
+    <script src="./index.js"></script>
+    
+    <!-- Demo Script -->
+    <script>
+        let widget = null;
+        const eventLog = document.getElementById('event-log');
+        
+        function logEvent(message) {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.textContent = `[${time}] ${message}`;
+            eventLog.appendChild(div);
+            eventLog.scrollTop = eventLog.scrollHeight;
+            
+            // Keep only last 20 events
+            while (eventLog.children.length > 20) {
+                eventLog.removeChild(eventLog.firstChild);
+            }
+        }
+        
+        function updateStatus() {
+            widget = document.querySelector('dazza-chat-widget');
+            const statusEl = document.getElementById('widget-status');
+            const connectionEl = document.getElementById('connection-status');
+            const countEl = document.getElementById('message-count');
+            
+            if (widget) {
+                statusEl.textContent = widget.minimized ? 'Minimized' : 'Visible';
+                connectionEl.textContent = widget.connected ? 'Connected' : 'Disconnected';
+                countEl.textContent = widget.messageCount || 0;
+            } else {
+                statusEl.textContent = 'Not Created';
+                connectionEl.textContent = 'N/A';
+                countEl.textContent = '0';
+            }
+        }
+        
+        function toggleWidget() {
+            if (!widget) {
+                createWidget();
+                return;
+            }
+            
+            if (widget.minimized) {
+                widget.maximize();
+            } else {
+                widget.minimize();
+            }
+            updateStatus();
+        }
+        
+        function minimizeWidget() {
+            if (widget) {
+                widget.minimize();
+                updateStatus();
+            }
+        }
+        
+        function maximizeWidget() {
+            if (widget) {
+                widget.maximize();
+                updateStatus();
+            }
+        }
+        
+        function setPosition(position) {
+            if (widget) {
+                widget.setAttribute('position', position);
+                logEvent(`Position changed to: ${position}`);
+            }
+        }
+        
+        function setTheme(theme) {
+            if (widget) {
+                widget.setAttribute('theme', theme);
+                logEvent(`Theme changed to: ${theme}`);
+            }
+        }
+        
+        function createWidget() {
+            if (widget) {
+                logEvent('Widget already exists');
+                return;
+            }
+            
+            widget = document.createElement('dazza-chat-widget');
+            widget.setAttribute('position', 'bottom-right');
+            widget.setAttribute('theme', 'vb');
+            
+            // Add event listeners
+            widget.addEventListener('chat-connected', () => {
+                logEvent('Chat connected');
+                updateStatus();
+            });
+            
+            widget.addEventListener('chat-disconnected', () => {
+                logEvent('Chat disconnected');
+                updateStatus();
+            });
+            
+            widget.addEventListener('chat-message-received', (e) => {
+                logEvent(`Message from ${e.detail.username}: ${e.detail.message.substring(0, 50)}...`);
+                updateStatus();
+            });
+            
+            widget.addEventListener('chat-toggle', (e) => {
+                logEvent(`Widget ${e.detail.minimized ? 'minimized' : 'maximized'}`);
+                updateStatus();
+            });
+            
+            document.body.appendChild(widget);
+            logEvent('Widget created');
+            updateStatus();
+        }
+        
+        function removeWidget() {
+            if (widget) {
+                widget.remove();
+                widget = null;
+                logEvent('Widget removed');
+                updateStatus();
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Create widget automatically
+            createWidget();
+            
+            // Update status periodically
+            setInterval(updateStatus, 1000);
+        });
+    </script>
+</body>
+</html>
