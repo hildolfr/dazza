@@ -518,6 +518,14 @@ export class HeistManager extends EventEmitter {
             [amount, normalizedUsername]
         );
     }
+    
+    // Compatibility method for commands that use the old signature
+    async updateUserEconomy(username, amount, trustChange = 0) {
+        await this.modifyUserBalance(username, amount);
+        if (trustChange !== 0) {
+            await this.modifyUserTrust(username, trustChange);
+        }
+    }
 
     async modifyUserTrust(username, amount) {
         const normalizedUsername = normalizeUsernameForDb(username);
