@@ -2998,6 +2998,54 @@ function renderTalkerStats(data, username) {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Achievements Panel -->
+                    ${data.achievements && data.achievements.length > 0 ? `
+                    <div class="hud-panel achievements-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">ACHIEVEMENT UNLOCKS</span>
+                            <div class="achievement-count">${data.achievements.length} EARNED</div>
+                        </div>
+                        
+                        <div class="achievements-hud-grid">
+                            ${data.achievements.slice(0, 8).map((achievement, index) => `
+                                <div class="achievement-badge ${achievement.achievement_level}" style="animation-delay: ${index * 0.05}s">
+                                    <div class="badge-glow"></div>
+                                    <div class="badge-icon">${achievement.icon || '🏆'}</div>
+                                    <div class="badge-info">
+                                        <span class="badge-name">${escapeHtml(achievement.name)}</span>
+                                        <span class="badge-tier ${achievement.achievement_level}">${achievement.achievement_level.toUpperCase()}</span>
+                                    </div>
+                                    <div class="badge-tooltip">
+                                        <span class="tooltip-text">${escapeHtml(achievement.description || achievement.details || '')}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${data.achievements.length > 8 ? `
+                        <div class="achievements-overflow">
+                            <span class="overflow-text">+${data.achievements.length - 8} MORE UNLOCKED</span>
+                            <div class="overflow-bar">
+                                <div class="bar-fill" style="width: ${Math.min((data.achievements.length / 50) * 100, 100)}%"></div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : `
+                    <div class="hud-panel achievements-panel empty">
+                        <div class="panel-header">
+                            <span class="panel-title">ACHIEVEMENT UNLOCKS</span>
+                            <div class="achievement-count">0 EARNED</div>
+                        </div>
+                        
+                        <div class="achievements-empty">
+                            <div class="empty-icon">🔒</div>
+                            <div class="empty-message">NO ACHIEVEMENTS UNLOCKED YET</div>
+                            <div class="empty-hint">Keep chatting to earn achievements!</div>
+                        </div>
+                    </div>
+                    `}
                 </div>
                 
                 <!-- Footer Stats Bar -->
@@ -3023,30 +3071,6 @@ function renderTalkerStats(data, username) {
                 </div>
             </div>
         </div>
-        
-        <!-- Achievements Section (keeping the original) -->
-        ${data.achievements && data.achievements.length > 0 ? `
-        <div class="stat-section">
-            <h3>🏆 Chat Achievements</h3>
-            <div class="achievements-grid">
-                ${data.achievements.slice(0, 8).map(achievement => `
-                    <div class="achievement unlocked ${achievement.achievement_level}">
-                        <div class="achievement-icon">${achievement.icon || '🏆'}</div>
-                        <div class="achievement-info">
-                            <span class="achievement-name">${escapeHtml(achievement.name)}</span>
-                            <span class="achievement-desc">${escapeHtml(achievement.description || achievement.details || '')}</span>
-                            <span class="achievement-tier">${achievement.achievement_level.toUpperCase()}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            ${data.achievements.length > 8 ? `
-                <div class="achievement-summary">
-                    <span>+${data.achievements.length - 8} more achievements</span>
-                </div>
-            ` : ''}
-        </div>
-        ` : ''}
     `;
     
     // Initialize waveform after rendering
