@@ -143,6 +143,10 @@ export class MultiRoomBot extends EventEmitter {
             // Load and join rooms
             await this.loadRooms();
             
+            // Start cash monitor
+            await this.cashMonitor.start();
+            this.logger.info('Cash monitor started');
+            
             // Start periodic tasks
             this.startPeriodicTasks();
             
