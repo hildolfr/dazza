@@ -1,5 +1,4 @@
 import { Command } from '../base.js';
-import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
 
 // Hardcoded allowed users (case-insensitive)
 const ALLOWED_USERS = ['Spazztik', 'hildolfr', 'ilovechinks'];
@@ -16,7 +15,7 @@ export default new Command({
         '!clear 0 offensive content - Clear chat immediately with reason'
     ],
     category: 'admin',
-    persistentCooldown: true, // Use persistent cooldown
+    persistentCooldown: false, // No cooldown for admin command
     pmAccepted: true, // Works in PM for admins
     
     async handler(bot, message, args) {
@@ -36,25 +35,6 @@ export default new Command({
                 return { success: false };
             }
             
-            // Check persistent cooldown (5 minutes)
-            if (bot.db && this.persistentCooldown) {
-                const cooldownManager = new PersistentCooldownManager(bot.db);
-                const cooldownCheck = await cooldownManager.check(this.name, message.username, 300000); // 5 minutes
-                
-                if (!cooldownCheck.allowed) {
-                    const minutes = Math.floor(cooldownCheck.remaining / 60);
-                    const seconds = cooldownCheck.remaining % 60;
-                    
-                    const cooldownMsg = `oi -${message.username}, ya just cleared chat. wait ${minutes}m ${seconds}s before doin' it again`;
-                    
-                    if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, cooldownMsg);
-                    } else {
-                        bot.sendMessage(message.roomId, cooldownMsg);
-                    }
-                    return { success: false };
-                }
-            }
             
             // Default delay is 2 seconds
             let delay = 2;
