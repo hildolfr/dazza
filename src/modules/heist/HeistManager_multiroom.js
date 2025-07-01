@@ -121,7 +121,7 @@ export class HeistManager extends EventEmitter {
         roomState.messageCount++;
         roomState.lastActivity = Date.now();
         
-        this.logger.silly(`Activity tracked for ${username} in room ${roomId}`);
+        this.logger.debug(`Activity tracked for ${username} in room ${roomId}`);
     }
 
     // Modified to track messages per room

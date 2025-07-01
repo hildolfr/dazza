@@ -25,8 +25,23 @@ export async function getCanonicalUsername(bot, username) {
     const lowerUsername = username.toLowerCase();
     
     // Check if user is currently online (most authoritative source)
-    const onlineUser = Array.from(bot.userlist.values())
-        .find(u => u.name.toLowerCase() === lowerUsername);
+    let onlineUser = null;
+    
+    // Handle both single-room bot and multi-room bot
+    if (bot.userlist && bot.userlist.values) {
+        // Single room bot
+        onlineUser = Array.from(bot.userlist.values())
+            .find(u => u.name.toLowerCase() === lowerUsername);
+    } else if (bot.rooms) {
+        // Multi-room bot - check all rooms
+        for (const room of bot.rooms.values()) {
+            if (room.userlist) {
+                onlineUser = Array.from(room.userlist.values())
+                    .find(u => u.name.toLowerCase() === lowerUsername);
+                if (onlineUser) break;
+            }
+        }
+    }
     
     if (onlineUser) {
         // Update cache with current online casing
