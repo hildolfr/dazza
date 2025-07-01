@@ -82,41 +82,99 @@ body {
 /* Southern Cross constellation */
 .southern-cross {
     position: absolute;
-    top: 20px;
-    left: 30px;
-    width: 100px;
-    height: 100px;
+    top: 30px;
+    left: 40px;
+    width: 120px;
+    height: 120px;
 }
 
-.southern-cross::before,
-.southern-cross::after {
-    content: '✦';
+.star {
     position: absolute;
-    color: rgba(255, 255, 255, 0.8);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    color: #fff;
+    text-shadow: 
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px rgba(255, 255, 255, 0.6),
+        0 0 30px rgba(255, 255, 255, 0.4);
     animation: twinkle 3s ease-in-out infinite;
 }
 
-.southern-cross::before {
-    font-size: 20px;
-    top: 0;
-    left: 20px;
+.star::before {
+    content: '✦';
 }
 
-.southern-cross::after {
-    font-size: 30px;
-    top: 30px;
+/* Alpha Crucis (bottom star - brightest) */
+.star-alpha {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+}
+
+/* Beta Crucis (left star) */
+.star-beta {
+    top: 40%;
     left: 0;
+    transform: translateY(-50%);
+    font-size: 24px;
+    animation-delay: 0.5s;
 }
 
-/* Add more stars */
-.southern-cross {
-    &::before { content: '✦ ✦ ✦ ✦ ✦'; letter-spacing: 15px; }
+/* Gamma Crucis (top star) */
+.star-gamma {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 22px;
+    animation-delay: 1s;
+}
+
+/* Delta Crucis (right star) */
+.star-delta {
+    top: 40%;
+    right: 0;
+    transform: translateY(-50%);
+    font-size: 20px;
+    animation-delay: 1.5s;
+}
+
+/* Epsilon Crucis (small pointer star) */
+.star-epsilon {
+    bottom: 15%;
+    left: 65%;
+    font-size: 16px;
+    animation-delay: 2s;
 }
 
 @keyframes twinkle {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.2); }
+    0%, 100% { 
+        opacity: 0.7; 
+        transform: scale(1) translateX(var(--translate-x, 0)) translateY(var(--translate-y, 0));
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.2) translateX(var(--translate-x, 0)) translateY(var(--translate-y, 0));
+    }
+}
+
+/* Set custom transform values for positioned stars */
+.star-alpha {
+    --translate-x: -50%;
+    --translate-y: 0;
+}
+
+.star-beta {
+    --translate-x: 0;
+    --translate-y: -50%;
+}
+
+.star-gamma {
+    --translate-x: -50%;
+    --translate-y: 0;
+}
+
+.star-delta {
+    --translate-x: 0;
+    --translate-y: -50%;
 }
 
 @keyframes slide {
