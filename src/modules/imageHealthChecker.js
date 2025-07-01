@@ -47,12 +47,28 @@ export class ImageHealthChecker {
     }
 
     isConnected() {
-        // Check if the bot is connected to the server
-        if (!this.bot.connection || !this.bot.connection.isConnected()) {
-            this.bot.logger.warn('[ImageHealthChecker] Bot is not connected, skipping health check');
+        // Check if the bot is connected to any room
+        // Handle both single-room bot (with connection) and multi-room bot (with connections)
+        
+        // Multi-room bot
+        if (this.bot.connections && this.bot.connections.size > 0) {
+            // Check if at least one connection is active
+            for (const [roomId, connection] of this.bot.connections) {
+                if (connection && connection.isConnected()) {
+                    return true;
+                }
+            }
+            this.bot.logger.warn('[ImageHealthChecker] Bot is not connected to any rooms, skipping health check');
             return false;
         }
-        return true;
+        
+        // Single-room bot (backward compatibility)
+        if (this.bot.connection && this.bot.connection.isConnected()) {
+            return true;
+        }
+        
+        this.bot.logger.warn('[ImageHealthChecker] Bot is not connected, skipping health check');
+        return false;
     }
 
     async runHealthCheck() {
