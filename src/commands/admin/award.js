@@ -1,20 +1,6 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
-
-// Helper function for PM commands in multi-room bot
-function sendPM(bot, toUser, message, roomContext) {
-    if (bot.rooms && roomContext) {
-        // Multi-room bot with room context
-        bot.sendPrivateMessage(toUser, message, roomContext.roomId || roomContext);
-    } else if (bot.rooms && bot.rooms.size > 0) {
-        // Multi-room bot without room context - use first available room
-        const firstRoomId = bot.rooms.keys().next().value;
-        bot.sendPrivateMessage(toUser, message, firstRoomId);
-    } else {
-        // Single-room bot or fallback
-        bot.sendPrivateMessage(toUser, message);
-    }
-}
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'award',
@@ -35,24 +21,24 @@ export default new Command({
         try {
             // Double-check it's hildolfr (case-insensitive)
             if (message.username.toLowerCase() !== 'hildolfr') {
-                bot.sendPrivateMessage(message.username, `nice try ${message.username}, but this command is for the big boss only`);
+                sendPM(bot, message.username, `nice try ${message.username}, but this command is for the big boss only`, message.roomContext || message.roomId);
                 return { success: false };
             }
             
             // Ensure it's a PM
             if (!message.isPM) {
-                bot.sendPrivateMessage(message.username, 'this command only works in PMs mate');
+                sendPM(bot, message.username, 'this command only works in PMs mate', message.roomContext || message.roomId);
                 return { success: false };
             }
             
             if (!bot.heistManager) {
-                bot.sendPrivateMessage(message.username, 'economy system is fucked mate, try again later');
+                sendPM(bot, message.username, 'economy system is fucked mate, try again later', message.roomContext || message.roomId);
                 return { success: false };
             }
 
             // Check arguments
             if (args.length < 2) {
-                bot.sendPrivateMessage(message.username, 'usage: !award <user> <amount> [reason]');
+                sendPM(bot, message.username, 'usage: !award <user> <amount> [reason]', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -62,13 +48,13 @@ export default new Command({
 
             // Validate amount
             if (!amount || amount < 1) {
-                bot.sendPrivateMessage(message.username, 'amount must be a positive number mate');
+                sendPM(bot, message.username, 'amount must be a positive number mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
             // Reasonable limit to prevent accidents
             if (amount > 100000) {
-                bot.sendPrivateMessage(message.username, 'steady on mate, max award is $100,000');
+                sendPM(bot, message.username, 'steady on mate, max award is $100,000', message.roomContext || message.roomId);
                 return { success: false };
             }
 

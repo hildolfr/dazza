@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
+import { sendPM, respond } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'tell',
@@ -12,11 +13,7 @@ export default new Command({
     async handler(bot, message, args) {
         if (args.length < 2) {
             const msg = 'usage: !tell <username> <message>';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(message.roomId, msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
@@ -26,22 +23,14 @@ export default new Command({
         // Check if user is trying to tell themselves
         if (targetUser.toLowerCase() === message.username.toLowerCase()) {
             const msg = 'just talk to yourself in your head mate';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(message.roomId, msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
         // Check if user is trying to tell the bot
         if (targetUser.toLowerCase() === bot.config.bot.username.toLowerCase()) {
             const msg = 'mate I\'m not gonna talk to meself, that\'s cooked';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(message.roomId, msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
@@ -71,11 +60,7 @@ export default new Command({
                     `-${targetUser}'s right here ya muppet`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, msg.replace('-', '')); // Remove - prefix in PMs
-                } else {
-                    bot.sendMessage(message.roomId, msg);
-                }
+                respond(bot, message, message.isPM ? msg.replace('-', '') : msg);
                 return { success: true };
             }
         }
@@ -95,11 +80,7 @@ export default new Command({
                     `can't do it mate, -${targetUser}'s inbox is full with one from -${existingFrom}`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, msg.replace(/-/g, '')); // Remove all - prefixes in PMs
-                } else {
-                    bot.sendMessage(message.roomId, msg);
-                }
+                respond(bot, message, message.isPM ? msg.replace(/-/g, '') : msg);
                 return { success: true };
             }
             
@@ -132,18 +113,14 @@ export default new Command({
                 }
             } else {
                 // PM confirmation for PM-initiated tells
-                bot.sendPrivateMessage(message.username, `I'll deliver your message to ${targetUser} privately when they show up`);
+                sendPM(bot, message.username, `I'll deliver your message to ${targetUser} privately when they show up`, message.roomContext || message.roomId);
             }
             
             return { success: true };
         } catch (error) {
             console.error('Tell command error:', error);
             const errorMsg = bot.personality.getResponse('error');
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
-            } else {
-                bot.sendMessage(message.roomId, errorMsg);
-            }
+            respond(bot, message, errorMsg);
             return { success: false };
         }
     }
