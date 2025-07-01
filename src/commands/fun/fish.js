@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Fish types with different rarities and values
 const fishTypes = {
@@ -136,7 +137,7 @@ export default new Command({
                 if (!cooldownCheck.allowed) {
                     const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, cooldownMsg);
+                        sendPM(bot, message.username, cooldownMsg, message);
                     } else {
                         bot.sendMessage(message.roomId, cooldownMsg);
                     }
@@ -146,7 +147,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'fishing licence machine is fucked, try again later';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -163,7 +164,7 @@ export default new Command({
             if (!bait) {
                 const errorMsg = `oi -${message.username}, dunno what "${args[0]}" is but it ain't bait. Try: worm, prawn, squid, lure, servo_pie, or ciggie_butt`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message); // Remove - prefix in PMs
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -174,7 +175,7 @@ export default new Command({
             if (bait.cost > 0 && userEcon.balance < bait.cost) {
                 const errorMsg = `-${message.username} ya need $${bait.cost} for ${baitChoice} bait but ya only got $${userEcon.balance}. Use a worm ya cheapskate`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message); // Remove - prefix in PMs
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -433,7 +434,7 @@ export default new Command({
             }
             
             // Send PM with fishing results
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message);
             
             // Handle public announcements and forced sharing
             if (publicAnnouncement) {
@@ -495,7 +496,7 @@ export default new Command({
             bot.logger.error('Fish command error:', error);
             const errorMsg = 'fishing rod snapped. bloody cheap Kmart shit.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }

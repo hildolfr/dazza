@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'pokies',
@@ -137,7 +138,7 @@ export default new Command({
             // Send PM with results
             const pmMessage = `🎰 POKIES RESULT 🎰\n\n${resultLine}${outcome}\n\nYour balance: $${newBalance.balance}`;
             
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
 
             // Update balance if won
             if (winnings > 0) {
@@ -181,7 +182,7 @@ export default new Command({
                         
                         // Send to PM if initiated via PM, otherwise public
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, reaction);
+                            sendPM(bot, message.username, reaction, message.roomContext || message.roomId);
                         } else {
                             bot.sendMessage(message.roomId, reaction);
                         }
@@ -202,7 +203,7 @@ export default new Command({
                         
                         // Send to PM if initiated via PM, otherwise public
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, addictionMsg);
+                            sendPM(bot, message.username, addictionMsg, message.roomContext || message.roomId);
                         } else {
                             bot.sendMessage(message.roomId, addictionMsg);
                         }

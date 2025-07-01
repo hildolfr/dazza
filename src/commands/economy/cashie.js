@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Job descriptions for each tier
 const jobDescriptions = {
@@ -104,7 +105,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'No cash jobs available right now mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -129,7 +130,7 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
                         bot.sendMessage(message.roomId, selectedMsg);
                     }
@@ -158,7 +159,7 @@ export default new Command({
                 pmMessage += `📄 ${failureMsg}\n\n`;
                 pmMessage += "Better luck next time mate. The cash economy's rough.";
                 
-                bot.sendPrivateMessage(message.username, pmMessage);
+                sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                 
                 // Record failed attempt
                 if (bot.db) {
@@ -247,7 +248,7 @@ export default new Command({
             pmMessage += `\n\nNew balance: $${newBalance.balance}`;
             
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Public announcement for big scores (always announce, regardless of PM)
             if (tier === 'legendary' || (tier === 'rare' && amount >= 150)) {
@@ -277,7 +278,7 @@ export default new Command({
             bot.logger.error('Cashie command error:', error);
             const errorMsg = 'Cash job fell through, technical difficulties mate';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }

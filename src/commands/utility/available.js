@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'available',
@@ -69,7 +70,7 @@ export default new Command({
                 }
             }
             
-            bot.sendPrivateMessage(username, response);
+            sendPM(bot, username, response, message);
             
             // If command was sent in public chat, acknowledge it
             if (!message.isPM) {
@@ -80,7 +81,7 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Error in available command:', error);
-            bot.sendPrivateMessage(message.username, 'fucked up checkin ya available commands');
+            sendPM(bot, message.username, 'fucked up checkin ya available commands', message);
             return { success: false };
         }
     }

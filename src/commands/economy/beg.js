@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // PM rejection messages (harsh, telling them to grow a pair)
 const pmRejectionMessages = [
@@ -152,7 +153,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = "economy system's fucked mate, try again later";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -162,7 +163,7 @@ export default new Command({
             // Harsh rejection for PM usage
             if (message.isPM) {
                 const rejection = pmRejectionMessages[Math.floor(Math.random() * pmRejectionMessages.length)];
-                bot.sendPrivateMessage(message.username, rejection);
+                sendPM(bot, message.username, rejection, message.roomContext || message.roomId);
                 return { success: false };
             }
 

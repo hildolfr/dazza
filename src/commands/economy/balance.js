@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'balance',
@@ -23,7 +24,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'economy system not ready yet mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -69,14 +70,14 @@ export default new Command({
             }
             
             // Send PM with balance info
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             return { success: true };
         } catch (error) {
             bot.logger.error('Balance command error:', error);
             const errorMsg = 'somethin went wrong checkin the balance';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }

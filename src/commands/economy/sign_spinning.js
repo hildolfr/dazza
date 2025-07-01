@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Sign types for different businesses
 const signTypes = {
@@ -81,7 +82,7 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'No sign spinning gigs available right now mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
                     bot.sendMessage(message.roomId, errorMsg);
                 }
@@ -107,7 +108,7 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
                         bot.sendMessage(message.roomId, selectedMsg);
                     }
@@ -263,7 +264,7 @@ export default new Command({
             pmMessage += `\n\nNew balance: $${newBalance.balance}`;
             
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Public announcement for exceptional results
             if (finalPay >= 60 || injured) {
@@ -298,7 +299,7 @@ export default new Command({
             bot.logger.error('Sign spinning command error:', error);
             const errorMsg = 'Sign spinning agency system crashed. Try again later mate.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
                 bot.sendMessage(message.roomId, errorMsg);
             }

@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Esky opening messages
 const openingMessages = [
@@ -147,7 +148,7 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (!bot.heistManager) {
-                bot.sendPrivateMessage(message.username, 'economy system not ready yet mate');
+                sendPM(bot, message.username, 'economy system not ready yet mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -155,7 +156,7 @@ export default new Command({
             const cost = 80;
             
             if (userBalance.balance < cost) {
-                bot.sendPrivateMessage(message.username, `ya need $${cost} for a mystery esky mate, you've only got $${userBalance.balance}`);
+                sendPM(bot, message.username, `ya need $${cost} for a mystery esky mate, you've only got $${userBalance.balance}`, message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -168,7 +169,7 @@ export default new Command({
                     const minutes = Math.floor(cooldownCheck.remaining / 60);
                     const seconds = cooldownCheck.remaining % 60;
                     
-                    bot.sendPrivateMessage(message.username, `hold ya horses mate, gotta wait ${minutes}m ${seconds}s before another mystery esky`);
+                    sendPM(bot, message.username, `hold ya horses mate, gotta wait ${minutes}m ${seconds}s before another mystery esky`, message.roomContext || message.roomId);
                     return { success: false };
                 }
             }
@@ -181,7 +182,7 @@ export default new Command({
 
             // Send opening message via PM
             const openingMsg = openingMessages[Math.floor(Math.random() * openingMessages.length)];
-            bot.sendPrivateMessage(message.username, `🎁 Mystery Esky Purchase\n\n${openingMsg}`);
+            sendPM(bot, message.username, `🎁 Mystery Esky Purchase\n\n${openingMsg}`, message.roomContext || message.roomId);
 
             // Determine outcome
             const roll = Math.random();
@@ -272,7 +273,7 @@ export default new Command({
                     pmResult += `\n📊 Net result: -$${cost}`;
                 }
                 
-                bot.sendPrivateMessage(message.username, pmResult);
+                sendPM(bot, message.username, pmResult, message.roomContext || message.roomId);
                 
                 // Send public announcement if applicable
                 if (publicAnnouncement) {
@@ -291,7 +292,7 @@ export default new Command({
             return { success: true };
         } catch (error) {
             bot.logger.error('Mystery box command error:', error);
-            bot.sendPrivateMessage(message.username, 'mystery esky machine broke mate');
+            sendPM(bot, message.username, 'mystery esky machine broke mate', message.roomContext || message.roomId);
             return { success: false };
         }
     }

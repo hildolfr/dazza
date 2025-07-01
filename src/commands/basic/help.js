@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'help',
@@ -44,7 +45,7 @@ export default new Command({
             bot.sendMessage(message.roomId, response);
             
             // Send PM with the manual link
-            bot.sendPrivateMessage(message.username, `G'day mate! Here's me full command manual: ${manualUrl} 🍺`);
+            sendPM(bot, message.username, `G'day mate! Here's me full command manual: ${manualUrl} 🍺`, message.roomContext || message.roomId);
         }
         
         return { success: true };
