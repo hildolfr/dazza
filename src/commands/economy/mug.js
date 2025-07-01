@@ -219,7 +219,7 @@ export default new Command({
                         bot.sendMessage(message.roomId, `HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
                         
                         // Update mug stats
-                        await updateMugStats(bot.db, message.username, targetUsername, true, amount);
+                        await updateMugStats(bot.db, message.username, targetUsername, true, amount, message.roomId || 'fatpizza');
                     } else {
                         bot.sendMessage(message.roomId, `-${message.username} tried to mug dazza but he's broke as usual`);
                     }
@@ -242,10 +242,10 @@ export default new Command({
                         bot.sendMessage(message.roomId, `${reversalMsg} (-${message.username} -2 trust)`);
                         
                         // Update stats
-                        await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount);
+                        await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount, message.roomId || 'fatpizza');
                     } else {
                         bot.sendMessage(message.roomId, `*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
-                        await updateMugStats(bot.db, message.username, 'dazza', false, 0);
+                        await updateMugStats(bot.db, message.username, 'dazza', false, 0, message.roomId || 'fatpizza');
                     }
                 }
                 
@@ -323,7 +323,7 @@ export default new Command({
                     
                     bot.sendMessage(message.roomId, `${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
+                    await updateMugStats(bot.db, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
                     return { success: true };
                 }
             }
@@ -364,7 +364,7 @@ export default new Command({
                         }, 2000);
                     }
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, true, mugAmount);
+                    await updateMugStats(bot.db, message.username, targetUsername, true, mugAmount, message.roomId || 'fatpizza');
                 }
             } else {
                 // Failed mug
@@ -382,7 +382,7 @@ export default new Command({
                 
                 bot.sendMessage(message.roomId, `${failMsg} (-${message.username} -2 trust)`);
                 
-                await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
+                await updateMugStats(bot.db, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
             }
 
             return { success: true };
@@ -396,7 +396,7 @@ export default new Command({
 });
 
 // Helper function to update mug statistics
-async function updateMugStats(db, attacker, victim, success, amount) {
+async function updateMugStats(db, attacker, victim, success, amount, roomId = 'fatpizza') {
     if (!db) return;
     
     try {
@@ -404,9 +404,9 @@ async function updateMugStats(db, attacker, victim, success, amount) {
         
         // Update attacker stats
         await db.run(`
-            INSERT INTO mug_stats (username, total_mugs, successful_mugs, failed_mugs, total_stolen, total_lost, last_played)
-            VALUES (?, 1, ?, ?, ?, ?, ?)
-            ON CONFLICT(username) DO UPDATE SET
+            INSERT INTO mug_stats (username, room_id, total_mugs, successful_mugs, failed_mugs, total_stolen, total_lost, last_played)
+            VALUES (?, ?, 1, ?, ?, ?, ?, ?)
+            ON CONFLICT(username, room_id) DO UPDATE SET
                 total_mugs = total_mugs + 1,
                 successful_mugs = successful_mugs + ?,
                 failed_mugs = failed_mugs + ?,
@@ -418,6 +418,7 @@ async function updateMugStats(db, attacker, victim, success, amount) {
                 updated_at = CURRENT_TIMESTAMP
         `, [
             attacker,
+            roomId,
             success ? 1 : 0,
             success ? 0 : 1,
             success ? amount : 0,
@@ -436,22 +437,22 @@ async function updateMugStats(db, attacker, victim, success, amount) {
         // Update victim stats if they were successfully mugged
         if (success && victim !== 'dazza') {
             await db.run(`
-                INSERT INTO mug_stats (username, times_mugged, total_lost, last_mugged_by, last_mugged_at)
-                VALUES (?, 1, ?, ?, ?)
-                ON CONFLICT(username) DO UPDATE SET
+                INSERT INTO mug_stats (username, room_id, times_mugged, total_lost, last_mugged_by, last_mugged_at)
+                VALUES (?, ?, 1, ?, ?, ?)
+                ON CONFLICT(username, room_id) DO UPDATE SET
                     times_mugged = times_mugged + 1,
                     total_lost = total_lost + ?,
                     last_mugged_by = ?,
                     last_mugged_at = ?,
                     updated_at = CURRENT_TIMESTAMP
-            `, [victim, amount, attacker, now, amount, attacker, now]);
+            `, [victim, roomId, amount, attacker, now, amount, attacker, now]);
         }
         
         // Log transaction
         await db.run(`
-            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-            VALUES (?, ?, 'mug', ?, ?)
-        `, [attacker, amount, success ? `Mugged ${victim}` : `Failed to mug ${victim}`, now]);
+            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+            VALUES (?, ?, 'mug', ?, ?, ?)
+        `, [attacker, amount, success ? `Mugged ${victim}` : `Failed to mug ${victim}`, roomId, now]);
         
     } catch (error) {
         console.error('Failed to update mug stats:', error);

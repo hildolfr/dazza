@@ -10,7 +10,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args.length) {
-            bot.sendMessage('gimme some numbers to crunch mate');
+            bot.sendMessage(message.roomId, 'gimme some numbers to crunch mate');
             return { success: true };
         }
         
@@ -22,22 +22,22 @@ export default new Command({
             
             // Check if anything was sanitized out
             if (sanitized !== expression.replace(/\s/g, '')) {
-                bot.sendMessage('oi stop tryna hack me calculator ya drongo');
+                bot.sendMessage(message.roomId, 'oi stop tryna hack me calculator ya drongo');
                 return { success: true };
             }
             
             const result = Function('"use strict"; return (' + sanitized + ')')();
             
             if (!isFinite(result)) {
-                bot.sendMessage('that ain\'t a real number mate, ya broke maths');
+                bot.sendMessage(message.roomId, 'that ain\'t a real number mate, ya broke maths');
             } else if (result === 420) {
-                bot.sendMessage(`${expression} = ${result} nice`);
+                bot.sendMessage(message.roomId, `${expression} = ${result} nice`);
             } else if (result === 69) {
-                bot.sendMessage(`${expression} = ${result} *snickers like a schoolboy*`);
+                bot.sendMessage(message.roomId, `${expression} = ${result} *snickers like a schoolboy*`);
             } else if (Math.abs(result) > 1000000) {
-                bot.sendMessage(`${expression} = ${result} fuckin hell that\'s a big number`);
+                bot.sendMessage(message.roomId, `${expression} = ${result} fuckin hell that\'s a big number`);
             } else if (result === 0) {
-                bot.sendMessage(`${expression} = ${result} fuck all mate`);
+                bot.sendMessage(message.roomId, `${expression} = ${result} fuck all mate`);
             } else {
                 const responses = [
                     `${expression} = ${result} accordin to me half-arsed calculator`,
@@ -46,7 +46,7 @@ export default new Command({
                     `${expression} = ${result} but don't quote me on that`,
                     `${expression} = ${result} *counts on fingers* yeah that's right`
                 ];
-                bot.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+                bot.sendMessage(message.roomId, responses[Math.floor(Math.random() * responses.length)]);
             }
         } catch (error) {
             const errorResponses = [
@@ -56,7 +56,7 @@ export default new Command({
                 'that\'s not how maths works ya galah',
                 'error: too many bongs, can\'t calculate'
             ];
-            bot.sendMessage(errorResponses[Math.floor(Math.random() * errorResponses.length)]);
+            bot.sendMessage(message.roomId, errorResponses[Math.floor(Math.random() * errorResponses.length)]);
         }
         
         return { success: true };

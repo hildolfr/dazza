@@ -148,8 +148,8 @@ export default new Command({
                 try {
                     // Log the total win amount for leaderboards (not just profit)
                     await bot.db.run(
-                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                        [message.username, winnings, 'pokies', `Won $${winnings} from $${amount} bet`, Date.now()]
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                        [message.username, winnings, 'pokies', `Won $${winnings} from $${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
                     bot.logger.error('Failed to log pokies transaction:', error);

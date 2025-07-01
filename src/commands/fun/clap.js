@@ -15,13 +15,13 @@ export default new Command({
 
     async handler(bot, message, args) {
         if (args.length === 0) {
-            bot.sendMessage('need 👏 some 👏 text 👏 to 👏 clap 👏 mate');
+            bot.sendMessage(message.roomId, 'need 👏 some 👏 text 👏 to 👏 clap 👏 mate');
             return { success: false };
         }
 
         const clappedText = args.join(' 👏 ');
         
-        bot.sendMessage(clappedText);
+        bot.sendMessage(message.roomId, clappedText);
         
         return { success: true };
     }

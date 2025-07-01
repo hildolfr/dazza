@@ -196,9 +196,9 @@ export default new Command({
                 // Still record the attempt
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'beg', 'Dazza was too broke', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'beg', 'Dazza was too broke', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 return { success: true };
@@ -224,9 +224,9 @@ export default new Command({
                     if (bot.db) {
                         bot.logger.debug(`Attempted to rob ${message.username} but they have balance: ${userEcon.balance}`);
                         await bot.db.run(`
-                            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                            VALUES (?, 0, 'beg', 'Too broke to rob', ?)
-                        `, [message.username, Date.now()]);
+                            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                            VALUES (?, 0, 'beg', 'Too broke to rob', ?, ?)
+                        `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                     }
                     
                     return { success: true };
@@ -259,9 +259,9 @@ export default new Command({
                         // Log the robbery
                         if (bot.db) {
                             await bot.db.run(`
-                                INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                                VALUES (?, ?, 'beg', 'Robbed by Dazza for begging', ?)
-                            `, [message.username, -robberyAmount, Date.now()]);
+                                INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                                VALUES (?, ?, 'beg', 'Robbed by Dazza for begging', ?, ?)
+                            `, [message.username, -robberyAmount, message.roomId || 'fatpizza', Date.now()]);
                         }
                     } catch (error) {
                         bot.logger.error('Error during robbery:', error);
@@ -296,9 +296,9 @@ export default new Command({
                     // Log the transaction
                     if (bot.db) {
                         await bot.db.run(`
-                            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                            VALUES (?, ?, 'beg', ?, ?)
-                        `, [message.username, payout, `Successful beg (${trustTier})`, Date.now()]);
+                            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                            VALUES (?, ?, 'beg', ?, ?, ?)
+                        `, [message.username, payout, `Successful beg (${trustTier})`, message.roomId || 'fatpizza', Date.now()]);
                     }
                 } else {
                     // Rolled success but $0 payout
@@ -315,9 +315,9 @@ export default new Command({
                 // Log failed attempt
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'beg', ?, ?)
-                    `, [message.username, `Failed beg attempt (${trustTier})`, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'beg', ?, ?, ?)
+                    `, [message.username, `Failed beg attempt (${trustTier})`, message.roomId || 'fatpizza', Date.now()]);
                 }
             }
 

@@ -43,9 +43,9 @@ export default new Command({
         // Check if targeting a user
         if (args.length > 0) {
             const targetUser = args[0];
-            bot.sendMessage(`${targetUser}: ${response}`);
+            bot.sendMessage(message.roomId, `${targetUser}: ${response}`);
         } else {
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
         }
         
         return { success: true };

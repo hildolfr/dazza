@@ -176,8 +176,8 @@ export default new Command({
             if (bot.db) {
                 // Get current stats
                 const stats = await bot.db.get(`
-                    SELECT * FROM sign_spinning_stats WHERE username = ?
-                `, [message.username]);
+                    SELECT * FROM sign_spinning_stats WHERE username = ? AND room_id = ?
+                `, [message.username, message.roomId || 'fatpizza']);
                 
                 if (stats) {
                     await bot.db.run(`
@@ -190,7 +190,7 @@ export default new Command({
                             worst_shift = CASE WHEN ? < worst_shift OR worst_shift = 0 THEN ? ELSE worst_shift END,
                             perfect_days = perfect_days + ?,
                             last_played = ?
-                        WHERE username = ?
+                        WHERE username = ? AND room_id = ?
                     `, [
                         finalPay,
                         injured && injuryDesc.includes('hit a car') ? 1 : 0,
@@ -199,15 +199,17 @@ export default new Command({
                         finalPay, finalPay,
                         finalPay >= 60 ? 1 : 0,
                         Date.now(),
-                        message.username
+                        message.username,
+                        message.roomId || 'fatpizza'
                     ]);
                 } else {
                     await bot.db.run(`
                         INSERT INTO sign_spinning_stats 
-                        (username, total_spins, total_earnings, cars_hit, cops_called, best_shift, worst_shift, perfect_days, last_played)
-                        VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?)
+                        (username, room_id, total_spins, total_earnings, cars_hit, cops_called, best_shift, worst_shift, perfect_days, last_played)
+                        VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)
                     `, [
                         message.username,
+                        message.roomId || 'fatpizza',
                         finalPay,
                         injured && injuryDesc.includes('hit a car') ? 1 : 0,
                         eventDesc.includes('cops') ? 1 : 0,
@@ -279,12 +281,13 @@ export default new Command({
             // Record transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'sign_spinning', ?, ?)
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'sign_spinning', ?, ?, ?)
                 `, [
                     message.username, 
                     finalPay, 
                     injured ? `Injured shift (${weather.condition})` : `${signTier} sign (${weather.condition})`, 
+                    message.roomId || 'fatpizza',
                     Date.now()
                 ]);
             }

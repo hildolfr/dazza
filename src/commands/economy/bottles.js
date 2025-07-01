@@ -148,9 +148,9 @@ export default new Command({
                 // Record the transaction as failed
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'bottles', 'Bottle run failed', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'bottles', 'Bottle run failed', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 return { success: true };
@@ -251,9 +251,9 @@ export default new Command({
             // Record the transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'bottles', ?, ?)
-                `, [message.username, amount, `${tier} haul${multiplier > 1 ? ` (${multiplier}x ${reason})` : ''}`, Date.now()]);
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'bottles', ?, ?, ?)
+                `, [message.username, amount, `${tier} haul${multiplier > 1 ? ` (${multiplier}x ${reason})` : ''}`, message.roomId || 'fatpizza', Date.now()]);
             }
             
             return { success: true };

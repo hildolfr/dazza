@@ -163,9 +163,9 @@ export default new Command({
                 // Record failed attempt
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'cashie', 'Cash job failed', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'cashie', 'Cash job failed', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 return { success: true };
@@ -266,9 +266,9 @@ export default new Command({
             // Record the transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'cashie', ?, ?)
-                `, [message.username, amount, `${tier} job${multiplier > 1 ? ` (${reasons.join(', ')})` : ''}`, Date.now()]);
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'cashie', ?, ?, ?)
+                `, [message.username, amount, `${tier} job${multiplier > 1 ? ` (${reasons.join(', ')})` : ''}`, message.roomId || 'fatpizza', Date.now()]);
             }
             
             return { success: true };

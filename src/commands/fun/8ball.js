@@ -10,7 +10,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (args.length === 0) {
-            bot.sendMessage('ask me somethin ya drongo');
+            bot.sendMessage(message.roomId, 'ask me somethin ya drongo');
             return { success: true };
         }
         
@@ -59,7 +59,7 @@ export default new Command({
         ];
         
         const response = responses[Math.floor(Math.random() * responses.length)];
-        bot.sendMessage(`${message.username}: ${response}`);
+        bot.sendMessage(message.roomId, `${message.username}: ${response}`);
         
         return { success: true };
     }

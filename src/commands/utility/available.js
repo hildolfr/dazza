@@ -73,7 +73,7 @@ export default new Command({
             
             // If command was sent in public chat, acknowledge it
             if (!message.isPM) {
-                bot.sendMessage(`checkin what's ready for ${username}...`);
+                bot.sendMessage(message.roomId, `checkin what's ready for ${username}...`);
             }
             
             return { success: true };

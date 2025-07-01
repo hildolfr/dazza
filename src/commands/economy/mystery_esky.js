@@ -213,8 +213,8 @@ export default new Command({
                     // Log trap transaction
                     if (bot.db) {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, -hospitalCost, 'mystery_esky', `Hospital bills from trap`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, -hospitalCost, 'mystery_esky', `Hospital bills from trap`, message.roomId || 'fatpizza', Date.now()]
                         );
                     }
                 } else if (roll < 0.85) {
@@ -250,8 +250,8 @@ export default new Command({
                     // Log win transaction
                     if (bot.db) {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, winnings, 'mystery_esky', `Won ${winnings} from mystery esky`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, winnings, 'mystery_esky', `Won ${winnings} from mystery esky`, message.roomId || 'fatpizza', Date.now()]
                         );
                     }
                 }

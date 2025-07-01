@@ -16,14 +16,14 @@ export default new Command({
 
     async handler(bot, message, args) {
         if (args.length === 0) {
-            bot.sendMessage('gimme some text to gothify mate');
+            bot.sendMessage(message.roomId, 'gimme some text to gothify mate');
             return { success: false };
         }
 
         const text = args.join(' ');
         const gothText = toFancyText(text);
         
-        bot.sendMessage(gothText);
+        bot.sendMessage(message.roomId, gothText);
         
         return { success: true };
     }

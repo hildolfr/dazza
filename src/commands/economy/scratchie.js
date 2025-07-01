@@ -143,8 +143,8 @@ export default new Command({
                 // Track in transactions with error handling
                 try {
                     await bot.db.run(
-                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                        [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, Date.now()]
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                        [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
                     bot.logger.error('Failed to log scratchie transaction:', error);
