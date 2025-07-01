@@ -7972,4 +7972,504 @@ EOF < /dev/null
         grid-column: span 1;
     }
 }
+
+/* ===============================================
+   YAPPER HUD STYLES - High-Tech Chat Command Center
+   =============================================== */
+
+.yapper-hud-section {
+    background: #0a0a0a;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.yapper-hud-section .hud-container {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 2px solid #00D4FF; /* Electric Blue for Yappers */
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.yapper-scanner {
+    background: linear-gradient(90deg, transparent, #00D4FF, transparent) !important;
+    animation: scan 3s linear infinite;
+}
+
+.yapper-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Status indicators for Yapper activity levels */
+.panel-status.lurking {
+    background: rgba(128, 128, 128, 0.2);
+    color: #808080;
+}
+
+.panel-status.active {
+    background: rgba(0, 149, 79, 0.2);
+    color: var(--vb-green);
+}
+
+.panel-status.chatty {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00D4FF;
+}
+
+.panel-status.yapping {
+    background: rgba(255, 199, 44, 0.2);
+    color: var(--vb-gold);
+}
+
+.panel-status.legendary {
+    background: linear-gradient(45deg, rgba(255, 0, 0, 0.2), rgba(255, 107, 53, 0.2));
+    color: #ff6b35;
+}
+
+/* Yapper-specific gradients */
+.bar-fill.yapper-gradient {
+    background: linear-gradient(90deg, #00D4FF, #00954F, #FFC72C);
+}
+
+.meter-fill.cyber-blue {
+    background: linear-gradient(90deg, #00D4FF, #1E90FF);
+}
+
+.meter-fill.cyber-cyan {
+    background: linear-gradient(90deg, #00CED1, #48D1CC);
+}
+
+.meter-fill.cyber-green {
+    background: linear-gradient(90deg, var(--vb-green), #32CD32);
+}
+
+.meter-fill.cyber-yellow {
+    background: linear-gradient(90deg, var(--vb-gold), #FFD700);
+}
+
+/* Peak indicator styling */
+.peak-indicator {
+    padding: 3px 12px;
+    background: rgba(255, 140, 0, 0.2);
+    color: #FF8C00;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Weekly Pattern Panel */
+.weekly-pattern .weekly-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 150px;
+    padding: 10px;
+}
+
+.day-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+}
+
+.day-bar {
+    width: 80%;
+    background: linear-gradient(180deg, #00D4FF, #00954F);
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.day-bar.weekend-bar {
+    background: linear-gradient(180deg, #FFC72C, #FF8C00);
+}
+
+.day-bar:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.5);
+}
+
+.day-bar .bar-value {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.day-bar:hover .bar-value {
+    opacity: 1;
+}
+
+.day-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+}
+
+/* Session Waveform Panel */
+.session-waveform .waveform-display {
+    padding: 20px;
+}
+
+.waveform-canvas {
+    width: 100%;
+    height: 100px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.waveform-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.wave-stat {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Velocity Gauge Panel */
+.velocity-gauge .gauge-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.circular-gauge {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.circular-gauge svg {
+    transform: rotate(-90deg);
+}
+
+.gauge-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 10;
+}
+
+.gauge-fill {
+    fill: none;
+    stroke: url(#velocity-gradient);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.5s;
+}
+
+.gauge-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.gauge-value {
+    display: block;
+    font-size: 3rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(255, 199, 44, 0.5);
+}
+
+.gauge-label {
+    display: block;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+}
+
+.gauge-red-zone {
+    margin-top: 10px;
+    padding: 5px 15px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    border-radius: 20px;
+    color: #ff4500;
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.gauge-red-zone[style*="opacity: 1"] {
+    animation: redZonePulse 1s infinite;
+}
+
+@keyframes redZonePulse {
+    0%, 100% { background: rgba(255, 0, 0, 0.2); }
+    50% { background: rgba(255, 0, 0, 0.4); }
+}
+
+/* Analytics Dashboard */
+.analytics-dashboard .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 15px;
+}
+
+.analytic-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s;
+}
+
+.analytic-item:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.analytic-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+}
+
+.analytic-info {
+    flex: 1;
+}
+
+.analytic-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.analytic-value {
+    display: block;
+    font-size: 1.5rem;
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+.analytic-value.counter {
+    font-variant-numeric: tabular-nums;
+}
+
+.analytic-sub {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 2px;
+}
+
+/* Gradient definitions for Yapper HUD */
+#velocity-gradient {
+    background: linear-gradient(90deg, #00D4FF 0%, #00954F 50%, #FFC72C 100%);
+}
+
+/* Quote Display Panel */
+.quote-display-panel {
+    grid-column: span 2;
+    background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.quote-display-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refresh-quote-btn {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.refresh-quote-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.5);
+    transform: rotate(180deg);
+}
+
+.refresh-icon {
+    font-size: 1rem;
+    filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.5));
+}
+
+.quote-display {
+    padding: 20px;
+    min-height: 100px;
+    position: relative;
+}
+
+/* Quote Content */
+.quote-content {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.quote-text {
+    font-size: 1.2rem;
+    color: #00D4FF;
+    font-style: italic;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    padding: 15px;
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 3px solid #00D4FF;
+    border-radius: 5px;
+}
+
+.quote-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.quote-author {
+    color: var(--vb-gold);
+    font-weight: bold;
+}
+
+.quote-time {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+}
+
+/* Loading State */
+.quote-loading {
+    text-align: center;
+    padding: 30px;
+}
+
+.quote-scanner {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00D4FF, transparent);
+    margin-bottom: 20px;
+    animation: scan 2s linear infinite;
+}
+
+.loading-text {
+    color: rgba(0, 212, 255, 0.7);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: pulse 1.5s infinite;
+}
+
+/* Empty State */
+.quote-empty {
+    text-align: center;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.empty-icon {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Error State */
+.quote-error {
+    text-align: center;
+    padding: 30px;
+    color: rgba(255, 140, 0, 0.8);
+}
+
+.error-icon {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.error-text {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments for Yapper HUD */
+@media (max-width: 768px) {
+    .yapper-hud-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hud-title {
+        font-size: 1.4rem;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .weekly-chart {
+        height: 120px;
+    }
+    
+    .circular-gauge {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .gauge-value {
+        font-size: 2.5rem;
+    }
+    
+    .quote-display-panel {
+        grid-column: span 1;
+    }
+    
+    .quote-text {
+        font-size: 1rem;
+    }
+}
 EOF < /dev/null
