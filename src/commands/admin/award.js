@@ -1,6 +1,21 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
 
+// Helper function for PM commands in multi-room bot
+function sendPM(bot, toUser, message, roomContext) {
+    if (bot.rooms && roomContext) {
+        // Multi-room bot with room context
+        bot.sendPrivateMessage(toUser, message, roomContext.roomId || roomContext);
+    } else if (bot.rooms && bot.rooms.size > 0) {
+        // Multi-room bot without room context - use first available room
+        const firstRoomId = bot.rooms.keys().next().value;
+        bot.sendPrivateMessage(toUser, message, firstRoomId);
+    } else {
+        // Single-room bot or fallback
+        bot.sendPrivateMessage(toUser, message);
+    }
+}
+
 export default new Command({
     name: 'award',
     aliases: ['givemoney', 'devpay'],
@@ -85,13 +100,8 @@ export default new Command({
                 confirmMsg = `💰 DEV AWARD: $${amount} to ${canonicalTarget} (${reason}) | New balance: $${newBalance.balance}`;
             }
             
-            // Send confirmation to admin (use message.roomId if available, or first active room)
-            const roomId = message.roomId || (bot.rooms && bot.rooms.size > 0 ? bot.rooms.keys().next().value : null);
-            if (bot.rooms && roomId) {
-                bot.sendPrivateMessage(message.username, confirmMsg, roomId);
-            } else {
-                bot.sendPrivateMessage(message.username, confirmMsg);
-            }
+            // Send confirmation to admin
+            sendPM(bot, message.username, confirmMsg, message.roomId);
             
             // Also notify the recipient if they're not dazza and online
             if (targetUser.toLowerCase() !== bot.username.toLowerCase()) {
@@ -113,11 +123,7 @@ export default new Command({
                 }
                 
                 if (targetOnline) {
-                    if (bot.rooms && roomId) {
-                        bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`, roomId);
-                    } else {
-                        bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`);
-                    }
+                    sendPM(bot, canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`, message.roomId);
                 }
             }
             
@@ -128,12 +134,8 @@ export default new Command({
             
         } catch (error) {
             bot.logger.error('Award command error:', error);
-            // Send error message with room context
-            if (bot.rooms && roomId) {
-                bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate', roomId);
-            } else {
-                bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate');
-            }
+            // Send error message
+            sendPM(bot, message.username, 'somethin went wrong with the award mate', message.roomId);
             return { success: false };
         }
     }
