@@ -12,14 +12,14 @@ export default new Command({
     async handler(bot, message, args) {
         // Check if memory monitor exists
         if (!bot.memoryMonitor) {
-            bot.sendMessage('memory monitor not running mate');
+            bot.sendMessage(message.roomId, 'memory monitor not running mate');
             return { success: true };
         }
         
         const stats = bot.memoryMonitor.getStats();
         
         if (!stats) {
-            bot.sendMessage('no memory stats available yet, gimme a sec');
+            bot.sendMessage(message.roomId, 'no memory stats available yet, gimme a sec');
             return { success: true };
         }
         
@@ -37,7 +37,7 @@ export default new Command({
             response += ' 🚨 CRITICAL';
         }
         
-        bot.sendMessage(response);
+        bot.sendMessage(message.roomId, response);
         
         // If verbose flag is set, show more details
         if (args[0] === '-v' || args[0] === '--verbose') {
@@ -46,7 +46,7 @@ export default new Command({
                 details += `avg: heap ${stats.average.heapUsedMB}MB, RSS ${stats.average.rssMB}MB | `;
                 details += `uptime: ${Math.floor(stats.uptime / 3600)}h ${Math.floor((stats.uptime % 3600) / 60)}m`;
                 
-                bot.sendMessage(details);
+                bot.sendMessage(message.roomId, details);
                 
                 // Show data structure sizes if any
                 if (Object.keys(stats.dataStructures).length > 0) {
@@ -54,7 +54,7 @@ export default new Command({
                         const sizes = Object.entries(stats.dataStructures)
                             .map(([name, size]) => `${name}: ${size}`)
                             .join(' | ');
-                        bot.sendMessage(`data structures: ${sizes}`);
+                        bot.sendMessage(message.roomId, `data structures: ${sizes}`);
                     }, 1000);
                 }
             }, 1000);

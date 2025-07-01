@@ -12,12 +12,12 @@ export default new Command({
     async handler(bot, message, args) {
         // Check if user is hildolfr
         if (message.username.toLowerCase() !== 'hildolfr') {
-            bot.sendMessage(`Oi -${message.username}, ya not authorized for that one mate`);
+            bot.sendMessage(message.roomId, `Oi -${message.username}, ya not authorized for that one mate`);
             return { success: false };
         }
         
         if (!bot.apiServer) {
-            bot.sendMessage('API server not initialized mate');
+            bot.sendMessage(message.roomId, 'API server not initialized mate');
             return { success: true };
         }
         
@@ -42,11 +42,11 @@ export default new Command({
             // Create status message
             const status = bot.apiServer.server?.listening ? '🟢 Online' : '🔴 Offline';
             
-            bot.sendMessage(`API ${status} | Port: ${port} | Endpoints: ${endpoints} | WS Clients: ${wsClients} | Uptime: ${uptimeStr} | Active Users: ${activeUsers.count}`);
+            bot.sendMessage(message.roomId, `API ${status} | Port: ${port} | Endpoints: ${endpoints} | WS Clients: ${wsClients} | Uptime: ${uptimeStr} | Active Users: ${activeUsers.count}`);
             
         } catch (error) {
             bot.logger.error('Error getting API status:', error);
-            bot.sendMessage('Failed to get API status mate');
+            bot.sendMessage(message.roomId, 'Failed to get API status mate');
         }
         
         return { success: true };
