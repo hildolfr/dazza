@@ -824,6 +824,9 @@ export class CyTubeBot extends EventEmitter {
         
         this.logger.info(`Loaded ${users.length} users in channel (${afkCount} AFK)`);
         
+        // Emit event for API to broadcast user count
+        this.emit('userlist:loaded');
+        
         // Notify video payout manager of userlist update
         if (this.videoPayoutManager) {
             this.videoPayoutManager.handleUserlistUpdate().catch(err =>
@@ -1081,6 +1084,11 @@ export class CyTubeBot extends EventEmitter {
             }
             user.meta.afk = data.afk;
             this.logger.debug(`User ${data.name} AFK status: ${data.afk}`);
+            
+            // Emit event for API to broadcast updated user count
+            if (wasAFK !== data.afk) {
+                this.emit('userlist:loaded'); // Reuse the same event to trigger count update
+            }
             
             // If user just came back from AFK, check for tells
             if (wasAFK && !data.afk) {

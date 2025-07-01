@@ -22,6 +22,10 @@ export function createTemplate(options = {}) {
             <div class="chat-header">
                 <div class="chat-header-content">
                     <span class="chat-title">LIVE CHAT</span>
+                    <span class="chat-user-count" style="display: none;">
+                        <span class="user-count-icon">üë•</span>
+                        <span class="user-count-text">0</span>
+                    </span>
                     <span class="chat-status" data-status="connecting">
                         <span class="status-dot"></span>
                         <span class="status-text">Connecting...</span>
@@ -79,7 +83,7 @@ export function createMessageTemplate(messageData) {
         case 'join':
             return `
                 <div class="chat-message system-message join-message">
-                    <span class="message-icon">í</span>
+                    <span class="message-icon">ÔøΩ</span>
                     <span class="message-text">${username} joined the chat</span>
                     <span class="message-time">${time}</span>
                 </div>
@@ -88,7 +92,7 @@ export function createMessageTemplate(messageData) {
         case 'leave':
             return `
                 <div class="chat-message system-message leave-message">
-                    <span class="message-icon">ê</span>
+                    <span class="message-icon">ÔøΩ</span>
                     <span class="message-text">${username} left the chat</span>
                     <span class="message-time">${time}</span>
                 </div>
@@ -156,7 +160,7 @@ export function createStatusTemplate(status) {
 export function createEmptyStateTemplate(message = 'No messages yet') {
     return `
         <div class="chat-empty-state">
-            <div class="empty-icon">=¨</div>
+            <div class="empty-icon">=ÔøΩ</div>
             <p class="empty-message">${message}</p>
         </div>
     `;
@@ -170,7 +174,7 @@ export function createEmptyStateTemplate(message = 'No messages yet') {
 export function createErrorTemplate(error = 'Failed to connect to chat') {
     return `
         <div class="chat-error-state">
-            <div class="error-icon">†</div>
+            <div class="error-icon">ÔøΩ</div>
             <p class="error-message">${error}</p>
             <button class="retry-button">Retry Connection</button>
         </div>
