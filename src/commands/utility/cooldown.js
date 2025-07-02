@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'cooldown',
@@ -86,7 +87,7 @@ export default new Command({
                     }
                 }
             } catch (error) {
-                bot.logger.error('Error checking persistent cooldowns:', error);
+                bot.logger.error('Error checking persistent cooldowns:', { error: error.message, stack: error.stack });
             }
             
             // Centrelink is now handled in the persistent cooldowns above
@@ -124,18 +125,18 @@ export default new Command({
                 }
             }
             
-            bot.sendPrivateMessage(username, response);
+            sendPM(bot, username, response, message);
             
             // If command was sent in public chat, acknowledge it
             if (!message.isPM) {
-                bot.sendMessage(`oi ${username}, check ya PMs for cooldown info`);
+                bot.sendMessage(message.roomId, `oi ${username}, check ya PMs for cooldown info`);
             }
             
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in cooldown command:', error);
-            bot.sendPrivateMessage(message.username, 'fucked up checkin ya cooldowns mate');
+            bot.logger.error('Error in cooldown command:', { error: error.message, stack: error.stack });
+            sendPM(bot, message.username, 'fucked up checkin ya cooldowns mate', message);
             return { success: false };
         }
     }

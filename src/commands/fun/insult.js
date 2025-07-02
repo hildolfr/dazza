@@ -21,7 +21,7 @@ export default new Command({
                 'say that again and I\'ll hack ya toaster',
                 'mate I\'ve got admin powers, watch it'
             ];
-            bot.sendMessage(selfDefense[Math.floor(Math.random() * selfDefense.length)]);
+            bot.sendMessage(message.roomId, selfDefense[Math.floor(Math.random() * selfDefense.length)]);
             return { success: true };
         }
         
@@ -73,7 +73,7 @@ export default new Command({
         ];
         
         const insult = insults[Math.floor(Math.random() * insults.length)];
-        bot.sendMessage(insult);
+        bot.sendMessage(message.roomId, insult);
         
         return { success: true };
     }

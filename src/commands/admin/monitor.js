@@ -12,7 +12,7 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (!bot.cashMonitor) {
-                bot.sendMessage('Cash monitor not initialized');
+                bot.sendMessage(message.roomId, 'Cash monitor not initialized');
                 return { success: false };
             }
 
@@ -21,24 +21,24 @@ export default new Command({
             if (args[0] === 'force') {
                 // Force a check
                 await bot.cashMonitor.checkForChanges();
-                bot.sendMessage(`Forced cash monitor check - tracking ${stats.usersTracked} users, total balance: $${stats.totalBalance}`);
+                bot.sendMessage(message.roomId, `Forced cash monitor check - tracking ${stats.usersTracked} users, total balance: $${stats.totalBalance}`);
             } else if (args[0] === 'debug') {
                 // Toggle debug mode
                 const currentDebug = bot.cashMonitor.debugMode;
                 bot.cashMonitor.setDebugMode(!currentDebug);
-                bot.sendMessage(`Cash monitor debug mode: ${!currentDebug ? 'ENABLED' : 'DISABLED'}`);
+                bot.sendMessage(message.roomId, `Cash monitor debug mode: ${!currentDebug ? 'ENABLED' : 'DISABLED'}`);
             } else {
                 // Show status
                 const status = stats.isRunning ? 'RUNNING' : 'STOPPED';
                 const debugStatus = bot.cashMonitor.debugMode ? ' [DEBUG]' : '';
-                bot.sendMessage(`Cash Monitor: ${status}${debugStatus} | Users: ${stats.usersTracked} | Total: $${stats.totalBalance} | Interval: ${stats.interval/1000}s`);
+                bot.sendMessage(message.roomId, `Cash Monitor: ${status}${debugStatus} | Users: ${stats.usersTracked} | Total: $${stats.totalBalance} | Interval: ${stats.interval/1000}s`);
             }
             
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in monitor command:', error);
-            bot.sendMessage('fucked up checking the monitor mate');
+            bot.logger.error('Error in monitor command:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'fucked up checking the monitor mate');
             return { success: false };
         }
     }

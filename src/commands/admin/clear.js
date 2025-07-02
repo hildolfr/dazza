@@ -1,5 +1,5 @@
 import { Command } from '../base.js';
-import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Hardcoded allowed users (case-insensitive)
 const ALLOWED_USERS = ['Spazztik', 'hildolfr', 'ilovechinks'];
@@ -16,7 +16,7 @@ export default new Command({
         '!clear 0 offensive content - Clear chat immediately with reason'
     ],
     category: 'admin',
-    persistentCooldown: true, // Use persistent cooldown
+    persistentCooldown: false, // No cooldown for admin command
     pmAccepted: true, // Works in PM for admins
     
     async handler(bot, message, args) {
@@ -29,32 +29,13 @@ export default new Command({
             if (!isAllowed) {
                 const errorMsg = "you're not the boss of me cunt";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(`${message.username}: ${errorMsg}`);
+                    bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                 }
                 return { success: false };
             }
             
-            // Check persistent cooldown (5 minutes)
-            if (bot.db && this.persistentCooldown) {
-                const cooldownManager = new PersistentCooldownManager(bot.db);
-                const cooldownCheck = await cooldownManager.check(this.name, message.username, 300000); // 5 minutes
-                
-                if (!cooldownCheck.allowed) {
-                    const minutes = Math.floor(cooldownCheck.remaining / 60);
-                    const seconds = cooldownCheck.remaining % 60;
-                    
-                    const cooldownMsg = `oi -${message.username}, ya just cleared chat. wait ${minutes}m ${seconds}s before doin' it again`;
-                    
-                    if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, cooldownMsg);
-                    } else {
-                        bot.sendMessage(cooldownMsg);
-                    }
-                    return { success: false };
-                }
-            }
             
             // Default delay is 2 seconds
             let delay = 2;
@@ -70,9 +51,9 @@ export default new Command({
                     // First arg is not a number - error
                     const errorMsg = "that's not a fuckin' number ya drongo";
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, errorMsg);
+                        sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(`${message.username}: ${errorMsg}`);
+                        bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                     }
                     return { success: false };
                 } else {
@@ -80,9 +61,9 @@ export default new Command({
                     if (parsedTime < 0) {
                         const errorMsg = "mate ya can't go back in time, use a positive number ya numpty";
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, errorMsg);
+                            sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                         } else {
-                            bot.sendMessage(`${message.username}: ${errorMsg}`);
+                            bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
                         return { success: false };
                     }
@@ -90,9 +71,9 @@ export default new Command({
                     if (parsedTime > 60) {
                         const errorMsg = "fuck off, I'm not waitin' more than a minute. 60 seconds max";
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, errorMsg);
+                            sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                         } else {
-                            bot.sendMessage(`${message.username}: ${errorMsg}`);
+                            bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
                         }
                         return { success: false };
                     }
@@ -114,21 +95,21 @@ export default new Command({
                 `alright ${message.username}, clearin' chat in ${delay} seconds`;
                 
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, ackMessage);
+                sendPM(bot, message.username, ackMessage, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(ackMessage);
+                bot.sendMessage(message.roomId, ackMessage);
             }
             
             // Schedule the clear
             setTimeout(async () => {
                 // Send the /clear command
-                bot.sendMessage('/clear');
+                bot.sendMessage(message.roomId, '/clear');
                 
                 // If there's a reason, announce it after clearing
                 if (reason) {
                     // Wait a tiny bit to ensure clear happens first
                     setTimeout(() => {
-                        bot.sendMessage(`Oi, chat got wiped by -${message.username}: ${reason}`);
+                        bot.sendMessage(message.roomId, `Oi, chat got wiped by -${message.username}: ${reason}`);
                     }, 100);
                 }
             }, delayMs);
@@ -136,13 +117,13 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Clear command error:', error);
+            bot.logger.error('Clear command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'somethin went wrong with the clear mate';
             
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(`${message.username}: ${errorMsg}`);
+                bot.sendMessage(message.roomId, `${message.username}: ${errorMsg}`);
             }
             
             return { success: false };

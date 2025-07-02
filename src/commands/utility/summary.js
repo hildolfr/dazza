@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { createLogger } from '../../utils/logger.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 const logger = createLogger('SummaryCommand');
 
@@ -13,31 +14,31 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args[0]) {
-            bot.sendMessage(`-${message.username} usage: !summary <hours> (e.g., !summary 2)`);
+            bot.sendMessage(message.roomId, `-${message.username} usage: !summary <hours> (e.g., !summary 2)`);
             return { success: true };
         }
         
         const hours = parseFloat(args[0]);
         if (isNaN(hours) || hours <= 0 || hours > 24) {
-            bot.sendMessage(`-${message.username} mate, gimme a number between 0 and 24 hours`);
+            bot.sendMessage(message.roomId, `-${message.username} mate, gimme a number between 0 and 24 hours`);
             return { success: true };
         }
         
         // Check if Ollama is available
         if (!bot.ollama) {
-            bot.sendMessage(`-${message.username} sorry mate, me brain's not workin right now`);
+            bot.sendMessage(message.roomId, `-${message.username} sorry mate, me brain's not workin right now`);
             return { success: false };
         }
         
         const isAvailable = await bot.ollama.isAvailable();
         if (!isAvailable) {
-            bot.sendMessage(`-${message.username} cant think straight right now, try again later`);
+            bot.sendMessage(message.roomId, `-${message.username} cant think straight right now, try again later`);
             return { success: false };
         }
         
         try {
             // Acknowledge the request in public chat (with - to avoid mention)
-            bot.sendMessage(`-${message.username} righto, checkin me notes from the last ${hours} hour${hours === 1 ? '' : 's'}... check ya PMs in a sec`);
+            bot.sendMessage(message.roomId, `-${message.username} righto, checkin me notes from the last ${hours} hour${hours === 1 ? '' : 's'}... check ya PMs in a sec`);
             
             // Get messages from the database
             const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
@@ -64,7 +65,7 @@ export default new Command({
             });
             
             if (humanMessages.length === 0) {
-                bot.sendPrivateMessage(message.username, `No chat messages found in the last ${hours} hour${hours === 1 ? '' : 's'}.`);
+                sendPM(bot, message.username, `No chat messages found in the last ${hours} hour${hours === 1 ? '' : 's'}.`, message);
                 return { success: true };
             }
             
@@ -107,14 +108,14 @@ export default new Command({
             const summaryMessages = await bot.ollama.generateSummary(chatLog, hours);
             
             if (!summaryMessages || summaryMessages.length === 0) {
-                bot.sendPrivateMessage(message.username, 'Failed to generate summary. Too cooked to think straight.');
+                sendPM(bot, message.username, 'Failed to generate summary. Too cooked to think straight.', message);
                 return { success: false };
             }
             
             // Send summary via PM - up to 2 messages
             for (let i = 0; i < summaryMessages.length && i < 2; i++) {
                 setTimeout(() => {
-                    bot.sendPrivateMessage(message.username, summaryMessages[i]);
+                    sendPM(bot, message.username, summaryMessages[i], message);
                 }, i * 1000); // 1 second delay between messages
             }
             
@@ -122,7 +123,7 @@ export default new Command({
             
         } catch (error) {
             logger.error('Summary command error:', error);
-            bot.sendMessage(`-${message.username} fuck, somethin went wrong with that`);
+            bot.sendMessage(message.roomId, `-${message.username} fuck, somethin went wrong with that`);
             return { success: false };
         }
     }

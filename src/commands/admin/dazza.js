@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'dazza',
@@ -17,7 +18,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendPrivateMessage(message.username, 'economy system not ready yet mate');
+                sendPM(bot, message.username, 'economy system not ready yet mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -43,12 +44,12 @@ export default new Command({
                 responses.push(`dazza's down to $${dazzaBalance.balance}, must've hit the pokies again`);
             }
 
-            bot.sendPrivateMessage(message.username, responses[Math.floor(Math.random() * responses.length)]);
+            sendPM(bot, message.username, responses[Math.floor(Math.random() * responses.length)], message.roomContext || message.roomId);
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Dazza balance command error:', error);
-            bot.sendPrivateMessage(message.username, 'failed to check dazza\'s stash');
+            bot.logger.error('Dazza balance command error:', { error: error.message, stack: error.stack });
+            sendPM(bot, message.username, 'failed to check dazza\'s stash', message.roomContext || message.roomId);
             return { success: false };
         }
     }

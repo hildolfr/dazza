@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Messages for each tier of recycling success
 const tierMessages = {
@@ -88,9 +89,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'Bottle depot is closed for maintenance mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -114,9 +115,9 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -131,7 +132,7 @@ export default new Command({
                     `-${message.username} grabbed the ute and some garbage bags, bottle hunting time`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
             
             // Roll for failure (8% chance)
@@ -143,14 +144,14 @@ export default new Command({
                 pmMessage += `📄 ${failureMsg}\n\n`;
                 pmMessage += "Better luck tomorrow mate. Maybe try a different spot.";
                 
-                bot.sendPrivateMessage(message.username, pmMessage);
+                sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                 
                 // Record the transaction as failed
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'bottles', 'Bottle run failed', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'bottles', 'Bottle run failed', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 return { success: true };
@@ -232,7 +233,7 @@ export default new Command({
             pmMessage += `\n\nNew balance: $${newBalance.balance}`;
             
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Public announcement for big wins (always announce, regardless of PM)
             if (tier === 'legendary' || (tier === 'rare' && amount >= 80)) {
@@ -244,27 +245,27 @@ export default new Command({
                         announcement += `made $${amount} recycling! Fuckin' legend!`;
                     }
                     
-                    bot.sendMessage(announcement);
+                    bot.sendMessage(message.roomId, announcement);
                 }, 2000);
             }
             
             // Record the transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'bottles', ?, ?)
-                `, [message.username, amount, `${tier} haul${multiplier > 1 ? ` (${multiplier}x ${reason})` : ''}`, Date.now()]);
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'bottles', ?, ?, ?)
+                `, [message.username, amount, `${tier} haul${multiplier > 1 ? ` (${multiplier}x ${reason})` : ''}`, message.roomId || 'fatpizza', Date.now()]);
             }
             
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Bottles command error:', error);
+            bot.logger.error('Bottles command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Bottle depot machine shit itself. Classic.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

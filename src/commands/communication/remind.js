@@ -17,7 +17,7 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (args.length < 2) {
-            bot.sendMessage('usage: !remind <time> <message> or !remind <user> <time> <message>');
+            bot.sendMessage(message.roomId, 'usage: !remind <time> <message> or !remind <user> <time> <message>');
             return { success: true };
         }
 
@@ -33,7 +33,7 @@ export default new Command({
             
             // Make sure we have enough args when targeting another user
             if (args.length < 3) {
-                bot.sendMessage('usage: !remind <time> <message> or !remind <user> <time> <message>');
+                bot.sendMessage(message.roomId, 'usage: !remind <time> <message> or !remind <user> <time> <message>');
                 return { success: true };
             }
         }
@@ -42,26 +42,26 @@ export default new Command({
         const reminderMessage = args.slice(timeIndex + 1).join(' ');
 
         if (!reminderMessage) {
-            bot.sendMessage('oi what am I supposed to remind about?');
+            bot.sendMessage(message.roomId, 'oi what am I supposed to remind about?');
             return { success: true };
         }
 
         const delay = parseTimeString(timeStr);
         
         if (!delay || delay <= 0) {
-            bot.sendMessage('dunno what time that is mate, try like "5m" or "2h"');
+            bot.sendMessage(message.roomId, 'dunno what time that is mate, try like "5m" or "2h"');
             return { success: true };
         }
 
         if (delay > bot.config.reminder.maxDuration) {
-            bot.sendMessage('fuck off I\'m not remembering that for more than a day');
+            bot.sendMessage(message.roomId, 'fuck off I\'m not remembering that for more than a day');
             return { success: true };
         }
 
         const remindAt = Date.now() + delay;
         
         try {
-            await bot.db.addReminder(message.username, targetUser, reminderMessage, remindAt);
+            await bot.db.addReminder(message.username, targetUser, reminderMessage, remindAt, message.roomId);
             
             if (targetUser === '@me') {
                 const selfResponses = [
@@ -87,7 +87,7 @@ export default new Command({
                     `I'll ping ya in ${timeStr} unless I'm balls deep in somethin`,
                     `reminder set mate, written on the back of a durrie packet`
                 ];
-                bot.sendMessage(selfResponses[Math.floor(Math.random() * selfResponses.length)]);
+                bot.sendMessage(message.roomId, selfResponses[Math.floor(Math.random() * selfResponses.length)]);
             } else {
                 const userResponses = [
                     `yeah alright, I'll tell -${targetUser} in ${timeStr}`,
@@ -109,13 +109,13 @@ export default new Command({
                     `I'll bug -${targetUser} about it in ${timeStr}, no escape`,
                     `gonna remind -${targetUser} like I'm their disappointed mother in ${timeStr}`
                 ];
-                bot.sendMessage(userResponses[Math.floor(Math.random() * userResponses.length)]);
+                bot.sendMessage(message.roomId, userResponses[Math.floor(Math.random() * userResponses.length)]);
             }
             
             return { success: true };
         } catch (error) {
             console.error('Remind command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

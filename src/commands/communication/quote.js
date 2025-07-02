@@ -11,28 +11,28 @@ export default new Command({
     
     async handler(bot, message, args) {
         if (!args.length) {
-            bot.sendMessage('quote who mate?');
+            bot.sendMessage(message.roomId, 'quote who mate?');
             return { success: true };
         }
         
         const targetUser = args[0];
         
         try {
-            const quote = await bot.db.getUserRandomMessage(targetUser);
+            const quote = await bot.db.getUserRandomMessage(targetUser, message.roomId);
             
             if (!quote) {
-                bot.sendMessage(`${targetUser} either never said nothin worth quotin or just spams commands like a drongo`);
+                bot.sendMessage(message.roomId, `${targetUser} either never said nothin worth quotin or just spams commands like a drongo`);
                 return { success: true };
             }
             
             const timestamp = formatTimestamp(quote.timestamp);
             const fancyQuote = toFancyText(quote.message);
-            bot.sendMessage(`"${fancyQuote}" - -${quote.username} (${timestamp})`);
+            bot.sendMessage(message.roomId, `"${fancyQuote}" - -${quote.username} (${timestamp})`);
             
             return { success: true };
         } catch (error) {
             console.error('Quote command error:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

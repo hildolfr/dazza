@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'award',
@@ -20,24 +21,24 @@ export default new Command({
         try {
             // Double-check it's hildolfr (case-insensitive)
             if (message.username.toLowerCase() !== 'hildolfr') {
-                bot.sendPrivateMessage(message.username, `nice try ${message.username}, but this command is for the big boss only`);
+                sendPM(bot, message.username, `nice try ${message.username}, but this command is for the big boss only`, message.roomContext || message.roomId);
                 return { success: false };
             }
             
             // Ensure it's a PM
             if (!message.isPM) {
-                bot.sendPrivateMessage(message.username, 'this command only works in PMs mate');
+                sendPM(bot, message.username, 'this command only works in PMs mate', message.roomContext || message.roomId);
                 return { success: false };
             }
             
             if (!bot.heistManager) {
-                bot.sendPrivateMessage(message.username, 'economy system is fucked mate, try again later');
+                sendPM(bot, message.username, 'economy system is fucked mate, try again later', message.roomContext || message.roomId);
                 return { success: false };
             }
 
             // Check arguments
             if (args.length < 2) {
-                bot.sendPrivateMessage(message.username, 'usage: !award <user> <amount> [reason]');
+                sendPM(bot, message.username, 'usage: !award <user> <amount> [reason]', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -47,13 +48,13 @@ export default new Command({
 
             // Validate amount
             if (!amount || amount < 1) {
-                bot.sendPrivateMessage(message.username, 'amount must be a positive number mate');
+                sendPM(bot, message.username, 'amount must be a positive number mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
             // Reasonable limit to prevent accidents
             if (amount > 100000) {
-                bot.sendPrivateMessage(message.username, 'steady on mate, max award is $100,000');
+                sendPM(bot, message.username, 'steady on mate, max award is $100,000', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -72,9 +73,9 @@ export default new Command({
             // Log the transaction for accountability
             await bot.db.run(`
                 INSERT INTO economy_transactions 
-                (username, amount, trust_change, transaction_type, description, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            `, [canonicalTarget, amount, 0, 'dev_award', `Awarded by hildolfr: ${reason}`, Date.now()]);
+                (username, amount, trust_change, transaction_type, description, room_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [canonicalTarget, amount, 0, 'dev_award', `Awarded by hildolfr: ${reason}`, message.roomId || 'fatpizza', Date.now()]);
             
             // Send confirmation via PM
             let confirmMsg;
@@ -85,14 +86,30 @@ export default new Command({
                 confirmMsg = `💰 DEV AWARD: $${amount} to ${canonicalTarget} (${reason}) | New balance: $${newBalance.balance}`;
             }
             
-            bot.sendPrivateMessage(message.username, confirmMsg);
+            // Send confirmation to admin
+            sendPM(bot, message.username, confirmMsg, message.roomId);
             
             // Also notify the recipient if they're not dazza and online
             if (targetUser.toLowerCase() !== bot.username.toLowerCase()) {
-                const onlineUsers = Array.from(bot.userlist.values());
-                const targetOnline = onlineUsers.find(u => u.name.toLowerCase() === canonicalTarget.toLowerCase());
+                // For multi-room bot, check if user is online in any room
+                let targetOnline = false;
+                
+                if (bot.rooms) {
+                    // Multi-room bot
+                    for (const [roomId, roomContext] of bot.rooms) {
+                        if (roomContext.hasUser(canonicalTarget)) {
+                            targetOnline = true;
+                            break;
+                        }
+                    }
+                } else if (bot.userlist) {
+                    // Single-room bot (backward compatibility)
+                    const onlineUsers = Array.from(bot.userlist.values());
+                    targetOnline = onlineUsers.find(u => u.name.toLowerCase() === canonicalTarget.toLowerCase());
+                }
+                
                 if (targetOnline) {
-                    bot.sendPrivateMessage(canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`);
+                    sendPM(bot, canonicalTarget, `💰 hildolfr awarded you $${amount}! Reason: ${reason} | Your new balance: $${newBalance.balance}`, message.roomId);
                 }
             }
             
@@ -102,8 +119,9 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Award command error:', error);
-            bot.sendPrivateMessage(message.username, 'somethin went wrong with the award mate');
+            bot.logger.error('Award command error:', { error: error.message, stack: error.stack });
+            // Send error message
+            sendPM(bot, message.username, 'somethin went wrong with the award mate', message.roomId);
             return { success: false };
         }
     }

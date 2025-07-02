@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'scratchie',
@@ -20,7 +21,7 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (!bot.heistManager) {
-                bot.sendPrivateMessage(message.username, 'economy system not ready yet mate');
+                sendPM(bot, message.username, 'economy system not ready yet mate', message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -32,13 +33,13 @@ export default new Command({
                 amount = parseInt(args[0]);
                 // Only allow specific price points
                 if (![5, 20, 50, 100].includes(amount)) {
-                    bot.sendPrivateMessage(message.username, 'scratchies only come in $5, $20, $50, or $100 mate');
+                    sendPM(bot, message.username, 'scratchies only come in $5, $20, $50, or $100 mate', message.roomContext || message.roomId);
                     return { success: false };
                 }
             }
 
             if (userBalance.balance < amount) {
-                bot.sendPrivateMessage(message.username, `ya need $${amount} for that scratchie mate, you've only got $${userBalance.balance}`);
+                sendPM(bot, message.username, `ya need $${amount} for that scratchie mate, you've only got $${userBalance.balance}`, message.roomContext || message.roomId);
                 return { success: false };
             }
 
@@ -91,7 +92,7 @@ export default new Command({
             await bot.heistManager.updateUserEconomy(message.username, -amount, 0);
 
             // Start PM with scratch animation
-            bot.sendPrivateMessage(message.username, `🎫 Bought a $${amount} "${ticketType}" scratchie...\n\n*scratch scratch scratch*`);
+            sendPM(bot, message.username, `🎫 Bought a $${amount} "${ticketType}" scratchie...\n\n*scratch scratch scratch*`, message.roomContext || message.roomId);
 
             // Determine outcome
             const roll = Math.random();
@@ -143,11 +144,11 @@ export default new Command({
                 // Track in transactions with error handling
                 try {
                     await bot.db.run(
-                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                        [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, Date.now()]
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                        [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
-                    bot.logger.error('Failed to log scratchie transaction:', error);
+                    bot.logger.error('Failed to log scratchie transaction:', { error: error.message, stack: error.stack });
                     // Don't fail the command just because logging failed
                 }
             }
@@ -165,15 +166,15 @@ export default new Command({
                         pmResult += `\n\n🎉 MASSIVE ${winnings / amount}x WIN! You're on fire!`;
                     }
                     
-                    bot.sendPrivateMessage(message.username, pmResult);
+                    sendPM(bot, message.username, pmResult, message.roomContext || message.roomId);
                     
                     // Public announcement for big wins
                     if (winnings >= amount * 10) {
                         setTimeout(() => {
                             if (winnings >= amount * 50) {
-                                bot.sendMessage(`🎰💰 HOLY FUCK! ${message.username} JUST HIT THE JACKPOT! $${winnings} ON A $${amount} SCRATCHIE! 💰🎰`);
+                                bot.sendMessage(message.roomId, `🎰💰 HOLY FUCK! ${message.username} JUST HIT THE JACKPOT! $${winnings} ON A $${amount} SCRATCHIE! 💰🎰`);
                             } else {
-                                bot.sendMessage(`🎉 BIG WIN! ${message.username} just won $${winnings} on a $${amount} scratchie! ${winnings / amount}x return!`);
+                                bot.sendMessage(message.roomId, `🎉 BIG WIN! ${message.username} just won $${winnings} on a $${amount} scratchie! ${winnings / amount}x return!`);
                             }
                         }, 1000);
                     }
@@ -182,8 +183,8 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Scratchie command error:', error);
-            bot.sendPrivateMessage(message.username, 'scratchie machine broke mate');
+            bot.logger.error('Scratchie command error:', { error: error.message, stack: error.stack });
+            sendPM(bot, message.username, 'scratchie machine broke mate', message.roomContext || message.roomId);
             return { success: false };
         }
     }

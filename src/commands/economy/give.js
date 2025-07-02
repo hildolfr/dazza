@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'give',
@@ -19,9 +20,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'economy system is fucked mate, try again later';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -30,9 +31,9 @@ export default new Command({
             if (args.length < 2) {
                 const errorMsg = `oi -${message.username}, usage: !give <user> <amount>`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', ''));
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -44,9 +45,9 @@ export default new Command({
             if (!amount || amount < 1) {
                 const errorMsg = `nah -${message.username}, gotta give at least $1 mate`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', ''));
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -61,9 +62,9 @@ export default new Command({
                 ];
                 const selectedMsg = selfMessages[Math.floor(Math.random() * selfMessages.length)];
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                    sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(selectedMsg);
+                    bot.sendMessage(message.roomId, selectedMsg);
                 }
                 return { success: false };
             }
@@ -125,9 +126,9 @@ export default new Command({
                 dazzaResponse += ` | Ya balance: $${newSenderBalance.balance}`;
                 
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, dazzaResponse.replace(/-/g, ''));
+                    sendPM(bot, message.username, dazzaResponse.replace(/-/g, ''), message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(dazzaResponse);
+                    bot.sendMessage(message.roomId, dazzaResponse);
                 }
                 
                 return { success: true };
@@ -144,9 +145,9 @@ export default new Command({
                 ];
                 const selectedMsg = brokeMessages[Math.floor(Math.random() * brokeMessages.length)];
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                    sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(selectedMsg);
+                    bot.sendMessage(message.roomId, selectedMsg);
                 }
                 return { success: false };
             }
@@ -203,25 +204,25 @@ export default new Command({
 
             if (message.isPM) {
                 // Remove - prefixes for PM
-                bot.sendPrivateMessage(message.username, successMsg.replace(/-/g, ''));
+                sendPM(bot, message.username, successMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                 
                 // Also notify the recipient if they're online
                 if (targetOnline) {
-                    bot.sendPrivateMessage(properTargetUsername, `💰 ${message.username} just sent you $${amount}! Your new balance: $${newTargetBalance.balance}`);
+                    sendPM(bot, properTargetUsername, `💰 ${message.username} just sent you $${amount}! Your new balance: $${newTargetBalance.balance}`, message.roomContext || message.roomId);
                 }
             } else {
-                bot.sendMessage(successMsg);
+                bot.sendMessage(message.roomId, successMsg);
             }
 
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Give command error:', error);
+            bot.logger.error('Give command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'somethin went wrong with the transfer mate';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

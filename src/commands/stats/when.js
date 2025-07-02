@@ -16,7 +16,7 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (args.length === 0) {
-                bot.sendMessage('usage: !when <search term>');
+                bot.sendMessage(message.roomId, 'usage: !when <search term>');
                 return { success: true };
             }
             
@@ -28,7 +28,7 @@ export default new Command({
             // Debug logging removed
             
             if (playlist.length === 0) {
-                bot.sendMessage('playlist is empty mate, CyTube might not be sending playlist data');
+                bot.sendMessage(message.roomId, 'playlist is empty mate, CyTube might not be sending playlist data');
                 return { success: true };
             }
             
@@ -87,9 +87,9 @@ export default new Command({
             if (!found) {
                 // Try more specific responses
                 if (searchTerm.length < 3) {
-                    bot.sendMessage('search term too short mate, gimme more to work with');
+                    bot.sendMessage(message.roomId, 'search term too short mate, gimme more to work with');
                 } else {
-                    bot.sendMessage(`couldn't find anything matching "${searchTerm}" in the playlist`);
+                    bot.sendMessage(message.roomId, `couldn't find anything matching "${searchTerm}" in the playlist`);
                 }
                 return { success: true };
             }
@@ -145,12 +145,12 @@ export default new Command({
                 response += shortWaitComments[Math.floor(Math.random() * shortWaitComments.length)];
             }
             
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in when command:', error);
-            bot.sendMessage(bot.personality.getResponse('error'));
+            bot.logger.error('Error in when command:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
     }

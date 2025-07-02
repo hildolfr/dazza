@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Job descriptions for each tier
 const jobDescriptions = {
@@ -104,9 +105,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'No cash jobs available right now mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -129,9 +130,9 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -146,7 +147,7 @@ export default new Command({
                     `-${message.username} reckons they can make a quick buck`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
             
             // Roll for failure (10% chance)
@@ -158,14 +159,14 @@ export default new Command({
                 pmMessage += `📄 ${failureMsg}\n\n`;
                 pmMessage += "Better luck next time mate. The cash economy's rough.";
                 
-                bot.sendPrivateMessage(message.username, pmMessage);
+                sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                 
                 // Record failed attempt
                 if (bot.db) {
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'cashie', 'Cash job failed', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'cashie', 'Cash job failed', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 return { success: true };
@@ -247,7 +248,7 @@ export default new Command({
             pmMessage += `\n\nNew balance: $${newBalance.balance}`;
             
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Public announcement for big scores (always announce, regardless of PM)
             if (tier === 'legendary' || (tier === 'rare' && amount >= 150)) {
@@ -259,27 +260,27 @@ export default new Command({
                         announcement += `scored $${amount} cash in hand! Living the dream!`;
                     }
                     
-                    bot.sendMessage(announcement);
+                    bot.sendMessage(message.roomId, announcement);
                 }, 2000);
             }
             
             // Record the transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'cashie', ?, ?)
-                `, [message.username, amount, `${tier} job${multiplier > 1 ? ` (${reasons.join(', ')})` : ''}`, Date.now()]);
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'cashie', ?, ?, ?)
+                `, [message.username, amount, `${tier} job${multiplier > 1 ? ` (${reasons.join(', ')})` : ''}`, message.roomId || 'fatpizza', Date.now()]);
             }
             
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Cashie command error:', error);
+            bot.logger.error('Cashie command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Cash job fell through, technical difficulties mate';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

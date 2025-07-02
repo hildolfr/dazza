@@ -30,7 +30,7 @@ export class CyTubeBot extends EventEmitter {
     constructor(config) {
         super();
         this.config = config;
-        this.connection = new CyTubeConnection(config);
+        this.connection = new CyTubeConnection(config.cytube.channel, config);
         this.personality = new DazzaPersonality();
         this.cooldowns = new CooldownManager();
         this.memoryManager = new MemoryManager();
@@ -79,6 +79,11 @@ export class CyTubeBot extends EventEmitter {
         this.processedMessages = new Set(); // Track processed message IDs
         this.maxProcessedSize = 1000; // Limit size to prevent memory issues
         this.staleMessageThreshold = 30000; // Ignore messages older than 30 seconds
+        
+        // Track bot's own sent messages to prevent self-replies
+        this.recentBotMessages = new Map(); // Map of message hash -> timestamp
+        this.MESSAGE_CACHE_DURATION = 30000; // 30 seconds
+        this.botMessageCleanupInterval = null;
         
         // Heist economy system
         this.heistManager = null;
@@ -315,16 +320,28 @@ export class CyTubeBot extends EventEmitter {
             this.sendMessage(data.message);
         });
         
-        // Optional: Acknowledge votes (comment out if too spammy)
+        // Acknowledge votes via PM only
         this.heistManager.on('vote_registered', (data) => {
-            // Only acknowledge vote changes to reduce spam
+            // Send PM acknowledgment for all votes (new and changed)
+            let pmMessage;
             if (data.changed) {
                 const responses = [
-                    `changed ya mind -${data.username}? ${data.crime} it is`,
-                    `righto -${data.username}, switched to ${data.crime}`
+                    `changed ya mind? ${data.crime} it is then`,
+                    `righto, switched ya to ${data.crime}`,
+                    `no worries, changed to ${data.crime}`
                 ];
-                this.sendMessage(responses[Math.floor(Math.random() * responses.length)]);
+                pmMessage = responses[Math.floor(Math.random() * responses.length)];
+            } else {
+                const responses = [
+                    `got it mate, you're in for ${data.crime}`,
+                    `righto, marked ya down for ${data.crime}`,
+                    `sweet as, ${data.crime} it is`,
+                    `no worries, you're ready for ${data.crime}`
+                ];
+                pmMessage = responses[Math.floor(Math.random() * responses.length)];
             }
+            
+            this.sendPrivateMessage(data.username, pmMessage);
         });
         
         // Handle heist resume events after bot restart
@@ -351,6 +368,7 @@ export class CyTubeBot extends EventEmitter {
         this.memoryMonitor.trackDataStructure('messageHistory', this.messageHistory);
         this.memoryMonitor.trackDataStructure('pendingMentionTimeouts', this.pendingMentionTimeouts);
         this.memoryMonitor.trackDataStructure('userDepartureTimes', this.userDepartureTimes);
+        this.memoryMonitor.trackDataStructure('recentBotMessages', this.recentBotMessages);
         
         // Handle memory warnings
         this.memoryMonitor.on('warning', (data) => {
@@ -502,6 +520,15 @@ export class CyTubeBot extends EventEmitter {
                 message: data.msg.substring(0, 50)
             });
             
+            return;
+        }
+        
+        // Check if this message was recently sent by the bot (catches echo/relay scenarios)
+        if (this.isRecentBotMessage(data.msg)) {
+            this.logger.debug('Ignoring recently sent bot message', {
+                username: data.username,
+                message: data.msg.substring(0, 50)
+            });
             return;
         }
         
@@ -658,12 +685,16 @@ export class CyTubeBot extends EventEmitter {
                         message: data.msg.substring(0, 50)
                     });
                 } else {
+                    // Get room ID from data or connection
+                    const roomId = data.roomId || data.room || this.connection?.roomId || 'fatpizza';
+                    
                     this.logger.debug('Mention detected', { 
                         username: data.username, 
                         message: data.msg,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        room: roomId
                     });
-                    await this.handleMention(data);
+                    await this.handleMention(data, roomId);
                 }
             }
 
@@ -671,7 +702,7 @@ export class CyTubeBot extends EventEmitter {
             // Check for pissing contest responses (yes/no)
             const lowerMsg = data.msg.toLowerCase().trim();
             if (this.pissingContestManager) {
-                const challenge = this.pissingContestManager.findChallengeForUser(data.username);
+                const challenge = this.pissingContestManager.findChallengeForUser(data.username, this.connection.roomId);
                 if (challenge) {
                     // Check if it's an accept/decline phrase
                     const acceptPhrases = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay',
@@ -683,13 +714,13 @@ export class CyTubeBot extends EventEmitter {
                         'maybe later', 'busy', 'can\'t'];
                     
                     if (acceptPhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.acceptChallenge(data.username);
+                        const result = await this.pissingContestManager.acceptChallenge(data.username, this.connection.roomId);
                         if (!result.success) {
                             this.sendMessage(result.message);
                         }
                         return;
                     } else if (declinePhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.declineChallenge(data.username);
+                        const result = await this.pissingContestManager.declineChallenge(data.username, this.connection.roomId);
                         this.sendMessage(result.message);
                         return;
                     }
@@ -792,7 +823,8 @@ export class CyTubeBot extends EventEmitter {
         const result = await this.commands.execute(commandName, this, {
             username: data.username,
             msg: data.msg,
-            time: data.time || Date.now()
+            time: data.time || Date.now(),
+            roomId: this.connection.roomId || 'fatpizza'
         }, args);
         
         // Log successful command execution
@@ -1203,7 +1235,29 @@ export class CyTubeBot extends EventEmitter {
         }
     }
 
-    sendMessage(message, context = null) {
+    /**
+     * Get userlist for a specific room (compatibility method for multi-room support)
+     * Single room bot always returns the main userlist
+     */
+    getUserlistForRoom(roomId) {
+        return this.userlist;
+    }
+
+    sendMessage(messageOrRoomId, messageOrContext = null, optionalContext = null) {
+        // Handle both old format (message, context) and new format (roomId, message, context)
+        let message, context;
+        
+        // If first param looks like a room ID (contains 'fatpizza' or similar), use new format
+        if (typeof messageOrRoomId === 'string' && (messageOrRoomId.includes('fatpizza') || messageOrRoomId.includes('/'))) {
+            // New format: (roomId, message, context)
+            message = messageOrContext;
+            context = optionalContext;
+        } else {
+            // Old format: (message, context)
+            message = messageOrRoomId;
+            context = messageOrContext;
+        }
+        
         // Check if we're in a PM context and should send PM response
         if (context && context.isPM && context.pmResponses) {
             this.sendPrivateMessage(context.username, message);
@@ -1218,6 +1272,10 @@ export class CyTubeBot extends EventEmitter {
                 setTimeout(() => {
                     // Apply character personality to each message
                     const processedMsg = this.personality.processMessage(msg);
+                    
+                    // Track the message before sending
+                    this.trackBotMessage(processedMsg);
+                    
                     console.log(`[${this.username}]: ${processedMsg}`);
                     this.connection.sendChatMessage(processedMsg);
                 }, delay);
@@ -1236,6 +1294,9 @@ export class CyTubeBot extends EventEmitter {
             this.sendMessage(messages, context); // Recursive call with array
             return;
         }
+        
+        // Track the message before sending
+        this.trackBotMessage(processedMessage);
         
         // Log bot's own messages to console
         console.log(`[${this.username}]: ${processedMessage}`);
@@ -1297,6 +1358,95 @@ export class CyTubeBot extends EventEmitter {
         
         // Limit to 3 messages max
         return messages.slice(0, 3);
+    }
+    
+    /**
+     * Generate a hash for a message to track bot's own messages
+     * @param {string} message - The message to hash
+     * @returns {string} A simple hash of the message
+     */
+    hashMessage(message) {
+        // Normalize the message: lowercase, trim, remove extra spaces
+        const normalized = message.toLowerCase().trim().replace(/\s+/g, ' ');
+        
+        // Create a simple hash using the message content and length
+        // This is sufficient for our use case of detecting recent duplicates
+        let hash = 0;
+        for (let i = 0; i < normalized.length; i++) {
+            const char = normalized.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        
+        // Include length to help differentiate similar messages
+        return `${Math.abs(hash)}_${normalized.length}`;
+    }
+    
+    /**
+     * Track a message sent by the bot to prevent self-replies
+     * @param {string} message - The message being sent
+     */
+    trackBotMessage(message) {
+        const hash = this.hashMessage(message);
+        const now = Date.now();
+        
+        this.recentBotMessages.set(hash, now);
+        
+        // Log for debugging
+        this.logger.debug('Tracking bot message', {
+            hash,
+            messagePreview: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+            totalTracked: this.recentBotMessages.size
+        });
+    }
+    
+    /**
+     * Clean up old bot messages from tracking
+     */
+    cleanupBotMessageCache() {
+        const now = Date.now();
+        const expired = [];
+        
+        for (const [hash, timestamp] of this.recentBotMessages) {
+            if (now - timestamp > this.MESSAGE_CACHE_DURATION) {
+                expired.push(hash);
+            }
+        }
+        
+        for (const hash of expired) {
+            this.recentBotMessages.delete(hash);
+        }
+        
+        if (expired.length > 0) {
+            this.logger.debug(`Cleaned up ${expired.length} expired bot messages, ${this.recentBotMessages.size} remaining`);
+        }
+    }
+    
+    /**
+     * Check if a message was recently sent by the bot
+     * @param {string} message - The message to check
+     * @returns {boolean} True if this was a recent bot message
+     */
+    isRecentBotMessage(message) {
+        const hash = this.hashMessage(message);
+        const timestamp = this.recentBotMessages.get(hash);
+        
+        if (!timestamp) {
+            return false;
+        }
+        
+        const age = Date.now() - timestamp;
+        const isRecent = age <= this.MESSAGE_CACHE_DURATION;
+        
+        if (isRecent) {
+            this.logger.debug('Message identified as recent bot message', {
+                hash,
+                ageMs: age,
+                messagePreview: message.substring(0, 50) + (message.length > 50 ? '...' : '')
+            });
+        }
+        
+        return isRecent;
     }
 
     async checkAndDeliverTells(username) {
@@ -1481,6 +1631,11 @@ export class CyTubeBot extends EventEmitter {
                 this.logger.error('Failed to clean up cooldowns', { error: error.message });
             }
         }, 24 * 60 * 60 * 1000); // Every 24 hours
+        
+        // Clean up bot message cache periodically
+        this.botMessageCleanupInterval = setInterval(() => {
+            this.cleanupBotMessageCache();
+        }, 60000); // Every minute
     }
 
     getRandomGreetingCooldown() {
@@ -1673,11 +1828,22 @@ export class CyTubeBot extends EventEmitter {
     /**
      * Handle mentions of Dazza
      * @param {Object} data - Message data
+     * @param {string} roomId - Room ID where the mention occurred (optional)
      */
-    async handleMention(data) {
+    async handleMention(data, roomId = null) {
         const now = Date.now();
         const username = data.username.toLowerCase();
         const isTestMode = this.isTestOverride(data.msg);
+        
+        // Extract room ID from data if not provided
+        const targetRoom = roomId || data.roomId || data.room || this.connection?.roomId || 'fatpizza';
+        
+        this.logger.debug('Handling mention', {
+            username: data.username,
+            room: targetRoom,
+            message: data.msg.substring(0, 50),
+            isTestMode
+        });
         
         // Log test mode activation
         if (isTestMode) {
@@ -1764,45 +1930,90 @@ export class CyTubeBot extends EventEmitter {
                     
                     response.forEach((msg, index) => {
                         const timeoutId = setTimeout(() => {
-                            this.sendMessage(msg);
-                            this.pendingMentionTimeouts.delete(timeoutId);
+                            try {
+                                this.sendMessage(targetRoom, msg);
+                                this.logger.debug(`Sent mention response ${index + 1}/${response.length} to room ${targetRoom}`);
+                            } catch (error) {
+                                this.logger.error('Error sending mention response', {
+                                    error: error.message,
+                                    room: targetRoom,
+                                    messageIndex: index
+                                });
+                            } finally {
+                                this.pendingMentionTimeouts.delete(timeoutId);
+                            }
                         }, totalDelay);
                         this.pendingMentionTimeouts.add(timeoutId);
                         // Add 2-4 seconds between messages (drunk typing speed)
                         totalDelay += 2000 + Math.random() * 2000;
                     });
                     
-                    this.logger.debug(`Dazza sent ${response.length} messages, next possible mention in ${Math.round(this.mentionCooldown / 1000)}s`);
+                    this.logger.debug(`Dazza queued ${response.length} messages for room ${targetRoom}, next possible mention in ${Math.round(this.mentionCooldown / 1000)}s`);
                 } else {
                     // Single message
                     const delay = 2000 + Math.random() * 3000;
                     const timeoutId = setTimeout(() => {
-                        this.sendMessage(response);
-                        this.pendingMentionTimeouts.delete(timeoutId);
+                        try {
+                            this.sendMessage(targetRoom, response);
+                            this.logger.debug(`Sent mention response to room ${targetRoom}`);
+                        } catch (error) {
+                            this.logger.error('Error sending mention response', {
+                                error: error.message,
+                                room: targetRoom
+                            });
+                        } finally {
+                            this.pendingMentionTimeouts.delete(timeoutId);
+                        }
                     }, delay);
                     this.pendingMentionTimeouts.add(timeoutId);
                     
-                    this.logger.debug(`Dazza responded, next possible mention in ${Math.round(this.mentionCooldown / 1000)}s`);
+                    this.logger.debug(`Dazza queued response for room ${targetRoom}, next possible mention in ${Math.round(this.mentionCooldown / 1000)}s`);
                 }
             } else {
                 // Generation failed, use fallback
                 const fallback = this.ollama.getFallbackResponse();
                 const delay = 1500 + Math.random() * 3000;
                 const timeoutId = setTimeout(() => {
-                    this.sendMessage(fallback);
-                    this.pendingMentionTimeouts.delete(timeoutId);
+                    try {
+                        this.sendMessage(targetRoom, fallback);
+                        this.logger.debug(`Sent fallback response to room ${targetRoom}`);
+                    } catch (error) {
+                        this.logger.error('Error sending fallback response', {
+                            error: error.message,
+                            room: targetRoom
+                        });
+                    } finally {
+                        this.pendingMentionTimeouts.delete(timeoutId);
+                    }
                 }, delay);
                 this.pendingMentionTimeouts.add(timeoutId);
+                this.logger.debug(`Using fallback response for room ${targetRoom} (generation failed)`);
             }
             
         } catch (error) {
-            this.logger.error('Error handling mention:', error);
+            this.logger.error('Error handling mention:', {
+                error: error.message,
+                stack: error.stack,
+                username: data.username,
+                room: targetRoom,
+                message: data.msg.substring(0, 50)
+            });
+            
             // Use fallback on any error
             const fallback = this.ollama.getFallbackResponse();
             const delay = 1500 + Math.random() * 3000;
             const timeoutId = setTimeout(() => {
-                this.sendMessage(fallback);
-                this.pendingMentionTimeouts.delete(timeoutId);
+                try {
+                    this.sendMessage(targetRoom, fallback);
+                    this.logger.debug(`Sent error fallback response to room ${targetRoom}`);
+                } catch (sendError) {
+                    this.logger.error('Error sending error fallback response', {
+                        error: sendError.message,
+                        room: targetRoom
+                    });
+                } finally {
+                    this.pendingMentionTimeouts.delete(timeoutId);
+                }
             }, delay);
             this.pendingMentionTimeouts.add(timeoutId);
         }
@@ -1872,7 +2083,8 @@ export class CyTubeBot extends EventEmitter {
                 const pmContext = {
                     ...data,
                     isPM: true,
-                    originalMessage: data.msg
+                    originalMessage: data.msg,
+                    roomId: this.connection.roomId || 'fatpizza'
                 };
                 
                 // Create a wrapped bot object that intercepts sendMessage calls
@@ -1919,7 +2131,22 @@ export class CyTubeBot extends EventEmitter {
         }
     }
     
-    sendPrivateMessage(toUser, message) {
+    sendPrivateMessage(toUserOrToUser, messageOrRoomId = null, optionalMessage = null) {
+        // Handle both old format (toUser, message) and new format (toUser, message, roomId)
+        let toUser, message;
+        
+        // Determine format based on number of arguments and their types
+        if (optionalMessage !== null) {
+            // New format: (toUser, message, roomId)
+            toUser = toUserOrToUser;
+            message = messageOrRoomId;
+            // roomId is ignored in single-room bot
+        } else {
+            // Old format: (toUser, message)
+            toUser = toUserOrToUser;
+            message = messageOrRoomId;
+        }
+        
         if (!this.connection.isConnected()) {
             this.logger.error('Cannot send PM: not connected');
             return;
@@ -1952,6 +2179,10 @@ export class CyTubeBot extends EventEmitter {
         if (this.cooldownCleanupInterval) {
             clearInterval(this.cooldownCleanupInterval);
             this.cooldownCleanupInterval = null;
+        }
+        if (this.botMessageCleanupInterval) {
+            clearInterval(this.botMessageCleanupInterval);
+            this.botMessageCleanupInterval = null;
         }
         
         // Stop batch scheduler

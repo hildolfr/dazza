@@ -41,7 +41,7 @@ export default new Command({
         
         // Parse new challenge
         if (args.length === 0) {
-            bot.sendMessage('gotta challenge someone mate - !piss <amount> [username] or !piss [username]');
+            bot.sendMessage(message.roomId, 'gotta challenge someone mate - !piss <amount> [username] or !piss [username]');
             return { success: false };
         }
         
@@ -53,7 +53,7 @@ export default new Command({
         if (!isNaN(parseInt(firstArg))) {
             amount = parseInt(firstArg);
             if (amount < 0) {
-                bot.sendMessage('can\'t bet negative money ya drongo');
+                bot.sendMessage(message.roomId, 'can\'t bet negative money ya drongo');
                 return { success: false };
             }
             targetUser = args[1];
@@ -64,7 +64,7 @@ export default new Command({
         
         // If no target specified, challenge the house (not implemented)
         if (!targetUser) {
-            bot.sendMessage('gotta specify who to piss against mate - !piss <amount> <username>');
+            bot.sendMessage(message.roomId, 'gotta specify who to piss against mate - !piss <amount> <username>');
             return { success: false };
         }
         
@@ -73,12 +73,12 @@ export default new Command({
         
         // Validate target
         if (targetUser.toLowerCase() === message.username.toLowerCase()) {
-            bot.sendMessage('can\'t piss against yaself ya numpty');
+            bot.sendMessage(message.roomId, 'can\'t piss against yaself ya numpty');
             return { success: false };
         }
         
         if (targetUser.toLowerCase() === bot.username.toLowerCase() || targetUser.startsWith('[')) {
-            bot.sendMessage('bots don\'t piss mate, challenge a real person');
+            bot.sendMessage(message.roomId, 'bots don\'t piss mate, challenge a real person');
             return { success: false };
         }
         
@@ -86,19 +86,20 @@ export default new Command({
         const result = await bot.pissingContestManager.createChallenge(
             message.username,
             targetUser,
-            amount
+            amount,
+            message.roomId
         );
         
         if (!result.success) {
-            bot.sendMessage(result.message);
+            bot.sendMessage(message.roomId, result.message);
             return { success: false };
         }
         
         // Announce challenge
         if (amount > 0) {
-            bot.sendMessage(`-${message.username} challenges -${targetUser} to a $${amount} pissing contest! Type 'yes' or 'no' to respond (30s to accept)`);
+            bot.sendMessage(message.roomId, `-${message.username} challenges -${targetUser} to a $${amount} pissing contest! Type 'yes' or 'no' to respond (30s to accept)`);
         } else {
-            bot.sendMessage(`-${message.username} challenges -${targetUser} to a pissing contest for bragging rights! Type 'yes' or 'no' to respond (30s to accept)`);
+            bot.sendMessage(message.roomId, `-${message.username} challenges -${targetUser} to a pissing contest for bragging rights! Type 'yes' or 'no' to respond (30s to accept)`);
         }
         
         return { success: true };

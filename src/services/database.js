@@ -1,10 +1,10 @@
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
-import { heistSchema } from '../modules/heist/schema.js';
-import { videoPayoutSchema } from '../modules/video_payout/schema.js';
+import { heistSchema } from '../modules/heist/schema_compat.js';
+import { videoPayoutSchema } from '../modules/video_payout/schema_compat.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
-import { cooldownSchema } from '../utils/cooldownSchema.js';
+import { cooldownSchema } from '../utils/cooldownSchema_compat.js';
 import MigrationRunner from '../migrations/runner.js';
 
 class Database {
@@ -60,7 +60,10 @@ class Database {
     }
 
     async createTables() {
+        console.log('Starting createTables...');
+        
         // Create messages table
+        console.log('Creating messages table...');
         await this.run(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -214,13 +217,34 @@ class Database {
         await this.run('CREATE INDEX IF NOT EXISTS idx_private_messages_timestamp ON private_messages(timestamp)');
 
         // Initialize heist schema
-        await heistSchema.initialize(this);
+        console.log('Initializing heist schema...');
+        try {
+            await heistSchema.initialize(this);
+            console.log('Heist schema initialized successfully');
+        } catch (error) {
+            console.error('Error initializing heist schema:', error.message);
+            throw error;
+        }
 
         // Initialize video payout schema
-        await videoPayoutSchema.initialize(this);
+        console.log('Initializing video payout schema...');
+        try {
+            await videoPayoutSchema.initialize(this);
+            console.log('Video payout schema initialized successfully');
+        } catch (error) {
+            console.error('Error initializing video payout schema:', error.message);
+            throw error;
+        }
 
         // Initialize cooldown schema
-        await cooldownSchema.initialize(this);
+        console.log('Initializing cooldown schema...');
+        try {
+            await cooldownSchema.initialize(this);
+            console.log('Cooldown schema initialized successfully');
+        } catch (error) {
+            console.error('Error initializing cooldown schema:', error.message);
+            throw error;
+        }
 
         // Add migration for tells table via_pm column
         try {
@@ -246,16 +270,16 @@ class Database {
         }
     }
 
-    async logMessage(username, message) {
+    async logMessage(username, message, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         const result = await this.run(
-            'INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)',
-            [username, message, timestamp]
+            'INSERT INTO messages (username, message, timestamp, room_id) VALUES (?, ?, ?, ?)',
+            [username, message, timestamp, roomId]
         );
 
         // Update user stats
-        await this.updateUserStats(username, timestamp);
+        await this.updateUserStats(username, timestamp, roomId);
         
         // Extract and save any image URLs
         const imageUrls = extractImageUrls(message);
@@ -283,32 +307,50 @@ class Database {
         };
     }
 
-    async logUserEvent(username, eventType) {
+    async logUserEvent(username, eventType, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(
-            'INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)',
-            [username, eventType, timestamp]
+            'INSERT INTO user_events (username, event_type, timestamp, room_id) VALUES (?, ?, ?, ?)',
+            [username, eventType, timestamp, roomId]
         );
 
         // Update user stats for join events
         if (eventType === 'join') {
-            await this.updateUserStats(username, timestamp);
+            await this.updateUserStats(username, timestamp, roomId, false);
         }
     }
 
-    async updateUserStats(username, timestamp) {
-        await this.run(`
-            INSERT INTO user_stats (username, first_seen, last_seen, message_count)
-            VALUES (?, ?, ?, 1)
-            ON CONFLICT(username) DO UPDATE SET
-                last_seen = ?,
-                message_count = message_count + 1,
-                updated_at = CURRENT_TIMESTAMP
-        `, [username, timestamp, timestamp, timestamp]);
+    async updateUserStats(username, timestamp, roomId = null, incrementMessage = true) {
+        // Ensure timestamp is valid
+        if (!timestamp) {
+            timestamp = Date.now();
+        }
+        
+        // User stats are global across all rooms, so we don't filter by room
+        if (incrementMessage) {
+            // For messages, increment the message count
+            await this.run(`
+                INSERT INTO user_stats (username, first_seen, last_seen, message_count)
+                VALUES (?, ?, ?, 1)
+                ON CONFLICT(username) DO UPDATE SET
+                    last_seen = ?,
+                    message_count = message_count + 1,
+                    updated_at = CURRENT_TIMESTAMP
+            `, [username, timestamp, timestamp, timestamp]);
+        } else {
+            // For join events, just update last_seen without incrementing message count
+            await this.run(`
+                INSERT INTO user_stats (username, first_seen, last_seen, message_count)
+                VALUES (?, ?, ?, 0)
+                ON CONFLICT(username) DO UPDATE SET
+                    last_seen = ?,
+                    updated_at = CURRENT_TIMESTAMP
+            `, [username, timestamp, timestamp, timestamp]);
+        }
     }
 
-    async getUserStats(username) {
+    async getUserStats(username, roomId = null) {
         const stats = await this.get(
             'SELECT * FROM user_stats WHERE LOWER(username) = LOWER(?)',
             [username]
@@ -316,10 +358,15 @@ class Database {
 
         if (stats) {
             // Get actual message count from messages table
-            const msgCount = await this.get(
-                'SELECT COUNT(*) as count FROM messages WHERE LOWER(username) = LOWER(?)',
-                [username]
-            );
+            let msgCountQuery = 'SELECT COUNT(*) as count FROM messages WHERE LOWER(username) = LOWER(?)';
+            const params = [username];
+            
+            if (roomId) {
+                msgCountQuery += ' AND room_id = ?';
+                params.push(roomId);
+            }
+            
+            const msgCount = await this.get(msgCountQuery, params);
             stats.message_count = msgCount.count;
         }
 
@@ -349,9 +396,9 @@ class Database {
         );
     }
 
-    async getRandomMessage() {
+    async getRandomMessage(roomId = null) {
         // Get a random message that's not a bot command and not from bot or system
-        const message = await this.get(`
+        let query = `
             SELECT username, message, timestamp 
             FROM messages 
             WHERE message NOT LIKE '!%'
@@ -359,50 +406,68 @@ class Database {
             AND LOWER(username) != '[server]'
             AND username NOT LIKE '[%]'
             AND LENGTH(message) > 10
-            ORDER BY RANDOM() 
-            LIMIT 1
-        `, [this.botUsername]);
+        `;
+        const params = [this.botUsername];
         
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY RANDOM() LIMIT 1';
+        
+        const message = await this.get(query, params);
         return message;
     }
 
-    async getUserRandomMessage(username) {
+    async getUserRandomMessage(username, roomId = null) {
         // Get a random message from specific user that's not a bot command
-        const message = await this.get(`
+        let query = `
             SELECT username, message, timestamp 
             FROM messages 
             WHERE LOWER(username) = LOWER(?)
             AND message NOT LIKE '!%'
-            ORDER BY RANDOM() 
-            LIMIT 1
-        `, [username]);
+        `;
+        const params = [username];
         
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY RANDOM() LIMIT 1';
+        
+        const message = await this.get(query, params);
         return message;
     }
 
-    async getBongCount(date) {
-        const result = await this.get(
-            'SELECT count FROM bong_counter WHERE date = ?',
-            [date]
-        );
+    async getBongCount(date, roomId = null) {
+        let query = 'SELECT SUM(count) as total FROM bong_counter WHERE date = ?';
+        const params = [date];
         
-        return result ? result.count : 0;
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        const result = await this.get(query, params);
+        return result && result.total ? result.total : 0;
     }
 
-    async incrementBongCount(date) {
+    async incrementBongCount(date, roomId = 'fatpizza') {
         await this.run(`
-            INSERT INTO bong_counter (date, count)
-            VALUES (?, 1)
-            ON CONFLICT(date) DO UPDATE SET
+            INSERT INTO bong_counter (room_id, date, count)
+            VALUES (?, ?, 1)
+            ON CONFLICT(room_id, date) DO UPDATE SET
                 count = count + 1,
                 updated_at = CURRENT_TIMESTAMP
-        `, [date]);
+        `, [roomId, date]);
         
         // Return the new count
-        return await this.getBongCount(date);
+        return await this.getBongCount(date, roomId);
     }
 
-    async logUserBong(username) {
+    async logUserBong(username, roomId = 'fatpizza') {
         const timestamp = Date.now();
         // Calculate hour in UTC+10 (server is UTC-8, so +18 hours)
         const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
@@ -410,8 +475,8 @@ class Database {
         const hour = adjustedTime.getUTCHours();
         
         await this.run(
-            'INSERT INTO user_bongs (username, timestamp, hour) VALUES (?, ?, ?)',
-            [username, timestamp, hour]
+            'INSERT INTO user_bongs (username, timestamp, hour, room_id) VALUES (?, ?, ?, ?)',
+            [username, timestamp, hour, roomId]
         );
         
         // Update session data
@@ -421,101 +486,161 @@ class Database {
         await this.updateBongStreak(username, timestamp);
     }
 
-    async getUserBongCount(username) {
-        const result = await this.get(
-            'SELECT COUNT(*) as count FROM user_bongs WHERE LOWER(username) = LOWER(?)',
-            [username]
-        );
+    async getUserBongCount(username, roomId = null) {
+        let query = 'SELECT COUNT(*) as count FROM user_bongs WHERE LOWER(username) = LOWER(?)';
+        const params = [username];
         
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        const result = await this.get(query, params);
         return result ? result.count : 0;
     }
 
-    async getDrinkCount(date) {
-        const result = await this.get(
-            'SELECT count FROM drink_counter WHERE date = ?',
-            [date]
-        );
+    async getDrinkCount(date, roomId = null) {
+        let query = 'SELECT SUM(count) as total FROM drink_counter WHERE date = ?';
+        const params = [date];
         
-        return result ? result.count : 0;
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        const result = await this.get(query, params);
+        return result && result.total ? result.total : 0;
     }
 
-    async incrementDrinkCount(date) {
+    async incrementDrinkCount(date, roomId = 'fatpizza') {
         await this.run(`
-            INSERT INTO drink_counter (date, count)
-            VALUES (?, 1)
-            ON CONFLICT(date) DO UPDATE SET
+            INSERT INTO drink_counter (room_id, date, count)
+            VALUES (?, ?, 1)
+            ON CONFLICT(room_id, date) DO UPDATE SET
                 count = count + 1,
                 updated_at = CURRENT_TIMESTAMP
-        `, [date]);
+        `, [roomId, date]);
         
         // Return the new count
-        return await this.getDrinkCount(date);
+        return await this.getDrinkCount(date, roomId);
     }
 
-    async logUserDrink(username) {
+    async logUserDrink(username, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(
-            'INSERT INTO user_drinks (username, timestamp) VALUES (?, ?)',
-            [username, timestamp]
+            'INSERT INTO user_drinks (username, timestamp, room_id) VALUES (?, ?, ?)',
+            [username, timestamp, roomId]
         );
     }
 
-    async getUserDrinkCount(username) {
-        const result = await this.get(
-            'SELECT COUNT(*) as count FROM user_drinks WHERE LOWER(username) = LOWER(?)',
-            [username]
-        );
+    async getUserDrinkCount(username, roomId = null) {
+        let query = 'SELECT COUNT(*) as count FROM user_drinks WHERE LOWER(username) = LOWER(?)';
+        const params = [username];
         
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        const result = await this.get(query, params);
         return result ? result.count : 0;
     }
 
-    async getTopTalkers(limit = 10) {
-        return await this.all(`
+    async getTopTalkers(limit = 10, roomId = null) {
+        let query = `
             SELECT username, COUNT(*) as message_count
             FROM messages
             WHERE LOWER(username) NOT IN (?, '[server]')
             AND username NOT LIKE '[%]'
+        `;
+        const params = [this.botUsername];
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += `
             GROUP BY LOWER(username)
             ORDER BY message_count DESC
             LIMIT ?
-        `, [this.botUsername, limit]);
+        `;
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getTopBongUsers(limit = 10) {
+    async getTopBongUsers(limit = 10, roomId = null) {
         // Get users who used !bong the most from dedicated table
-        return await this.all(`
+        let query = `
             SELECT username, COUNT(*) as bong_count
             FROM user_bongs
+        `;
+        const params = [];
+        
+        if (roomId) {
+            query += ' WHERE room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += `
             GROUP BY LOWER(username)
             ORDER BY bong_count DESC
             LIMIT ?
-        `, [limit]);
+        `;
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getTopDrinkers(limit = 10) {
+    async getTopDrinkers(limit = 10, roomId = null) {
         // Get users who used !drink the most from dedicated table
-        return await this.all(`
+        let query = `
             SELECT username, COUNT(*) as drink_count
             FROM user_drinks
+        `;
+        const params = [];
+        
+        if (roomId) {
+            query += ' WHERE room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += `
             GROUP BY LOWER(username)
             ORDER BY drink_count DESC
             LIMIT ?
-        `, [limit]);
+        `;
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getTopQuotedUsers(limit = 10) {
+    async getTopQuotedUsers(limit = 10, roomId = null) {
         // Count non-command messages per user
-        return await this.all(`
+        let query = `
             SELECT username, COUNT(*) as quotable_messages
             FROM messages
             WHERE message NOT LIKE '!%'
             AND LOWER(username) NOT IN (?, '[server]')
             AND username NOT LIKE '[%]'
+        `;
+        const params = [this.botUsername];
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += `
             GROUP BY LOWER(username)
             ORDER BY quotable_messages DESC
             LIMIT ?
-        `, [this.botUsername, limit]);
+        `;
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
     async getTopGamblers(limit = 10) {
@@ -644,28 +769,57 @@ class Database {
         `, [limit]);
     }
 
-    async getChannelStats() {
+    async getChannelStats(roomId = null) {
         // Get various channel statistics
-        const totalMessages = await this.get('SELECT COUNT(*) as count FROM messages');
-        const totalUsers = await this.get('SELECT COUNT(DISTINCT LOWER(username)) as count FROM messages');
-        const messagesLast24h = await this.get(
-            'SELECT COUNT(*) as count FROM messages WHERE timestamp > ?',
-            [Date.now() - 86400000]
-        );
-        const mostActiveHour = await this.get(`
+        let msgQuery = 'SELECT COUNT(*) as count FROM messages';
+        let userQuery = 'SELECT COUNT(DISTINCT LOWER(username)) as count FROM messages';
+        let msg24Query = 'SELECT COUNT(*) as count FROM messages WHERE timestamp > ?';
+        let hourQuery = `
             SELECT strftime('%H', datetime(timestamp/1000, 'unixepoch')) as hour, COUNT(*) as count
             FROM messages
+        `;
+        let bongQuery = 'SELECT SUM(count) as total FROM bong_counter';
+        
+        const msgParams = [];
+        const userParams = [];
+        const msg24Params = [Date.now() - 86400000];
+        const hourParams = [];
+        const bongParams = [];
+        
+        if (roomId) {
+            msgQuery += ' WHERE room_id = ?';
+            msgParams.push(roomId);
+            
+            userQuery += ' WHERE room_id = ?';
+            userParams.push(roomId);
+            
+            msg24Query += ' AND room_id = ?';
+            msg24Params.push(roomId);
+            
+            hourQuery += ' WHERE room_id = ?';
+            hourParams.push(roomId);
+            
+            bongQuery += ' WHERE room_id = ?';
+            bongParams.push(roomId);
+        }
+        
+        hourQuery += `
             GROUP BY hour
             ORDER BY count DESC
             LIMIT 1
-        `);
+        `;
+        
+        const totalMessages = await this.get(msgQuery, msgParams);
+        const totalUsers = await this.get(userQuery, userParams);
+        const messagesLast24h = await this.get(msg24Query, msg24Params);
+        const mostActiveHour = await this.get(hourQuery, hourParams);
         
         // Get today's bong count
         const today = new Date().toDateString();
-        const todayBongs = await this.getBongCount(today);
+        const todayBongs = await this.getBongCount(today, roomId);
         
         // Get total bongs all time
-        const totalBongs = await this.get('SELECT SUM(count) as total FROM bong_counter');
+        const totalBongs = await this.get(bongQuery, bongParams);
         
         return {
             totalMessages: totalMessages.count,
@@ -678,12 +832,12 @@ class Database {
     }
 
     // Reminder methods
-    async addReminder(fromUser, toUser, message, remindAt) {
+    async addReminder(fromUser, toUser, message, remindAt, roomId = 'fatpizza') {
         const createdAt = Date.now();
         
         await this.run(
-            'INSERT INTO reminders (from_user, to_user, message, created_at, remind_at) VALUES (?, ?, ?, ?, ?)',
-            [fromUser, toUser, message, createdAt, remindAt]
+            'INSERT INTO reminders (from_user, to_user, message, created_at, remind_at, room_id) VALUES (?, ?, ?, ?, ?, ?)',
+            [fromUser, toUser, message, createdAt, remindAt, roomId]
         );
     }
 
@@ -703,12 +857,12 @@ class Database {
     }
 
     // Tell methods
-    async addTell(fromUser, toUser, message, viaPm = false) {
+    async addTell(fromUser, toUser, message, viaPm = false, roomId = 'fatpizza') {
         const createdAt = Date.now();
         
         await this.run(
-            'INSERT INTO tells (from_user, to_user, message, created_at, via_pm) VALUES (?, ?, ?, ?, ?)',
-            [fromUser, toUser, message, createdAt, viaPm ? 1 : 0]
+            'INSERT INTO tells (from_user, to_user, message, created_at, via_pm, room_id) VALUES (?, ?, ?, ?, ?, ?)',
+            [fromUser, toUser, message, createdAt, viaPm ? 1 : 0, roomId]
         );
     }
 
@@ -726,14 +880,14 @@ class Database {
         );
     }
 
-    async logUrl(username, urlData, messageId = null) {
+    async logUrl(username, urlData, messageId = null, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(`
             INSERT INTO posted_urls (
                 username, url, normalized_url, domain, 
-                url_type, message_id, timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                url_type, message_id, timestamp, room_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             username,
             urlData.url,
@@ -741,48 +895,103 @@ class Database {
             urlData.domain,
             urlData.type,
             messageId,
-            timestamp
+            timestamp,
+            roomId
         ]);
     }
 
-    async getRecentUrls(limit = 50) {
-        return await this.all(
-            'SELECT * FROM posted_urls ORDER BY timestamp DESC LIMIT ?',
-            [limit]
-        );
+    async getRecentUrls(limit = 50, roomId = null) {
+        let query = 'SELECT * FROM posted_urls';
+        const params = [];
+        
+        if (roomId) {
+            query += ' WHERE room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY timestamp DESC LIMIT ?';
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getUrlsByUser(username, limit = 50) {
-        return await this.all(
-            'SELECT * FROM posted_urls WHERE LOWER(username) = LOWER(?) ORDER BY timestamp DESC LIMIT ?',
-            [username, limit]
-        );
+    async getUrlsByUser(username, limit = 50, roomId = null) {
+        let query = 'SELECT * FROM posted_urls WHERE LOWER(username) = LOWER(?)';
+        const params = [username];
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY timestamp DESC LIMIT ?';
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getUrlsByDomain(domain, limit = 50) {
-        return await this.all(
-            'SELECT * FROM posted_urls WHERE LOWER(domain) = LOWER(?) ORDER BY timestamp DESC LIMIT ?',
-            [domain, limit]
-        );
+    async getUrlsByDomain(domain, limit = 50, roomId = null) {
+        let query = 'SELECT * FROM posted_urls WHERE LOWER(domain) = LOWER(?)';
+        const params = [domain];
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY timestamp DESC LIMIT ?';
+        params.push(limit);
+        
+        return await this.all(query, params);
     }
 
-    async getUrlStats() {
-        const totalUrls = await this.get('SELECT COUNT(*) as count FROM posted_urls');
-        const uniqueDomains = await this.get('SELECT COUNT(DISTINCT domain) as count FROM posted_urls');
-        const topDomains = await this.all(`
+    async getUrlStats(roomId = null) {
+        let urlQuery = 'SELECT COUNT(*) as count FROM posted_urls';
+        let domainQuery = 'SELECT COUNT(DISTINCT domain) as count FROM posted_urls';
+        let topDomainsQuery = `
             SELECT domain, COUNT(*) as count 
-            FROM posted_urls 
+            FROM posted_urls
+        `;
+        let topPostersQuery = `
+            SELECT username, COUNT(*) as count 
+            FROM posted_urls
+        `;
+        
+        const urlParams = [];
+        const domainParams = [];
+        const topDomainsParams = [];
+        const topPostersParams = [];
+        
+        if (roomId) {
+            urlQuery += ' WHERE room_id = ?';
+            urlParams.push(roomId);
+            
+            domainQuery += ' WHERE room_id = ?';
+            domainParams.push(roomId);
+            
+            topDomainsQuery += ' WHERE room_id = ?';
+            topDomainsParams.push(roomId);
+            
+            topPostersQuery += ' WHERE room_id = ?';
+            topPostersParams.push(roomId);
+        }
+        
+        topDomainsQuery += `
             GROUP BY domain 
             ORDER BY count DESC 
             LIMIT 10
-        `);
-        const topPosters = await this.all(`
-            SELECT username, COUNT(*) as count 
-            FROM posted_urls 
+        `;
+        
+        topPostersQuery += `
             GROUP BY username 
             ORDER BY count DESC 
             LIMIT 10
-        `);
+        `;
+        
+        const totalUrls = await this.get(urlQuery, urlParams);
+        const uniqueDomains = await this.get(domainQuery, domainParams);
+        const topDomains = await this.all(topDomainsQuery, topDomainsParams);
+        const topPosters = await this.all(topPostersQuery, topPostersParams);
         
         return {
             totalUrls: totalUrls.count,
@@ -816,36 +1025,36 @@ class Database {
     }
 
     // Bladder management for pissing contest
-    async updateBladder(username, drinkAmount = 1) {
+    async updateBladder(username, drinkAmount = 1, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(`
-            INSERT INTO user_bladder (username, current_amount, last_drink_time, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(username) DO UPDATE SET
+            INSERT INTO user_bladder (username, room_id, current_amount, last_drink_time, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(username, room_id) DO UPDATE SET
                 current_amount = current_amount + ?,
                 last_drink_time = ?,
                 updated_at = ?
-        `, [username, drinkAmount, timestamp, timestamp, drinkAmount, timestamp, timestamp]);
+        `, [username, roomId, drinkAmount, timestamp, timestamp, drinkAmount, timestamp, timestamp]);
     }
 
-    async getBladderState(username) {
+    async getBladderState(username, roomId = 'fatpizza') {
         const result = await this.get(
-            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?)',
-            [username]
+            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?) AND room_id = ?',
+            [username, roomId]
         );
         
         return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
     }
 
-    async resetBladder(username) {
+    async resetBladder(username, roomId = 'fatpizza') {
         const timestamp = Date.now();
         
         await this.run(`
             UPDATE user_bladder
             SET current_amount = 0, last_piss_time = ?, updated_at = ?
-            WHERE LOWER(username) = LOWER(?)
-        `, [timestamp, timestamp, username]);
+            WHERE LOWER(username) = LOWER(?) AND room_id = ?
+        `, [timestamp, timestamp, username, roomId]);
     }
 
     // Pissing contest stats

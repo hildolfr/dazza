@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // PM rejection messages
 const pmRejectionMessages = [
@@ -149,9 +150,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = "economy system's broken, can't mug anyone right now";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -159,12 +160,12 @@ export default new Command({
             // Reject PM usage harshly
             if (message.isPM) {
                 const rejection = pmRejectionMessages[Math.floor(Math.random() * pmRejectionMessages.length)];
-                bot.sendPrivateMessage(message.username, rejection);
+                sendPM(bot, message.username, rejection, message.roomContext || message.roomId);
                 return { success: false };
             }
 
             if (args.length === 0) {
-                bot.sendMessage('who ya muggin? specify a target - !mug <username>');
+                bot.sendMessage(message.roomId, 'who ya muggin? specify a target - !mug <username>');
                 return { success: false };
             }
 
@@ -172,7 +173,7 @@ export default new Command({
             
             // Can't mug yourself
             if (targetUsername === message.username.toLowerCase()) {
-                bot.sendMessage(`-${message.username} tries to mug themselves... what a fuckin idiot`);
+                bot.sendMessage(message.roomId, `-${message.username} tries to mug themselves... what a fuckin idiot`);
                 return { success: false };
             }
 
@@ -192,7 +193,7 @@ export default new Command({
                         `-${message.username} you need ${hours}h ${minutes}m before your next crime spree`
                     ];
                     
-                    bot.sendMessage(cooldownMessages[Math.floor(Math.random() * cooldownMessages.length)]);
+                    bot.sendMessage(message.roomId, cooldownMessages[Math.floor(Math.random() * cooldownMessages.length)]);
                     return { success: false };
                 }
             }
@@ -216,12 +217,12 @@ export default new Command({
                         await bot.heistManager.updateUserEconomy('dazza', -amount, 0);
                         await bot.heistManager.updateUserEconomy(message.username, amount, 5); // +5 trust for balls
                         
-                        bot.sendMessage(`HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
+                        bot.sendMessage(message.roomId, `HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
                         
                         // Update mug stats
-                        await updateMugStats(bot.db, message.username, targetUsername, true, amount);
+                        await updateMugStats(bot.db, message.username, targetUsername, true, amount, message.roomId || 'fatpizza');
                     } else {
-                        bot.sendMessage(`-${message.username} tried to mug dazza but he's broke as usual`);
+                        bot.sendMessage(message.roomId, `-${message.username} tried to mug dazza but he's broke as usual`);
                     }
                 } else {
                     // Dazza reversal - he mugs you back
@@ -239,13 +240,13 @@ export default new Command({
                         reversalMsg = reversalMsg.replace('-attacker', `-${message.username}`);
                         reversalMsg = reversalMsg.replace('-amount', reversalAmount);
                         
-                        bot.sendMessage(`${reversalMsg} (-${message.username} -2 trust)`);
+                        bot.sendMessage(message.roomId, `${reversalMsg} (-${message.username} -2 trust)`);
                         
                         // Update stats
-                        await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount);
+                        await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount, message.roomId || 'fatpizza');
                     } else {
-                        bot.sendMessage(`*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
-                        await updateMugStats(bot.db, message.username, 'dazza', false, 0);
+                        bot.sendMessage(message.roomId, `*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
+                        await updateMugStats(bot.db, message.username, 'dazza', false, 0, message.roomId || 'fatpizza');
                     }
                 }
                 
@@ -253,9 +254,26 @@ export default new Command({
             }
 
             // Check if target exists in the channel
-            const targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
+            let targetInChannel = false;
+            
+            // Multi-room bot check
+            if (message.roomContext && message.roomContext.hasUser) {
+                targetInChannel = message.roomContext.hasUser(targetUsername);
+            } 
+            // Single-room bot fallback
+            else if (bot.userlist && bot.userlist.has) {
+                targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
+            }
+            // Alternative method for getting userlist
+            else if (bot.getUserlistForRoom) {
+                const userlist = bot.getUserlistForRoom(message.roomId);
+                if (userlist && userlist.has) {
+                    targetInChannel = userlist.has(targetUsername.toLowerCase());
+                }
+            }
+            
             if (!targetInChannel) {
-                bot.sendMessage(`can't find ${targetUsername} in here, they probably legged it`);
+                bot.sendMessage(message.roomId, `can't find ${targetUsername} in here, they probably legged it`);
                 return { success: false };
             }
 
@@ -265,21 +283,44 @@ export default new Command({
             
             // Check if victim is broke
             if (victimEcon.balance <= 0) {
-                bot.sendMessage(`-${targetUsername} is already broke as fuck, nothing to mug`);
+                bot.sendMessage(message.roomId, `-${targetUsername} is already broke as fuck, nothing to mug`);
                 return { success: false };
             }
 
             // Check if victim is AFK
-            const victimAFK = bot.isUserAFK(targetUsername);
+            let victimAFK = false;
+            
+            // Multi-room bot check
+            if (message.roomContext && message.roomContext.getUser) {
+                const user = message.roomContext.getUser(targetUsername);
+                if (user) {
+                    victimAFK = user.afk === true || (user.meta && user.meta.afk === true);
+                }
+            }
+            // Single-room bot fallback
+            else if (bot.isUserAFK && typeof bot.isUserAFK === 'function') {
+                victimAFK = bot.isUserAFK(targetUsername);
+            }
+            // Alternative method to check AFK status
+            else if (bot.userlist && bot.userlist.get) {
+                const user = bot.userlist.get(targetUsername.toLowerCase());
+                if (user) {
+                    victimAFK = user.afk === true || (user.meta && user.meta.afk === true);
+                }
+            }
             
             // Announce the mugging attempt (ping the victim)
-            bot.sendMessage(`-${message.username} is trying to mug ${targetUsername}!`);
+            bot.sendMessage(message.roomId, `-${message.username} is trying to mug ${targetUsername}!`);
             
             // Set up response window (60 seconds)
             let victimResponded = false;
             let responseAlertSent = false;
-            const responseHandler = (msg) => {
-                if (msg.username.toLowerCase() === targetUsername.toLowerCase() && !victimResponded) {
+            const responseHandler = (data) => {
+                // For multi-room bot, check roomId matches
+                const isCorrectRoom = data.roomId ? data.roomId === message.roomId : true;
+                const isVictim = data.username && data.username.toLowerCase() === targetUsername.toLowerCase();
+                
+                if (isCorrectRoom && isVictim && !victimResponded) {
                     victimResponded = true;
                     if (!responseAlertSent) {
                         responseAlertSent = true;
@@ -289,18 +330,20 @@ export default new Command({
                             `shit! -${targetUsername} saw ya -${message.username}! they're ready to defend`,
                             `-${targetUsername} spotted the mugging attempt! odds just turned against -${message.username}`
                         ];
-                        bot.sendMessage(alertMessages[Math.floor(Math.random() * alertMessages.length)]);
+                        bot.sendMessage(message.roomId, alertMessages[Math.floor(Math.random() * alertMessages.length)]);
                     }
                 }
             };
             
-            bot.on('userMessage', responseHandler);
+            // Use appropriate event based on bot type
+            const eventName = bot.rooms ? 'chat:message' : 'userMessage';
+            bot.on(eventName, responseHandler);
             
             // Wait 60 seconds for response
             await new Promise(resolve => setTimeout(resolve, 60000));
             
             // Remove the handler
-            bot.removeListener('userMessage', responseHandler);
+            bot.removeListener(eventName, responseHandler);
             
             // Calculate success
             let successChance = calculateSuccessChance(attackerTrust, victimTrust, victimAFK);
@@ -312,18 +355,30 @@ export default new Command({
                 const roll = Math.random();
                 if (roll > successChance) {
                     // Victim successfully defends
-                    const fine = calculateFine();
+                    const attackerBalance = await bot.heistManager.getUserBalance(message.username);
+                    const baseFine = calculateFine();
+                    const fine = Math.min(baseFine, attackerBalance.balance); // Don't fine more than they have
                     const defenseTrustGain = Math.floor(Math.random() * 3) + 1; // 1-3 trust gain
-                    await bot.heistManager.updateUserEconomy(message.username, -fine, -3); // -3 trust severe penalty
+                    
+                    if (fine > 0) {
+                        await bot.heistManager.updateUserEconomy(message.username, -fine, -3); // -3 trust severe penalty
+                    } else {
+                        await bot.heistManager.updateUserEconomy(message.username, 0, -3); // Just trust penalty if broke
+                    }
                     await bot.heistManager.updateUserEconomy(targetUsername, 0, defenseTrustGain); // variable trust for defending
                     
-                    const defendMsg = responseMessages.victimDefends[Math.floor(Math.random() * responseMessages.victimDefends.length)]
-                        .replace('-victim', `-${targetUsername}`)
-                        .replace('-fine', fine);
+                    let defendMsg;
+                    if (fine > 0) {
+                        defendMsg = responseMessages.victimDefends[Math.floor(Math.random() * responseMessages.victimDefends.length)]
+                            .replace('-victim', `-${targetUsername}`)
+                            .replace('-fine', fine);
+                    } else {
+                        defendMsg = `-${targetUsername} fought off -${message.username} who's too broke to pay the fine!`;
+                    }
                     
-                    bot.sendMessage(`${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
+                    bot.sendMessage(message.roomId, `${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
+                    await updateMugStats(bot.db, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
                     return { success: true };
                 }
             }
@@ -352,7 +407,7 @@ export default new Command({
                         .replace('-amount', mugAmount)
                         .replace('-victim', `-${targetUsername}`);
                     
-                    bot.sendMessage(`${successMsg} (-${message.username} +2 trust, -${targetUsername} -1 trust)`);
+                    bot.sendMessage(message.roomId, `${successMsg} (-${message.username} +2 trust, -${targetUsername} -1 trust)`);
                     
                     // Mock if zeroed out
                     if (newVictimBalance.balance === 0) {
@@ -360,49 +415,61 @@ export default new Command({
                             const mockMsg = brokeVictimMockery[Math.floor(Math.random() * brokeVictimMockery.length)]
                                 .replace('-victim', `-${targetUsername}`)
                                 .replace('-attacker', `-${message.username}`);
-                            bot.sendMessage(mockMsg);
+                            bot.sendMessage(message.roomId, mockMsg);
                         }, 2000);
                     }
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, true, mugAmount);
+                    await updateMugStats(bot.db, message.username, targetUsername, true, mugAmount, message.roomId || 'fatpizza');
                 }
             } else {
                 // Failed mug
-                const fine = calculateFine();
-                await bot.heistManager.updateUserEconomy(message.username, -fine, -2); // -2 trust for failure
+                const attackerBalance = await bot.heistManager.getUserBalance(message.username);
+                const baseFine = calculateFine();
+                const fine = Math.min(baseFine, attackerBalance.balance); // Don't fine more than they have
+                
+                if (fine > 0) {
+                    await bot.heistManager.updateUserEconomy(message.username, -fine, -2); // -2 trust for failure
+                } else {
+                    await bot.heistManager.updateUserEconomy(message.username, 0, -2); // Just trust penalty if broke
+                }
                 
                 // Select failure message based on trust levels
                 let msgCategory = 'equalTrust';
                 if (attackerTrust < victimTrust - 20) msgCategory = 'lowTrust';
                 else if (attackerTrust > victimTrust + 20) msgCategory = 'highTrust';
                 
-                let failMsg = failureMessages[msgCategory][Math.floor(Math.random() * failureMessages[msgCategory].length)]
-                    .replace('-victim', `-${targetUsername}`)
-                    .replace('-fine', fine);
+                let failMsg;
+                if (fine > 0) {
+                    failMsg = failureMessages[msgCategory][Math.floor(Math.random() * failureMessages[msgCategory].length)]
+                        .replace('-victim', `-${targetUsername}`)
+                        .replace('-fine', fine);
+                } else {
+                    failMsg = `-${message.username} failed to mug -${targetUsername} and is too broke to pay the fine!`;
+                }
                 
-                bot.sendMessage(`${failMsg} (-${message.username} -2 trust)`);
+                bot.sendMessage(message.roomId, `${failMsg} (-${message.username} -2 trust)`);
                 
-                await updateMugStats(bot.db, message.username, targetUsername, false, -fine);
+                await updateMugStats(bot.db, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
             }
 
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Mug command error:', error);
-            bot.sendMessage('something went wrong with the mugging');
+            bot.logger.error('Mug command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'something went wrong with the mugging');
             return { success: false };
         }
     }
 });
 
 // Helper function to update mug statistics
-async function updateMugStats(db, attacker, victim, success, amount) {
+async function updateMugStats(db, attacker, victim, success, amount, roomId = 'fatpizza') {
     if (!db) return;
     
     try {
         const now = Date.now();
         
-        // Update attacker stats
+        // Update attacker stats (without room_id since table doesn't have it)
         await db.run(`
             INSERT INTO mug_stats (username, total_mugs, successful_mugs, failed_mugs, total_stolen, total_lost, last_played)
             VALUES (?, 1, ?, ?, ?, ?, ?)
@@ -449,9 +516,9 @@ async function updateMugStats(db, attacker, victim, success, amount) {
         
         // Log transaction
         await db.run(`
-            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-            VALUES (?, ?, 'mug', ?, ?)
-        `, [attacker, amount, success ? `Mugged ${victim}` : `Failed to mug ${victim}`, now]);
+            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+            VALUES (?, ?, 'mug', ?, ?, ?)
+        `, [attacker, amount, success ? `Mugged ${victim}` : `Failed to mug ${victim}`, roomId, now]);
         
     } catch (error) {
         console.error('Failed to update mug stats:', error);

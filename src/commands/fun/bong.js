@@ -18,10 +18,10 @@ export default new Command({
         try {
             // Log user bong with normalized username
             const canonicalUsername = await normalizeUsernameForDb(bot, message.username);
-            await bot.db.logUserBong(canonicalUsername);
+            await bot.db.logUserBong(canonicalUsername, message.roomId);
             
             // Increment daily counter
-            newCount = await bot.db.incrementBongCount(today);
+            newCount = await bot.db.incrementBongCount(today, message.roomId);
         } catch (error) {
             console.error('Failed to update bong counter:', error);
         }
@@ -45,16 +45,16 @@ export default new Command({
         ];
         
         const response = bongResponses[Math.floor(Math.random() * bongResponses.length)];
-        bot.sendMessage(response);
+        bot.sendMessage(message.roomId, response);
         
         // Special messages for milestones
         if (newCount % 50 === 0 && newCount > 0) {
             setTimeout(() => {
-                bot.sendMessage(`fuckin hell lads, that's ${newCount} cones today! I think I can see through time`);
+                bot.sendMessage(message.roomId, `fuckin hell lads, that's ${newCount} cones today! I think I can see through time`);
             }, 2000);
         } else if (newCount % 25 === 0 && newCount > 0) {
             setTimeout(() => {
-                bot.sendMessage(`${newCount} billies! me lungs are fucked but we soldier on`);
+                bot.sendMessage(message.roomId, `${newCount} billies! me lungs are fucked but we soldier on`);
             }, 2000);
         }
         

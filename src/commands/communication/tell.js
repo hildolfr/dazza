@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { getCanonicalUsername } from '../../utils/usernameNormalizer.js';
+import { sendPM, respond } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'tell',
@@ -12,11 +13,7 @@ export default new Command({
     async handler(bot, message, args) {
         if (args.length < 2) {
             const msg = 'usage: !tell <username> <message>';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
@@ -26,30 +23,22 @@ export default new Command({
         // Check if user is trying to tell themselves
         if (targetUser.toLowerCase() === message.username.toLowerCase()) {
             const msg = 'just talk to yourself in your head mate';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
         // Check if user is trying to tell the bot
         if (targetUser.toLowerCase() === bot.config.bot.username.toLowerCase()) {
             const msg = 'mate I\'m not gonna talk to meself, that\'s cooked';
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, msg);
-            } else {
-                bot.sendMessage(msg);
-            }
+            respond(bot, message, msg);
             return { success: true };
         }
         
         // Check if user is online
-        const onlineUser = bot.userlist.get(targetUser.toLowerCase());
+        const onlineUser = message.roomContext.userlist.get(targetUser.toLowerCase());
         if (onlineUser) {
             // Check if they're AFK
-            if (bot.isUserAFK(targetUser)) {
+            if (message.roomContext.isUserAFK(targetUser)) {
                 // User is AFK, proceed with saving the message
                 const afkResponses = [
                     `${targetUser}'s afk right now, I'll tell 'em when they get back`,
@@ -71,11 +60,7 @@ export default new Command({
                     `-${targetUser}'s right here ya muppet`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, msg.replace('-', '')); // Remove - prefix in PMs
-                } else {
-                    bot.sendMessage(msg);
-                }
+                respond(bot, message, message.isPM ? msg.replace('-', '') : msg);
                 return { success: true };
             }
         }
@@ -95,23 +80,19 @@ export default new Command({
                     `can't do it mate, -${targetUser}'s inbox is full with one from -${existingFrom}`
                 ];
                 const msg = responses[Math.floor(Math.random() * responses.length)];
-                if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, msg.replace(/-/g, '')); // Remove all - prefixes in PMs
-                } else {
-                    bot.sendMessage(msg);
-                }
+                respond(bot, message, message.isPM ? msg.replace(/-/g, '') : msg);
                 return { success: true };
             }
             
             // Store tell with normalized usernames and PM flag if sent via PM
             const canonicalFrom = await getCanonicalUsername(bot, message.username);
             const canonicalTo = await getCanonicalUsername(bot, targetUser);
-            await bot.db.addTell(canonicalFrom, canonicalTo, tellMessage, message.isPM || false);
+            await bot.db.addTell(canonicalFrom, canonicalTo, tellMessage, message.isPM || false, message.roomId);
             
             // Only send public confirmation if not initiated via PM
             if (!message.isPM) {
                 // Use appropriate confirmation based on whether user is AFK or not
-                if (onlineUser && bot.isUserAFK(targetUser)) {
+                if (onlineUser && message.roomContext.isUserAFK(targetUser)) {
                     const afkResponses = [
                         `-${targetUser}'s afk right now, I'll tell 'em when they get back`,
                         `looks like -${targetUser}'s gone for a dart, I'll pass it on when they return`,
@@ -119,7 +100,7 @@ export default new Command({
                         `-${targetUser}'s not at their desk, I'll tell 'em when they wake up`,
                         `-${targetUser}'s afk, might be on the dunny. I'll give 'em the message`
                     ];
-                    bot.sendMessage(afkResponses[Math.floor(Math.random() * afkResponses.length)]);
+                    bot.sendMessage(message.roomId, afkResponses[Math.floor(Math.random() * afkResponses.length)]);
                 } else {
                     const confirmResponses = [
                         `no worries mate, I'll tell -${targetUser} when they rock up`,
@@ -128,22 +109,18 @@ export default new Command({
                         `roger that, -${targetUser} will get the memo`,
                         `sweet as, I'll let -${targetUser} know`
                     ];
-                    bot.sendMessage(confirmResponses[Math.floor(Math.random() * confirmResponses.length)]);
+                    bot.sendMessage(message.roomId, confirmResponses[Math.floor(Math.random() * confirmResponses.length)]);
                 }
             } else {
                 // PM confirmation for PM-initiated tells
-                bot.sendPrivateMessage(message.username, `I'll deliver your message to ${targetUser} privately when they show up`);
+                sendPM(bot, message.username, `I'll deliver your message to ${targetUser} privately when they show up`, message.roomContext || message.roomId);
             }
             
             return { success: true };
         } catch (error) {
             console.error('Tell command error:', error);
             const errorMsg = bot.personality.getResponse('error');
-            if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
-            } else {
-                bot.sendMessage(errorMsg);
-            }
+            respond(bot, message, errorMsg);
             return { success: false };
         }
     }

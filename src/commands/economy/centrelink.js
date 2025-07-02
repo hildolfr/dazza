@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Dole payment excuses/reasons when you get paid
 const paymentReasons = [
@@ -115,9 +116,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'Centrelink system is down for maintenance (surprise surprise)';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -141,9 +142,9 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, '')); // Remove - prefixes in PMs
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId); // Remove - prefixes in PMs
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -158,7 +159,7 @@ export default new Command({
                     `Running -${message.username} through the system, PMing the outcome`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
             
             // Check for rare payments first (0.5-1% chance)
@@ -238,12 +239,12 @@ export default new Command({
             }
             
             // Send the PM with all details
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Handle public announcements
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -285,11 +286,11 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing centrelink rewards:', error);
+                        bot.logger.error('Error sharing centrelink rewards:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -297,12 +298,12 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Centrelink command error:', error);
+            bot.logger.error('Centrelink command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Centrelink computer crashed. Standard Monday really.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

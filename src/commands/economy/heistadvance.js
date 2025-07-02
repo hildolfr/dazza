@@ -22,7 +22,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendMessage('heist system not initialized yet');
+                bot.sendMessage(message.roomId, 'heist system not initialized yet');
                 return { success: false };
             }
 
@@ -37,11 +37,11 @@ export default new Command({
 
             switch (currentState) {
                 case hm.states.IDLE:
-                    bot.sendMessage('heist is idle - use !forceheist to start one');
+                    bot.sendMessage(message.roomId, 'heist is idle - use !forceheist to start one');
                     return { success: false };
 
                 case hm.states.VOTING:
-                    bot.sendMessage('advancing: ending voting phase and executing heist');
+                    bot.sendMessage(message.roomId, 'advancing: ending voting phase and executing heist');
                     bot.logger.info(`Heist voting phase force-advanced by ${message.username}`);
                     
                     // Make sure we're still in voting state before executing
@@ -51,7 +51,7 @@ export default new Command({
                     break;
 
                 case hm.states.IN_PROGRESS:
-                    bot.sendMessage('advancing: completing heist immediately');
+                    bot.sendMessage(message.roomId, 'advancing: completing heist immediately');
                     bot.logger.info(`Heist in-progress phase force-advanced by ${message.username}`);
                     
                     // Get the current crime
@@ -64,17 +64,17 @@ export default new Command({
                         if (crime && hm.currentState === hm.states.IN_PROGRESS) {
                             await hm.completeHeist(crime);
                         } else {
-                            bot.sendMessage('warning: could not find crime data');
+                            bot.sendMessage(message.roomId, 'warning: could not find crime data');
                             return { success: false };
                         }
                     } else {
-                        bot.sendMessage('error: no crime in progress');
+                        bot.sendMessage(message.roomId, 'error: no crime in progress');
                         return { success: false };
                     }
                     break;
 
                 case hm.states.COOLDOWN:
-                    bot.sendMessage('advancing: ending cooldown and scheduling next heist');
+                    bot.sendMessage(message.roomId, 'advancing: ending cooldown and scheduling next heist');
                     bot.logger.info(`Heist cooldown phase force-advanced by ${message.username}`);
                     
                     // End cooldown and go to idle
@@ -83,22 +83,22 @@ export default new Command({
                     break;
 
                 case hm.states.ANNOUNCING:
-                    bot.sendMessage('heist is currently announcing - wait a moment');
+                    bot.sendMessage(message.roomId, 'heist is currently announcing - wait a moment');
                     return { success: false };
 
                 case hm.states.DISTRIBUTING:
-                    bot.sendMessage('heist is currently distributing rewards - wait a moment');
+                    bot.sendMessage(message.roomId, 'heist is currently distributing rewards - wait a moment');
                     return { success: false };
 
                 default:
-                    bot.sendMessage(`unknown heist state: ${currentState}`);
+                    bot.sendMessage(message.roomId, `unknown heist state: ${currentState}`);
                     return { success: false };
             }
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Heist advance command error:', error);
-            bot.sendMessage('failed to advance heist: ' + error.message);
+            bot.logger.error('Heist advance command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'failed to advance heist: ' + error.message);
             return { success: false };
         }
     }

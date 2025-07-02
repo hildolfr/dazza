@@ -279,9 +279,6 @@ function renderCategoryDetails(username, category, data) {
         case 'talkers':
             content += renderTalkerStats(data, username);
             break;
-        case 'quoted':
-            content += renderQuotedStats(data, username);
-            break;
         default:
             content += renderBasicStats(data, username);
     }
@@ -3551,7 +3548,6 @@ function getCategoryTitle(category) {
         talkers: 'Top Yappers',
         bongs: '🌿 Most Cooked Cunts',
         drinks: '🍺 Top Piss-heads',
-        quoted: '💬 Quotable Legends',
         gamblers: '🎰 Lucky Bastards',
         fishing: '🎣 Master Baiters',
         bottles: '♻️ Eco Warriors',

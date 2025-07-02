@@ -8,13 +8,24 @@ export class PissingContestManager {
     constructor(bot) {
         this.bot = bot;
         this.db = bot.db;
-        this.activeChallenges = new Map(); // challenger -> challenge data
-        this.cooldowns = new Map(); // username -> timestamp
+        this.activeChallenges = new Map(); // roomId -> Map(challenger -> challenge data)
+        this.cooldowns = new Map(); // roomId -> Map(username -> timestamp)
+        this.defaultRoom = 'fatpizza';
+    }
+
+    // Get or create room-specific map
+    getRoomMap(map, roomId) {
+        const room = roomId || this.defaultRoom;
+        if (!map.has(room)) {
+            map.set(room, new Map());
+        }
+        return map.get(room);
     }
 
     // Check if user is on cooldown
-    checkCooldown(username) {
-        const lastPlayed = this.cooldowns.get(username);
+    checkCooldown(username, roomId) {
+        const roomCooldowns = this.getRoomMap(this.cooldowns, roomId);
+        const lastPlayed = roomCooldowns.get(username);
         if (!lastPlayed) return { allowed: true };
         
         const timeSince = Date.now() - lastPlayed;
@@ -29,13 +40,13 @@ export class PissingContestManager {
     }
 
     // Create a new challenge
-    async createChallenge(challenger, challenged, amount) {
+    async createChallenge(challenger, challenged, amount, roomId) {
         // Normalize usernames
         const normalizedChallenger = await normalizeUsernameForDb(this.bot, challenger);
         const normalizedChallenged = await normalizeUsernameForDb(this.bot, challenged);
         
         // Check cooldown
-        const cooldown = this.checkCooldown(normalizedChallenger);
+        const cooldown = this.checkCooldown(normalizedChallenger, roomId);
         if (!cooldown.allowed) {
             return {
                 success: false,
@@ -43,8 +54,9 @@ export class PissingContestManager {
             };
         }
         
-        // Check if challenger has active challenge
-        if (this.activeChallenges.has(normalizedChallenger)) {
+        // Check if challenger has active challenge in this room
+        const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+        if (roomChallenges.has(normalizedChallenger)) {
             return {
                 success: false,
                 message: "ya already got ya dick out mate, finish that contest first"
@@ -69,17 +81,19 @@ export class PissingContestManager {
             amount,
             created_at: Date.now(),
             expires_at: Date.now() + 30000, // 30 second timeout
-            status: 'pending'
+            status: 'pending',
+            roomId: roomId || this.defaultRoom
         };
         
         // Store challenge
-        this.activeChallenges.set(normalizedChallenger, challenge);
+        roomChallenges.set(normalizedChallenger, challenge);
         
         // Set timeout to expire challenge
         setTimeout(() => {
-            if (this.activeChallenges.get(normalizedChallenger)?.status === 'pending') {
-                this.activeChallenges.delete(normalizedChallenger);
-                this.bot.sendMessage(`-${challenger} got stood up! Nobody wants to see that tiny thing`);
+            const currentRoomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+            if (currentRoomChallenges.get(normalizedChallenger)?.status === 'pending') {
+                currentRoomChallenges.delete(normalizedChallenger);
+                this.bot.sendMessage(`-${challenger} got stood up! Nobody wants to see that tiny thing`, roomId);
             }
         }, 30000);
         
@@ -90,9 +104,11 @@ export class PissingContestManager {
     }
 
     // Find challenge where user is the challenged party
-    findChallengeForUser(username) {
+    findChallengeForUser(username, roomId) {
         const normalized = username.toLowerCase();
-        for (const [challenger, challenge] of this.activeChallenges.entries()) {
+        const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+        
+        for (const [challenger, challenge] of roomChallenges.entries()) {
             if (challenge.challenged.toLowerCase() === normalized && challenge.status === 'pending') {
                 return challenge;
             }
@@ -101,8 +117,8 @@ export class PissingContestManager {
     }
 
     // Accept a challenge
-    async acceptChallenge(username) {
-        const challenge = this.findChallengeForUser(username);
+    async acceptChallenge(username, roomId) {
+        const challenge = this.findChallengeForUser(username, roomId);
         if (!challenge) {
             return {
                 success: false,
@@ -111,7 +127,7 @@ export class PissingContestManager {
         }
         
         // Check cooldown for challenged player
-        const cooldown = this.checkCooldown(challenge.challenged);
+        const cooldown = this.checkCooldown(challenge.challenged, roomId);
         if (!cooldown.allowed) {
             return {
                 success: false,
@@ -123,7 +139,8 @@ export class PissingContestManager {
         if (challenge.amount > 0) {
             const balance = await this.bot.heistManager.getUserBalance(username);
             if (balance.balance < challenge.amount) {
-                this.activeChallenges.delete(challenge.challenger);
+                const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+                roomChallenges.delete(challenge.challenger);
                 return {
                     success: false,
                     message: `ya need $${challenge.amount} to accept mate, you've only got $${balance.balance}`
@@ -140,8 +157,8 @@ export class PissingContestManager {
     }
 
     // Decline a challenge
-    async declineChallenge(username) {
-        const challenge = this.findChallengeForUser(username);
+    async declineChallenge(username, roomId) {
+        const challenge = this.findChallengeForUser(username, roomId);
         if (!challenge) {
             return {
                 success: false,
@@ -150,7 +167,8 @@ export class PissingContestManager {
         }
         
         // Remove challenge
-        this.activeChallenges.delete(challenge.challenger);
+        const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+        roomChallenges.delete(challenge.challenger);
         
         return {
             success: true,
@@ -160,14 +178,16 @@ export class PissingContestManager {
 
     // Run the actual contest
     async runContest(challenge) {
-        const { challenger, challenged, amount } = challenge;
+        const { challenger, challenged, amount, roomId } = challenge;
         
         // Remove from active challenges
-        this.activeChallenges.delete(challenger);
+        const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
+        roomChallenges.delete(challenger);
         
         // Set cooldowns
-        this.cooldowns.set(challenger, Date.now());
-        this.cooldowns.set(challenged, Date.now());
+        const roomCooldowns = this.getRoomMap(this.cooldowns, roomId);
+        roomCooldowns.set(challenger, Date.now());
+        roomCooldowns.set(challenged, Date.now());
         
         // Quick acceptance message
         const acceptMessages = [
@@ -177,7 +197,7 @@ export class PissingContestManager {
             "you're gonna lose mate!",
             "whip em out lads!"
         ];
-        this.bot.sendMessage(acceptMessages[Math.floor(Math.random() * acceptMessages.length)]);
+        this.bot.sendMessage(acceptMessages[Math.floor(Math.random() * acceptMessages.length)], roomId);
         
         // Roll characteristics
         const challengerChar = getRandomCharacteristic();
@@ -209,7 +229,7 @@ export class PissingContestManager {
         
         // Build announcement after brief delay
         setTimeout(() => {
-            this.announceMatchup(challenger, challenged, challengerChar, challengedChar, location, weather, amount, challengerCondition, challengedCondition);
+            this.announceMatchup(challenger, challenged, challengerChar, challengedChar, location, weather, amount, challengerCondition, challengedCondition, roomId);
         }, 1500);
         
         // Show single waiting message during contest
@@ -277,7 +297,7 @@ export class PissingContestManager {
                 "*the sound of pure determination*",
                 "This is what peak performance looks like"
             ];
-            this.bot.sendMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
+            this.bot.sendMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)], roomId);
         }, 15000);
         
         // Calculate results after 30 seconds
@@ -289,7 +309,7 @@ export class PissingContestManager {
     }
 
     // Announce the matchup
-    announceMatchup(challenger, challenged, charA, charB, location, weather, amount, conditionA, conditionB) {
+    announceMatchup(challenger, challenged, charA, charB, location, weather, amount, conditionA, conditionB, roomId) {
         // Check if both have conditions for two-line format
         const bothHaveConditions = conditionA && conditionB;
         
@@ -319,29 +339,29 @@ export class PissingContestManager {
             announcement += ` 🏆`;
         }
         
-        this.bot.sendMessage(announcement);
+        this.bot.sendMessage(announcement, roomId);
         
         // If both have conditions, announce them on second line
         if (bothHaveConditions) {
             setTimeout(() => {
-                this.bot.sendMessage(`Conditions: -${challenger} [*${conditionA.name}*], -${challenged} [*${conditionB.name}*]`);
+                this.bot.sendMessage(`Conditions: -${challenger} [*${conditionA.name}*], -${challenged} [*${conditionB.name}*]`, roomId);
             }, 500);
         }
         
         // Announce weather after brief delay
         setTimeout(() => {
-            this.bot.sendMessage(`${formatWeather(weather)} - ${weather.special ? weather.special.message : location.description}`);
+            this.bot.sendMessage(`${formatWeather(weather)} - ${weather.special ? weather.special.message : location.description}`, roomId);
         }, bothHaveConditions ? 2000 : 1500);
         
         // Force commentary for certain matchups
         if (shouldForceCommentary(charA, charB)) {
             setTimeout(() => {
-                this.addDazzaCommentary(charA, charB);
+                this.addDazzaCommentary(charA, charB, roomId);
             }, bothHaveConditions ? 3500 : 3000);
         } else if (Math.random() < 0.4) {
             // 40% chance for random generic commentary
             setTimeout(() => {
-                this.addRandomDazzaCommentary();
+                this.addRandomDazzaCommentary(roomId);
             }, bothHaveConditions ? 3500 : 3000);
         }
     }
@@ -351,8 +371,8 @@ export class PissingContestManager {
         const { challenger, challenged, amount } = challenge;
         
         // Get bladder states
-        const challengerBladder = await this.getBladderState(challenger);
-        const challengedBladder = await this.getBladderState(challenged);
+        const challengerBladder = await this.getBladderState(challenger, challenge.roomId);
+        const challengedBladder = await this.getBladderState(challenged, challenge.roomId);
         
         // Calculate base stats for each player
         let challengerStats = this.calculateBaseStats(challengerBladder);
@@ -408,7 +428,7 @@ export class PissingContestManager {
         await this.handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather);
         
         // Check for special events
-        this.checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged);
+        this.checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged, challenge.roomId);
     }
 
     // Calculate base stats from bladder
@@ -480,6 +500,8 @@ export class PissingContestManager {
 
     // Display contest results
     displayResults(winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, challenge) {
+        const roomId = challenge.roomId;
+        
         // Format stats
         const formatStats = (stats) => {
             return `📏${stats.distance.toFixed(1)}m 💧${Math.round(stats.volume)}mL 🎯${Math.round(stats.aim)}% ⏱️${Math.round(stats.duration)}s`;
@@ -490,34 +512,34 @@ export class PissingContestManager {
         const loserChar = winner === challenge.challenger ? charB : charA;
         
         // Winner announcement with boxing-style naming
-        this.bot.sendMessage(`${formatStats(winnerStats)} **[${winnerScore}]**`);
-        this.bot.sendMessage(`🏆 -${winner} '${winnerChar.name}' fuckin WINS with ${winnerScore} points!`);
+        this.bot.sendMessage(`${formatStats(winnerStats)} **[${winnerScore}]**`, roomId);
+        this.bot.sendMessage(`🏆 -${winner} '${winnerChar.name}' fuckin WINS with ${winnerScore} points!`, roomId);
         
         // Loser stats with boxing-style naming
         setTimeout(() => {
-            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} '${loserChar.name}' got smashed!`);
+            this.bot.sendMessage(`${formatStats(loserStats)} **[${loserScore}]** - -${loser} '${loserChar.name}' got smashed!`, roomId);
         }, 1500);
         
         // Add contextual commentary
         setTimeout(() => {
-            this.addContextualCommentary(winnerStats, loserStats, winnerScore, loserScore, charA, charB);
+            this.addContextualCommentary(winnerStats, loserStats, winnerScore, loserScore, charA, charB, roomId);
         }, 3000);
     }
 
     // Handle failures
     async handleFailures(challenge, challengerFailed, challengedFailed, challengerCond, challengedCond) {
-        const { challenger, challenged, amount } = challenge;
+        const { challenger, challenged, amount, roomId } = challenge;
         
         if (challengerFailed && challengedFailed) {
             // Check if it's the same mutual condition
             if (challengerCond.name === challengedCond.name && challengerCond.mutual) {
                 // Mutual failure - announce once
-                this.bot.sendMessage(`Both cunts ${challengerCond.message}!`);
-                this.bot.sendMessage("No winner! What a fuckin embarrassment!");
+                this.bot.sendMessage(`Both cunts ${challengerCond.message}!`, roomId);
+                this.bot.sendMessage("No winner! What a fuckin embarrassment!", roomId);
             } else {
                 // Different failures
-                this.bot.sendMessage(`Both cunts failed! -${challenger} ${challengerCond.message} and -${challenged} ${challengedCond.message}!`);
-                this.bot.sendMessage("No winner! What a fuckin embarrassment!");
+                this.bot.sendMessage(`Both cunts failed! -${challenger} ${challengerCond.message} and -${challenged} ${challengedCond.message}!`, roomId);
+                this.bot.sendMessage("No winner! What a fuckin embarrassment!", roomId);
             }
             return;
         }
@@ -529,7 +551,7 @@ export class PissingContestManager {
         try {
             if (amount > 0) {
                 await this.bot.heistManager.transferMoney(loser, winner, amount);
-                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS $${amount}!`);
+                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS $${amount}!`, roomId);
             } else {
             const bragMessages = [
                 "What a fuckin pussy!",
@@ -549,7 +571,7 @@ export class PissingContestManager {
                 "Couldn't handle the pressure!"
             ];
                 const bragMessage = bragMessages[Math.floor(Math.random() * bragMessages.length)];
-                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS by default! ${bragMessage}`);
+                this.bot.sendMessage(`💦 -${loser} ${loserCond.message}! -${winner} WINS by default! ${bragMessage}`, roomId);
             }
             
             // Update stats
@@ -557,19 +579,19 @@ export class PissingContestManager {
             await this.updateStats(loser, false, amount, null);
         } catch (error) {
             console.error('Error handling pissing contest failure:', error);
-            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
+            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done', roomId);
         }
     }
 
     // Handle match outcome
     async handleOutcome(challenge, winner, loser, winnerStats, loserStats, winnerScore, loserScore, charA, charB, location, weather) {
-        const { amount } = challenge;
+        const { amount, roomId } = challenge;
         
         try {
             // Transfer money if betting
             if (amount > 0) {
                 await this.bot.heistManager.transferMoney(loser, winner, amount);
-                this.bot.sendMessage(`💰 -${winner} wins $${amount} from -${loser}!`);
+                this.bot.sendMessage(`💰 -${winner} wins $${amount} from -${loser}!`, roomId);
             }
             
             // Update stats
@@ -584,12 +606,12 @@ export class PissingContestManager {
             await this.updateAnalytics(loser);
         } catch (error) {
             console.error('Error handling pissing contest outcome:', error);
-            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
+            this.bot.sendMessage('somethin went wrong with the payout, but the contest is done', roomId);
         }
     }
 
     // Add Dazza commentary
-    addDazzaCommentary(charA, charB) {
+    addDazzaCommentary(charA, charB, roomId) {
         const comments = {
             size_mismatch: [
                 "Fuckin hell, that's David and Goliath of dicks right there",
@@ -649,11 +671,11 @@ export class PissingContestManager {
             return; // No special commentary
         }
         
-        this.bot.sendMessage(`Dazza: "${commentary[Math.floor(Math.random() * commentary.length)]}"`);
+        this.bot.sendMessage(`Dazza: "${commentary[Math.floor(Math.random() * commentary.length)]}"`, roomId);
     }
 
     // Add random generic Dazza commentary
-    addRandomDazzaCommentary() {
+    addRandomDazzaCommentary(roomId) {
         const genericComments = [
             "I've seen enough dicks for one day",
             "This is why I drink",
@@ -715,11 +737,11 @@ export class PissingContestManager {
             "That's more skin than a chicken drumstick"
         ];
         
-        this.bot.sendMessage(`Dazza: "${genericComments[Math.floor(Math.random() * genericComments.length)]}"`);
+        this.bot.sendMessage(`Dazza: "${genericComments[Math.floor(Math.random() * genericComments.length)]}"`, roomId);
     }
 
     // Add contextual commentary based on results
-    addContextualCommentary(winnerStats, loserStats, winnerScore, loserScore, charA, charB) {
+    addContextualCommentary(winnerStats, loserStats, winnerScore, loserScore, charA, charB, roomId) {
         const comments = [];
         
         // Size mismatches
@@ -751,21 +773,17 @@ export class PissingContestManager {
         }
         
         if (comments.length > 0) {
-            this.bot.sendMessage(comments[Math.floor(Math.random() * comments.length)]);
+            this.bot.sendMessage(comments[Math.floor(Math.random() * comments.length)], roomId);
         }
     }
 
     // Get bladder state from database
-    async getBladderState(username) {
+    async getBladderState(username, roomId = 'fatpizza') {
         const normalized = await normalizeUsernameForDb(this.bot, username);
         
         try {
-            const row = await this.db.get(
-                'SELECT current_amount FROM user_bladder WHERE username = ?',
-                [normalized]
-            );
-            
-            return row ? row.current_amount : 0;
+            const bladderState = await this.db.getBladderState(normalized, roomId);
+            return bladderState.current_amount || 0;
         } catch (error) {
             console.error('Error getting bladder state:', error);
             return 0;
@@ -903,13 +921,13 @@ export class PissingContestManager {
     }
 
     // Check for special events
-    checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged) {
+    checkSpecialEvents(location, weather, challengerStats, challengedStats, challengerCondition, challengedCondition, challenger, challenged, roomId) {
         // Location events
         const locationEvents = checkLocationEvents(location);
         for (const event of locationEvents) {
             if (event.type === 'fine' && event.message) {
                 setTimeout(() => {
-                    this.bot.sendMessage(event.message);
+                    this.bot.sendMessage(event.message, roomId);
                 }, 4500);
             }
         }
@@ -919,7 +937,7 @@ export class PissingContestManager {
         for (const event of weatherEvents) {
             if (event.message) {
                 setTimeout(() => {
-                    this.bot.sendMessage(event.message);
+                    this.bot.sendMessage(event.message, roomId);
                 }, 5000);
             }
         }
@@ -929,10 +947,10 @@ export class PissingContestManager {
             setTimeout(async () => {
                 try {
                     await this.bot.heistManager.deductMoney(challenger, challengerCondition.fine);
-                    this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`);
+                    this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`, roomId);
                 } catch (error) {
                     console.error('Error deducting fine from challenger:', error);
-                    this.bot.sendMessage(`tried to fine -${challenger} but somethin went wrong`);
+                    this.bot.sendMessage(`tried to fine -${challenger} but somethin went wrong`, roomId);
                 }
             }, 6000);
         }
@@ -941,10 +959,10 @@ export class PissingContestManager {
             setTimeout(async () => {
                 try {
                     await this.bot.heistManager.deductMoney(challenged, challengedCondition.fine);
-                    this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`);
+                    this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`, roomId);
                 } catch (error) {
                     console.error('Error deducting fine from challenged:', error);
-                    this.bot.sendMessage(`tried to fine -${challenged} but somethin went wrong`);
+                    this.bot.sendMessage(`tried to fine -${challenged} but somethin went wrong`, roomId);
                 }
             }, 6500);
         }

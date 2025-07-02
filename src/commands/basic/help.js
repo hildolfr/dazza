@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'help',
@@ -18,7 +19,7 @@ export default new Command({
             const command = bot.commands.get(commandName);
             
             if (!command) {
-                bot.sendMessage(`fuckin command "${commandName}" doesn't exist mate`);
+                bot.sendMessage(message.roomId, `fuckin command "${commandName}" doesn't exist mate`);
                 return { success: true };
             }
             
@@ -26,7 +27,7 @@ export default new Command({
             if (command.usage) helpText += ` | Usage: ${command.usage}`;
             if (command.aliases.length > 0) helpText += ` | Aliases: ${command.aliases.join(', ')}`;
             
-            bot.sendMessage(helpText);
+            bot.sendMessage(message.roomId, helpText);
         } else {
             // Link to the GitHub-hosted command manual
             const manualUrl = 'https://hildolfr.github.io/dazza/commands.html';
@@ -41,10 +42,10 @@ export default new Command({
             ];
             
             const response = publicResponses[Math.floor(Math.random() * publicResponses.length)];
-            bot.sendMessage(response);
+            bot.sendMessage(message.roomId, response);
             
             // Send PM with the manual link
-            bot.sendPrivateMessage(message.username, `G'day mate! Here's me full command manual: ${manualUrl} 🍺`);
+            sendPM(bot, message.username, `G'day mate! Here's me full command manual: ${manualUrl} 🍺`, message.roomContext || message.roomId);
         }
         
         return { success: true };

@@ -22,7 +22,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendMessage('heist system not initialized yet');
+                bot.sendMessage(message.roomId, 'heist system not initialized yet');
                 return { success: false };
             }
 
@@ -155,12 +155,12 @@ export default new Command({
             }
 
             // Send all status lines
-            bot.sendMessage(statusLines.join(' | '));
+            bot.sendMessage(message.roomId, statusLines.join(' | '));
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Heist status command error:', error);
-            bot.sendMessage('failed to get heist status: ' + error.message);
+            bot.logger.error('Heist status command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'failed to get heist status: ' + error.message);
             return { success: false };
         }
     }

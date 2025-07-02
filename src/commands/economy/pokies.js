@@ -1,4 +1,5 @@
 import { Command } from '../base.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 export default new Command({
     name: 'pokies',
@@ -18,30 +19,30 @@ export default new Command({
     async handler(bot, message, args) {
         try {
             if (!bot.heistManager) {
-                bot.sendMessage('pokies not plugged in yet mate');
+                bot.sendMessage(message.roomId, 'pokies not plugged in yet mate');
                 return { success: false };
             }
 
             if (args.length === 0) {
-                bot.sendMessage('gotta bet somethin mate - !pokies <amount>');
+                bot.sendMessage(message.roomId, 'gotta bet somethin mate - !pokies <amount>');
                 return { success: false };
             }
 
             const amount = parseInt(args[0]);
             if (isNaN(amount) || amount < 1) {
-                bot.sendMessage('invalid bet amount ya drongo');
+                bot.sendMessage(message.roomId, 'invalid bet amount ya drongo');
                 return { success: false };
             }
 
             if (amount > 1000) {
-                bot.sendMessage('max bet is $1000, this ain\'t crown casino');
+                bot.sendMessage(message.roomId, 'max bet is $1000, this ain\'t crown casino');
                 return { success: false };
             }
 
             const userBalance = await bot.heistManager.getUserBalance(message.username);
             
             if (userBalance.balance < amount) {
-                bot.sendMessage(`ya need $${amount} to play mate, you've only got $${userBalance.balance}`);
+                bot.sendMessage(message.roomId, `ya need $${amount} to play mate, you've only got $${userBalance.balance}`);
                 return { success: false };
             }
 
@@ -54,7 +55,7 @@ export default new Command({
                     `another $${amount} from -${message.username} into the pokies`,
                     `-${message.username}'s riskin $${amount} on the one-armed bandit`
                 ];
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
             
             // Deduct the bet using HeistManager for proper username handling
@@ -137,7 +138,7 @@ export default new Command({
             // Send PM with results
             const pmMessage = `🎰 POKIES RESULT 🎰\n\n${resultLine}${outcome}\n\nYour balance: $${newBalance.balance}`;
             
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
 
             // Update balance if won
             if (winnings > 0) {
@@ -148,22 +149,22 @@ export default new Command({
                 try {
                     // Log the total win amount for leaderboards (not just profit)
                     await bot.db.run(
-                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                        [message.username, winnings, 'pokies', `Won $${winnings} from $${amount} bet`, Date.now()]
+                        'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                        [message.username, winnings, 'pokies', `Won $${winnings} from $${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
-                    bot.logger.error('Failed to log pokies transaction:', error);
+                    bot.logger.error('Failed to log pokies transaction:', { error: error.message, stack: error.stack });
                     // Don't fail the command just because logging failed
                 }
 
                 // Always announce big wins publicly (even if initiated via PM - be a bit cruel)
                 if (winnings >= amount * 50) {
                     setTimeout(() => {
-                        bot.sendMessage(`🎰💰 HOLY FUCK ${message.username} JUST HIT THE JACKPOT! $${winnings}! 💰🎰`);
+                        bot.sendMessage(message.roomId, `🎰💰 HOLY FUCK ${message.username} JUST HIT THE JACKPOT! $${winnings}! 💰🎰`);
                     }, 2500);
                 } else if (winnings >= amount * 10) {
                     setTimeout(() => {
-                        bot.sendMessage(`🎉 big win! ${message.username} just won $${winnings} on the pokies!`);
+                        bot.sendMessage(message.roomId, `🎉 big win! ${message.username} just won $${winnings} on the pokies!`);
                     }, 2500);
                 }
             } else {
@@ -181,9 +182,9 @@ export default new Command({
                         
                         // Send to PM if initiated via PM, otherwise public
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, reaction);
+                            sendPM(bot, message.username, reaction, message.roomContext || message.roomId);
                         } else {
-                            bot.sendMessage(reaction);
+                            bot.sendMessage(message.roomId, reaction);
                         }
                     }, 3000);
                 }
@@ -202,9 +203,9 @@ export default new Command({
                         
                         // Send to PM if initiated via PM, otherwise public
                         if (message.isPM) {
-                            bot.sendPrivateMessage(message.username, addictionMsg);
+                            sendPM(bot, message.username, addictionMsg, message.roomContext || message.roomId);
                         } else {
-                            bot.sendMessage(addictionMsg);
+                            bot.sendMessage(message.roomId, addictionMsg);
                         }
                     }, 4500);
                 }
@@ -212,8 +213,8 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Pokies command error:', error);
-            bot.sendMessage('pokies machine tilted mate');
+            bot.logger.error('Pokies command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'pokies machine tilted mate');
             return { success: false };
         }
     }

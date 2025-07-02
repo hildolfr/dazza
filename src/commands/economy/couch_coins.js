@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Location descriptions for finding coins
 const locations = [
@@ -131,9 +132,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = "couch is at the tip mate, try again later";
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -157,9 +158,9 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -174,7 +175,7 @@ export default new Command({
                     `-${message.username} is excavating the sacred couch`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
 
             // Get user's current balance for desperation check
@@ -203,7 +204,7 @@ export default new Command({
                     const newBalance = await bot.heistManager.getUserBalance(message.username);
                     pmMessage += `Balance: $${newBalance.balance}`;
                     
-                    bot.sendPrivateMessage(message.username, pmMessage);
+                    sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                     
                     // Update stats
                     if (bot.db) {
@@ -219,9 +220,9 @@ export default new Command({
                         `, [message.username, Date.now(), Date.now()]);
                         
                         await bot.db.run(`
-                            INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                            VALUES (?, ?, 'couch_coins', ?, ?)
-                        `, [message.username, -actualCost, 'Bad event while searching', Date.now()]);
+                            INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                            VALUES (?, ?, 'couch_coins', ?, ?, ?)
+                        `, [message.username, -actualCost, 'Bad event while searching', message.roomId || 'fatpizza', Date.now()]);
                     }
                 } else {
                     // User is broke, can't charge them
@@ -229,7 +230,7 @@ export default new Command({
                     pmMessage += `📄 ${badEvent.message.replace('-amount', `$${cost}`)}\n\n`;
                     pmMessage += "Lucky you're broke or that woulda cost ya!";
                     
-                    bot.sendPrivateMessage(message.username, pmMessage);
+                    sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
                     
                     // Still update search count
                     if (bot.db) {
@@ -304,9 +305,9 @@ export default new Command({
                     `, [message.username, Date.now(), Date.now()]);
                     
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, 0, 'couch_coins', 'Found nothing', ?)
-                    `, [message.username, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, 0, 'couch_coins', 'Found nothing', ?, ?)
+                    `, [message.username, message.roomId || 'fatpizza', Date.now()]);
                 }
             } else {
                 // Found money!
@@ -363,31 +364,31 @@ export default new Command({
                     `, [message.username, amount, amount, Date.now(), amount, bestFind, Date.now()]);
                     
                     await bot.db.run(`
-                        INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                        VALUES (?, ?, 'couch_coins', ?, ?)
-                    `, [message.username, amount, `Found in ${location}`, Date.now()]);
+                        INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                        VALUES (?, ?, 'couch_coins', ?, ?, ?)
+                    `, [message.username, amount, `Found in ${location}`, message.roomId || 'fatpizza', Date.now()]);
                 }
                 
                 // Public announcement for big finds
                 if (publicAnnouncement && !message.isPM) {
                     setTimeout(() => {
-                        bot.sendMessage(`🚨 COUCH JACKPOT! ${message.username} just found $${amount} ${location}! Lucky bastard!`);
+                        bot.sendMessage(message.roomId, `🚨 COUCH JACKPOT! ${message.username} just found $${amount} ${location}! Lucky bastard!`);
                     }, 2000);
                 }
             }
 
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Couch coins command error:', error);
+            bot.logger.error('Couch coins command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'couch search system fucked itself. typical.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

@@ -22,7 +22,7 @@ export default new Command({
         try {
             // Check if HeistManager exists
             if (!bot.heistManager) {
-                bot.sendMessage('heist system not initialized yet');
+                bot.sendMessage(message.roomId, 'heist system not initialized yet');
                 return { success: false };
             }
 
@@ -31,7 +31,7 @@ export default new Command({
             
             // If not in IDLE state, show current state info
             if (currentState !== bot.heistManager.states.IDLE) {
-                bot.sendMessage(`heist currently in progress - state: ${currentState}`);
+                bot.sendMessage(message.roomId, `heist currently in progress - state: ${currentState}`);
                 return { success: true };
             }
 
@@ -39,7 +39,7 @@ export default new Command({
             const nextHeistTime = await bot.heistManager.getConfig('next_heist_time');
             
             if (!nextHeistTime) {
-                bot.sendMessage('no heist scheduled yet');
+                bot.sendMessage(message.roomId, 'no heist scheduled yet');
                 return { success: false };
             }
 
@@ -47,7 +47,7 @@ export default new Command({
             const timeUntil = parseInt(nextHeistTime) - now;
             
             if (timeUntil <= 0) {
-                bot.sendMessage('heist should trigger any moment now');
+                bot.sendMessage(message.roomId, 'heist should trigger any moment now');
             } else {
                 // Convert to human readable format
                 const hours = Math.floor(timeUntil / (1000 * 60 * 60));
@@ -59,13 +59,13 @@ export default new Command({
                 if (minutes > 0) timeStr += `${minutes}m `;
                 if (seconds > 0 || timeStr === '') timeStr += `${seconds}s`;
                 
-                bot.sendMessage(`next heist in: ${timeStr.trim()}`);
+                bot.sendMessage(message.roomId, `next heist in: ${timeStr.trim()}`);
             }
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Next heist command error:', error);
-            bot.sendMessage('failed to check heist timer: ' + error.message);
+            bot.logger.error('Next heist command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'failed to check heist timer: ' + error.message);
             return { success: false };
         }
     }

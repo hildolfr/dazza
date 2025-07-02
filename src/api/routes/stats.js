@@ -8,6 +8,7 @@ export function createStatsRoutes(apiServer) {
     // GET /api/v1/stats/users/:username - Get user statistics
     router.get('/users/:username', asyncHandler(async (req, res) => {
         const { username } = req.params;
+        const { room = 'fatpizza' } = req.query;
         
         if (!username) {
             throw new ValidationError('Username is required', 'username');
@@ -15,7 +16,7 @@ export function createStatsRoutes(apiServer) {
         
         const normalizedUsername = username.toLowerCase();
         
-        // Get user stats
+        // Get user stats (user_stats is global, not room-specific)
         const userStats = await apiServer.bot.db.get(
             'SELECT * FROM user_stats WHERE username = ?',
             [normalizedUsername]
@@ -28,12 +29,12 @@ export function createStatsRoutes(apiServer) {
         // Get additional stats
         const [bongCount, drinkCount, balance, criminalRecord, imageCount] = await Promise.all([
             apiServer.bot.db.get(
-                'SELECT COUNT(*) as count FROM user_bongs WHERE username = ?',
-                [normalizedUsername]
+                'SELECT COUNT(*) as count FROM user_bongs WHERE username = ? AND room_id = ?',
+                [normalizedUsername, room]
             ),
             apiServer.bot.db.get(
-                'SELECT COUNT(*) as count FROM user_drinks WHERE username = ?',
-                [normalizedUsername]
+                'SELECT COUNT(*) as count FROM user_drinks WHERE username = ? AND room_id = ?',
+                [normalizedUsername, room]
             ),
             apiServer.bot.db.get(
                 'SELECT balance FROM economy_users WHERE username = ?',
@@ -60,14 +61,15 @@ export function createStatsRoutes(apiServer) {
                 drinkCount: drinkCount?.count || 0,
                 balance: balance?.balance || 0,
                 criminalRecord: criminalRecord?.record || null,
-                imageCount: imageCount?.count || 0
+                imageCount: imageCount?.count || 0,
+                room: room
             }
         });
     }));
     
     // GET /api/v1/stats/leaderboard/all - Get all leaderboards at once
     router.get('/leaderboard/all', asyncHandler(async (req, res) => {
-        const { limit = 5 } = req.query;
+        const { limit = 5, room = 'fatpizza' } = req.query;
         const limitNum = Math.min(Math.max(parseInt(limit) || 5, 1), 10);
         
         // Define all leaderboard types with their titles
@@ -75,7 +77,6 @@ export function createStatsRoutes(apiServer) {
             { type: 'talkers', title: 'Top Yappers' },
             { type: 'bongs', title: '🌿 Most Cooked Cunts' },
             { type: 'drinks', title: '🍺 Top Piss-heads' },
-            { type: 'quoted', title: '💬 Quotable Legends' },
             { type: 'gamblers', title: '🎰 Lucky Bastards' },
             { type: 'fishing', title: '🎣 Master Baiters' },
             { type: 'bottles', title: '♻️ Eco Warriors' },
@@ -92,7 +93,7 @@ export function createStatsRoutes(apiServer) {
                     let results;
                     switch (type) {
                         case 'talkers':
-                            results = await apiServer.bot.db.getTopTalkers(limitNum);
+                            results = await apiServer.bot.db.getTopTalkers(limitNum, room);
                             return {
                                 type,
                                 title,
@@ -103,7 +104,7 @@ export function createStatsRoutes(apiServer) {
                                 }))
                             };
                         case 'bongs':
-                            results = await apiServer.bot.db.getTopBongUsers(limitNum);
+                            results = await apiServer.bot.db.getTopBongUsers(limitNum, room);
                             return {
                                 type,
                                 title,
@@ -115,7 +116,7 @@ export function createStatsRoutes(apiServer) {
                                 }))
                             };
                         case 'drinks':
-                            results = await apiServer.bot.db.getTopDrinkers(limitNum);
+                            results = await apiServer.bot.db.getTopDrinkers(limitNum, room);
                             return {
                                 type,
                                 title,
@@ -124,17 +125,6 @@ export function createStatsRoutes(apiServer) {
                                     username: r.username,
                                     value: `${r.drink_count} drinks`,
                                     achievement: r.drink_count >= 500 ? '💀' : r.drink_count >= 100 ? '🍺' : null
-                                }))
-                            };
-                        case 'quoted':
-                            results = await apiServer.bot.db.getTopQuotedUsers(limitNum);
-                            return {
-                                type,
-                                title,
-                                data: results.map((r, i) => ({
-                                    rank: i + 1,
-                                    username: r.username,
-                                    value: `${r.quotable_messages} bangers`
                                 }))
                             };
                         case 'gamblers':
@@ -258,7 +248,8 @@ export function createStatsRoutes(apiServer) {
         res.json({
             success: true,
             data: {
-                leaderboards: allLeaderboards
+                leaderboards: allLeaderboards,
+                room: room
             }
         });
     }));
@@ -266,9 +257,9 @@ export function createStatsRoutes(apiServer) {
     // GET /api/v1/stats/leaderboard/:type - Get leaderboards
     router.get('/leaderboard/:type', asyncHandler(async (req, res) => {
         const { type } = req.params;
-        const { limit = 10 } = req.query;
+        const { limit = 10, room = 'fatpizza' } = req.query;
         
-        const validTypes = ['talkers', 'bongs', 'drinks', 'quoted', 'gamblers', 'fishing', 
+        const validTypes = ['talkers', 'bongs', 'drinks', 'gamblers', 'fishing', 
                           'bottles', 'cashie', 'sign_spinning', 'beggars', 'pissers',
                           'money', 'criminal', 'messages', 'images'];
         if (!validTypes.includes(type)) {
@@ -280,7 +271,7 @@ export function createStatsRoutes(apiServer) {
         
         switch (type) {
             case 'talkers':
-                results = await apiServer.bot.db.getTopTalkers(limitNum);
+                results = await apiServer.bot.db.getTopTalkers(limitNum, room);
                 data = results.map((row, index) => ({
                     rank: index + 1,
                     username: row.username,
@@ -290,7 +281,7 @@ export function createStatsRoutes(apiServer) {
                 break;
                 
             case 'bongs':
-                results = await apiServer.bot.db.getTopBongUsers(limitNum);
+                results = await apiServer.bot.db.getTopBongUsers(limitNum, room);
                 data = results.map((row, index) => ({
                     rank: index + 1,
                     username: row.username,
@@ -301,23 +292,13 @@ export function createStatsRoutes(apiServer) {
                 break;
             
             case 'drinks':
-                results = await apiServer.bot.db.getTopDrinkers(limitNum);
+                results = await apiServer.bot.db.getTopDrinkers(limitNum, room);
                 data = results.map((row, index) => ({
                     rank: index + 1,
                     username: row.username,
                     count: row.drink_count,
                     label: 'drinks',
                     achievement: row.drink_count >= 500 ? '💀' : row.drink_count >= 100 ? '🍺' : null
-                }));
-                break;
-                
-            case 'quoted':
-                results = await apiServer.bot.db.getTopQuotedUsers(limitNum);
-                data = results.map((row, index) => ({
-                    rank: index + 1,
-                    username: row.username,
-                    count: row.quotable_messages,
-                    label: 'bangers'
                 }));
                 break;
                 
@@ -492,23 +473,25 @@ export function createStatsRoutes(apiServer) {
             success: true,
             data: {
                 type,
-                leaderboard: data
+                leaderboard: data,
+                room: room
             }
         });
     }));
     
     // GET /api/v1/stats/channel - Get channel statistics
     router.get('/channel', asyncHandler(async (req, res) => {
+        const { room = 'fatpizza' } = req.query;
         // Get various channel stats
         const [totalMessages, uniqueUsers, activeToday, totalBongs, totalDrinks] = await Promise.all([
-            apiServer.bot.db.get('SELECT COUNT(*) as count FROM messages'),
-            apiServer.bot.db.get('SELECT COUNT(*) as count FROM user_stats'),
+            apiServer.bot.db.get('SELECT COUNT(*) as count FROM messages WHERE room_id = ?', [room]),
+            apiServer.bot.db.get('SELECT COUNT(DISTINCT username) as count FROM messages WHERE room_id = ?', [room]),
             apiServer.bot.db.get(
-                'SELECT COUNT(DISTINCT username) as count FROM messages WHERE timestamp > ?',
-                [Date.now() - 86400000] // Last 24 hours
+                'SELECT COUNT(DISTINCT username) as count FROM messages WHERE room_id = ? AND timestamp > ?',
+                [room, Date.now() - 86400000] // Last 24 hours
             ),
-            apiServer.bot.db.get('SELECT COUNT(*) as count FROM user_bongs'),
-            apiServer.bot.db.get('SELECT COUNT(*) as count FROM user_drinks')
+            apiServer.bot.db.get('SELECT COUNT(*) as count FROM user_bongs WHERE room_id = ?', [room]),
+            apiServer.bot.db.get('SELECT COUNT(*) as count FROM user_drinks WHERE room_id = ?', [room])
         ]);
         
         // Get current video info if available
@@ -558,7 +541,8 @@ export function createStatsRoutes(apiServer) {
                     connected: apiServer.bot.connection?.connected || false,
                     channel: apiServer.bot.connection?.channel || null
                 },
-                memory: memoryStats
+                memory: memoryStats,
+                room: room
             }
         });
     }));
@@ -566,7 +550,7 @@ export function createStatsRoutes(apiServer) {
     // GET /api/v1/stats/daily/:type - Get daily statistics
     router.get('/daily/:type', asyncHandler(async (req, res) => {
         const { type } = req.params;
-        const { days = 7 } = req.query;
+        const { days = 7, room = 'fatpizza' } = req.query;
         
         const validTypes = ['bongs', 'drinks', 'messages'];
         if (!validTypes.includes(type)) {
@@ -584,7 +568,7 @@ export function createStatsRoutes(apiServer) {
                         date(timestamp / 1000, 'unixepoch') as date,
                         COUNT(*) as count
                     FROM user_bongs
-                    WHERE timestamp > ?
+                    WHERE room_id = ? AND timestamp > ?
                     GROUP BY date
                     ORDER BY date DESC
                 `;
@@ -596,7 +580,7 @@ export function createStatsRoutes(apiServer) {
                         date(timestamp / 1000, 'unixepoch') as date,
                         COUNT(*) as count
                     FROM user_drinks
-                    WHERE timestamp > ?
+                    WHERE room_id = ? AND timestamp > ?
                     GROUP BY date
                     ORDER BY date DESC
                 `;
@@ -608,14 +592,14 @@ export function createStatsRoutes(apiServer) {
                         date(timestamp / 1000, 'unixepoch') as date,
                         COUNT(*) as count
                     FROM messages
-                    WHERE timestamp > ?
+                    WHERE room_id = ? AND timestamp > ?
                     GROUP BY date
                     ORDER BY date DESC
                 `;
                 break;
         }
         
-        const results = await apiServer.bot.db.all(query, [cutoff]);
+        const results = await apiServer.bot.db.all(query, [room, cutoff]);
         
         res.json({
             success: true,
@@ -625,31 +609,34 @@ export function createStatsRoutes(apiServer) {
                 daily: results.map(row => ({
                     date: row.date,
                     count: row.count
-                }))
+                })),
+                room: room
             }
         });
     }));
     
     // GET /api/v1/stats/recent/activity - Get recent channel activity
     router.get('/recent/activity', asyncHandler(async (req, res) => {
-        const { limit = 20 } = req.query;
+        const { limit = 20, room = 'fatpizza' } = req.query;
         const limitNum = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
         
         // Get recent messages
         const recentMessages = await apiServer.bot.db.all(`
             SELECT username, message, timestamp
             FROM messages
+            WHERE room_id = ?
             ORDER BY timestamp DESC
             LIMIT ?
-        `, [limitNum]);
+        `, [room, limitNum]);
         
         // Get recent user events
         const recentEvents = await apiServer.bot.db.all(`
             SELECT username, event_type, timestamp
             FROM user_events
+            WHERE room_id = ?
             ORDER BY timestamp DESC
             LIMIT ?
-        `, [limitNum]);
+        `, [room, limitNum]);
         
         res.json({
             success: true,
@@ -663,7 +650,8 @@ export function createStatsRoutes(apiServer) {
                     username: evt.username,
                     type: evt.event_type,
                     timestamp: evt.timestamp
-                }))
+                })),
+                room: room
             }
         });
     }));
@@ -671,6 +659,7 @@ export function createStatsRoutes(apiServer) {
     // GET /api/v1/stats/users/:username/category/:category - Get detailed user stats for a specific category
     router.get('/users/:username/category/:category', asyncHandler(async (req, res) => {
         const { username, category } = req.params;
+        const { room = 'fatpizza' } = req.query;
         const normalizedUsername = username.toLowerCase();
         
         let data = {};
@@ -678,6 +667,7 @@ export function createStatsRoutes(apiServer) {
         try {
             switch (category) {
                 case 'pissers':
+                    // Pissing contest stats are global, not room-specific
                     const pissingStats = await apiServer.bot.db.get(
                         'SELECT * FROM pissing_contest_stats WHERE LOWER(username) = ?',
                         [normalizedUsername]
@@ -1069,7 +1059,7 @@ export function createStatsRoutes(apiServer) {
                     break;
                     
                 default:
-                    // For simple counters (talkers, bongs, drinks, quoted)
+                    // For simple counters (talkers, bongs, drinks)
                     const basicStats = await apiServer.bot.db.get(
                         'SELECT * FROM user_stats WHERE LOWER(username) = ?',
                         [normalizedUsername]
@@ -1085,11 +1075,11 @@ export function createStatsRoutes(apiServer) {
                                 DATE((timestamp + ${TIMEZONE_OFFSET})/1000, 'unixepoch') as date,
                                 COUNT(*) as count
                             FROM user_bongs
-                            WHERE LOWER(username) = ?
+                            WHERE LOWER(username) = ? AND room_id = ?
                             GROUP BY date
                             ORDER BY date DESC
                             LIMIT 30
-                        `, [normalizedUsername]);
+                        `, [normalizedUsername, room]);
                         
                         // Get hourly breakdown
                         const hourlyStats = await apiServer.bot.db.all(`
@@ -1097,10 +1087,10 @@ export function createStatsRoutes(apiServer) {
                                 hour,
                                 COUNT(*) as count
                             FROM user_bongs
-                            WHERE LOWER(username) = ?
+                            WHERE LOWER(username) = ? AND room_id = ?
                             GROUP BY hour
                             ORDER BY hour
-                        `, [normalizedUsername]);
+                        `, [normalizedUsername, room]);
                         
                         // Calculate time patterns
                         const totalBongs = hourlyStats.reduce((sum, h) => sum + h.count, 0);
@@ -1134,7 +1124,7 @@ export function createStatsRoutes(apiServer) {
                             timePatterns.night.percentage = ((timePatterns.night.count / totalBongs) * 100).toFixed(1);
                         }
                         
-                        // Get session data
+                        // Get session data (sessions are global, not room-specific)
                         const sessions = await apiServer.bot.db.all(`
                             SELECT * FROM bong_sessions
                             WHERE LOWER(username) = ?
@@ -1147,7 +1137,7 @@ export function createStatsRoutes(apiServer) {
                         const fastestSession = sessions.reduce((max, s) => 
                             (!max || s.max_cones_per_hour > max.max_cones_per_hour) ? s : max, null);
                         
-                        // Get streak data
+                        // Get streak data (streaks are global, not room-specific)
                         const streakData = await apiServer.bot.db.get(
                             'SELECT * FROM user_bong_streaks WHERE LOWER(username) = ?',
                             [normalizedUsername]
@@ -1165,16 +1155,17 @@ export function createStatsRoutes(apiServer) {
                                 COUNT(*) as count
                             FROM user_bongs
                             WHERE LOWER(username) = ? 
+                            AND room_id = ?
                             AND timestamp > ?
                             GROUP BY date
                             ORDER BY count DESC
                             LIMIT 1
-                        `, [normalizedUsername, weekAgo.getTime()]);
+                        `, [normalizedUsername, room, weekAgo.getTime()]);
                         
                         // Get last bong time for "time since last"
                         const lastBong = await apiServer.bot.db.get(
-                            'SELECT MAX(timestamp) as last_timestamp FROM user_bongs WHERE LOWER(username) = ?',
-                            [normalizedUsername]
+                            'SELECT MAX(timestamp) as last_timestamp FROM user_bongs WHERE LOWER(username) = ? AND room_id = ?',
+                            [normalizedUsername, room]
                         );
                         
                         data = {
@@ -1231,11 +1222,11 @@ export function createStatsRoutes(apiServer) {
                                 DATE(timestamp/1000, 'unixepoch') as date,
                                 COUNT(*) as count
                             FROM user_drinks
-                            WHERE LOWER(username) = ?
+                            WHERE LOWER(username) = ? AND room_id = ?
                             GROUP BY date
                             ORDER BY date DESC
                             LIMIT 30
-                        `, [normalizedUsername]);
+                        `, [normalizedUsername, room]);
                         
                         data = {
                             basicStats,
@@ -1258,6 +1249,7 @@ export function createStatsRoutes(apiServer) {
                 data: {
                     username: normalizedUsername,
                     category,
+                    room: room,
                     ...data
                 }
             });
@@ -1271,6 +1263,7 @@ export function createStatsRoutes(apiServer) {
     // GET /api/v1/stats/users/:username/ranks - Get user's position across all leaderboards
     router.get('/users/:username/ranks', asyncHandler(async (req, res) => {
         const { username } = req.params;
+        const { room = 'fatpizza' } = req.query;
         const normalizedUsername = username.toLowerCase();
         
         // Check if user exists
@@ -1298,11 +1291,10 @@ export function createStatsRoutes(apiServer) {
         };
         
         // Fetch all ranks
-        const [talkers, bongs, drinks, quoted, gamblers, fishing, bottles, cashie, signSpinning, beggars, pissers] = await Promise.all([
-            apiServer.bot.db.getTopTalkers(100),
-            apiServer.bot.db.getTopBongUsers(100),
-            apiServer.bot.db.getTopDrinkers(100),
-            apiServer.bot.db.getTopQuotedUsers(100),
+        const [talkers, bongs, drinks, gamblers, fishing, bottles, cashie, signSpinning, beggars, pissers] = await Promise.all([
+            apiServer.bot.db.getTopTalkers(100, room),
+            apiServer.bot.db.getTopBongUsers(100, room),
+            apiServer.bot.db.getTopDrinkers(100, room),
             apiServer.bot.db.getTopGamblers(100),
             apiServer.bot.db.getTopFishers(100),
             apiServer.bot.db.getTopBottleCollectors(100),
@@ -1315,7 +1307,6 @@ export function createStatsRoutes(apiServer) {
         ranks.talkers = findUserRank(talkers, normalizedUsername, r => `${r.message_count} messages`);
         ranks.bongs = findUserRank(bongs, normalizedUsername, r => `${r.bong_count} cones`);
         ranks.drinks = findUserRank(drinks, normalizedUsername, r => `${r.drink_count} drinks`);
-        ranks.quoted = findUserRank(quoted, normalizedUsername, r => `${r.quotable_messages} bangers`);
         ranks.gamblers = findUserRank(gamblers, normalizedUsername, r => `$${r.biggest_win}`);
         ranks.fishing = findUserRank(fishing, normalizedUsername, r => `${r.biggest_catch}kg`);
         ranks.bottles = findUserRank(bottles, normalizedUsername, r => `$${r.total_earnings}`);
@@ -1328,7 +1319,8 @@ export function createStatsRoutes(apiServer) {
             success: true,
             data: {
                 username: normalizedUsername,
-                ranks
+                ranks,
+                room: room
             }
         });
     }));

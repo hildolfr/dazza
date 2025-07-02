@@ -19,14 +19,14 @@ export default new Command({
         try {
             // Log user drink with normalized username
             const canonicalUsername = await normalizeUsernameForDb(bot, message.username);
-            await bot.db.logUserDrink(canonicalUsername);
+            await bot.db.logUserDrink(canonicalUsername, message.roomId);
             
             // Increment daily counter
-            newCount = await bot.db.incrementDrinkCount(today);
+            newCount = await bot.db.incrementDrinkCount(today, message.roomId);
             
             // Update bladder for pissing contest
-            await bot.db.updateBladder(canonicalUsername, 1);
-            const bladderState = await bot.db.getBladderState(canonicalUsername);
+            await bot.db.updateBladder(canonicalUsername, 1, message.roomId);
+            const bladderState = await bot.db.getBladderState(canonicalUsername, message.roomId);
             bladderAmount = bladderState.current_amount;
         } catch (error) {
             console.error('Failed to update drink counter:', error);
@@ -143,7 +143,7 @@ export default new Command({
         }
         
         const response = drinkResponses[Math.floor(Math.random() * drinkResponses.length)];
-        bot.sendMessage(response);
+        bot.sendMessage(message.roomId, response);
         
         // Special messages for milestones with more variety
         if (newCount % 50 === 0 && newCount > 0) {
@@ -155,7 +155,7 @@ export default new Command({
                 `half a hundy drinks! somebody check if I'm still breathin'`
             ];
             setTimeout(() => {
-                bot.sendMessage(fiftyMessages[Math.floor(Math.random() * fiftyMessages.length)]);
+                bot.sendMessage(message.roomId, fiftyMessages[Math.floor(Math.random() * fiftyMessages.length)]);
             }, 2000);
         } else if (newCount % 25 === 0 && newCount > 0) {
             const twentyFiveMessages = [
@@ -166,7 +166,7 @@ export default new Command({
                 `${newCount} frothies! I'm a professional athlete... of drinkin'`
             ];
             setTimeout(() => {
-                bot.sendMessage(twentyFiveMessages[Math.floor(Math.random() * twentyFiveMessages.length)]);
+                bot.sendMessage(message.roomId, twentyFiveMessages[Math.floor(Math.random() * twentyFiveMessages.length)]);
             }, 2000);
         } else if (newCount % 12 === 0 && newCount > 0) {
             const cartonMessages = [
@@ -177,7 +177,7 @@ export default new Command({
                 `12-pack annihilated! ${newCount} total, who's keepin' score?`
             ];
             setTimeout(() => {
-                bot.sendMessage(cartonMessages[Math.floor(Math.random() * cartonMessages.length)]);
+                bot.sendMessage(message.roomId, cartonMessages[Math.floor(Math.random() * cartonMessages.length)]);
             }, 2000);
         } else if (newCount % 6 === 0 && newCount > 0) {
             const sixPackMessages = [
@@ -188,16 +188,16 @@ export default new Command({
             ];
             if (Math.random() < 0.3) { // 30% chance for six-pack message
                 setTimeout(() => {
-                    bot.sendMessage(sixPackMessages[Math.floor(Math.random() * sixPackMessages.length)]);
+                    bot.sendMessage(message.roomId, sixPackMessages[Math.floor(Math.random() * sixPackMessages.length)]);
                 }, 2000);
             }
         } else if (newCount === 69) {
             setTimeout(() => {
-                bot.sendMessage(`nice. 😏`);
+                bot.sendMessage(message.roomId, `nice. 😏`);
             }, 2000);
         } else if (newCount === 100) {
             setTimeout(() => {
-                bot.sendMessage(`ONE HUNDRED FUCKIN' DRINKS! CALL THE AMBOS, I'VE ACHIEVED IMMORTALITY! 🚑💀`);
+                bot.sendMessage(message.roomId, `ONE HUNDRED FUCKIN' DRINKS! CALL THE AMBOS, I'VE ACHIEVED IMMORTALITY! 🚑💀`);
             }, 2000);
         }
         
@@ -216,7 +216,7 @@ export default new Command({
                 } else {
                     bladderMsg = "bladder's getting full mate";
                 }
-                bot.sendMessage(bladderMsg);
+                bot.sendMessage(message.roomId, bladderMsg);
             }, 3500);
         }
         

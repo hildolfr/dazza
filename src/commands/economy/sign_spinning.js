@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Sign types for different businesses
 const signTypes = {
@@ -81,9 +82,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'No sign spinning gigs available right now mate';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -107,9 +108,9 @@ export default new Command({
                     
                     const selectedMsg = waitMessages[Math.floor(Math.random() * waitMessages.length)];
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, selectedMsg.replace(/-/g, ''));
+                        sendPM(bot, message.username, selectedMsg.replace(/-/g, ''), message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(selectedMsg);
+                        bot.sendMessage(message.roomId, selectedMsg);
                     }
                     return { success: false };
                 }
@@ -124,7 +125,7 @@ export default new Command({
                     `-${message.username} is about to show these signs who's boss`
                 ];
                 
-                bot.sendMessage(publicMessages[Math.floor(Math.random() * publicMessages.length)]);
+                bot.sendMessage(message.roomId, publicMessages[Math.floor(Math.random() * publicMessages.length)]);
             }
             
             // Determine sign type (80% common, 20% uncommon)
@@ -176,8 +177,8 @@ export default new Command({
             if (bot.db) {
                 // Get current stats
                 const stats = await bot.db.get(`
-                    SELECT * FROM sign_spinning_stats WHERE username = ?
-                `, [message.username]);
+                    SELECT * FROM sign_spinning_stats WHERE username = ? AND room_id = ?
+                `, [message.username, message.roomId || 'fatpizza']);
                 
                 if (stats) {
                     await bot.db.run(`
@@ -190,7 +191,7 @@ export default new Command({
                             worst_shift = CASE WHEN ? < worst_shift OR worst_shift = 0 THEN ? ELSE worst_shift END,
                             perfect_days = perfect_days + ?,
                             last_played = ?
-                        WHERE username = ?
+                        WHERE username = ? AND room_id = ?
                     `, [
                         finalPay,
                         injured && injuryDesc.includes('hit a car') ? 1 : 0,
@@ -199,15 +200,17 @@ export default new Command({
                         finalPay, finalPay,
                         finalPay >= 60 ? 1 : 0,
                         Date.now(),
-                        message.username
+                        message.username,
+                        message.roomId || 'fatpizza'
                     ]);
                 } else {
                     await bot.db.run(`
                         INSERT INTO sign_spinning_stats 
-                        (username, total_spins, total_earnings, cars_hit, cops_called, best_shift, worst_shift, perfect_days, last_played)
-                        VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?)
+                        (username, room_id, total_spins, total_earnings, cars_hit, cops_called, best_shift, worst_shift, perfect_days, last_played)
+                        VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)
                     `, [
                         message.username,
+                        message.roomId || 'fatpizza',
                         finalPay,
                         injured && injuryDesc.includes('hit a car') ? 1 : 0,
                         eventDesc.includes('cops') ? 1 : 0,
@@ -261,7 +264,7 @@ export default new Command({
             pmMessage += `\n\nNew balance: $${newBalance.balance}`;
             
             // Send PM
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message.roomContext || message.roomId);
             
             // Public announcement for exceptional results
             if (finalPay >= 60 || injured) {
@@ -272,19 +275,20 @@ export default new Command({
                     } else {
                         announcement = `🪧 LEGENDARY SPINNER! ${message.username} made $${finalPay} throwing signs around like a mad cunt!`;
                     }
-                    bot.sendMessage(announcement);
+                    bot.sendMessage(message.roomId, announcement);
                 }, 2000);
             }
             
             // Record transaction
             if (bot.db) {
                 await bot.db.run(`
-                    INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at)
-                    VALUES (?, ?, 'sign_spinning', ?, ?)
+                    INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at)
+                    VALUES (?, ?, 'sign_spinning', ?, ?, ?)
                 `, [
                     message.username, 
                     finalPay, 
                     injured ? `Injured shift (${weather.condition})` : `${signTier} sign (${weather.condition})`, 
+                    message.roomId || 'fatpizza',
                     Date.now()
                 ]);
             }
@@ -292,12 +296,12 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Sign spinning command error:', error);
+            bot.logger.error('Sign spinning command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Sign spinning agency system crashed. Try again later mate.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

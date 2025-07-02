@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Fish types with different rarities and values
 const fishTypes = {
@@ -136,9 +137,9 @@ export default new Command({
                 if (!cooldownCheck.allowed) {
                     const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, cooldownMsg);
+                        sendPM(bot, message.username, cooldownMsg, message);
                     } else {
-                        bot.sendMessage(cooldownMsg);
+                        bot.sendMessage(message.roomId, cooldownMsg);
                     }
                     return { success: false };
                 }
@@ -146,9 +147,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'fishing licence machine is fucked, try again later';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -163,9 +164,9 @@ export default new Command({
             if (!bait) {
                 const errorMsg = `oi -${message.username}, dunno what "${args[0]}" is but it ain't bait. Try: worm, prawn, squid, lure, servo_pie, or ciggie_butt`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -174,9 +175,9 @@ export default new Command({
             if (bait.cost > 0 && userEcon.balance < bait.cost) {
                 const errorMsg = `-${message.username} ya need $${bait.cost} for ${baitChoice} bait but ya only got $${userEcon.balance}. Use a worm ya cheapskate`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -198,7 +199,7 @@ export default new Command({
                     `🎣 -${message.username} throws in a line, I'll PM ya what bites`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
             
             // Determine catch
@@ -246,11 +247,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
             } else if (catchRoll < 0.15) {
@@ -267,11 +268,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
                 
@@ -343,11 +344,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else if (fishRarity === 'rare') {
                     pmMessage += `${rarityEmojis[fishRarity]} Fuckin' ripper! You landed a ${weight}kg ${fishName}!\n`;
@@ -367,11 +368,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else if (fishRarity === 'epic') {
                     pmMessage += `${rarityEmojis[fishRarity]} Bloody oath! Epic catch - ${weight}kg ${fishName}!\n`;
@@ -383,11 +384,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else {
                     const catchMessages = [
@@ -403,11 +404,11 @@ export default new Command({
                     // Log to transactions for leaderboard
                     try {
                         await bot.db.run(
-                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, created_at) VALUES (?, ?, ?, ?, ?)',
-                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, Date.now()]
+                            'INSERT INTO economy_transactions (username, amount, transaction_type, description, room_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                            [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
                 
@@ -433,12 +434,12 @@ export default new Command({
             }
             
             // Send PM with fishing results
-            bot.sendPrivateMessage(message.username, pmMessage);
+            sendPM(bot, message.username, pmMessage, message);
             
             // Handle public announcements and forced sharing
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -480,11 +481,11 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing fishing rewards:', error);
+                        bot.logger.error('Error sharing fishing rewards:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -492,12 +493,12 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Fish command error:', error);
+            bot.logger.error('Fish command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'fishing rod snapped. bloody cheap Kmart shit.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }

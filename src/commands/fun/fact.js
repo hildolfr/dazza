@@ -77,7 +77,7 @@ export default new Command({
         ];
         
         const fact = facts[Math.floor(Math.random() * facts.length)];
-        bot.sendMessage(fact);
+        bot.sendMessage(message.roomId, fact);
         
         return { success: true };
     }

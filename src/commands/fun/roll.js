@@ -121,7 +121,7 @@ export default new Command({
                 sides = parseInt(match[2]);
                 
                 if (dice > 100 || sides > 1000) {
-                    bot.sendMessage('fuck off with those massive dice');
+                    bot.sendMessage(message.roomId, 'fuck off with those massive dice');
                     return { success: true };
                 }
             }
@@ -161,7 +161,7 @@ export default new Command({
             }
             
             response = response.replace('{roll}', total);
-            bot.sendMessage(`${message.username} ${response}`);
+            bot.sendMessage(message.roomId, `${message.username} ${response}`);
         } else {
             // Multiple dice logic
             const rollsStr = rolls.join(', ');
@@ -192,7 +192,7 @@ export default new Command({
             }
             
             response = response.replace('{rolls}', rollsStr).replace('{total}', total);
-            bot.sendMessage(`${message.username} ${response}`);
+            bot.sendMessage(message.roomId, `${message.username} ${response}`);
         }
         
         return { success: true };

@@ -1,1 +1,0 @@
-Uncaught SyntaxError: expected expression, got '}' commands.html:2346:13

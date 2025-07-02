@@ -28,7 +28,7 @@ export default new Command({
             );
 
             if (!userData) {
-                bot.sendMessage(`-${targetUser} has no criminal record... yet`);
+                bot.sendMessage(message.roomId, `-${targetUser} has no criminal record... yet`);
                 return { success: true };
             }
 
@@ -68,7 +68,7 @@ export default new Command({
 
             // Build criminal record - keep it concise
             if (heistStats.total_heists === 0) {
-                bot.sendMessage(`-${targetUser} has a clean record (fuckin pussy)`);
+                bot.sendMessage(message.roomId, `-${targetUser} has a clean record (fuckin pussy)`);
                 return { success: true };
             }
             
@@ -101,11 +101,11 @@ export default new Command({
                 record += `Stolen: $0`;
             }
 
-            bot.sendMessage(record);
+            bot.sendMessage(message.roomId, record);
             return { success: true };
         } catch (error) {
-            bot.logger.error('Criminal record command error:', error);
-            bot.sendMessage('records room is locked mate');
+            bot.logger.error('Criminal record command error:', { error: error.message, stack: error.stack });
+            bot.sendMessage(message.roomId, 'records room is locked mate');
             return { success: false };
         }
     }

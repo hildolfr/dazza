@@ -1,5 +1,6 @@
 import { Command } from '../base.js';
 import { PersistentCooldownManager } from '../../utils/persistentCooldowns.js';
+import { sendPM } from '../../utils/pmHelper.js';
 
 // Australian race horses and dogs with bogan names
 const horseNames = [
@@ -75,9 +76,9 @@ export default new Command({
                 if (!cooldownCheck.allowed) {
                     const cooldownMsg = this.cooldownMessage.replace('{time}', cooldownCheck.remaining);
                     if (message.isPM) {
-                        bot.sendPrivateMessage(message.username, cooldownMsg);
+                        sendPM(bot, message.username, cooldownMsg, message.roomContext || message.roomId);
                     } else {
-                        bot.sendMessage(cooldownMsg);
+                        bot.sendMessage(message.roomId, cooldownMsg);
                     }
                     return { success: false };
                 }
@@ -85,9 +86,9 @@ export default new Command({
             if (!bot.heistManager) {
                 const errorMsg = 'TAB machine\'s fucked mate, try again later';
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg);
+                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -97,9 +98,9 @@ export default new Command({
             if (!amount || amount < 1) {
                 const errorMsg = `oi -${message.username}, gotta tell me how much to bet ya drongo! Like: !tab 20`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message.roomContext || message.roomId); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -109,9 +110,9 @@ export default new Command({
             if (!['horse', 'dog'].includes(raceType)) {
                 const errorMsg = `-${message.username} mate, it's either 'horse' or 'dog', not whatever the fuck "${args[1]}" is`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message.roomContext || message.roomId); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -127,9 +128,9 @@ export default new Command({
                 ];
                 const selectedInsult = insults[Math.floor(Math.random() * insults.length)];
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, selectedInsult.replace(/-/g, '')); // Remove all - prefixes in PMs
+                    sendPM(bot, message.username, selectedInsult.replace(/-/g, ''), message.roomContext || message.roomId); // Remove all - prefixes in PMs
                 } else {
-                    bot.sendMessage(selectedInsult);
+                    bot.sendMessage(message.roomId, selectedInsult);
                 }
                 return { success: false };
             }
@@ -139,9 +140,9 @@ export default new Command({
             if (amount > maxBet) {
                 const errorMsg = `steady on -${message.username}, max bet is $${maxBet} - this ain't Crown Casino`;
                 if (message.isPM) {
-                    bot.sendPrivateMessage(message.username, errorMsg.replace('-', '')); // Remove - prefix in PMs
+                    sendPM(bot, message.username, errorMsg.replace('-', ''), message.roomContext || message.roomId); // Remove - prefix in PMs
                 } else {
-                    bot.sendMessage(errorMsg);
+                    bot.sendMessage(message.roomId, errorMsg);
                 }
                 return { success: false };
             }
@@ -175,7 +176,7 @@ export default new Command({
                     `🏁 -${message.username} backs the ${raceType}s with $${amount}, I'll PM ya the action`
                 ];
                 
-                bot.sendMessage(publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
+                bot.sendMessage(message.roomId, publicAcknowledgments[Math.floor(Math.random() * publicAcknowledgments.length)]);
             }
 
             // User's selection (random)
@@ -188,8 +189,9 @@ export default new Command({
                 `${i + 1}. ${animal}${i === userPick ? ' ← YOUR BET' : ''}`
             ).join(' | ');
             
-            bot.sendPrivateMessage(message.username, 
-                `🏇 Race ${raceNumber} at ${track} | You backed #${userPick + 1} ${userAnimal} ($${amount} @ ${userOdds}:1)`
+            sendPM(bot, message.username, 
+                `🏇 Race ${raceNumber} at ${track} | You backed #${userPick + 1} ${userAnimal} ($${amount} @ ${userOdds}:1)`,
+                message.roomContext || message.roomId
             );
             
             // Small delay before race result
@@ -250,12 +252,12 @@ export default new Command({
             }
             
             // Send second PM with race result
-            bot.sendPrivateMessage(message.username, resultMessage);
+            sendPM(bot, message.username, resultMessage, message.roomContext || message.roomId);
             
             // Handle public announcements
             if (publicAnnouncement) {
                 setTimeout(() => {
-                    bot.sendMessage(publicAnnouncement);
+                    bot.sendMessage(message.roomId, publicAnnouncement);
                 }, 2000);
             }
             
@@ -297,11 +299,11 @@ export default new Command({
                             ];
                             
                             setTimeout(() => {
-                                bot.sendMessage(shareMessages[Math.floor(Math.random() * shareMessages.length)]);
+                                bot.sendMessage(message.roomId, shareMessages[Math.floor(Math.random() * shareMessages.length)]);
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing TAB winnings:', error);
+                        bot.logger.error('Error sharing TAB winnings:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -309,12 +311,12 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('TAB command error:', error);
+            bot.logger.error('TAB command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'TAB machine just ate ya money and caught fire. typical.';
             if (message.isPM) {
-                bot.sendPrivateMessage(message.username, errorMsg);
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             } else {
-                bot.sendMessage(errorMsg);
+                bot.sendMessage(message.roomId, errorMsg);
             }
             return { success: false };
         }
