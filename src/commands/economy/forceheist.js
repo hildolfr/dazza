@@ -62,7 +62,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Force heist command error:', error);
+            bot.logger.error('Force heist command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'failed to force trigger heist: ' + error.message);
             return { success: false };
         }

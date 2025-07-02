@@ -265,7 +265,7 @@ export default new Command({
                             `, [message.username, -robberyAmount, message.roomId || 'fatpizza', Date.now()]);
                         }
                     } catch (error) {
-                        bot.logger.error('Error during robbery:', error);
+                        bot.logger.error('Error during robbery:', { error: error.message, stack: error.stack });
                         bot.sendMessage(message.roomId, 'somethin went wrong with the robbery, lucky escape for ya');
                     }
                     
@@ -325,7 +325,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Beg command error:', error);
+            bot.logger.error('Beg command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'somethin went wrong with the begging mate');
             return { success: false };
         }

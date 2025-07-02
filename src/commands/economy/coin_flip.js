@@ -233,7 +233,7 @@ const coinFlipCommand = {
                             await bot.db.run('ROLLBACK');
                         }
                     } catch (error) {
-                        bot.logger.error('Error in challenge timeout:', error);
+                        bot.logger.error('Error in challenge timeout:', { error: error.message, stack: error.stack });
                         try {
                             await bot.db.run('ROLLBACK');
                         } catch {}
@@ -248,7 +248,7 @@ const coinFlipCommand = {
             }
 
         } catch (error) {
-            bot.logger.error('Error creating coin flip challenge:', error);
+            bot.logger.error('Error creating coin flip challenge:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'challenge board broke mate');
             return { success: false };
         }
@@ -397,7 +397,7 @@ const coinFlipCommand = {
             }
 
         } catch (error) {
-            bot.logger.error('Error handling coin flip response:', error);
+            bot.logger.error('Error handling coin flip response:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'coin flip machine exploded');
             return { success: false };
         }
@@ -501,7 +501,7 @@ const coinFlipCommand = {
             }
 
         } catch (error) {
-            bot.logger.error('Error in house coin flip:', error);
+            bot.logger.error('Error in house coin flip:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'coin vanished into thin air mate');
             return { success: false };
         }
@@ -580,7 +580,7 @@ const coinFlipCommand = {
                 );
             }
         } catch (error) {
-            bot.logger.error('Error updating coin flip stats:', error);
+            bot.logger.error('Error updating coin flip stats:', { error: error.message, stack: error.stack });
             // Don't fail the command over stats
         }
     }

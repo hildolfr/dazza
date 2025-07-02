@@ -217,7 +217,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Give command error:', error);
+            bot.logger.error('Give command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'somethin went wrong with the transfer mate';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

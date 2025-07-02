@@ -482,9 +482,15 @@ export class HeistManager extends EventEmitter {
 
     // Database helper methods
     async getOrCreateUser(username) {
+        // Don't create economy entries for system users
+        if (this.isSystemUser(username)) {
+            this.logger.warn(`Attempted to create economy entry for system user: ${username}`);
+            return { username, balance: 0, trust: 0, trust_score: 0 };
+        }
+        
         const normalizedUsername = normalizeUsernameForDb(username);
         
-        const user = await this.db.get(
+        let user = await this.db.get(
             'SELECT * FROM user_economy WHERE username = ?',
             [normalizedUsername]
         );
@@ -505,9 +511,15 @@ export class HeistManager extends EventEmitter {
                     [normalizedUsername]
                 );
             }
+            
+            // Fetch the user after creation
+            user = await this.db.get(
+                'SELECT * FROM user_economy WHERE username = ?',
+                [normalizedUsername]
+            );
         }
         
-        return user;
+        return user || { username: normalizedUsername, balance: 0, trust: 50, trust_score: 50 };
     }
 
     async modifyUserBalance(username, amount) {
@@ -543,6 +555,41 @@ export class HeistManager extends EventEmitter {
             // Column doesn't exist yet, skip the update
             this.logger.debug('trust_score column not yet available, skipping trust update');
         }
+    }
+
+    getTrustLevel(trust) {
+        if (trust >= 90) return { title: "Made Man", icon: "👑" };
+        if (trust >= 75) return { title: "Career Criminal", icon: "💀" };
+        if (trust >= 60) return { title: "Seasoned Crim", icon: "🔫" };
+        if (trust >= 40) return { title: "Petty Crim", icon: "🔪" };
+        if (trust >= 20) return { title: "Snitch Risk", icon: "🐀" };
+        return { title: "Rat", icon: "🐁" };
+    }
+
+    async getUserBalance(username) {
+        const normalizedUsername = normalizeUsernameForDb(username);
+        
+        // Get user data from database
+        const user = await this.db.get(
+            'SELECT balance, COALESCE(trust_score, trust, 50) as trust FROM user_economy WHERE username = ?',
+            [normalizedUsername]
+        );
+        
+        if (!user) {
+            // Create user if they don't exist
+            await this.getOrCreateUser(username);
+            return {
+                balance: 0,
+                trust: 50,
+                trustLevel: this.getTrustLevel(50)
+            };
+        }
+        
+        return {
+            balance: user.balance || 0,
+            trust: user.trust || 50,
+            trustLevel: this.getTrustLevel(user.trust || 50)
+        };
     }
 
     // Config management

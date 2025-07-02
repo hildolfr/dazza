@@ -97,7 +97,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Heist advance command error:', error);
+            bot.logger.error('Heist advance command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'failed to advance heist: ' + error.message);
             return { success: false };
         }

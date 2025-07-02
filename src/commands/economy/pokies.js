@@ -153,7 +153,7 @@ export default new Command({
                         [message.username, winnings, 'pokies', `Won $${winnings} from $${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
-                    bot.logger.error('Failed to log pokies transaction:', error);
+                    bot.logger.error('Failed to log pokies transaction:', { error: error.message, stack: error.stack });
                     // Don't fail the command just because logging failed
                 }
 
@@ -213,7 +213,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Pokies command error:', error);
+            bot.logger.error('Pokies command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'pokies machine tilted mate');
             return { success: false };
         }

@@ -251,7 +251,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
             } else if (catchRoll < 0.15) {
@@ -272,7 +272,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
                 
@@ -348,7 +348,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else if (fishRarity === 'rare') {
                     pmMessage += `${rarityEmojis[fishRarity]} Fuckin' ripper! You landed a ${weight}kg ${fishName}!\n`;
@@ -372,7 +372,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else if (fishRarity === 'epic') {
                     pmMessage += `${rarityEmojis[fishRarity]} Bloody oath! Epic catch - ${weight}kg ${fishName}!\n`;
@@ -388,7 +388,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 } else {
                     const catchMessages = [
@@ -408,7 +408,7 @@ export default new Command({
                             [message.username, value, 'fishing', `${weight}kg ${fishName}`, message.roomId || 'fatpizza', Date.now()]
                         );
                     } catch (error) {
-                        bot.logger.error('Failed to log fishing transaction:', error);
+                        bot.logger.error('Failed to log fishing transaction:', { error: error.message, stack: error.stack });
                     }
                 }
                 
@@ -485,7 +485,7 @@ export default new Command({
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing fishing rewards:', error);
+                        bot.logger.error('Error sharing fishing rewards:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -493,7 +493,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Fish command error:', error);
+            bot.logger.error('Fish command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'fishing rod snapped. bloody cheap Kmart shit.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message);

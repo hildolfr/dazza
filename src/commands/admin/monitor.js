@@ -37,7 +37,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in monitor command:', error);
+            bot.logger.error('Error in monitor command:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'fucked up checking the monitor mate');
             return { success: false };
         }

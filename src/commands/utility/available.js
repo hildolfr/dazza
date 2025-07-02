@@ -80,7 +80,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in available command:', error);
+            bot.logger.error('Error in available command:', { error: error.message, stack: error.stack });
             sendPM(bot, message.username, 'fucked up checkin ya available commands', message);
             return { success: false };
         }

@@ -148,7 +148,7 @@ export default new Command({
                         [message.username, winnings, 'scratchie', `Won ${winnings} from ${amount} bet`, message.roomId || 'fatpizza', Date.now()]
                     );
                 } catch (error) {
-                    bot.logger.error('Failed to log scratchie transaction:', error);
+                    bot.logger.error('Failed to log scratchie transaction:', { error: error.message, stack: error.stack });
                     // Don't fail the command just because logging failed
                 }
             }
@@ -183,7 +183,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Scratchie command error:', error);
+            bot.logger.error('Scratchie command error:', { error: error.message, stack: error.stack });
             sendPM(bot, message.username, 'scratchie machine broke mate', message.roomContext || message.roomId);
             return { success: false };
         }

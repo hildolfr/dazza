@@ -389,7 +389,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Mug command error:', error);
+            bot.logger.error('Mug command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'something went wrong with the mugging');
             return { success: false };
         }

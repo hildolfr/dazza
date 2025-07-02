@@ -149,7 +149,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in when command:', error);
+            bot.logger.error('Error in when command:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }

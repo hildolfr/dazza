@@ -119,7 +119,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Award command error:', error);
+            bot.logger.error('Award command error:', { error: error.message, stack: error.stack });
             // Send error message
             sendPM(bot, message.username, 'somethin went wrong with the award mate', message.roomId);
             return { success: false };

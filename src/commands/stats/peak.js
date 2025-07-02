@@ -64,7 +64,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in peak command:', error);
+            bot.logger.error('Error in peak command:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, "fucked up checkin' the peak times");
             return { success: false };
         }

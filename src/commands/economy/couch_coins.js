@@ -383,7 +383,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Couch coins command error:', error);
+            bot.logger.error('Couch coins command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'couch search system fucked itself. typical.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

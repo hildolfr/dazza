@@ -117,7 +117,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Clear command error:', error);
+            bot.logger.error('Clear command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'somethin went wrong with the clear mate';
             
             if (message.isPM) {
