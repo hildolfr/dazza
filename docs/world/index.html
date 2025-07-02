@@ -144,6 +144,128 @@
             right: 12px;
         }
         
+        /* Weather System */
+        .weather-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        /* Rain */
+        .rain {
+            background-image: 
+                linear-gradient(to bottom, transparent 0%, rgba(200,200,255,0.6) 50%, transparent 100%),
+                linear-gradient(to bottom, transparent 0%, rgba(200,200,255,0.6) 50%, transparent 100%);
+            background-size: 2px 15px, 3px 20px;
+            background-position: 0 0, 10px 5px;
+            animation: rain-fall 0.3s linear infinite;
+        }
+        
+        @keyframes rain-fall {
+            to { background-position: 0 15px, 10px 20px; }
+        }
+        
+        /* Stormy clouds */
+        .storm-clouds {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(to bottom, 
+                rgba(40, 40, 50, 0.9) 0%, 
+                rgba(60, 60, 70, 0.7) 50%, 
+                transparent 100%);
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        /* Lightning flash */
+        .lightning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+        }
+        
+        .lightning.flash {
+            animation: lightning-flash 0.3s ease-out;
+        }
+        
+        @keyframes lightning-flash {
+            0% { opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+        
+        /* Fog */
+        .fog {
+            background: linear-gradient(to right, 
+                transparent 0%, 
+                rgba(220, 220, 220, 0.6) 20%, 
+                rgba(220, 220, 220, 0.4) 50%, 
+                rgba(220, 220, 220, 0.6) 80%, 
+                transparent 100%);
+            animation: fog-drift 30s ease-in-out infinite;
+        }
+        
+        @keyframes fog-drift {
+            0%, 100% { transform: translateX(-10%); }
+            50% { transform: translateX(10%); }
+        }
+        
+        /* Weather control panel */
+        .weather-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+            font-family: Arial, sans-serif;
+        }
+        
+        .weather-controls h3 {
+            color: white;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        
+        .weather-btn {
+            display: block;
+            width: 100%;
+            padding: 5px 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        
+        .weather-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .weather-btn.active {
+            background: rgba(100, 150, 255, 0.5);
+            border-color: rgba(100, 150, 255, 0.8);
+        }
+        
         /* Birds */
         .bird {
             position: absolute;
@@ -202,9 +324,9 @@
         /* Beach area */
         #beach-area {
             position: absolute;
-            right: 0;
+            right: 8%; /* Leave space for ocean */
             top: 0;
-            width: 22%;
+            width: 14%; /* Reduced to fit before ocean */
             height: 100%;
             background: linear-gradient(to right, 
                 #c4b8a0 0%, 
@@ -235,6 +357,77 @@
             background-size: 60px 60px;
         }
         
+        /* Rock pools */
+        .rock-pool {
+            position: absolute;
+            border-radius: 40% 60% 50% 70%;
+            background: linear-gradient(135deg, #708090 0%, #556070 50%, #405060 100%);
+            border: 2px solid #404850;
+            z-index: 8;
+        }
+        
+        .rock-pool-water {
+            position: absolute;
+            top: 20%;
+            left: 15%;
+            right: 15%;
+            bottom: 20%;
+            background: rgba(64, 128, 160, 0.6);
+            border-radius: inherit;
+            animation: rock-pool-shimmer 4s ease-in-out infinite;
+        }
+        
+        @keyframes rock-pool-shimmer {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Driftwood */
+        .driftwood {
+            position: absolute;
+            background: linear-gradient(to right, #806050 0%, #705040 50%, #604030 100%);
+            border-radius: 30% 10%;
+            transform-origin: center;
+            z-index: 9;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* Seaweed */
+        .seaweed {
+            position: absolute;
+            background: #2a4a2a;
+            border-radius: 80% 20% 70% 30%;
+            opacity: 0.8;
+            z-index: 9;
+        }
+        
+        /* Beach grass tufts */
+        .beach-grass {
+            position: absolute;
+            z-index: 10;
+        }
+        
+        .grass-blade {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(to top, #506040 0%, #708050 100%);
+            transform-origin: bottom;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        /* Shells scattered on beach */
+        .shell {
+            position: absolute;
+            width: 6px;
+            height: 5px;
+            background: radial-gradient(ellipse, #f0e0d0 0%, #e0d0c0 100%);
+            border-radius: 30% 70% 40% 60%;
+            z-index: 9;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
         /* Ocean */
         #ocean {
             position: absolute;
@@ -252,6 +445,22 @@
                 #2870b0 72%, 
                 #1860a8 84%, 
                 #0850a0 100%);
+            z-index: 5;
+        }
+        
+        /* Natural shoreline between beach and ocean */
+        .shoreline {
+            position: absolute;
+            right: 8%;
+            top: 0;
+            width: 2%;
+            height: 100%;
+            background: linear-gradient(to right,
+                #f0e8d8 0%,
+                #e8e0d0 20%,
+                #d0c8c0 40%,
+                #c0d0d8 60%,
+                #b8d0e0 100%);
             z-index: 5;
         }
         
@@ -1605,6 +1814,22 @@
             <div class="bird" style="top: 15%; left: 20%;"></div>
             <div class="bird" style="top: 25%; left: 60%; animation-delay: -5s;"></div>
             <div class="bird" style="top: 20%; left: 40%; animation-delay: -10s;"></div>
+            <div class="storm-clouds"></div>
+        </div>
+        
+        <!-- Weather overlays -->
+        <div class="weather-overlay rain" id="rainOverlay"></div>
+        <div class="weather-overlay fog" id="fogOverlay"></div>
+        <div class="lightning" id="lightning"></div>
+        
+        <!-- Weather control panel -->
+        <div class="weather-controls">
+            <h3>Weather Control</h3>
+            <button class="weather-btn active" onclick="setWeather('sunny')">☀️ Sunny</button>
+            <button class="weather-btn" onclick="setWeather('cloudy')">☁️ Cloudy</button>
+            <button class="weather-btn" onclick="setWeather('rainy')">🌧️ Rainy</button>
+            <button class="weather-btn" onclick="setWeather('stormy')">⛈️ Stormy</button>
+            <button class="weather-btn" onclick="setWeather('foggy')">🌫️ Foggy</button>
         </div>
         
         <!-- Legend -->
@@ -1650,7 +1875,44 @@
         <!-- Beach area -->
         <div id="beach-area">
             <div class="sand-texture"></div>
+            
+            <!-- Rock pools -->
+            <div class="rock-pool" style="left: 5%; top: 20%; width: 25px; height: 20px;">
+                <div class="rock-pool-water"></div>
+            </div>
+            <div class="rock-pool" style="left: 15%; top: 65%; width: 30px; height: 25px;">
+                <div class="rock-pool-water"></div>
+            </div>
+            
+            <!-- Driftwood -->
+            <div class="driftwood" style="left: 10%; top: 40%; width: 35px; height: 6px; transform: rotate(25deg);"></div>
+            <div class="driftwood" style="left: 20%; top: 75%; width: 20px; height: 4px; transform: rotate(45deg);"></div>
+            
+            <!-- Seaweed -->
+            <div class="seaweed" style="left: 12%; top: 30%; width: 15px; height: 8px; transform: rotate(20deg);"></div>
+            <div class="seaweed" style="left: 25%; top: 70%; width: 18px; height: 7px; transform: rotate(10deg);"></div>
+            
+            <!-- Beach grass tufts -->
+            <div class="beach-grass" style="left: 8%; top: 10%;">
+                <div class="grass-blade" style="transform: rotate(-10deg);"></div>
+                <div class="grass-blade" style="left: 2px; transform: rotate(5deg);"></div>
+                <div class="grass-blade" style="left: 4px; transform: rotate(15deg);"></div>
+            </div>
+            <div class="beach-grass" style="left: 18%; top: 85%;">
+                <div class="grass-blade" style="transform: rotate(-5deg);"></div>
+                <div class="grass-blade" style="left: 2px; transform: rotate(8deg);"></div>
+                <div class="grass-blade" style="left: 4px; transform: rotate(-12deg);"></div>
+            </div>
+            
+            <!-- Shells -->
+            <div class="shell" style="left: 15%; top: 25%; transform: rotate(30deg);"></div>
+            <div class="shell" style="left: 22%; top: 42%; transform: rotate(-45deg);"></div>
+            <div class="shell" style="left: 10%; top: 58%; transform: rotate(60deg);"></div>
+            <div class="shell" style="left: 28%; top: 82%; transform: rotate(15deg);"></div>
         </div>
+        
+        <!-- Shoreline transition -->
+        <div class="shoreline"></div>
         
         <!-- Ocean -->
         <div id="ocean">
@@ -2400,8 +2662,66 @@
     </div>
     
     <script>
-        // Future interactivity placeholder
+        // Weather system
+        let currentWeather = 'sunny';
+        let lightningInterval = null;
+        
+        function setWeather(weather) {
+            // Clear previous weather
+            document.querySelectorAll('.weather-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('rainOverlay').style.opacity = '0';
+            document.getElementById('fogOverlay').style.opacity = '0';
+            document.querySelector('.storm-clouds').style.opacity = '0';
+            document.getElementById('sun').style.opacity = '1';
+            
+            if (lightningInterval) {
+                clearInterval(lightningInterval);
+                lightningInterval = null;
+            }
+            
+            // Apply new weather
+            currentWeather = weather;
+            document.querySelector(`.weather-btn[onclick="setWeather('${weather}')"]`).classList.add('active');
+            
+            switch(weather) {
+                case 'sunny':
+                    // Default state - bright and clear
+                    break;
+                    
+                case 'cloudy':
+                    document.getElementById('sun').style.opacity = '0.3';
+                    break;
+                    
+                case 'rainy':
+                    document.getElementById('sun').style.opacity = '0.1';
+                    document.getElementById('rainOverlay').style.opacity = '1';
+                    document.querySelector('.storm-clouds').style.opacity = '0.5';
+                    break;
+                    
+                case 'stormy':
+                    document.getElementById('sun').style.opacity = '0';
+                    document.getElementById('rainOverlay').style.opacity = '1';
+                    document.querySelector('.storm-clouds').style.opacity = '0.9';
+                    
+                    // Lightning effect
+                    lightningInterval = setInterval(() => {
+                        if (Math.random() > 0.7) {
+                            const lightning = document.getElementById('lightning');
+                            lightning.classList.add('flash');
+                            setTimeout(() => lightning.classList.remove('flash'), 300);
+                        }
+                    }, 2000);
+                    break;
+                    
+                case 'foggy':
+                    document.getElementById('sun').style.opacity = '0.2';
+                    document.getElementById('fogOverlay').style.opacity = '1';
+                    break;
+            }
+        }
+        
         console.log('Dazza\'s beach town loaded - Welcome to the Gold Coast mate!');
+        console.log('Try the weather controls in the top right corner!');
     </script>
 </body>
 </html>

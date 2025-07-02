@@ -154,7 +154,10 @@ export default new Command({
 
             // Get canonical username for the target
             const properTargetUsername = await getCanonicalUsername(bot, targetUser);
-            const targetOnline = Array.from(bot.userlist.values())
+            
+            // Get userlist for the current room
+            const userlist = message.roomId ? bot.getUserlistForRoom(message.roomId) : bot.getUserlist();
+            const targetOnline = Array.from(userlist.values())
                 .find(u => u.name.toLowerCase() === targetUser.toLowerCase());
             
             // Get target balance (this will create entry if needed)
