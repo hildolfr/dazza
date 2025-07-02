@@ -437,6 +437,7 @@ export class MultiRoomBot extends EventEmitter {
         // Check if command exists
         const command = this.commands.get(commandName);
         if (!command) {
+            this.logger.debug(`Command not found: ${commandName} in room ${roomId}`);
             return;
         }
         

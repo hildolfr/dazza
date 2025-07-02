@@ -88,6 +88,14 @@ export class PissingContestManager {
         // Store challenge
         roomChallenges.set(normalizedChallenger, challenge);
         
+        console.log(`[PissingContest] Created challenge:`, {
+            challenger: challenge.challenger,
+            challenged: challenge.challenged,
+            amount: challenge.amount,
+            roomId: challenge.roomId,
+            status: challenge.status
+        });
+        
         // Set timeout to expire challenge
         setTimeout(() => {
             const currentRoomChallenges = this.getRoomMap(this.activeChallenges, roomId);
@@ -108,8 +116,15 @@ export class PissingContestManager {
         const normalized = username.toLowerCase();
         const roomChallenges = this.getRoomMap(this.activeChallenges, roomId);
         
+        // Debug logging
+        if (roomChallenges.size > 0) {
+            console.log(`[PissingContest] Looking for challenges for ${username} (normalized: ${normalized}) in room ${roomId}`);
+            console.log(`[PissingContest] Active challenges in room:`, Array.from(roomChallenges.values()));
+        }
+        
         for (const [challenger, challenge] of roomChallenges.entries()) {
             if (challenge.challenged.toLowerCase() === normalized && challenge.status === 'pending') {
+                console.log(`[PissingContest] Found challenge for ${username}:`, challenge);
                 return challenge;
             }
         }

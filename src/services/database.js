@@ -1039,12 +1039,24 @@ class Database {
     }
 
     async getBladderState(username, roomId = 'fatpizza') {
-        const result = await this.get(
-            'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?) AND room_id = ?',
-            [username, roomId]
-        );
-        
-        return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
+        try {
+            const result = await this.get(
+                'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?) AND room_id = ?',
+                [username, roomId]
+            );
+            
+            return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
+        } catch (error) {
+            // If table doesn't have room_id column yet, fall back to old query
+            if (error.message && error.message.includes('no such column: room_id')) {
+                const result = await this.get(
+                    'SELECT current_amount, last_drink_time, last_piss_time FROM user_bladder WHERE LOWER(username) = LOWER(?)',
+                    [username]
+                );
+                return result || { current_amount: 0, last_drink_time: null, last_piss_time: null };
+            }
+            throw error;
+        }
     }
 
     async resetBladder(username, roomId = 'fatpizza') {

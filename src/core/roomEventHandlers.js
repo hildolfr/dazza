@@ -193,8 +193,12 @@ export const RoomEventHandlers = {
         await this.checkForMentions(roomId, data);
         
         // Check if it's a command
-        if (data.msg.startsWith('!')) {
-            await this.handleCommand(roomId, data);
+        const trimmedMsg = data.msg.trim();
+        if (trimmedMsg.startsWith('!')) {
+            await this.handleCommand(roomId, {
+                ...data,
+                msg: trimmedMsg
+            });
         }
     },
     
@@ -214,9 +218,11 @@ export const RoomEventHandlers = {
         });
         
         // Handle PM commands
-        if (data.msg.startsWith('!')) {
+        const trimmedPM = data.msg.trim();
+        if (trimmedPM.startsWith('!')) {
             await this.handleCommand(roomId, {
                 ...data,
+                msg: trimmedPM,
                 isPM: true,
                 roomId: roomId,
                 meta: { ...data.meta, pm: true }

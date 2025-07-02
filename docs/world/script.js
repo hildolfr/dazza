@@ -67,6 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     });
     
+    // Add city/landmark interactions
+    const cities = document.querySelectorAll('.city, .landmark');
+    cities.forEach(city => {
+        city.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = city.getAttribute('title');
+            console.log(`Oi cunt! You clicked on ${name}!`);
+        });
+    });
+    
     // Add some random ambient animations
     setInterval(() => {
         // Randomly trigger a dust particle
@@ -101,6 +111,25 @@ style.textContent = `
         100% {
             transform: translate(-50%, -50%) scale(3);
             opacity: 0;
+        }
+    }
+    
+    @keyframes popup-fade {
+        0% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(10px);
+        }
+        20% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        80% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-10px);
         }
     }
 `;
