@@ -987,6 +987,7 @@
             background-color: #608050;
             border-radius: 50% 10%;
             transform-origin: bottom center;
+            z-index: 2;
         }
         
         .palm-frond:nth-child(2) { transform: translateX(-50%) rotate(-35deg); }
@@ -1241,6 +1242,7 @@
             border: 2px solid rgba(0,0,0,0.2);
             position: relative;
             box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            z-index: 2;
         }
         
         .umbrella-stripes {
@@ -1307,6 +1309,7 @@
             background-color: #f0e0d0;
             border: 2px solid #d0c0b0;
             box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            z-index: 2;
         }
         
         .tower-platform::before {
@@ -1360,6 +1363,7 @@
             height: 15px;
             background-color: #d03030;
             animation: wave-flag 3s ease-in-out infinite;
+            z-index: 1;
         }
         
         .flag-yellow {
@@ -1399,6 +1403,7 @@
                 transparent 100%);
             border-radius: 50%;
             pointer-events: none;
+            z-index: 1;
         }
         
         /* Traffic light - overhead view */
@@ -1800,6 +1805,86 @@
             color: white;
             font-size: 5px;
             font-weight: bold;
+        }
+        
+        /* Ute vehicle */
+        .ute {
+            position: absolute;
+            z-index: 12;
+        }
+        
+        .ute-cab {
+            position: absolute;
+            border-radius: 3px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+        
+        .ute-tray {
+            position: absolute;
+            background-color: #606060;
+            border: 1px solid #505050;
+            z-index: 1;
+        }
+        
+        /* Graffiti */
+        .graffiti {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transform: rotate(-5deg);
+            opacity: 0.7;
+            z-index: 11;
+        }
+        
+        /* Train station */
+        .train-station {
+            position: absolute;
+            z-index: 15;
+        }
+        
+        .station-platform {
+            position: absolute;
+            background-color: #888888;
+            border: 2px solid #707070;
+        }
+        
+        .train-tracks {
+            position: absolute;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #606060 0px,
+                #606060 3px,
+                #808080 3px,
+                #808080 4px,
+                transparent 4px,
+                transparent 20px,
+                #808080 20px,
+                #808080 21px,
+                #606060 21px,
+                #606060 24px
+            );
+            z-index: 9;
+        }
+        
+        /* Sports oval */
+        .sports-oval {
+            position: absolute;
+            background-color: #90a080;
+            border-radius: 50%;
+            z-index: 6;
+        }
+        
+        .goal-posts {
+            position: absolute;
+            z-index: 7;
+        }
+        
+        .goal-post {
+            position: absolute;
+            width: 3px;
+            height: 25px;
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -2658,6 +2743,229 @@
         <div class="bush" style="left: 28%; top: 48%;"></div>
         <div class="bush" style="left: 44%; top: 70%;"></div>
         <div class="bush" style="left: 17%; top: 88%;"></div>
+        
+        <!-- NEW BOGAN TOWN ADDITIONS -->
+        
+        <!-- TAB/Betting Shop - next to bottle shop -->
+        <div class="building" style="left: calc(20% + 85px); top: 46%; width: 50px; height: 40px;">
+            <div class="roof roof-corrugated" style="background-color: #a04040;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(20% + 95px); top: calc(46% + 15px); background-color: #a04040; color: white; border-color: #a04040;">TAB</div>
+        
+        <!-- Centrelink - prominent location on main street -->
+        <div class="building" style="left: 55%; top: 20%; width: 80px; height: 60px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="window" style="left: 10px; top: 40%; width: 20px; height: 15px;"></div>
+            <div class="window" style="right: 10px; top: 40%; width: 20px; height: 15px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 16px; height: 22px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(55% + 15px); top: calc(20% + 20px); background-color: #306030; color: white; border-color: #306030;">CENTRELINK</div>
+        
+        <!-- Woolworths - large supermarket with parking -->
+        <div class="building" style="left: 3%; top: 25%; width: 110px; height: 70px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window" style="width: 90%; height: 80%;"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: 3%; top: calc(25% + 72px); width: 110px; height: 40px;">
+            <div class="parking-line" style="left: 15px; top: 5px; width: 2px; height: 30px;"></div>
+            <div class="parking-line" style="left: 35px; top: 5px; width: 2px; height: 30px;"></div>
+            <div class="parking-line" style="left: 55px; top: 5px; width: 2px; height: 30px;"></div>
+            <div class="parking-line" style="left: 75px; top: 5px; width: 2px; height: 30px;"></div>
+            <div class="parking-line" style="left: 95px; top: 5px; width: 2px; height: 30px;"></div>
+        </div>
+        <div class="building-label" style="left: calc(3% + 30px); top: calc(25% + 25px); background-color: #408040; color: white; border-color: #408040;">WOOLWORTHS</div>
+        
+        <!-- Pizza Shop - Dazza's favorite -->
+        <div class="building" style="left: 52%; top: 5%; width: 60px; height: 45px;">
+            <div class="roof roof-tile" style="background-color: #d06060;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(52% + 8px); top: calc(5% + 15px); background-color: #d06060; color: white; border-color: #d06060;">FAT PIZZA</div>
+        
+        <!-- Tobacconist/Smoke Shop -->
+        <div class="building" style="left: calc(52% + 65px); top: 5%; width: 45px; height: 45px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(52% + 70px); top: calc(5% + 15px);">SMOKES</div>
+        
+        <!-- Another pub - The Surfie -->
+        <div class="building" style="left: 58%; top: 32%; width: 75px; height: 55px;">
+            <div class="roof roof-tile"></div>
+            <div class="window" style="left: 10px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="window" style="right: 10px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 18px; height: 25px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: 58%; top: calc(32% + 57px); width: 75px; height: 25px;">
+            <div class="parking-line" style="left: 20px; top: 3px; width: 2px; height: 18px;"></div>
+            <div class="parking-line" style="left: 40px; top: 3px; width: 2px; height: 18px;"></div>
+            <div class="parking-line" style="left: 60px; top: 3px; width: 2px; height: 18px;"></div>
+        </div>
+        <div class="building-label" style="left: calc(58% + 15px); top: calc(32% + 20px);">THE SURFIE</div>
+        
+        <!-- Third pub - Workers Club -->
+        <div class="building" style="left: 2%; top: 85%; width: 85px; height: 50px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="window" style="left: 15px; top: 45%; width: 20px; height: 12px;"></div>
+            <div class="window" style="right: 15px; top: 45%; width: 20px; height: 12px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 16px; height: 22px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(2% + 20px); top: calc(85% + 18px);">WORKERS CLUB</div>
+        
+        <!-- Tattoo Parlor -->
+        <div class="building" style="left: 65%; top: 10%; width: 50px; height: 40px;">
+            <div class="roof roof-corrugated" style="background-color: #404040;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(65% + 5px); top: calc(10% + 12px); background-color: #404040; color: #f0f0f0; border-color: #404040;">INK CITY</div>
+        
+        <!-- Cash Converters -->
+        <div class="building" style="left: 28%; top: 10%; width: 55px; height: 40px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(28% + 2px); top: calc(10% + 12px); font-size: 7px;">CASH CONVERTERS</div>
+        
+        <!-- Maccas (McDonald's) with drive-thru -->
+        <div class="building" style="left: 48%; top: 58%; width: 90px; height: 60px;">
+            <div class="roof roof-corrugated" style="background-color: #d0d030;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: 48%; top: calc(58% + 62px); width: 90px; height: 35px;">
+            <div class="parking-line" style="left: 20px; top: 5px; width: 2px; height: 25px;"></div>
+            <div class="parking-line" style="left: 45px; top: 5px; width: 2px; height: 25px;"></div>
+            <div class="parking-line" style="left: 70px; top: 5px; width: 2px; height: 25px;"></div>
+        </div>
+        <div class="building-label" style="left: calc(48% + 30px); top: calc(58% + 20px); background-color: #d0d030; color: #d03030; border-color: #d0d030;">MACCAS</div>
+        
+        <!-- KFC -->
+        <div class="building" style="left: calc(48% + 95px); top: 60%; width: 70px; height: 50px;">
+            <div class="roof roof-corrugated" style="background-color: #d03030;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(48% + 115px); top: calc(60% + 18px); background-color: #d03030; color: white; border-color: #d03030;">KFC</div>
+        
+        <!-- Chemist/Pharmacy -->
+        <div class="building" style="left: 40%; top: 8%; width: 55px; height: 40px;">
+            <div class="roof roof-tile"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(40% + 10px); top: calc(8% + 12px); background-color: white; color: #306030; border-color: #306030;">CHEMIST</div>
+        
+        <!-- Op Shop -->
+        <div class="building" style="left: calc(40% + 58px); top: 8%; width: 45px; height: 40px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(40% + 62px); top: calc(8% + 12px);">VINNIES</div>
+        
+        <!-- Sports Oval/Footy Field -->
+        <div class="sports-oval" style="left: 5%; top: 88%; width: 120px; height: 80px;">
+            <div class="goal-posts" style="left: 10px; top: 50%; transform: translateY(-50%);">
+                <div class="goal-post" style="left: 0;"></div>
+                <div class="goal-post" style="left: 8px;"></div>
+            </div>
+            <div class="goal-posts" style="right: 10px; top: 50%; transform: translateY(-50%);">
+                <div class="goal-post" style="left: 0;"></div>
+                <div class="goal-post" style="left: 8px;"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(5% + 40px); top: calc(88% + 35px); background-color: rgba(144,160,128,0.9);">FOOTY OVAL</div>
+        
+        <!-- Train Station on Railway St -->
+        <div class="train-station" style="left: 1%; top: 65%; width: 130px; height: 40px;">
+            <div class="station-platform" style="width: 100%; height: 100%;">
+                <div class="window" style="left: 20px; top: 30%; width: 25px; height: 12px;"></div>
+                <div class="window" style="left: 50px; top: 30%; width: 25px; height: 12px;"></div>
+                <div class="window" style="left: 80px; top: 30%; width: 25px; height: 12px;"></div>
+                <div class="door" style="right: 10px; bottom: 0; width: 12px; height: 20px;">
+                    <div class="door-handle"></div>
+                </div>
+            </div>
+        </div>
+        <div class="train-tracks" style="left: 0; top: calc(65% + 42px); width: 15%; height: 8px;"></div>
+        <div class="building-label" style="left: calc(1% + 40px); top: calc(65% + 10px);">RAILWAY STATION</div>
+        
+        <!-- Replace some cars with utes -->
+        <div class="ute" style="left: calc(35% + 15px); top: 40%; width: 40px; height: 20px;">
+            <div class="ute-cab" style="width: 60%; height: 100%; background-color: #ffffff;"></div>
+            <div class="ute-tray" style="left: 60%; width: 40%; height: 100%;"></div>
+            <div class="car-window" style="left: 5px; top: 3px; width: 15px; height: 8px; background-color: #506070; border: 1px solid #405060;"></div>
+        </div>
+        
+        <div class="ute" style="left: calc(20% + 40px); top: calc(2% + 57px); width: 40px; height: 20px;">
+            <div class="ute-cab" style="width: 60%; height: 100%; background-color: #4040a0;"></div>
+            <div class="ute-tray" style="left: 60%; width: 40%; height: 100%;"></div>
+            <div class="car-window" style="left: 5px; top: 3px; width: 15px; height: 8px; background-color: #506070; border: 1px solid #405060;"></div>
+        </div>
+        
+        <div class="ute" style="left: calc(58% + 30px); top: calc(32% + 60px); width: 40px; height: 20px;">
+            <div class="ute-cab" style="width: 60%; height: 100%; background-color: #d04040;"></div>
+            <div class="ute-tray" style="left: 60%; width: 40%; height: 100%;"></div>
+            <div class="car-window" style="left: 5px; top: 3px; width: 15px; height: 8px; background-color: #506070; border: 1px solid #405060;"></div>
+        </div>
+        
+        <!-- Graffiti tags -->
+        <div class="graffiti" style="left: calc(15% + 48px); top: 35%; color: #d04040; font-size: 10px;">DAZZA</div>
+        <div class="graffiti" style="left: 25%; top: calc(75% + 48px); color: #4040d0; font-size: 8px; transform: rotate(10deg);">SHAZ</div>
+        <div class="graffiti" style="left: calc(35% - 30px); top: 65%; color: #40a040; font-size: 9px;">420</div>
+        <div class="graffiti" style="left: calc(40% + 95px); top: calc(20% + 72px); color: #a040a0; font-size: 7px; transform: rotate(-15deg);">BOGANS</div>
+        
+        <!-- Subtle bong shop -->
+        <div class="building" style="left: calc(65% + 55px); top: 10%; width: 40px; height: 40px;">
+            <div class="roof roof-corrugated" style="background-color: #408040;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(65% + 58px); top: calc(10% + 12px); font-size: 7px; background-color: #408040; color: white; border-color: #408040;">OFF YA TREE</div>
+        
+        <!-- Pokies venue -->
+        <div class="building" style="left: 45%; top: 85%; width: 80px; height: 50px;">
+            <div class="roof roof-corrugated" style="background-color: #808040;"></div>
+            <div class="window" style="left: 15px; top: 45%; width: 20px; height: 12px;"></div>
+            <div class="window" style="right: 15px; top: 45%; width: 20px; height: 12px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 16px; height: 22px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(45% + 15px); top: calc(85% + 18px); background-color: #808040; color: #f0f000; border-color: #808040;">POKIES PALACE</div>
+        
+        <!-- Hungry Jack's -->
+        <div class="building" style="left: 34%; top: 60%; width: 65px; height: 45px;">
+            <div class="roof roof-corrugated" style="background-color: #d08040;"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="building-label" style="left: calc(34% + 8px); top: calc(60% + 15px); background-color: #d08040; color: white; border-color: #d08040;">HUNGRY JACK'S</div>
         
     </div>
     
