@@ -251,9 +251,13 @@ export class HeistManager extends EventEmitter {
         const canonical = getCanonicalUsername(username);
         const roomState = this.getRoomState(roomId);
         
-        // Check if user already voted
-        if (roomState.votes.has(canonical)) {
-            return { success: false, message: 'Already voted' };
+        // Check if user already voted (for tracking changes)
+        const previousVote = roomState.votes.get(canonical);
+        const isChangingVote = previousVote !== undefined;
+        
+        // If changing vote, check if it's to the same crime
+        if (isChangingVote && previousVote === crimeType) {
+            return { success: false, message: 'Already voted for that crime' };
         }
         
         // Validate crime type
@@ -267,14 +271,17 @@ export class HeistManager extends EventEmitter {
         // Get or create user
         await this.getOrCreateUser(canonical);
         
-        // Award trust for voting
-        await this.modifyUserTrust(canonical, this.config.TRUST_VOTE_BONUS);
+        // Award trust for voting (only on first vote, not changes)
+        if (!isChangingVote) {
+            await this.modifyUserTrust(canonical, this.config.TRUST_VOTE_BONUS);
+        }
         
-        // Emit vote registered event with room
+        // Emit vote registered event with room and changed flag
         this.emit('vote_registered', {
             username: username,
             crime: crimeType,
-            roomId: roomId
+            roomId: roomId,
+            changed: isChangingVote
         });
         
         this.logger.debug(`Vote registered: ${username} -> ${crimeType} in room ${roomId}`);
