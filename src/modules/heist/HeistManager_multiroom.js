@@ -614,13 +614,20 @@ export class HeistManager extends EventEmitter {
             'SELECT value FROM heist_config WHERE key = ?',
             [key]
         );
-        return result ? result.value : null;
+        
+        if (!result) return null;
+        
+        // Convert empty strings back to null for consistency
+        return result.value === '' ? null : result.value;
     }
 
     async setConfig(key, value) {
+        // Convert null to empty string to avoid SQL constraint errors
+        const safeValue = value === null ? '' : value;
+        
         await this.db.run(
             'INSERT OR REPLACE INTO heist_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
-            [key, value]
+            [key, safeValue]
         );
     }
 

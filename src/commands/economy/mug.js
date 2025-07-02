@@ -257,12 +257,19 @@ export default new Command({
             let targetInChannel = false;
             
             // Multi-room bot check
-            if (message.roomContext) {
+            if (message.roomContext && message.roomContext.hasUser) {
                 targetInChannel = message.roomContext.hasUser(targetUsername);
             } 
             // Single-room bot fallback
-            else if (bot.userlist) {
+            else if (bot.userlist && bot.userlist.has) {
                 targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
+            }
+            // Alternative method for getting userlist
+            else if (bot.getUserlistForRoom) {
+                const userlist = bot.getUserlistForRoom(message.roomId);
+                if (userlist && userlist.has) {
+                    targetInChannel = userlist.has(targetUsername.toLowerCase());
+                }
             }
             
             if (!targetInChannel) {
@@ -284,15 +291,22 @@ export default new Command({
             let victimAFK = false;
             
             // Multi-room bot check
-            if (message.roomContext) {
+            if (message.roomContext && message.roomContext.getUser) {
                 const user = message.roomContext.getUser(targetUsername);
                 if (user) {
                     victimAFK = user.afk === true || (user.meta && user.meta.afk === true);
                 }
             }
             // Single-room bot fallback
-            else if (bot.isUserAFK) {
+            else if (bot.isUserAFK && typeof bot.isUserAFK === 'function') {
                 victimAFK = bot.isUserAFK(targetUsername);
+            }
+            // Alternative method to check AFK status
+            else if (bot.userlist && bot.userlist.get) {
+                const user = bot.userlist.get(targetUsername.toLowerCase());
+                if (user) {
+                    victimAFK = user.afk === true || (user.meta && user.meta.afk === true);
+                }
             }
             
             // Announce the mugging attempt (ping the victim)
@@ -341,14 +355,26 @@ export default new Command({
                 const roll = Math.random();
                 if (roll > successChance) {
                     // Victim successfully defends
-                    const fine = calculateFine();
+                    const attackerBalance = await bot.heistManager.getUserBalance(message.username);
+                    const baseFine = calculateFine();
+                    const fine = Math.min(baseFine, attackerBalance.balance); // Don't fine more than they have
                     const defenseTrustGain = Math.floor(Math.random() * 3) + 1; // 1-3 trust gain
-                    await bot.heistManager.updateUserEconomy(message.username, -fine, -3); // -3 trust severe penalty
+                    
+                    if (fine > 0) {
+                        await bot.heistManager.updateUserEconomy(message.username, -fine, -3); // -3 trust severe penalty
+                    } else {
+                        await bot.heistManager.updateUserEconomy(message.username, 0, -3); // Just trust penalty if broke
+                    }
                     await bot.heistManager.updateUserEconomy(targetUsername, 0, defenseTrustGain); // variable trust for defending
                     
-                    const defendMsg = responseMessages.victimDefends[Math.floor(Math.random() * responseMessages.victimDefends.length)]
-                        .replace('-victim', `-${targetUsername}`)
-                        .replace('-fine', fine);
+                    let defendMsg;
+                    if (fine > 0) {
+                        defendMsg = responseMessages.victimDefends[Math.floor(Math.random() * responseMessages.victimDefends.length)]
+                            .replace('-victim', `-${targetUsername}`)
+                            .replace('-fine', fine);
+                    } else {
+                        defendMsg = `-${targetUsername} fought off -${message.username} who's too broke to pay the fine!`;
+                    }
                     
                     bot.sendMessage(message.roomId, `${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
@@ -397,17 +423,29 @@ export default new Command({
                 }
             } else {
                 // Failed mug
-                const fine = calculateFine();
-                await bot.heistManager.updateUserEconomy(message.username, -fine, -2); // -2 trust for failure
+                const attackerBalance = await bot.heistManager.getUserBalance(message.username);
+                const baseFine = calculateFine();
+                const fine = Math.min(baseFine, attackerBalance.balance); // Don't fine more than they have
+                
+                if (fine > 0) {
+                    await bot.heistManager.updateUserEconomy(message.username, -fine, -2); // -2 trust for failure
+                } else {
+                    await bot.heistManager.updateUserEconomy(message.username, 0, -2); // Just trust penalty if broke
+                }
                 
                 // Select failure message based on trust levels
                 let msgCategory = 'equalTrust';
                 if (attackerTrust < victimTrust - 20) msgCategory = 'lowTrust';
                 else if (attackerTrust > victimTrust + 20) msgCategory = 'highTrust';
                 
-                let failMsg = failureMessages[msgCategory][Math.floor(Math.random() * failureMessages[msgCategory].length)]
-                    .replace('-victim', `-${targetUsername}`)
-                    .replace('-fine', fine);
+                let failMsg;
+                if (fine > 0) {
+                    failMsg = failureMessages[msgCategory][Math.floor(Math.random() * failureMessages[msgCategory].length)]
+                        .replace('-victim', `-${targetUsername}`)
+                        .replace('-fine', fine);
+                } else {
+                    failMsg = `-${message.username} failed to mug -${targetUsername} and is too broke to pay the fine!`;
+                }
                 
                 bot.sendMessage(message.roomId, `${failMsg} (-${message.username} -2 trust)`);
                 
@@ -431,11 +469,11 @@ async function updateMugStats(db, attacker, victim, success, amount, roomId = 'f
     try {
         const now = Date.now();
         
-        // Update attacker stats
+        // Update attacker stats (without room_id since table doesn't have it)
         await db.run(`
-            INSERT INTO mug_stats (username, room_id, total_mugs, successful_mugs, failed_mugs, total_stolen, total_lost, last_played)
-            VALUES (?, ?, 1, ?, ?, ?, ?, ?)
-            ON CONFLICT(username, room_id) DO UPDATE SET
+            INSERT INTO mug_stats (username, total_mugs, successful_mugs, failed_mugs, total_stolen, total_lost, last_played)
+            VALUES (?, 1, ?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
                 total_mugs = total_mugs + 1,
                 successful_mugs = successful_mugs + ?,
                 failed_mugs = failed_mugs + ?,
@@ -447,7 +485,6 @@ async function updateMugStats(db, attacker, victim, success, amount, roomId = 'f
                 updated_at = CURRENT_TIMESTAMP
         `, [
             attacker,
-            roomId,
             success ? 1 : 0,
             success ? 0 : 1,
             success ? amount : 0,
@@ -466,15 +503,15 @@ async function updateMugStats(db, attacker, victim, success, amount, roomId = 'f
         // Update victim stats if they were successfully mugged
         if (success && victim !== 'dazza') {
             await db.run(`
-                INSERT INTO mug_stats (username, room_id, times_mugged, total_lost, last_mugged_by, last_mugged_at)
-                VALUES (?, ?, 1, ?, ?, ?)
-                ON CONFLICT(username, room_id) DO UPDATE SET
+                INSERT INTO mug_stats (username, times_mugged, total_lost, last_mugged_by, last_mugged_at)
+                VALUES (?, 1, ?, ?, ?)
+                ON CONFLICT(username) DO UPDATE SET
                     times_mugged = times_mugged + 1,
                     total_lost = total_lost + ?,
                     last_mugged_by = ?,
                     last_mugged_at = ?,
                     updated_at = CURRENT_TIMESTAMP
-            `, [victim, roomId, amount, attacker, now, amount, attacker, now]);
+            `, [victim, amount, attacker, now, amount, attacker, now]);
         }
         
         // Log transaction

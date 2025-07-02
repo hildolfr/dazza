@@ -23,32 +23,14 @@ export default new Command({
             // Get balance from HeistManager
             if (!bot.heistManager) {
                 const errorMsg = 'economy system not ready yet mate';
-                if (message.isPM) {
-                    sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
-                } else {
-                    bot.sendMessage(message.roomId, errorMsg);
-                }
+                // Always send via PM
+                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
                 return { success: false };
             }
             
             const economy = await bot.heistManager.getUserBalance(targetUser);
             
-            // Only send public acknowledgment if NOT a PM
-            if (!message.isPM) {
-                // Public acknowledgment responses
-                const publicResponses = [
-                    `Checkin' the books for ya -${message.username}...`,
-                    `PMing ya the balance details -${message.username}`,
-                    `Slidin' into ya DMs with the financial report -${message.username}`,
-                    `Check ya messages -${message.username}`,
-                    `Sendin' the deets privately -${message.username}`
-                ];
-                
-                // Send public acknowledgment
-                bot.sendMessage(message.roomId, publicResponses[Math.floor(Math.random() * publicResponses.length)]);
-            }
-            
-            // Format private message with balance details
+            // Format private message with balance details (no public acknowledgment)
             let pmMessage;
             if (targetUser.toLowerCase() === message.username.toLowerCase()) {
                 // Checking own balance
@@ -76,11 +58,8 @@ export default new Command({
         } catch (error) {
             bot.logger.error('Balance command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'somethin went wrong checkin the balance';
-            if (message.isPM) {
-                sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
-            } else {
-                bot.sendMessage(message.roomId, errorMsg);
-            }
+            // Always send error via PM
+            sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
             return { success: false };
         }
     }
