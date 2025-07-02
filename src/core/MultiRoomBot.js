@@ -304,6 +304,8 @@ export class MultiRoomBot extends EventEmitter {
         // Connection events
         connection.on('authenticated', () => this.handleRoomAuthenticated(roomId));
         connection.on('disconnected', (reason) => this.handleRoomDisconnected(roomId, reason));
+        connection.on('reconnecting', () => this.handleRoomReconnecting(roomId));
+        connection.on('reconnectFailed', () => this.handleRoomReconnectFailed(roomId));
         
         // User events
         connection.on('userlist', (users) => this.handleUserlist(roomId, users));
@@ -514,6 +516,78 @@ export class MultiRoomBot extends EventEmitter {
         if (error.msg && error.msg.includes('Guest login is restricted')) {
             this.logger.error(`Guest login restricted in room ${roomId}`);
         }
+    }
+    
+    /**
+     * Handle room reconnecting event
+     */
+    async handleRoomReconnecting(roomId) {
+        this.logger.info(`Attempting to reconnect to room ${roomId}`);
+        
+        const connection = this.connections.get(roomId);
+        const roomContext = this.rooms.get(roomId);
+        
+        if (!connection || !roomContext) {
+            this.logger.error(`No connection/context for room ${roomId} during reconnect`);
+            return;
+        }
+        
+        try {
+            // Get room config
+            const roomConfigPath = path.join(__dirname, `../../rooms/${roomId}.js`);
+            const roomConfig = await import(roomConfigPath);
+            const config = roomConfig.default || roomConfig;
+            
+            // Attempt to reconnect
+            await connection.connect();
+            await connection.joinChannel(config.channel || roomId);
+            
+            // Login if credentials are provided
+            if (this.config.bot.username && this.config.bot.password) {
+                await connection.login(this.config.bot.username, this.config.bot.password);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            // Update room context
+            roomContext.connected = true;
+            roomContext.joinedChannel = true;
+            roomContext.authenticated = true;
+            
+            // Update database
+            await this.db.run(`
+                UPDATE rooms SET is_active = 1, last_active = ? WHERE id = ?
+            `, [Date.now(), roomId]);
+            
+            this.logger.info(`Successfully reconnected to room ${roomId}`);
+            
+            // Emit reconnection event
+            this.emit('room:reconnected', { roomId });
+        } catch (error) {
+            this.logger.error(`Failed to reconnect to room ${roomId}:`, error);
+            
+            // If it's a rate limit error, the connection will handle retry
+            if (!error.message.includes('Rate limit') && !error.message.includes('Too soon')) {
+                // Schedule another reconnect attempt
+                connection.scheduleReconnect();
+            }
+        }
+    }
+    
+    /**
+     * Handle room reconnect failed event
+     */
+    handleRoomReconnectFailed(roomId) {
+        this.logger.error(`Max reconnection attempts reached for room ${roomId}`);
+        
+        // Update database to mark room as inactive
+        this.db.run(`
+            UPDATE rooms SET is_active = 0, last_active = ? WHERE id = ?
+        `, [Date.now(), roomId]).catch(err => {
+            this.logger.error(`Failed to update room status:`, err);
+        });
+        
+        // Emit failure event
+        this.emit('room:reconnectFailed', { roomId });
     }
     
     /**
