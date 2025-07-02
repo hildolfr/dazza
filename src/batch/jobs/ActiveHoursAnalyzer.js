@@ -11,22 +11,37 @@ export class ActiveHoursAnalyzer extends BatchJob {
     async execute() {
         const startTime = Date.now();
         
-        // Clear existing data (we'll rebuild it completely for accuracy)
-        await this.db.run('DELETE FROM user_active_hours');
+        try {
+            // Clear existing data (we'll rebuild it completely for accuracy)
+            await this.db.run('DELETE FROM user_active_hours');
+        } catch (error) {
+            this.logger.error(`[ActiveHoursAnalyzer] Failed to delete from user_active_hours: ${error.message}`);
+            throw error;
+        }
         
         // Process messages grouped by user and hour
-        const hourlyStats = await this.db.all(`
-            SELECT 
-                LOWER(username) as username,
-                CAST(strftime('%H', datetime(timestamp / 1000, 'unixepoch', ? || ' hours')) AS INTEGER) as hour,
-                COUNT(*) as message_count,
-                SUM(COALESCE(word_count, 0)) as word_count,
-                AVG(LENGTH(message)) as avg_message_length
-            FROM messages
-            WHERE LOWER(username) != ?
-                AND username NOT LIKE '[%]'
-            GROUP BY LOWER(username), hour
-        `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
+        let hourlyStats;
+        try {
+            hourlyStats = await this.db.all(`
+                SELECT 
+                    LOWER(username) as username,
+                    CAST(strftime('%H', datetime(timestamp / 1000, 'unixepoch', ? || ' hours')) AS INTEGER) as hour,
+                    COUNT(*) as message_count,
+                    SUM(COALESCE(word_count, 0)) as word_count,
+                    AVG(LENGTH(message)) as avg_message_length
+                FROM messages
+                WHERE LOWER(username) != ?
+                    AND username NOT LIKE '[%]'
+                GROUP BY LOWER(username), hour
+            `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
+        } catch (error) {
+            this.logger.error(`[ActiveHoursAnalyzer] Failed to query messages: ${error.message}`);
+            // Check if it's the word_count column issue
+            if (error.message.includes('word_count')) {
+                this.logger.error(`[ActiveHoursAnalyzer] The messages table is missing the word_count column. Migration may not have run properly.`);
+            }
+            throw error;
+        }
 
         this.logger.info(`[ActiveHoursAnalyzer] Processing ${hourlyStats.length} user-hour combinations`);
 
