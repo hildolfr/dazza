@@ -11,6 +11,20 @@ export class ActiveHoursAnalyzer extends BatchJob {
     async execute() {
         const startTime = Date.now();
         
+        // Ensure the table exists (in case migration didn't run)
+        await this.db.run(`
+            CREATE TABLE IF NOT EXISTS user_active_hours (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                hour INTEGER NOT NULL,
+                message_count INTEGER DEFAULT 0,
+                word_count INTEGER DEFAULT 0,
+                avg_message_length INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(username, hour)
+            )
+        `);
+        
         try {
             // Clear existing data (we'll rebuild it completely for accuracy)
             await this.db.run('DELETE FROM user_active_hours');
@@ -21,13 +35,23 @@ export class ActiveHoursAnalyzer extends BatchJob {
         
         // Process messages grouped by user and hour
         let hourlyStats;
+        
+        // First check if word_count column exists
+        let hasWordCount = false;
+        try {
+            await this.db.get('SELECT word_count FROM messages LIMIT 1');
+            hasWordCount = true;
+        } catch (error) {
+            this.logger.warn('[ActiveHoursAnalyzer] word_count column not found, will use 0 for all word counts');
+        }
+        
         try {
             hourlyStats = await this.db.all(`
                 SELECT 
                     LOWER(username) as username,
                     CAST(strftime('%H', datetime(timestamp / 1000, 'unixepoch', ? || ' hours')) AS INTEGER) as hour,
                     COUNT(*) as message_count,
-                    SUM(COALESCE(word_count, 0)) as word_count,
+                    ${hasWordCount ? 'SUM(COALESCE(word_count, 0))' : '0'} as word_count,
                     AVG(LENGTH(message)) as avg_message_length
                 FROM messages
                 WHERE LOWER(username) != ?
@@ -36,10 +60,6 @@ export class ActiveHoursAnalyzer extends BatchJob {
             `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
         } catch (error) {
             this.logger.error(`[ActiveHoursAnalyzer] Failed to query messages: ${error.message}`);
-            // Check if it's the word_count column issue
-            if (error.message.includes('word_count')) {
-                this.logger.error(`[ActiveHoursAnalyzer] The messages table is missing the word_count column. Migration may not have run properly.`);
-            }
             throw error;
         }
 
