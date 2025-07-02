@@ -165,10 +165,10 @@ body {
 /* Enhanced Ocean */
 .ocean {
     position: absolute;
-    width: 120%;
-    height: 120%;
-    top: -10%;
-    left: -10%;
+    width: 110%;
+    height: 110%;
+    top: -5%;
+    left: -5%;
     background: 
         radial-gradient(ellipse at 20% 30%, rgba(0, 191, 255, 0.2) 0%, transparent 40%),
         radial-gradient(ellipse at 80% 70%, rgba(30, 144, 255, 0.15) 0%, transparent 50%),
@@ -245,10 +245,10 @@ body {
 /* Main landmass - Australia shape */
 .landmass {
     position: absolute;
-    width: 85%;
-    height: 75%;
-    top: 12%;
-    left: 7.5%;
+    width: 95%;
+    height: 85%;
+    top: 7%;
+    left: 2.5%;
     background: linear-gradient(135deg, #A0826D 0%, #8B7355 50%, #7A6449 100%);
     clip-path: polygon(
         /* Detailed Australia outline */
@@ -351,7 +351,7 @@ body {
 .central-desert {
     width: 45%;
     height: 45%;
-    top: 30%;
+    top: 35%;
     left: 27%;
 }
 
@@ -431,8 +431,8 @@ body {
 }
 
 .dune-1 {
-    width: 120px;
-    height: 60px;
+    width: 60px;
+    height: 30px;
     top: 20%;
     left: 10%;
     border-radius: 80% 20% 30% 70% / 60% 40% 60% 40%;
@@ -443,8 +443,8 @@ body {
 }
 
 .dune-2 {
-    width: 100px;
-    height: 45px;
+    width: 50px;
+    height: 22px;
     top: 40%;
     left: 50%;
     border-radius: 30% 70% 70% 30% / 40% 60% 40% 60%;
@@ -456,8 +456,8 @@ body {
 
 .cactus {
     position: absolute;
-    width: 25px;
-    height: 50px;
+    width: 12px;
+    height: 25px;
     background: 
         linear-gradient(to bottom, #228B22 0%, #1F6B1F 100%);
     border-radius: 15px 15px 5px 5px / 40px 40px 10px 10px;
@@ -478,19 +478,19 @@ body {
 }
 
 .cactus::before {
-    width: 18px;
-    height: 25px;
-    top: 12px;
-    left: -12px;
+    width: 9px;
+    height: 12px;
+    top: 6px;
+    left: -6px;
     border-radius: 10px 10px 5px 5px / 20px 20px 10px 10px;
     transform: rotate(-20deg);
 }
 
 .cactus::after {
-    width: 20px;
-    height: 28px;
-    top: 18px;
-    right: -13px;
+    width: 10px;
+    height: 14px;
+    top: 9px;
+    right: -6px;
     border-radius: 10px 10px 5px 5px / 20px 20px 10px 10px;
     transform: rotate(25deg);
 }
@@ -518,8 +518,8 @@ body {
 /* Enhanced Tumbleweed */
 .tumbleweed {
     position: absolute;
-    width: 35px;
-    height: 35px;
+    width: 15px;
+    height: 15px;
     bottom: 10%;
     left: -50px;
     background: 
@@ -558,15 +558,15 @@ body {
 .tropical-region.north {
     position: absolute;
     width: 60%;
-    height: 30%;
-    top: 5%;
+    height: 25%;
+    top: 10%;
     left: 30%;
 }
 
 .palm {
     position: absolute;
-    width: 18px;
-    height: 70px;
+    width: 10px;
+    height: 35px;
     background: 
         repeating-linear-gradient(
             0deg,
@@ -586,10 +586,10 @@ body {
 .palm::before {
     content: '';
     position: absolute;
-    top: -40px;
-    left: -30px;
-    width: 80px;
-    height: 80px;
+    top: -20px;
+    left: -15px;
+    width: 40px;
+    height: 40px;
     background: 
         radial-gradient(circle at center, transparent 30%, #228B22 35%, transparent 40%),
         conic-gradient(
@@ -616,9 +616,9 @@ body {
 .palm::after {
     content: '🥥🥥';
     position: absolute;
-    top: -25px;
-    left: -8px;
-    font-size: 12px;
+    top: -12px;
+    left: -4px;
+    font-size: 6px;
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.4));
 }
 
@@ -642,10 +642,10 @@ body {
 /* Eastern coastline */
 .coast-region.east {
     position: absolute;
-    width: 20%;
+    width: 15%;
     height: 60%;
     top: 20%;
-    right: 5%;
+    right: 3%;
 }
 
 .beach-area {
@@ -682,10 +682,10 @@ body {
 
 .reef-indicator {
     position: absolute;
-    width: 80px;
-    height: 150px;
+    width: 40px;
+    height: 75px;
     top: 15%;
-    right: -40px;
+    right: -20px;
     background: 
         radial-gradient(ellipse at 30% 30%, rgba(64, 224, 208, 0.4) 0%, transparent 40%),
         radial-gradient(ellipse at 70% 60%, rgba(72, 209, 204, 0.3) 0%, transparent 50%),
@@ -699,7 +699,7 @@ body {
     position: absolute;
     top: 40%;
     left: 20%;
-    font-size: 12px;
+    font-size: 6px;
     animation: swim 8s linear infinite;
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
 }
@@ -716,15 +716,15 @@ body {
 .temperate-region.south {
     position: absolute;
     width: 50%;
-    height: 30%;
-    bottom: 10%;
+    height: 25%;
+    bottom: 15%;
     left: 25%;
 }
 
 .eucalyptus {
     position: absolute;
-    width: 30px;
-    height: 60px;
+    width: 15px;
+    height: 30px;
     background: 
         repeating-linear-gradient(
             -5deg,
@@ -744,10 +744,10 @@ body {
 .eucalyptus::before {
     content: '';
     position: absolute;
-    top: -45px;
-    left: -25px;
-    width: 80px;
-    height: 80px;
+    top: -20px;
+    left: -12px;
+    width: 40px;
+    height: 40px;
     background: 
         radial-gradient(circle at 30% 30%, rgba(144, 238, 144, 0.3) 0%, transparent 30%),
         radial-gradient(circle at 70% 40%, rgba(34, 139, 34, 0.4) 0%, transparent 25%),
@@ -763,10 +763,10 @@ body {
 .eucalyptus::after {
     content: '';
     position: absolute;
-    top: -20px;
-    left: -30px;
-    width: 90px;
-    height: 60px;
+    top: -10px;
+    left: -15px;
+    width: 45px;
+    height: 30px;
     background: 
         radial-gradient(ellipse at 20% 80%, #6B8E23 0%, transparent 20%),
         radial-gradient(ellipse at 80% 60%, #556B2F 0%, transparent 15%),
@@ -788,8 +788,8 @@ body {
 
 .grass-patch {
     position: absolute;
-    width: 90px;
-    height: 25px;
+    width: 45px;
+    height: 12px;
     background: 
         radial-gradient(ellipse at 30% 50%, #90EE90 0%, #7CFC00 50%, #6B8E23 100%);
     border-radius: 50%;
@@ -830,14 +830,14 @@ body {
     position: absolute;
     width: 30%;
     height: 50%;
-    top: 25%;
-    left: 5%;
+    top: 30%;
+    left: 8%;
 }
 
 .bush {
     position: absolute;
-    width: 45px;
-    height: 35px;
+    width: 22px;
+    height: 17px;
     background: 
         radial-gradient(circle at 40% 40%, rgba(107, 142, 35, 0.4) 0%, transparent 60%),
         radial-gradient(circle at 60% 60%, #556B2F 0%, #3D5A1E 100%);
@@ -869,8 +869,8 @@ body {
 
 .rock {
     position: absolute;
-    width: 60px;
-    height: 45px;
+    width: 30px;
+    height: 22px;
     background: 
         radial-gradient(ellipse at 30% 30%, rgba(205, 192, 176, 0.3) 0%, transparent 50%),
         linear-gradient(135deg, #8B7D6B 0%, #696969 50%, #4A4A4A 100%);
@@ -906,10 +906,10 @@ body {
 /* Tasmania - More detailed */
 .tasmania {
     position: absolute;
-    width: 14%;
-    height: 12%;
-    bottom: -8%;
-    left: 64%;
+    width: 10%;
+    height: 8%;
+    bottom: -5%;
+    left: 66%;
 }
 
 .tassie-terrain {
@@ -948,7 +948,7 @@ body {
 /* Enhanced animated birds */
 .bird {
     position: absolute;
-    font-size: 24px;
+    font-size: 16px;
     animation: fly-across 30s linear infinite;
     filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.3));
 }
@@ -977,8 +977,8 @@ body {
 /* Enhanced dust particles */
 .dust-particle {
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 3px;
+    height: 3px;
     background: 
         radial-gradient(circle, #D2B48C 0%, #C19A6B 100%);
     border-radius: 50%;
@@ -1121,8 +1121,8 @@ body {
 
 /* Additional desert elements */
 .dune-3 {
-    width: 140px;
-    height: 55px;
+    width: 70px;
+    height: 27px;
     top: 55%;
     left: 25%;
     border-radius: 20% 80% 60% 40% / 40% 60% 40% 60%;
@@ -1149,8 +1149,8 @@ body {
 
 .desert-grass {
     position: absolute;
-    width: 40px;
-    height: 25px;
+    width: 20px;
+    height: 12px;
     background: linear-gradient(to top, #8B7D6B 0%, #9ACD32 100%);
     clip-path: polygon(
         50% 0%, 60% 50%, 70% 30%, 80% 80%, 
@@ -1172,8 +1172,8 @@ body {
 
 .tropical-bush {
     position: absolute;
-    width: 50px;
-    height: 40px;
+    width: 25px;
+    height: 20px;
     background: 
         radial-gradient(circle at center, #228B22 0%, #006400 100%);
     border-radius: 40% 60% 55% 45% / 55% 45% 55% 45%;
@@ -1192,7 +1192,7 @@ body {
 .mangrove::before {
     content: '🌿';
     position: absolute;
-    font-size: 50px;
+    font-size: 25px;
     transform: scaleY(1.5);
     filter: 
         hue-rotate(20deg) 
@@ -1204,8 +1204,8 @@ body {
 /* Coastal elements */
 .coastal-rock {
     position: absolute;
-    width: 35px;
-    height: 40px;
+    width: 17px;
+    height: 20px;
     background: 
         linear-gradient(to bottom, #696969 0%, #2F4F4F 100%);
     border-radius: 20% 80% 30% 70% / 70% 30% 70% 30%;
@@ -1221,8 +1221,8 @@ body {
     position: absolute;
     bottom: 40%;
     right: 20%;
-    width: 15px;
-    height: 40px;
+    width: 8px;
+    height: 20px;
     background: 
         repeating-linear-gradient(
             0deg,
@@ -1236,10 +1236,10 @@ body {
 .lighthouse::before {
     content: '';
     position: absolute;
-    top: -15px;
-    left: -7.5px;
-    width: 30px;
-    height: 30px;
+    top: -7px;
+    left: -4px;
+    width: 15px;
+    height: 15px;
     background: radial-gradient(circle, rgba(255, 255, 0, 0.8) 0%, transparent 70%);
     animation: lighthouse-glow 3s ease-in-out infinite;
 }
@@ -1277,13 +1277,13 @@ body {
 .flowers-1::before {
     content: '🌻🌸🌼';
     position: absolute;
-    font-size: 16px;
+    font-size: 8px;
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .kangaroo {
     position: absolute;
-    font-size: 30px;
+    font-size: 15px;
     animation: hop 5s ease-in-out infinite;
 }
 
@@ -1300,9 +1300,9 @@ body {
 
 @keyframes hop {
     0%, 100% { transform: translateY(0) translateX(0); }
-    25% { transform: translateY(-20px) translateX(10px); }
-    50% { transform: translateY(0) translateX(20px); }
-    75% { transform: translateY(-15px) translateX(30px); }
+    25% { transform: translateY(-10px) translateX(5px); }
+    50% { transform: translateY(0) translateX(10px); }
+    75% { transform: translateY(-7px) translateX(15px); }
 }
 
 /* Western region additions */
@@ -1330,7 +1330,7 @@ body {
 .mining-site::before {
     content: '⛏️';
     position: absolute;
-    font-size: 25px;
+    font-size: 12px;
     transform: rotate(-45deg);
     filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4));
 }
@@ -1354,7 +1354,7 @@ body {
     position: absolute;
     bottom: 40%;
     left: 30%;
-    font-size: 20px;
+    font-size: 10px;
 }
 
 .tassie-devil::before {
@@ -1370,29 +1370,29 @@ body {
     right: 20%;
     width: 0;
     height: 0;
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-bottom: 25px solid #696969;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 12px solid #696969;
     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .mountain-peak::before {
     content: '';
     position: absolute;
-    top: 8px;
-    left: -8px;
+    top: 4px;
+    left: -4px;
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 10px solid #FFFFFF;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid #FFFFFF;
 }
 
 /* Additional animated elements */
 .bird-3 {
     top: 50%;
     animation-delay: 8s;
-    font-size: 18px;
+    font-size: 12px;
 }
 
 .particle-3 {
@@ -1404,7 +1404,7 @@ body {
 
 .butterfly {
     position: absolute;
-    font-size: 20px;
+    font-size: 12px;
     animation: butterfly-flight 20s ease-in-out infinite;
 }
 
@@ -1421,15 +1421,15 @@ body {
 
 @keyframes butterfly-flight {
     0% { transform: translate(0, 0); }
-    25% { transform: translate(50px, -30px) rotate(10deg); }
-    50% { transform: translate(-30px, -50px) rotate(-10deg); }
-    75% { transform: translate(40px, 20px) rotate(5deg); }
+    25% { transform: translate(25px, -15px) rotate(10deg); }
+    50% { transform: translate(-15px, -25px) rotate(-10deg); }
+    75% { transform: translate(20px, 10px) rotate(5deg); }
     100% { transform: translate(0, 0); }
 }
 
 .airplane {
     position: absolute;
-    font-size: 30px;
+    font-size: 20px;
     animation: fly-plane 60s linear infinite;
 }
 
