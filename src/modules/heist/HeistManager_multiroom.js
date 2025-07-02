@@ -488,7 +488,7 @@ export class HeistManager extends EventEmitter {
             return { username, balance: 0, trust: 0, trust_score: 0 };
         }
         
-        const normalizedUsername = normalizeUsernameForDb(username);
+        const normalizedUsername = await normalizeUsernameForDb(this.bot, username);
         
         let user = await this.db.get(
             'SELECT * FROM user_economy WHERE username = ?',
@@ -523,7 +523,7 @@ export class HeistManager extends EventEmitter {
     }
 
     async modifyUserBalance(username, amount) {
-        const normalizedUsername = normalizeUsernameForDb(username);
+        const normalizedUsername = await normalizeUsernameForDb(this.bot, username);
         
         await this.db.run(
             'UPDATE user_economy SET balance = balance + ? WHERE username = ?',
@@ -540,7 +540,7 @@ export class HeistManager extends EventEmitter {
     }
 
     async modifyUserTrust(username, amount) {
-        const normalizedUsername = normalizeUsernameForDb(username);
+        const normalizedUsername = await normalizeUsernameForDb(this.bot, username);
         
         // Check if trust_score column exists
         const tableInfo = await this.db.all(`PRAGMA table_info(user_economy)`);
@@ -567,7 +567,7 @@ export class HeistManager extends EventEmitter {
     }
 
     async getUserBalance(username) {
-        const normalizedUsername = normalizeUsernameForDb(username);
+        const normalizedUsername = await normalizeUsernameForDb(this.bot, username);
         
         // Get user data from database
         let user = await this.db.get(
