@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dazza's World - Straya Map</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇦🇺</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="world-container">
+        <!-- Sky background with animated clouds -->
+        <div class="sky-layer">
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="cloud cloud-3"></div>
+            <div class="cloud cloud-4"></div>
+            <div class="sun"></div>
+        </div>
+        
+        <!-- Main map container -->
+        <div class="map-viewport">
+            <div class="australia-map">
+                <!-- Ocean waves -->
+                <div class="ocean">
+                    <div class="wave wave-1"></div>
+                    <div class="wave wave-2"></div>
+                    <div class="wave wave-3"></div>
+                </div>
+                
+                <!-- Main landmass -->
+                <div class="landmass">
+                    <!-- Base terrain -->
+                    <div class="terrain-base"></div>
+                    
+                    <!-- Desert regions -->
+                    <div class="desert-region central-desert">
+                        <div class="sand-dune dune-1"></div>
+                        <div class="sand-dune dune-2"></div>
+                        <div class="cactus cactus-1"></div>
+                        <div class="tumbleweed"></div>
+                    </div>
+                    
+                    <!-- Tropical north -->
+                    <div class="tropical-region north">
+                        <div class="palm palm-1"></div>
+                        <div class="palm palm-2"></div>
+                        <div class="palm palm-3"></div>
+                    </div>
+                    
+                    <!-- Eastern coastline -->
+                    <div class="coast-region east">
+                        <div class="beach-area"></div>
+                        <div class="reef-indicator"></div>
+                    </div>
+                    
+                    <!-- Southern temperate -->
+                    <div class="temperate-region south">
+                        <div class="eucalyptus tree-1"></div>
+                        <div class="eucalyptus tree-2"></div>
+                        <div class="grass-patch patch-1"></div>
+                        <div class="grass-patch patch-2"></div>
+                    </div>
+                    
+                    <!-- Western region -->
+                    <div class="western-region">
+                        <div class="bush bush-1"></div>
+                        <div class="rock formation-1"></div>
+                    </div>
+                    
+                    <!-- Tasmania -->
+                    <div class="tasmania">
+                        <div class="tassie-terrain"></div>
+                        <div class="eucalyptus tree-small"></div>
+                    </div>
+                </div>
+                
+                <!-- Animated elements overlay -->
+                <div class="animation-layer">
+                    <div class="bird bird-1"></div>
+                    <div class="bird bird-2"></div>
+                    <div class="dust-particle particle-1"></div>
+                    <div class="dust-particle particle-2"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- UI Overlay -->
+        <div class="ui-overlay">
+            <div class="title-banner">
+                <h1>DAZZA'S STRAYA</h1>
+                <p class="subtitle">Choose Your Adventure, Cunt!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

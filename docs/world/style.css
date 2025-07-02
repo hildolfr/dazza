@@ -1,0 +1,659 @@
+/* ===== DAZZA'S WORLD MAP - SUPER MARIO WORLD STYLE ===== */
+
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    background: #5C94FC; /* Classic Mario sky blue */
+}
+
+/* World container */
+.world-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* Sky layer with gradient */
+.sky-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, 
+        #5C94FC 0%, 
+        #8CB4FC 50%, 
+        #BCd4FC 100%);
+    overflow: hidden;
+}
+
+/* Sun */
+.sun {
+    position: absolute;
+    top: 50px;
+    right: 100px;
+    width: 80px;
+    height: 80px;
+    background: #FFD700;
+    border-radius: 50%;
+    box-shadow: 0 0 50px #FFD700;
+    animation: sun-glow 4s ease-in-out infinite;
+}
+
+/* Animated clouds */
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 100px;
+    opacity: 0.8;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 100px;
+}
+
+.cloud-1 {
+    width: 100px;
+    height: 40px;
+    top: 20%;
+    left: -100px;
+    animation: drift-right 60s linear infinite;
+}
+
+.cloud-1::before {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 10px;
+}
+
+.cloud-1::after {
+    width: 60px;
+    height: 40px;
+    top: -15px;
+    right: 10px;
+}
+
+.cloud-2 {
+    width: 80px;
+    height: 35px;
+    top: 15%;
+    left: -80px;
+    animation: drift-right 45s linear infinite;
+    animation-delay: 20s;
+}
+
+.cloud-3 {
+    width: 120px;
+    height: 45px;
+    top: 30%;
+    left: -120px;
+    animation: drift-right 70s linear infinite;
+    animation-delay: 10s;
+}
+
+.cloud-4 {
+    width: 90px;
+    height: 38px;
+    top: 10%;
+    left: -90px;
+    animation: drift-right 55s linear infinite;
+    animation-delay: 30s;
+}
+
+/* Map viewport */
+.map-viewport {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 1200px;
+    height: 80%;
+    perspective: 1000px;
+}
+
+/* Australia map container */
+.australia-map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform: rotateX(15deg);
+    transform-style: preserve-3d;
+}
+
+/* Ocean */
+.ocean {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    background: linear-gradient(135deg, #006994 0%, #0099CC 100%);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+/* Animated waves */
+.wave {
+    position: absolute;
+    width: 200%;
+    height: 100px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 20px,
+        rgba(255, 255, 255, 0.1) 20px,
+        rgba(255, 255, 255, 0.1) 40px
+    );
+}
+
+.wave-1 {
+    top: 20%;
+    animation: wave-motion 8s linear infinite;
+}
+
+.wave-2 {
+    top: 50%;
+    animation: wave-motion 10s linear infinite reverse;
+}
+
+.wave-3 {
+    top: 80%;
+    animation: wave-motion 12s linear infinite;
+}
+
+/* Main landmass - Australia shape */
+.landmass {
+    position: absolute;
+    width: 85%;
+    height: 75%;
+    top: 12%;
+    left: 7.5%;
+    background: #8B7355;
+    clip-path: polygon(
+        /* Simplified Australia outline */
+        15% 25%, /* Top left (WA) */
+        35% 15%, /* Top (NT) */
+        55% 10%, /* Cape York */
+        65% 15%,
+        75% 20%, /* QLD coast */
+        85% 35%,
+        90% 50%, /* NSW */
+        85% 65%,
+        80% 70%, /* VIC */
+        70% 75%,
+        60% 70%, /* SA */
+        40% 65%,
+        25% 55%, /* WA coast */
+        15% 40%,
+        15% 25%
+    );
+    box-shadow: 
+        0 0 30px rgba(0, 0, 0, 0.3),
+        inset 0 0 50px rgba(0, 0, 0, 0.1);
+}
+
+/* Terrain base with texture */
+.terrain-base {
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 50% 50%, #9B8B6B 0%, #8B7355 100%),
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23D2B48C"/><circle cx="25" cy="25" r="2" fill="%23C19A6B"/><circle cx="75" cy="75" r="2" fill="%23C19A6B"/><circle cx="50" cy="50" r="1" fill="%23C19A6B"/></svg>');
+    background-size: 100%, 50px 50px;
+}
+
+/* Desert region */
+.desert-region {
+    position: absolute;
+}
+
+.central-desert {
+    width: 40%;
+    height: 40%;
+    top: 35%;
+    left: 30%;
+}
+
+.sand-dune {
+    position: absolute;
+    background: linear-gradient(135deg, #F4D03F 0%, #E6B840 100%);
+    border-radius: 50% 50% 0 0;
+}
+
+.dune-1 {
+    width: 100px;
+    height: 50px;
+    top: 20%;
+    left: 10%;
+}
+
+.dune-2 {
+    width: 80px;
+    height: 40px;
+    top: 40%;
+    left: 50%;
+}
+
+.cactus {
+    position: absolute;
+    width: 20px;
+    height: 40px;
+    background: #228B22;
+    border-radius: 10px 10px 0 0;
+}
+
+.cactus::before,
+.cactus::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 20px;
+    background: #228B22;
+    border-radius: 10px;
+}
+
+.cactus::before {
+    top: 10px;
+    left: -10px;
+}
+
+.cactus::after {
+    top: 15px;
+    right: -10px;
+}
+
+.cactus-1 {
+    top: 60%;
+    left: 30%;
+    animation: sway-slow 6s ease-in-out infinite;
+}
+
+/* Tumbleweed */
+.tumbleweed {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    bottom: 10%;
+    left: 0;
+    background: #8B7355;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: tumble 20s linear infinite;
+}
+
+/* Tropical region */
+.tropical-region.north {
+    position: absolute;
+    width: 60%;
+    height: 30%;
+    top: 5%;
+    left: 30%;
+}
+
+.palm {
+    position: absolute;
+    width: 15px;
+    height: 60px;
+    background: #8B4513;
+}
+
+.palm::before {
+    content: '🌴';
+    position: absolute;
+    top: -20px;
+    left: -15px;
+    font-size: 40px;
+    animation: palm-sway 4s ease-in-out infinite;
+}
+
+.palm-1 {
+    top: 30%;
+    left: 20%;
+}
+
+.palm-2 {
+    top: 40%;
+    left: 60%;
+    animation-delay: 1s;
+}
+
+.palm-3 {
+    top: 50%;
+    left: 80%;
+    animation-delay: 2s;
+}
+
+/* Eastern coastline */
+.coast-region.east {
+    position: absolute;
+    width: 20%;
+    height: 60%;
+    top: 20%;
+    right: 5%;
+}
+
+.beach-area {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, 
+        transparent 0%, 
+        #F4E9D9 50%, 
+        #F0E68C 100%);
+    opacity: 0.5;
+}
+
+.reef-indicator {
+    position: absolute;
+    width: 50px;
+    height: 100px;
+    top: 20%;
+    right: -30px;
+    background: radial-gradient(ellipse, #40E0D0 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+/* Southern temperate region */
+.temperate-region.south {
+    position: absolute;
+    width: 50%;
+    height: 30%;
+    bottom: 10%;
+    left: 25%;
+}
+
+.eucalyptus {
+    position: absolute;
+    width: 25px;
+    height: 50px;
+    background: linear-gradient(to top, #654321 0%, #8B4513 30%, transparent 30%);
+}
+
+.eucalyptus::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: -20px;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle, #228B22 30%, transparent 70%);
+    border-radius: 50%;
+    animation: tree-sway 5s ease-in-out infinite;
+}
+
+.tree-1 {
+    bottom: 40%;
+    left: 20%;
+}
+
+.tree-2 {
+    bottom: 50%;
+    left: 70%;
+    animation-delay: 2s;
+}
+
+.grass-patch {
+    position: absolute;
+    width: 80px;
+    height: 20px;
+    background: #90EE90;
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.patch-1 {
+    bottom: 20%;
+    left: 30%;
+}
+
+.patch-2 {
+    bottom: 30%;
+    left: 60%;
+}
+
+/* Western region */
+.western-region {
+    position: absolute;
+    width: 30%;
+    height: 50%;
+    top: 25%;
+    left: 5%;
+}
+
+.bush {
+    position: absolute;
+    width: 40px;
+    height: 30px;
+    background: #556B2F;
+    border-radius: 50%;
+    animation: bush-rustle 8s ease-in-out infinite;
+}
+
+.bush-1 {
+    top: 40%;
+    left: 30%;
+}
+
+.rock {
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    background: linear-gradient(135deg, #8B7D6B 0%, #696969 100%);
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+}
+
+.formation-1 {
+    top: 60%;
+    left: 50%;
+}
+
+/* Tasmania */
+.tasmania {
+    position: absolute;
+    width: 12%;
+    height: 10%;
+    bottom: -5%;
+    left: 65%;
+}
+
+.tassie-terrain {
+    width: 100%;
+    height: 100%;
+    background: #8B7355;
+    border-radius: 40%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.tree-small {
+    transform: scale(0.6);
+    bottom: 30%;
+    left: 40%;
+}
+
+/* Animated birds */
+.bird {
+    position: absolute;
+    font-size: 20px;
+    animation: fly-across 30s linear infinite;
+}
+
+.bird::before {
+    content: '🦅';
+}
+
+.bird-1 {
+    top: 20%;
+    animation-delay: 0s;
+}
+
+.bird-2 {
+    top: 35%;
+    animation-delay: 15s;
+}
+
+/* Dust particles */
+.dust-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #D2B48C;
+    border-radius: 50%;
+    opacity: 0.5;
+}
+
+.particle-1 {
+    top: 50%;
+    left: 40%;
+    animation: dust-float 10s ease-in-out infinite;
+}
+
+.particle-2 {
+    top: 60%;
+    left: 60%;
+    animation: dust-float 12s ease-in-out infinite reverse;
+}
+
+/* UI Overlay */
+.ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.title-banner {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    padding: 20px 40px;
+    border-radius: 10px;
+    box-shadow: 
+        0 5px 20px rgba(0, 0, 0, 0.3),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+    border: 3px solid #B8860B;
+}
+
+.title-banner h1 {
+    font-size: 36px;
+    color: #8B0000;
+    text-shadow: 
+        2px 2px 0 #FFD700,
+        -2px -2px 0 #FFD700,
+        2px -2px 0 #FFD700,
+        -2px 2px 0 #FFD700;
+    margin-bottom: 5px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #654321;
+    font-style: italic;
+}
+
+/* Animations */
+@keyframes drift-right {
+    from { left: -200px; }
+    to { left: 110%; }
+}
+
+@keyframes wave-motion {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@keyframes sway-slow {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+}
+
+@keyframes palm-sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+@keyframes tree-sway {
+    0%, 100% { transform: scale(1) rotate(-1deg); }
+    50% { transform: scale(1.05) rotate(1deg); }
+}
+
+@keyframes bush-rustle {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.02) translateX(-1px); }
+    75% { transform: scale(0.98) translateX(1px); }
+}
+
+@keyframes tumble {
+    from {
+        left: -50px;
+        transform: rotate(0deg);
+    }
+    to {
+        left: 110%;
+        transform: rotate(720deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes fly-across {
+    from {
+        left: -50px;
+        transform: translateY(0);
+    }
+    25% { transform: translateY(-10px); }
+    50% { transform: translateY(10px); }
+    75% { transform: translateY(-5px); }
+    to {
+        left: 110%;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dust-float {
+    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+    25% { transform: translate(10px, -5px); opacity: 0.3; }
+    50% { transform: translate(-5px, 10px); opacity: 0.6; }
+    75% { transform: translate(5px, 5px); opacity: 0.4; }
+}
+
+@keyframes sun-glow {
+    0%, 100% { box-shadow: 0 0 50px #FFD700; }
+    50% { box-shadow: 0 0 80px #FFD700, 0 0 120px #FFA500; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .title-banner h1 {
+        font-size: 24px;
+    }
+    
+    .subtitle {
+        font-size: 14px;
+    }
+    
+    .map-viewport {
+        width: 95%;
+        height: 70%;
+    }
+}
