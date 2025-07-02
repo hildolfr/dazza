@@ -254,7 +254,17 @@ export default new Command({
             }
 
             // Check if target exists in the channel
-            const targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
+            let targetInChannel = false;
+            
+            // Multi-room bot check
+            if (message.roomContext) {
+                targetInChannel = message.roomContext.hasUser(targetUsername);
+            } 
+            // Single-room bot fallback
+            else if (bot.userlist) {
+                targetInChannel = bot.userlist.has(targetUsername.toLowerCase());
+            }
+            
             if (!targetInChannel) {
                 bot.sendMessage(message.roomId, `can't find ${targetUsername} in here, they probably legged it`);
                 return { success: false };

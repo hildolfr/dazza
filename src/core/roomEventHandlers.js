@@ -408,7 +408,7 @@ export const RoomEventHandlers = {
             );
             
             // Mark tell as delivered
-            await this.db.deleteTell(tell.id);
+            await this.db.markTellDelivered(tell.id);
         }
     },
     
