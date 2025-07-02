@@ -792,7 +792,8 @@ export class CyTubeBot extends EventEmitter {
         const result = await this.commands.execute(commandName, this, {
             username: data.username,
             msg: data.msg,
-            time: data.time || Date.now()
+            time: data.time || Date.now(),
+            roomId: this.connection.roomId || 'fatpizza'
         }, args);
         
         // Log successful command execution
@@ -1894,7 +1895,8 @@ export class CyTubeBot extends EventEmitter {
                 const pmContext = {
                     ...data,
                     isPM: true,
-                    originalMessage: data.msg
+                    originalMessage: data.msg,
+                    roomId: this.connection.roomId || 'fatpizza'
                 };
                 
                 // Create a wrapped bot object that intercepts sendMessage calls

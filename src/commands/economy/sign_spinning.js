@@ -296,7 +296,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Sign spinning command error:', error);
+            bot.logger.error('Sign spinning command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Sign spinning agency system crashed. Try again later mate.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

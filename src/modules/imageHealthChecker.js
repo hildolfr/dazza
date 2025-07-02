@@ -207,7 +207,7 @@ export class ImageHealthChecker {
             }
             
         } catch (error) {
-            this.bot.logger.error('[ImageHealthChecker] Health check failed:', error);
+            this.bot.logger.error('[ImageHealthChecker] Health check failed:', { error: error.message, stack: error.stack });
         } finally {
             this.isRunning = false;
         }
@@ -324,7 +324,7 @@ export class ImageHealthChecker {
             }
             
         } catch (error) {
-            this.bot.logger.error('[ImageHealthChecker] Recheck failed:', error);
+            this.bot.logger.error('[ImageHealthChecker] Recheck failed:', { error: error.message, stack: error.stack });
         }
     }
     
@@ -420,7 +420,7 @@ export class ImageHealthChecker {
             };
             
         } catch (error) {
-            this.bot.logger.error(`[ImageHealthChecker] Failed to check images for ${username}:`, error);
+            this.bot.logger.error(`[ImageHealthChecker] Failed to check images for ${username}:`, { error: error.message, stack: error.stack });
             throw error;
         }
     }
@@ -494,7 +494,7 @@ export class ImageHealthChecker {
             }
             
         } catch (error) {
-            this.bot.logger.error(`[ImageHealthChecker] Failed to recheck image ${imageId}:`, error);
+            this.bot.logger.error(`[ImageHealthChecker] Failed to recheck image ${imageId}:`, { error: error.message, stack: error.stack });
             throw error;
         }
     }

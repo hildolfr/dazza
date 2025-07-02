@@ -104,7 +104,7 @@ export default new Command({
             bot.sendMessage(message.roomId, record);
             return { success: true };
         } catch (error) {
-            bot.logger.error('Criminal record command error:', error);
+            bot.logger.error('Criminal record command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'records room is locked mate');
             return { success: false };
         }

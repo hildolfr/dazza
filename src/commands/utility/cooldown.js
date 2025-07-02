@@ -87,7 +87,7 @@ export default new Command({
                     }
                 }
             } catch (error) {
-                bot.logger.error('Error checking persistent cooldowns:', error);
+                bot.logger.error('Error checking persistent cooldowns:', { error: error.message, stack: error.stack });
             }
             
             // Centrelink is now handled in the persistent cooldowns above
@@ -135,7 +135,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Error in cooldown command:', error);
+            bot.logger.error('Error in cooldown command:', { error: error.message, stack: error.stack });
             sendPM(bot, message.username, 'fucked up checkin ya cooldowns mate', message);
             return { success: false };
         }

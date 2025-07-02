@@ -85,7 +85,7 @@ export async function getCanonicalUsername(bot, username) {
     } catch (error) {
         // Log error but don't crash
         if (bot.logger) {
-            bot.logger.error('Error getting canonical username:', error);
+            bot.logger.error('Error getting canonical username:', { error: error.message, stack: error.stack });
         }
     }
     

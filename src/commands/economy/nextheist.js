@@ -64,7 +64,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Next heist command error:', error);
+            bot.logger.error('Next heist command error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'failed to check heist timer: ' + error.message);
             return { success: false };
         }

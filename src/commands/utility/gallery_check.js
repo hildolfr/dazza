@@ -49,7 +49,7 @@ export default new Command({
             
             return { success: true };
         } catch (error) {
-            bot.logger.error('Gallery check error:', error);
+            bot.logger.error('Gallery check error:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, `Fucked up checkin' the gallery, try again later`);
             return { success: false };
         }

@@ -48,7 +48,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Dazza balance command error:', error);
+            bot.logger.error('Dazza balance command error:', { error: error.message, stack: error.stack });
             sendPM(bot, message.username, 'failed to check dazza\'s stash', message.roomContext || message.roomId);
             return { success: false };
         }

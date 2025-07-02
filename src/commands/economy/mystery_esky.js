@@ -291,7 +291,7 @@ export default new Command({
 
             return { success: true };
         } catch (error) {
-            bot.logger.error('Mystery box command error:', error);
+            bot.logger.error('Mystery box command error:', { error: error.message, stack: error.stack });
             sendPM(bot, message.username, 'mystery esky machine broke mate', message.roomContext || message.roomId);
             return { success: false };
         }

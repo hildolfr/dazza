@@ -290,7 +290,7 @@ export default new Command({
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing centrelink rewards:', error);
+                        bot.logger.error('Error sharing centrelink rewards:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -298,7 +298,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Centrelink command error:', error);
+            bot.logger.error('Centrelink command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Centrelink computer crashed. Standard Monday really.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

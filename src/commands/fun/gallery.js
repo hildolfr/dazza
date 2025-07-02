@@ -36,7 +36,7 @@ export default new Command({
                 
                 return { success: true };
             } catch (error) {
-                bot.logger.error('Gallery lock error:', error);
+                bot.logger.error('Gallery lock error:', { error: error.message, stack: error.stack });
                 sendPM(bot, message.username, `Fucked up the lock mechanism, try again later`, message);
                 return { success: false };
             }

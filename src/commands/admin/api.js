@@ -45,7 +45,7 @@ export default new Command({
             bot.sendMessage(message.roomId, `API ${status} | Port: ${port} | Endpoints: ${endpoints} | WS Clients: ${wsClients} | Uptime: ${uptimeStr} | Active Users: ${activeUsers.count}`);
             
         } catch (error) {
-            bot.logger.error('Error getting API status:', error);
+            bot.logger.error('Error getting API status:', { error: error.message, stack: error.stack });
             bot.sendMessage(message.roomId, 'Failed to get API status mate');
         }
         

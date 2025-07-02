@@ -303,7 +303,7 @@ export default new Command({
                             }, 1000);
                         }
                     } catch (error) {
-                        bot.logger.error('Error sharing TAB winnings:', error);
+                        bot.logger.error('Error sharing TAB winnings:', { error: error.message, stack: error.stack });
                     }
                 }, 4000);
             }
@@ -311,7 +311,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('TAB command error:', error);
+            bot.logger.error('TAB command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'TAB machine just ate ya money and caught fire. typical.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

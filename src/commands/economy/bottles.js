@@ -260,7 +260,7 @@ export default new Command({
             return { success: true };
             
         } catch (error) {
-            bot.logger.error('Bottles command error:', error);
+            bot.logger.error('Bottles command error:', { error: error.message, stack: error.stack });
             const errorMsg = 'Bottle depot machine shit itself. Classic.';
             if (message.isPM) {
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);
