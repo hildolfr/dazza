@@ -72,10 +72,7 @@ export default new Command({
             
             sendPM(bot, username, response, message);
             
-            // If command was sent in public chat, acknowledge it
-            if (!message.isPM) {
-                bot.sendMessage(message.roomId, `checkin what's ready for ${username}...`);
-            }
+            // No public acknowledgment - PM only
             
             return { success: true };
             

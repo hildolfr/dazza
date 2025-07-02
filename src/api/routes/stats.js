@@ -77,7 +77,6 @@ export function createStatsRoutes(apiServer) {
             { type: 'talkers', title: 'Top Yappers' },
             { type: 'bongs', title: '🌿 Most Cooked Cunts' },
             { type: 'drinks', title: '🍺 Top Piss-heads' },
-            { type: 'quoted', title: '💬 Quotable Legends' },
             { type: 'gamblers', title: '🎰 Lucky Bastards' },
             { type: 'fishing', title: '🎣 Master Baiters' },
             { type: 'bottles', title: '♻️ Eco Warriors' },
@@ -126,17 +125,6 @@ export function createStatsRoutes(apiServer) {
                                     username: r.username,
                                     value: `${r.drink_count} drinks`,
                                     achievement: r.drink_count >= 500 ? '💀' : r.drink_count >= 100 ? '🍺' : null
-                                }))
-                            };
-                        case 'quoted':
-                            results = await apiServer.bot.db.getTopQuotedUsers(limitNum, room);
-                            return {
-                                type,
-                                title,
-                                data: results.map((r, i) => ({
-                                    rank: i + 1,
-                                    username: r.username,
-                                    value: `${r.quotable_messages} bangers`
                                 }))
                             };
                         case 'gamblers':
@@ -271,7 +259,7 @@ export function createStatsRoutes(apiServer) {
         const { type } = req.params;
         const { limit = 10, room = 'fatpizza' } = req.query;
         
-        const validTypes = ['talkers', 'bongs', 'drinks', 'quoted', 'gamblers', 'fishing', 
+        const validTypes = ['talkers', 'bongs', 'drinks', 'gamblers', 'fishing', 
                           'bottles', 'cashie', 'sign_spinning', 'beggars', 'pissers',
                           'money', 'criminal', 'messages', 'images'];
         if (!validTypes.includes(type)) {
@@ -311,16 +299,6 @@ export function createStatsRoutes(apiServer) {
                     count: row.drink_count,
                     label: 'drinks',
                     achievement: row.drink_count >= 500 ? '💀' : row.drink_count >= 100 ? '🍺' : null
-                }));
-                break;
-                
-            case 'quoted':
-                results = await apiServer.bot.db.getTopQuotedUsers(limitNum, room);
-                data = results.map((row, index) => ({
-                    rank: index + 1,
-                    username: row.username,
-                    count: row.quotable_messages,
-                    label: 'bangers'
                 }));
                 break;
                 
@@ -1081,7 +1059,7 @@ export function createStatsRoutes(apiServer) {
                     break;
                     
                 default:
-                    // For simple counters (talkers, bongs, drinks, quoted)
+                    // For simple counters (talkers, bongs, drinks)
                     const basicStats = await apiServer.bot.db.get(
                         'SELECT * FROM user_stats WHERE LOWER(username) = ?',
                         [normalizedUsername]
@@ -1313,11 +1291,10 @@ export function createStatsRoutes(apiServer) {
         };
         
         // Fetch all ranks
-        const [talkers, bongs, drinks, quoted, gamblers, fishing, bottles, cashie, signSpinning, beggars, pissers] = await Promise.all([
+        const [talkers, bongs, drinks, gamblers, fishing, bottles, cashie, signSpinning, beggars, pissers] = await Promise.all([
             apiServer.bot.db.getTopTalkers(100, room),
             apiServer.bot.db.getTopBongUsers(100, room),
             apiServer.bot.db.getTopDrinkers(100, room),
-            apiServer.bot.db.getTopQuotedUsers(100, room),
             apiServer.bot.db.getTopGamblers(100),
             apiServer.bot.db.getTopFishers(100),
             apiServer.bot.db.getTopBottleCollectors(100),
@@ -1330,7 +1307,6 @@ export function createStatsRoutes(apiServer) {
         ranks.talkers = findUserRank(talkers, normalizedUsername, r => `${r.message_count} messages`);
         ranks.bongs = findUserRank(bongs, normalizedUsername, r => `${r.bong_count} cones`);
         ranks.drinks = findUserRank(drinks, normalizedUsername, r => `${r.drink_count} drinks`);
-        ranks.quoted = findUserRank(quoted, normalizedUsername, r => `${r.quotable_messages} bangers`);
         ranks.gamblers = findUserRank(gamblers, normalizedUsername, r => `$${r.biggest_win}`);
         ranks.fishing = findUserRank(fishing, normalizedUsername, r => `${r.biggest_catch}kg`);
         ranks.bottles = findUserRank(bottles, normalizedUsername, r => `$${r.total_earnings}`);
