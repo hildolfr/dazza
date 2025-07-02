@@ -570,7 +570,7 @@ export class HeistManager extends EventEmitter {
         const normalizedUsername = normalizeUsernameForDb(username);
         
         // Get user data from database
-        const user = await this.db.get(
+        let user = await this.db.get(
             'SELECT balance, COALESCE(trust_score, trust, 50) as trust FROM user_economy WHERE username = ?',
             [normalizedUsername]
         );
@@ -578,11 +578,20 @@ export class HeistManager extends EventEmitter {
         if (!user) {
             // Create user if they don't exist
             await this.getOrCreateUser(username);
-            return {
-                balance: 0,
-                trust: 50,
-                trustLevel: this.getTrustLevel(50)
-            };
+            // Fetch the user data after creation
+            user = await this.db.get(
+                'SELECT balance, COALESCE(trust_score, trust, 50) as trust FROM user_economy WHERE username = ?',
+                [normalizedUsername]
+            );
+            
+            // If still no user, return defaults
+            if (!user) {
+                return {
+                    balance: 0,
+                    trust: 50,
+                    trustLevel: this.getTrustLevel(50)
+                };
+            }
         }
         
         return {
