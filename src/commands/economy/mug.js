@@ -281,7 +281,19 @@ export default new Command({
             }
 
             // Check if victim is AFK
-            const victimAFK = bot.isUserAFK(targetUsername);
+            let victimAFK = false;
+            
+            // Multi-room bot check
+            if (message.roomContext) {
+                const user = message.roomContext.getUser(targetUsername);
+                if (user) {
+                    victimAFK = user.afk === true || (user.meta && user.meta.afk === true);
+                }
+            }
+            // Single-room bot fallback
+            else if (bot.isUserAFK) {
+                victimAFK = bot.isUserAFK(targetUsername);
+            }
             
             // Announce the mugging attempt (ping the victim)
             bot.sendMessage(message.roomId, `-${message.username} is trying to mug ${targetUsername}!`);
@@ -289,8 +301,12 @@ export default new Command({
             // Set up response window (60 seconds)
             let victimResponded = false;
             let responseAlertSent = false;
-            const responseHandler = (msg) => {
-                if (msg.username.toLowerCase() === targetUsername.toLowerCase() && !victimResponded) {
+            const responseHandler = (data) => {
+                // For multi-room bot, check roomId matches
+                const isCorrectRoom = data.roomId ? data.roomId === message.roomId : true;
+                const isVictim = data.username && data.username.toLowerCase() === targetUsername.toLowerCase();
+                
+                if (isCorrectRoom && isVictim && !victimResponded) {
                     victimResponded = true;
                     if (!responseAlertSent) {
                         responseAlertSent = true;
@@ -305,13 +321,15 @@ export default new Command({
                 }
             };
             
-            bot.on('userMessage', responseHandler);
+            // Use appropriate event based on bot type
+            const eventName = bot.rooms ? 'chat:message' : 'userMessage';
+            bot.on(eventName, responseHandler);
             
             // Wait 60 seconds for response
             await new Promise(resolve => setTimeout(resolve, 60000));
             
             // Remove the handler
-            bot.removeListener('userMessage', responseHandler);
+            bot.removeListener(eventName, responseHandler);
             
             // Calculate success
             let successChance = calculateSuccessChance(attackerTrust, victimTrust, victimAFK);
