@@ -485,6 +485,11 @@ export const RoomEventHandlers = {
         const room = this.getRoom(roomId);
         if (!room || !this.ollama) return;
         
+        // Don't respond to server messages
+        if (data.username === '[server]') {
+            return;
+        }
+        
         // Check if message mentions the bot
         const lowerMsg = data.msg.toLowerCase();
         const botNameLower = this.username.toLowerCase();
