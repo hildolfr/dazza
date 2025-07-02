@@ -261,6 +261,18 @@ export class ApiServer extends EventEmitter {
         // Mount versioned API
         this.app.use('/api/v1', router);
         
+        // Static files and custom routes
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+        const docsPath = path.join(__dirname, '..', '..', 'docs');
+        
+        // Serve world.html at /docs/world
+        this.app.get('/docs/world', (req, res) => {
+            res.sendFile(path.join(docsPath, 'world.html'));
+        });
+        
+        // Serve other static files from docs directory
+        this.app.use('/docs', express.static(docsPath));
+        
         // Root redirect
         this.app.get('/', (req, res) => {
             res.json({

@@ -3,184 +3,2389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dazza's World - Straya Map</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇦🇺</text></svg>">
-    <link rel="stylesheet" href="style.css">
+    <title>Dazza's Town - World Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: monospace;
+            background-color: #e8dcc4;
+        }
+        
+        #world-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: #c8b8a0;
+            overflow: hidden;
+        }
+        
+        /* Sky layer */
+        #sky {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                #98c0e8 0%, 
+                #a8c8e8 25%, 
+                #b8d4e8 45%, 
+                #c8dce8 65%, 
+                #d8e4e8 85%, 
+                #e8ece8 100%);
+            z-index: 0;
+        }
+        
+        /* Sun */
+        #sun {
+            position: absolute;
+            top: 8%;
+            right: 18%;
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle, 
+                #fffef0 0%, 
+                #fffce0 20%, 
+                #fff8c0 40%, 
+                #ffe8a0 60%, 
+                #ffd870 80%, 
+                #ffc840 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 100px rgba(255, 220, 100, 0.9);
+            z-index: 1;
+        }
+        
+        /* Clouds */
+        .cloud {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.75);
+            border-radius: 100px;
+            opacity: 0.65;
+            z-index: 2;
+        }
+        
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.75);
+            border-radius: 100px;
+        }
+        
+        .cloud1 {
+            width: 100px;
+            height: 40px;
+            top: 12%;
+            left: 8%;
+            animation: drift 85s infinite;
+        }
+        
+        .cloud1::before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 10px;
+        }
+        
+        .cloud1::after {
+            width: 60px;
+            height: 40px;
+            top: -15px;
+            right: 10px;
+        }
+        
+        .cloud2 {
+            width: 80px;
+            height: 35px;
+            top: 22%;
+            left: 35%;
+            animation: drift 105s infinite;
+            animation-delay: -25s;
+        }
+        
+        .cloud2::before {
+            width: 60px;
+            height: 45px;
+            top: -20px;
+            left: 15px;
+        }
+        
+        .cloud2::after {
+            width: 50px;
+            height: 35px;
+            top: -10px;
+            right: 15px;
+        }
+        
+        .cloud3 {
+            width: 90px;
+            height: 38px;
+            top: 30%;
+            right: 25%;
+            animation: drift 95s infinite;
+            animation-delay: -45s;
+        }
+        
+        .cloud3::before {
+            width: 55px;
+            height: 48px;
+            top: -22px;
+            left: 12px;
+        }
+        
+        .cloud3::after {
+            width: 55px;
+            height: 38px;
+            top: -12px;
+            right: 12px;
+        }
+        
+        /* Birds */
+        .bird {
+            position: absolute;
+            width: 15px;
+            height: 2px;
+            background-color: #404040;
+            z-index: 3;
+            animation: fly 20s linear infinite;
+        }
+        
+        .bird::before,
+        .bird::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 7px;
+            height: 2px;
+            background-color: #404040;
+        }
+        
+        .bird::before {
+            left: -5px;
+            transform: rotate(15deg);
+        }
+        
+        .bird::after {
+            right: -5px;
+            transform: rotate(-15deg);
+        }
+        
+        @keyframes drift {
+            0% { transform: translateX(-150px); }
+            100% { transform: translateX(400px); }
+        }
+        
+        @keyframes fly {
+            0% { transform: translate(-100px, 0); }
+            25% { transform: translate(200px, -20px); }
+            50% { transform: translate(400px, 10px); }
+            75% { transform: translate(600px, -15px); }
+            100% { transform: translate(800px, 0); }
+        }
+        
+        /* Base ground */
+        #ground {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #c4b8a0;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 25px, rgba(0,0,0,0.01) 25px, rgba(0,0,0,0.01) 50px),
+                repeating-linear-gradient(-45deg, transparent, transparent 25px, rgba(0,0,0,0.01) 25px, rgba(0,0,0,0.01) 50px);
+            z-index: 3;
+        }
+        
+        /* Beach area */
+        #beach-area {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 22%;
+            height: 100%;
+            background: linear-gradient(to right, 
+                #c4b8a0 0%, 
+                #ccc0a8 12%, 
+                #d4c8b0 24%, 
+                #dcd0b8 36%, 
+                #e4d8c0 48%, 
+                #ece0c8 60%, 
+                #f0e8d8 72%, 
+                #f4f0e8 84%, 
+                #f8f4f0 92%, 
+                #fcf8f0 100%);
+            z-index: 4;
+        }
+        
+        /* Sand texture */
+        .sand-texture {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.5;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(0,0,0,0.03) 0%, transparent 1.5%),
+                radial-gradient(circle at 60% 20%, rgba(0,0,0,0.03) 0%, transparent 1.5%),
+                radial-gradient(circle at 15% 40%, rgba(0,0,0,0.03) 0%, transparent 1.5%),
+                radial-gradient(circle at 80% 60%, rgba(0,0,0,0.03) 0%, transparent 1.5%),
+                radial-gradient(circle at 45% 50%, rgba(0,0,0,0.03) 0%, transparent 1.5%);
+            background-size: 60px 60px;
+        }
+        
+        /* Ocean */
+        #ocean {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 8%;
+            height: 100%;
+            background: linear-gradient(to right, 
+                #b8d0e0 0%, 
+                #a0c0d8 12%, 
+                #88b0d0 24%, 
+                #70a0c8 36%, 
+                #5890c0 48%, 
+                #4080b8 60%, 
+                #2870b0 72%, 
+                #1860a8 84%, 
+                #0850a0 100%);
+            z-index: 5;
+        }
+        
+        /* Wave layers */
+        .wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 45px,
+                rgba(255,255,255,0.4) 45px,
+                rgba(255,255,255,0.4) 48px,
+                transparent 48px,
+                transparent 90px
+            );
+            animation: waves 6s linear infinite;
+        }
+        
+        .wave2 {
+            opacity: 0.3;
+            animation: waves 6s linear infinite reverse;
+            animation-delay: 3s;
+        }
+        
+        .wave3 {
+            opacity: 0.2;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 30px,
+                rgba(255,255,255,0.3) 30px,
+                rgba(255,255,255,0.3) 32px,
+                transparent 32px,
+                transparent 60px
+            );
+            animation: waves 4s linear infinite;
+            animation-delay: 1.5s;
+        }
+        
+        @keyframes waves {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(90px); }
+        }
+        
+        /* Shore foam */
+        .shore-foam {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right,
+                rgba(255,255,255,0.7) 0%,
+                rgba(255,255,255,0.4) 30%,
+                rgba(255,255,255,0.2) 60%,
+                transparent 100%);
+            animation: foam 4s ease-in-out infinite;
+        }
+        
+        @keyframes foam {
+            0%, 100% { transform: translateX(0); opacity: 0.7; }
+            50% { transform: translateX(-20px); opacity: 0.9; }
+        }
+        
+        /* Roads */
+        .road {
+            position: absolute;
+            background-color: #787068;
+            z-index: 8;
+        }
+        
+        .road::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 120px, rgba(0,0,0,0.02) 120px, rgba(0,0,0,0.02) 122px);
+            opacity: 0.6;
+        }
+        
+        /* Road types */
+        .road-main-vertical {
+            width: 50px;
+            left: 35%;
+            height: 100%;
+        }
+        
+        .road-secondary-vertical {
+            width: 45px;
+            left: 15%;
+            height: 100%;
+        }
+        
+        .road-main-horizontal {
+            height: 50px;
+            width: 70%;
+            left: 0;
+        }
+        
+        .road-secondary-horizontal {
+            height: 45px;
+            width: 70%;
+            left: 0;
+        }
+        
+        /* Road markings */
+        .road-marking {
+            position: absolute;
+            z-index: 9;
+        }
+        
+        .lane-divider-vertical {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                #f0e0c8 0px,
+                #f0e0c8 25px,
+                transparent 25px,
+                transparent 50px
+            );
+            opacity: 0.8;
+        }
+        
+        .lane-divider-horizontal {
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            width: 100%;
+            background: repeating-linear-gradient(
+                to right,
+                #f0e0c8 0px,
+                #f0e0c8 25px,
+                transparent 25px,
+                transparent 50px
+            );
+            opacity: 0.8;
+        }
+        
+        /* Stop lines at intersections */
+        .stop-line {
+            position: absolute;
+            background-color: #f0e0c8;
+            opacity: 0.7;
+            z-index: 9;
+        }
+        
+        /* Intersections */
+        .intersection {
+            position: absolute;
+            background-color: #787068;
+            z-index: 8;
+        }
+        
+        /* Footpaths */
+        .footpath {
+            position: absolute;
+            background-color: #b0a090;
+            z-index: 7;
+        }
+        
+        .footpath::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,0.015) 20px, rgba(0,0,0,0.015) 21px);
+        }
+        
+        /* Crosswalk */
+        .crosswalk {
+            position: absolute;
+            z-index: 9;
+        }
+        
+        .crosswalk-stripe {
+            position: absolute;
+            background-color: #f0e0c8;
+            opacity: 0.9;
+        }
+        
+        /* Buildings */
+        .building {
+            position: absolute;
+            background-color: #d0c0a8;
+            border: 2px solid #a09080;
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.25);
+            z-index: 15;
+        }
+        
+        /* Roofs */
+        .roof {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 35%;
+            z-index: 1;
+        }
+        
+        .roof-tile {
+            background-color: #907060;
+            border-bottom: 3px solid #706050;
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 8px,
+                rgba(0,0,0,0.1) 8px,
+                rgba(0,0,0,0.1) 9px
+            );
+        }
+        
+        .roof-corrugated {
+            background-color: #8088a0;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #8088a0 0px,
+                #8088a0 4px,
+                #707890 4px,
+                #707890 8px
+            );
+            border-bottom: 2px solid #607080;
+        }
+        
+        /* Chimneys */
+        .chimney {
+            position: absolute;
+            top: -8px;
+            width: 12px;
+            height: 20px;
+            background-color: #706050;
+            border: 1px solid #605040;
+            z-index: 2;
+        }
+        
+        /* AC Units */
+        .ac-unit {
+            position: absolute;
+            top: 5px;
+            width: 20px;
+            height: 15px;
+            background-color: #e0e0e0;
+            border: 1px solid #c0c0c0;
+            z-index: 2;
+        }
+        
+        /* Windows */
+        .window {
+            position: absolute;
+            background-color: #708898;
+            border: 2px solid #506070;
+            z-index: 2;
+        }
+        
+        .window::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #506070;
+        }
+        
+        .window::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background-color: #506070;
+        }
+        
+        /* Doors */
+        .door {
+            position: absolute;
+            background-color: #805040;
+            border: 2px solid #604030;
+            z-index: 2;
+        }
+        
+        .door-handle {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            width: 4px;
+            height: 8px;
+            background-color: #c0b090;
+            transform: translateY(-50%);
+        }
+        
+        /* Shop fronts */
+        .shopfront {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60%;
+            background-color: rgba(255,255,255,0.1);
+            border-top: 2px solid #908070;
+            z-index: 2;
+        }
+        
+        .shop-window {
+            position: absolute;
+            bottom: 10%;
+            width: 80%;
+            left: 10%;
+            height: 70%;
+            background-color: #809898;
+            border: 3px solid #607080;
+        }
+        
+        /* Label system with pointer lines */
+        .label-container {
+            position: absolute;
+            left: 2%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px;
+            background-color: rgba(248, 240, 232, 0.95);
+            border: 2px solid #404040;
+            padding: 10px;
+            z-index: 30;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .label-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid #404040;
+            padding-bottom: 5px;
+        }
+        
+        .label-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 10px;
+        }
+        
+        .label-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            border: 1px solid #404040;
+            flex-shrink: 0;
+        }
+        
+        .label-text {
+            color: #202020;
+        }
+        
+        /* Small floating labels for key buildings */
+        .building-label {
+            position: absolute;
+            background-color: rgba(248, 240, 232, 0.9);
+            border: 1px solid #404040;
+            padding: 1px 4px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #202020;
+            z-index: 25;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        
+        /* Parking */
+        .parking-lot {
+            position: absolute;
+            background-color: #686058;
+            z-index: 6;
+        }
+        
+        .parking-line {
+            position: absolute;
+            background-color: #f0e0c8;
+            opacity: 0.6;
+        }
+        
+        /* Vehicles */
+        .car {
+            position: absolute;
+            z-index: 12;
+        }
+        
+        .car-body {
+            position: absolute;
+            border-radius: 3px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .car-window {
+            position: absolute;
+            background-color: #506070;
+            border: 1px solid #405060;
+        }
+        
+        /* Grass */
+        .grass {
+            position: absolute;
+            background-color: #a0b090;
+            z-index: 5;
+        }
+        
+        .grass::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(255,255,255,0.05) 0%, transparent 1.5%),
+                radial-gradient(circle at 45% 45%, rgba(255,255,255,0.05) 0%, transparent 1.5%),
+                radial-gradient(circle at 75% 25%, rgba(255,255,255,0.05) 0%, transparent 1.5%),
+                radial-gradient(circle at 25% 75%, rgba(255,255,255,0.05) 0%, transparent 1.5%),
+                radial-gradient(circle at 85% 85%, rgba(255,255,255,0.05) 0%, transparent 1.5%);
+            background-size: 15px 15px;
+        }
+        
+        /* Garden beds */
+        .garden-bed {
+            position: absolute;
+            background-color: #806050;
+            border: 2px solid #605040;
+            z-index: 13;
+        }
+        
+        .flowers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, #d08080 0%, transparent 3px),
+                radial-gradient(circle at 50% 50%, #d0d080 0%, transparent 3px),
+                radial-gradient(circle at 80% 70%, #d080d0 0%, transparent 3px);
+            background-size: 15px 15px;
+        }
+        
+        /* Trees */
+        .tree {
+            position: absolute;
+            z-index: 16;
+        }
+        
+        .tree-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 18px;
+            background-color: #605040;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                #605040 0px,
+                #605040 2px,
+                #504030 2px,
+                #504030 4px
+            );
+            z-index: 1;
+        }
+        
+        .tree-crown {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35px;
+            height: 35px;
+            background-color: #708060;
+            border-radius: 50%;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.35);
+            z-index: 2;
+        }
+        
+        .tree-crown::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.15) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+        
+        /* Palm trees */
+        .palm-tree {
+            position: absolute;
+            z-index: 16;
+        }
+        
+        .palm-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 45px;
+            background-color: #706050;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                #706050 0px,
+                #706050 4px,
+                #605040 4px,
+                #605040 8px
+            );
+        }
+        
+        .palm-frond {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            width: 45px;
+            height: 25px;
+            background-color: #608050;
+            border-radius: 50% 10%;
+            transform-origin: bottom center;
+        }
+        
+        .palm-frond:nth-child(2) { transform: translateX(-50%) rotate(-35deg); }
+        .palm-frond:nth-child(3) { transform: translateX(-50%) rotate(35deg); }
+        .palm-frond:nth-child(4) { transform: translateX(-50%) rotate(-70deg); }
+        .palm-frond:nth-child(5) { transform: translateX(-50%) rotate(70deg); }
+        .palm-frond:nth-child(6) { transform: translateX(-50%) rotate(0deg) scale(1.1); }
+        
+        /* Bushes */
+        .bush {
+            position: absolute;
+            width: 30px;
+            height: 18px;
+            background-color: #788868;
+            border-radius: 50%;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.25);
+            z-index: 14;
+        }
+        
+        /* Fences */
+        .fence {
+            position: absolute;
+            z-index: 13;
+        }
+        
+        .fence-horizontal {
+            height: 5px;
+            background-color: #807060;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #807060 0px,
+                #807060 10px,
+                transparent 10px,
+                transparent 12px
+            );
+        }
+        
+        .fence-vertical {
+            width: 5px;
+            background-color: #807060;
+            background-image: repeating-linear-gradient(
+                0deg,
+                #807060 0px,
+                #807060 10px,
+                transparent 10px,
+                transparent 12px
+            );
+        }
+        
+        /* Letter boxes */
+        .letterbox {
+            position: absolute;
+            width: 10px;
+            height: 12px;
+            background-color: #606060;
+            border: 1px solid #505050;
+            z-index: 14;
+        }
+        
+        .letterbox::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 4px;
+            background-color: #505050;
+        }
+        
+        /* Power infrastructure - overhead view */
+        .power-pole {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #605040;
+            border-radius: 50%;
+            z-index: 17;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .power-pole::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background-color: #504030;
+            border-radius: 50%;
+        }
+        
+        .power-crossbar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 35px;
+            height: 4px;
+            background-color: #605040;
+            z-index: 16;
+        }
+        
+        .power-line {
+            position: absolute;
+            height: 1px;
+            background-color: #403020;
+            z-index: 15;
+            opacity: 0.7;
+        }
+        
+        /* Street furniture */
+        .bin {
+            position: absolute;
+            width: 14px;
+            height: 18px;
+            background-color: #506050;
+            border: 1px solid #405040;
+            z-index: 14;
+        }
+        
+        .bin::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -1px;
+            right: -1px;
+            height: 4px;
+            background-color: #405040;
+            border-radius: 1px;
+        }
+        
+        .bench {
+            position: absolute;
+            width: 30px;
+            height: 12px;
+            background-color: #706050;
+            border: 1px solid #605040;
+            z-index: 14;
+        }
+        
+        .bench::before,
+        .bench::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            width: 3px;
+            height: 4px;
+            background-color: #605040;
+        }
+        
+        .bench::before { left: 3px; }
+        .bench::after { right: 3px; }
+        
+        /* Street signs - overhead view perspective */
+        .street-sign {
+            position: absolute;
+            z-index: 18;
+        }
+        
+        .sign-base {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #505050;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .sign-board {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #208020;
+            border: 2px solid #f0f0f0;
+            padding: 2px 8px;
+            font-size: 8px;
+            color: #f0f0f0;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* Bus stop */
+        .bus-stop {
+            position: absolute;
+            z-index: 15;
+        }
+        
+        .bus-shelter {
+            position: absolute;
+            width: 40px;
+            height: 35px;
+            background-color: rgba(160, 160, 160, 0.9);
+            border: 2px solid #808080;
+        }
+        
+        .bus-shelter-roof {
+            position: absolute;
+            top: -5px;
+            left: -3px;
+            right: -3px;
+            height: 8px;
+            background-color: #707070;
+            border: 1px solid #606060;
+        }
+        
+        /* BBQ Area */
+        .bbq-area {
+            position: absolute;
+            z-index: 14;
+        }
+        
+        .bbq {
+            position: absolute;
+            width: 25px;
+            height: 20px;
+            background-color: #606060;
+            border: 2px solid #505050;
+        }
+        
+        .bbq-grill {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            height: 10px;
+            background-color: #404040;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #404040 0px,
+                #404040 2px,
+                #808080 2px,
+                #808080 3px
+            );
+        }
+        
+        /* Beach elements */
+        .beach-umbrella {
+            position: absolute;
+            width: 32px;
+            height: 42px;
+            z-index: 17;
+        }
+        
+        .umbrella-top {
+            width: 100%;
+            height: 70%;
+            border-radius: 50% 50% 0 0;
+            border: 2px solid rgba(0,0,0,0.2);
+            position: relative;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+        
+        .umbrella-stripes {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            overflow: hidden;
+            background: repeating-conic-gradient(
+                from 0deg,
+                var(--color1) 0deg 45deg,
+                var(--color2) 45deg 90deg
+            );
+        }
+        
+        .umbrella-pole {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 50%;
+            background-color: #504030;
+        }
+        
+        .beach-towel {
+            position: absolute;
+            width: 38px;
+            height: 20px;
+            z-index: 16;
+            border: 1px solid rgba(0,0,0,0.25);
+            background-image: repeating-linear-gradient(
+                90deg,
+                var(--color1) 0px,
+                var(--color1) 6px,
+                var(--color2) 6px,
+                var(--color2) 12px
+            );
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        /* Surfboards */
+        .surfboard {
+            position: absolute;
+            width: 8px;
+            height: 30px;
+            border-radius: 40% 40% 50% 50%;
+            z-index: 16;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* Lifeguard tower */
+        .lifeguard-tower {
+            position: absolute;
+            width: 35px;
+            height: 45px;
+            z-index: 18;
+        }
+        
+        .tower-platform {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 60%;
+            background-color: #f0e0d0;
+            border: 2px solid #d0c0b0;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+        
+        .tower-platform::before {
+            content: 'LIFEGUARD';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 6px;
+            color: #d03030;
+            font-weight: bold;
+        }
+        
+        .tower-legs {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 45%;
+        }
+        
+        .tower-leg {
+            position: absolute;
+            bottom: 0;
+            width: 5px;
+            height: 100%;
+            background-color: #807060;
+        }
+        
+        .tower-leg:first-child { left: 3px; }
+        .tower-leg:last-child { right: 3px; }
+        
+        /* Beach flags */
+        .beach-flag {
+            position: absolute;
+            z-index: 17;
+        }
+        
+        .flag-pole {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            height: 40px;
+            background-color: #606060;
+        }
+        
+        .flag {
+            position: absolute;
+            top: 5px;
+            left: 2px;
+            width: 20px;
+            height: 15px;
+            background-color: #d03030;
+            animation: wave-flag 3s ease-in-out infinite;
+        }
+        
+        .flag-yellow {
+            background-color: #f0d030;
+        }
+        
+        @keyframes wave-flag {
+            0%, 100% { transform: skewY(0deg); }
+            50% { transform: skewY(-5deg); }
+        }
+        
+        /* Street lights - overhead view */
+        .street-light {
+            position: absolute;
+            z-index: 17;
+        }
+        
+        .light-base {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #606060;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .light-glow {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, 
+                rgba(255, 240, 200, 0.3) 0%, 
+                rgba(255, 240, 200, 0.2) 30%, 
+                rgba(255, 240, 200, 0.1) 60%, 
+                transparent 100%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        /* Traffic light - overhead view */
+        .traffic-light {
+            position: absolute;
+            z-index: 18;
+        }
+        
+        .traffic-light-base {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #505050;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .traffic-light-box {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 25px;
+            background-color: #404040;
+            border: 1px solid #303030;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .traffic-light-box::before,
+        .traffic-light-box::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+        
+        .traffic-light-box::before {
+            top: 3px;
+            background-color: #60d060;
+            box-shadow: 0 0 2px #60d060;
+        }
+        
+        .traffic-light-box::after {
+            bottom: 3px;
+            background-color: #404040;
+        }
+        
+        /* Manhole covers */
+        .manhole {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #606060;
+            border-radius: 50%;
+            border: 2px solid #505050;
+            z-index: 8;
+            background-image: 
+                radial-gradient(circle at 30% 30%, transparent 2px, #505050 2px, #505050 3px, transparent 3px),
+                radial-gradient(circle at 70% 30%, transparent 2px, #505050 2px, #505050 3px, transparent 3px),
+                radial-gradient(circle at 30% 70%, transparent 2px, #505050 2px, #505050 3px, transparent 3px),
+                radial-gradient(circle at 70% 70%, transparent 2px, #505050 2px, #505050 3px, transparent 3px);
+        }
+        
+        /* Storm drains */
+        .storm-drain {
+            position: absolute;
+            width: 25px;
+            height: 12px;
+            background-color: #505050;
+            border: 2px solid #404040;
+            z-index: 8;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #404040 0px,
+                #404040 2px,
+                #606060 2px,
+                #606060 4px
+            );
+        }
+        
+        /* Road patches and cracks */
+        .road-patch {
+            position: absolute;
+            background-color: #656058;
+            z-index: 8;
+            opacity: 0.7;
+        }
+        
+        .road-crack {
+            position: absolute;
+            background-color: #505050;
+            z-index: 8;
+            opacity: 0.5;
+        }
+        
+        /* Picnic tables */
+        .picnic-table {
+            position: absolute;
+            width: 35px;
+            height: 25px;
+            z-index: 14;
+        }
+        
+        .table-top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #706050;
+            border: 2px solid #605040;
+        }
+        
+        .table-bench {
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            background-color: #706050;
+            border: 1px solid #605040;
+        }
+        
+        .table-bench:first-of-type { top: -10px; }
+        .table-bench:last-of-type { bottom: -10px; }
+        
+        /* Playground equipment */
+        .playground {
+            position: absolute;
+            z-index: 14;
+        }
+        
+        .swing-set {
+            position: absolute;
+            width: 40px;
+            height: 35px;
+        }
+        
+        .swing-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #707070;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .swing {
+            position: absolute;
+            bottom: 5px;
+            width: 10px;
+            height: 15px;
+            background-color: #404040;
+            border: 1px solid #303030;
+        }
+        
+        .swing:first-of-type { left: 8px; }
+        .swing:last-of-type { right: 8px; }
+        
+        .slide {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+        }
+        
+        .slide-ramp {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #909090 0%, #b0b0b0 100%);
+            border: 2px solid #808080;
+            transform: skewY(-5deg);
+        }
+        
+        .slide-ladder {
+            position: absolute;
+            left: -8px;
+            top: -5px;
+            width: 8px;
+            height: 20px;
+            background-color: #808080;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 3px,
+                #606060 3px,
+                #606060 4px
+            );
+        }
+        
+        /* Dog park */
+        .dog-park-fence {
+            position: absolute;
+            z-index: 13;
+            border: 3px solid #908070;
+            background-color: transparent;
+        }
+        
+        .dog-park-sign {
+            position: absolute;
+            background-color: #708070;
+            color: white;
+            padding: 2px 4px;
+            font-size: 6px;
+            font-weight: bold;
+            z-index: 14;
+        }
+        
+        /* Skate park elements */
+        .skate-ramp {
+            position: absolute;
+            background: linear-gradient(to right, #808080 0%, #909090 50%, #808080 100%);
+            border: 2px solid #707070;
+            z-index: 13;
+            border-radius: 40% 40% 0 0;
+        }
+        
+        .skate-rail {
+            position: absolute;
+            background-color: #606060;
+            z-index: 13;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* Boat ramp */
+        .boat-ramp {
+            position: absolute;
+            background: linear-gradient(to right,
+                #888078 0%,
+                #888078 70%,
+                #7890a0 70%,
+                #6080a0 100%);
+            z-index: 7;
+        }
+        
+        /* Pier */
+        .pier {
+            position: absolute;
+            background-color: #706050;
+            z-index: 10;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #706050 0px,
+                #706050 8px,
+                #605040 8px,
+                #605040 10px
+            );
+        }
+        
+        .pier-post {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #605040;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        /* Seagulls */
+        .seagull {
+            position: absolute;
+            width: 8px;
+            height: 2px;
+            background-color: #f0f0f0;
+            z-index: 19;
+            animation: fly 15s linear infinite;
+        }
+        
+        .seagull::before,
+        .seagull::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 4px;
+            height: 2px;
+            background-color: #f0f0f0;
+        }
+        
+        .seagull::before {
+            left: -3px;
+            transform: rotate(10deg);
+        }
+        
+        .seagull::after {
+            right: -3px;
+            transform: rotate(-10deg);
+        }
+        
+        /* Beach shower */
+        .beach-shower {
+            position: absolute;
+            z-index: 15;
+        }
+        
+        .shower-pole {
+            position: absolute;
+            bottom: 0;
+            width: 6px;
+            height: 35px;
+            background-color: #808080;
+        }
+        
+        .shower-head {
+            position: absolute;
+            top: 0;
+            left: -2px;
+            width: 10px;
+            height: 10px;
+            background-color: #909090;
+            border-radius: 50%;
+        }
+        
+        /* Beach path */
+        .beach-path {
+            position: absolute;
+            background-color: #a09080;
+            z-index: 7;
+        }
+        
+        .beach-path::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent 0px,
+                transparent 10px,
+                rgba(0,0,0,0.05) 10px,
+                rgba(0,0,0,0.05) 11px
+            );
+        }
+        
+        /* Driveways */
+        .driveway {
+            position: absolute;
+            background-color: #888078;
+            z-index: 7;
+        }
+        
+        /* People figures */
+        .person {
+            position: absolute;
+            z-index: 18;
+        }
+        
+        .person-body {
+            position: absolute;
+            bottom: 0;
+            width: 8px;
+            height: 12px;
+            background-color: var(--shirt-color);
+            border-radius: 20% 20% 0 0;
+        }
+        
+        .person-head {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background-color: #f0c0a0;
+            border-radius: 50%;
+        }
+        
+        /* Stop sign - overhead view perspective */
+        .stop-sign {
+            position: absolute;
+            z-index: 18;
+        }
+        
+        .stop-sign-base {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #505050;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .stop-sign-board {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #d03030;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stop-sign-board::after {
+            content: 'STOP';
+            color: white;
+            font-size: 5px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <div class="world-container">
-        <!-- Sky background with animated clouds -->
-        <div class="sky-layer">
-            <div class="cloud cloud-1"></div>
-            <div class="cloud cloud-2"></div>
-            <div class="cloud cloud-3"></div>
-            <div class="cloud cloud-4"></div>
-            <div class="sun"></div>
+    <div id="world-container">
+        <!-- Sky -->
+        <div id="sky">
+            <div id="sun"></div>
+            <div class="cloud cloud1"></div>
+            <div class="cloud cloud2"></div>
+            <div class="cloud cloud3"></div>
+            <div class="bird" style="top: 15%; left: 20%;"></div>
+            <div class="bird" style="top: 25%; left: 60%; animation-delay: -5s;"></div>
+            <div class="bird" style="top: 20%; left: 40%; animation-delay: -10s;"></div>
         </div>
         
-        <!-- Main map container -->
-        <div class="map-viewport">
-            <div class="australia-map">
-                <!-- Ocean waves -->
-                <div class="ocean">
-                    <div class="wave wave-1"></div>
-                    <div class="wave wave-2"></div>
-                    <div class="wave wave-3"></div>
-                    <div class="ocean-creature shark-1"></div>
-                    <div class="ocean-creature octopus-1"></div>
-                    <div class="ocean-creature fish-school-1"></div>
-                    <div class="ocean-foam foam-1"></div>
-                    <div class="ocean-foam foam-2"></div>
-                </div>
-                
-                <!-- Main landmass -->
-                <div class="landmass">
-                    <!-- Base terrain -->
-                    <div class="terrain-base"></div>
-                    
-                    <!-- Desert regions -->
-                    <div class="desert-region central-desert">
-                        <div class="sand-dune dune-1"></div>
-                        <div class="sand-dune dune-2"></div>
-                        <div class="sand-dune dune-3"></div>
-                        <div class="cactus cactus-1"></div>
-                        <div class="cactus cactus-2"></div>
-                        <div class="desert-rock"></div>
-                        <div class="tumbleweed"></div>
-                        <div class="tumbleweed tumbleweed-2"></div>
-                        <div class="desert-grass grass-1"></div>
-                        <div class="desert-grass grass-2"></div>
-                        <div class="scorpion scorpion-1"></div>
-                        <div class="lizard lizard-1"></div>
-                    </div>
-                    
-                    <!-- Tropical north -->
-                    <div class="tropical-region north">
-                        <div class="palm palm-1"></div>
-                        <div class="palm palm-2"></div>
-                        <div class="palm palm-3"></div>
-                        <div class="palm palm-4"></div>
-                        <div class="palm palm-5"></div>
-                        <div class="tropical-bush bush-tropical-1"></div>
-                        <div class="tropical-bush bush-tropical-2"></div>
-                        <div class="mangrove mangrove-1"></div>
-                        <div class="parrot parrot-1"></div>
-                        <div class="fern fern-1"></div>
-                        <div class="cassowary cassowary-1"></div>
-                    </div>
-                    
-                    <!-- Eastern coastline -->
-                    <div class="coast-region east">
-                        <div class="beach-area"></div>
-                        <div class="reef-indicator"></div>
-                        <div class="coastal-rock rock-coastal-1"></div>
-                        <div class="coastal-rock rock-coastal-2"></div>
-                        <div class="lighthouse"></div>
-                        <div class="surfer surfer-1"></div>
-                        <div class="dolphin dolphin-1"></div>
-                        <div class="whale whale-1"></div>
-                        <div class="seagull gull-1"></div>
-                    </div>
-                    
-                    <!-- Southern temperate -->
-                    <div class="temperate-region south">
-                        <div class="eucalyptus tree-1"></div>
-                        <div class="eucalyptus tree-2"></div>
-                        <div class="eucalyptus tree-3"></div>
-                        <div class="grass-patch patch-1"></div>
-                        <div class="grass-patch patch-2"></div>
-                        <div class="grass-patch patch-3"></div>
-                        <div class="grass-patch patch-4"></div>
-                        <div class="flower-patch flowers-1"></div>
-                        <div class="flower-patch flowers-2"></div>
-                        <div class="kangaroo roo-1"></div>
-                        <div class="kangaroo roo-2"></div>
-                        <div class="sheep sheep-1"></div>
-                        <div class="wallaby wallaby-1"></div>
-                    </div>
-                    
-                    <!-- Western region -->
-                    <div class="western-region">
-                        <div class="bush bush-1"></div>
-                        <div class="bush bush-2"></div>
-                        <div class="rock formation-1"></div>
-                        <div class="rock formation-2"></div>
-                        <div class="rock formation-3"></div>
-                        <div class="mining-site"></div>
-                        <div class="outback-road"></div>
-                        <div class="windmill windmill-1"></div>
-                        <div class="dingo dingo-1"></div>
-                        <div class="eagle eagle-1"></div>
-                    </div>
-                    
-                    <!-- Tasmania -->
-                    <div class="tasmania">
-                        <div class="tassie-terrain"></div>
-                        <div class="eucalyptus tree-small"></div>
-                        <div class="tassie-devil"></div>
-                        <div class="mountain-peak"></div>
-                        <div class="platypus platypus-1"></div>
-                    </div>
-                    <!-- Cities and landmarks -->
-                    <div class="cities-layer">
-                        <div class="city sydney" title="Sydney">
-                            <span class="city-icon">🏙️</span>
-                            <span class="landmark opera-house">🎭</span>
-                        </div>
-                        <div class="city melbourne" title="Melbourne">
-                            <span class="city-icon">🌆</span>
-                        </div>
-                        <div class="city brisbane" title="Brisbane">
-                            <span class="city-icon">🏢</span>
-                        </div>
-                        <div class="city perth" title="Perth">
-                            <span class="city-icon">🌃</span>
-                        </div>
-                        <div class="city adelaide" title="Adelaide">
-                            <span class="city-icon">🏛️</span>
-                        </div>
-                        <div class="landmark uluru" title="Uluru">
-                            <span class="landmark-icon">🗿</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Wildlife elements -->
-                    <div class="wildlife-layer">
-                        <div class="crocodile croc-1"></div>
-                        <div class="koala koala-1"></div>
-                        <div class="emu emu-1"></div>
-                        <div class="wombat wombat-1"></div>
-                        <div class="spider spider-1"></div>
-                        <div class="snake snake-1"></div>
-                        <div class="koala koala-1"></div>
-                        <div class="kookaburra kook-1"></div>
-                        <div class="echidna echidna-1"></div>
-                    </div>
-                </div>
-                
-                <!-- Animated elements overlay -->
-                <div class="animation-layer">
-                    <div class="bird bird-1"></div>
-                    <div class="bird bird-2"></div>
-                    <div class="bird bird-3"></div>
-                    <div class="dust-particle particle-1"></div>
-                    <div class="dust-particle particle-2"></div>
-                    <div class="dust-particle particle-3"></div>
-                    <div class="butterfly butterfly-1"></div>
-                    <div class="airplane plane-1"></div>
-                </div>
+        <!-- Legend -->
+        <div class="label-container">
+            <div class="label-title">DAZZA'S TOWN</div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #b8a088;"></div>
+                <div class="label-text">The Pub</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #d03030;"></div>
+                <div class="label-text">Servo (Gas Station)</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #c8b8a8;"></div>
+                <div class="label-text">Shops</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #d8c8b8;"></div>
+                <div class="label-text">Houses</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #a0b090;"></div>
+                <div class="label-text">Grass Areas</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #787068;"></div>
+                <div class="label-text">Roads</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #f8f0e8;"></div>
+                <div class="label-text">Beach Sand</div>
+            </div>
+            <div class="label-item">
+                <div class="label-color" style="background-color: #5890c0;"></div>
+                <div class="label-text">Ocean</div>
             </div>
         </div>
         
-        <!-- UI Overlay -->
-        <div class="ui-overlay">
-            <div class="title-banner">
-                <h1>DAZZA'S STRAYA</h1>
-                <p class="subtitle">Choose Your Adventure, Cunt!</p>
+        <!-- Ground base -->
+        <div id="ground"></div>
+        
+        <!-- Beach area -->
+        <div id="beach-area">
+            <div class="sand-texture"></div>
+        </div>
+        
+        <!-- Ocean -->
+        <div id="ocean">
+            <div class="shore-foam"></div>
+            <div class="wave"></div>
+            <div class="wave wave2"></div>
+            <div class="wave wave3"></div>
+        </div>
+        
+        <!-- ROADS SYSTEM -->
+        <!-- Main vertical road -->
+        <div class="road road-main-vertical">
+            <div class="road-marking lane-divider-vertical"></div>
+        </div>
+        
+        <!-- Secondary vertical road -->
+        <div class="road road-secondary-vertical">
+            <div class="road-marking lane-divider-vertical"></div>
+        </div>
+        
+        <!-- Horizontal roads -->
+        <div class="road road-main-horizontal" style="top: 15%;">
+            <div class="road-marking lane-divider-horizontal"></div>
+        </div>
+        <div class="road road-secondary-horizontal" style="top: 35%;">
+            <div class="road-marking lane-divider-horizontal"></div>
+        </div>
+        <div class="road road-main-horizontal" style="top: 55%;">
+            <div class="road-marking lane-divider-horizontal"></div>
+        </div>
+        <div class="road road-secondary-horizontal" style="top: 75%;">
+            <div class="road-marking lane-divider-horizontal"></div>
+        </div>
+        <div class="road road-secondary-horizontal" style="top: 90%;">
+            <div class="road-marking lane-divider-horizontal"></div>
+        </div>
+        
+        <!-- Intersections -->
+        <div class="intersection" style="left: 15%; top: 15%; width: 45px; height: 50px;"></div>
+        <div class="intersection" style="left: 35%; top: 15%; width: 50px; height: 50px;"></div>
+        <div class="intersection" style="left: 15%; top: 35%; width: 45px; height: 45px;"></div>
+        <div class="intersection" style="left: 35%; top: 35%; width: 50px; height: 45px;"></div>
+        <div class="intersection" style="left: 15%; top: 55%; width: 45px; height: 50px;"></div>
+        <div class="intersection" style="left: 35%; top: 55%; width: 50px; height: 50px;"></div>
+        <div class="intersection" style="left: 15%; top: 75%; width: 45px; height: 45px;"></div>
+        <div class="intersection" style="left: 35%; top: 75%; width: 50px; height: 45px;"></div>
+        
+        <!-- Stop lines at intersections -->
+        <!-- Main intersection at 35% x 55% -->
+        <div class="stop-line" style="left: calc(35% - 5px); top: calc(55% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 50px); top: calc(55% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% - 5px); top: calc(55% + 50px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 50px); top: calc(55% + 50px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 23px); top: calc(55% - 5px); height: 5px; width: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 23px); top: calc(55% + 50px); height: 5px; width: 3px;"></div>
+        
+        <!-- Other intersections -->
+        <div class="stop-line" style="left: calc(15% - 5px); top: calc(35% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(15% + 45px); top: calc(35% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(15% + 20px); top: calc(35% - 5px); height: 5px; width: 3px;"></div>
+        <div class="stop-line" style="left: calc(15% + 20px); top: calc(35% + 45px); height: 5px; width: 3px;"></div>
+        
+        <div class="stop-line" style="left: calc(35% - 5px); top: calc(15% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 50px); top: calc(15% - 3px); width: 5px; height: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 23px); top: calc(15% - 5px); height: 5px; width: 3px;"></div>
+        <div class="stop-line" style="left: calc(35% + 23px); top: calc(15% + 50px); height: 5px; width: 3px;"></div>
+        
+        <!-- Stop signs with overhead perspective -->
+        <div class="stop-sign" style="left: calc(35% - 20px); top: calc(55% - 30px);">
+            <div class="stop-sign-base"></div>
+            <div class="stop-sign-board"></div>
+        </div>
+        
+        <div class="stop-sign" style="left: calc(35% + 70px); top: calc(55% + 55px);">
+            <div class="stop-sign-base"></div>
+            <div class="stop-sign-board"></div>
+        </div>
+        
+        <div class="stop-sign" style="left: calc(15% - 20px); top: calc(35% - 30px);">
+            <div class="stop-sign-base"></div>
+            <div class="stop-sign-board"></div>
+        </div>
+        
+        <div class="stop-sign" style="left: calc(15% + 65px); top: calc(75% + 50px);">
+            <div class="stop-sign-base"></div>
+            <div class="stop-sign-board"></div>
+        </div>
+        
+        <!-- Footpaths along main street -->
+        <div class="footpath" style="left: calc(35% - 8px); top: 0; width: 8px; height: 100%;"></div>
+        <div class="footpath" style="left: calc(35% + 50px); top: 0; width: 8px; height: 100%;"></div>
+        <div class="footpath" style="left: calc(15% - 8px); top: 0; width: 8px; height: 100%;"></div>
+        <div class="footpath" style="left: calc(15% + 45px); top: 0; width: 8px; height: 100%;"></div>
+        
+        <!-- Crosswalks at main intersection -->
+        <div class="crosswalk" style="left: calc(35% + 10px); top: calc(55% - 25px); width: 30px; height: 25px;">
+            <div class="crosswalk-stripe" style="top: 2px; width: 100%; height: 4px;"></div>
+            <div class="crosswalk-stripe" style="top: 9px; width: 100%; height: 4px;"></div>
+            <div class="crosswalk-stripe" style="top: 16px; width: 100%; height: 4px;"></div>
+        </div>
+        
+        <div class="crosswalk" style="left: calc(35% - 30px); top: calc(55% + 10px); width: 30px; height: 30px;">
+            <div class="crosswalk-stripe" style="left: 2px; top: 0; width: 4px; height: 100%;"></div>
+            <div class="crosswalk-stripe" style="left: 9px; top: 0; width: 4px; height: 100%;"></div>
+            <div class="crosswalk-stripe" style="left: 16px; top: 0; width: 4px; height: 100%;"></div>
+            <div class="crosswalk-stripe" style="left: 23px; top: 0; width: 4px; height: 100%;"></div>
+        </div>
+        
+        <!-- Street signs with overhead perspective -->
+        <div class="street-sign" style="left: calc(35% + 55px); top: calc(55% - 35px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">BEACH RD</div>
+        </div>
+        
+        <div class="street-sign" style="left: calc(35% - 30px); top: calc(15% + 55px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">SURF ST</div>
+        </div>
+        
+        <div class="street-sign" style="left: calc(15% - 25px); top: calc(15% + 55px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">MAIN ST</div>
+        </div>
+        
+        <div class="street-sign" style="left: calc(35% + 55px); top: calc(35% - 35px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">PUB LN</div>
+        </div>
+        
+        <div class="street-sign" style="left: calc(15% + 50px); top: calc(75% - 35px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">RSL AVE</div>
+        </div>
+        
+        <div class="street-sign" style="left: calc(35% + 55px); top: calc(75% - 35px);">
+            <div class="sign-base"></div>
+            <div class="sign-board">SERVO WAY</div>
+        </div>
+        
+        <!-- BLOCK 1: Top Left - Residential (0-15% x 0-15%) -->
+        <div class="grass" style="left: 1%; top: 1%; width: 13%; height: 13%;"></div>
+        
+        <div class="building" style="left: 2%; top: 3%; width: 50px; height: 40px;">
+            <div class="roof roof-tile"></div>
+            <div class="chimney" style="right: 8px;"></div>
+            <div class="window" style="left: 8px; top: 45%; width: 12px; height: 10px;"></div>
+            <div class="window" style="right: 8px; top: 45%; width: 12px; height: 10px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 14px; height: 20px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
             </div>
         </div>
+        <div class="driveway" style="left: calc(2% + 50px); top: calc(3% + 15px); width: 20px; height: 25px;"></div>
+        <div class="letterbox" style="left: calc(2% + 52px); top: calc(3% + 42px);"></div>
+        
+        <div class="building" style="left: 8%; top: 3%; width: 45px; height: 40px;">
+            <div class="roof roof-tile"></div>
+            <div class="ac-unit" style="right: 5px;"></div>
+            <div class="window" style="left: 15px; top: 45%; width: 15px; height: 10px;"></div>
+            <div class="door" style="right: 5px; bottom: 0; width: 12px; height: 18px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="letterbox" style="left: calc(8% + 47px); top: calc(3% + 42px);"></div>
+        
+        <div class="tree" style="left: 11%; top: 9%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        
+        <div class="garden-bed" style="left: 3%; top: 11%; width: 40px; height: 20px;">
+            <div class="flowers"></div>
+        </div>
+        
+        <div class="fence fence-horizontal" style="left: 2%; top: calc(3% + 42px); width: 11%;"></div>
+        
+        <!-- BLOCK 2: Top Middle - Commercial (15-35% x 0-15%) -->
+        <div class="building" style="left: 20%; top: 2%; width: 70px; height: 50px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: 20%; top: calc(2% + 52px); width: 70px; height: 30px;">
+            <div class="parking-line" style="left: 22px; top: 5px; width: 2px; height: 20px;"></div>
+            <div class="parking-line" style="left: 44px; top: 5px; width: 2px; height: 20px;"></div>
+        </div>
+        
+        <!-- Parked car -->
+        <div class="car" style="left: calc(20% + 5px); top: calc(2% + 57px); width: 35px; height: 20px;">
+            <div class="car-body" style="width: 100%; height: 100%; background-color: #d04040;"></div>
+            <div class="car-window" style="left: 5px; top: 3px; width: 10px; height: 8px;"></div>
+            <div class="car-window" style="right: 5px; top: 3px; width: 10px; height: 8px;"></div>
+        </div>
+        
+        <div class="building" style="left: calc(20% + 75px); top: 2%; width: 60px; height: 50px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        
+        <!-- Building labels -->
+        <div class="building-label" style="left: calc(20% + 15px); top: calc(2% + 15px);">BAKERY</div>
+        <div class="building-label" style="left: calc(20% + 80px); top: calc(2% + 15px);">NEWS</div>
+        
+        <!-- BLOCK 3: Main Street Commercial (35-55% x 15-35%) -->
+        <div class="building" style="left: 40%; top: 20%; width: 90px; height: 70px;">
+            <div class="roof roof-tile"></div>
+            <div class="chimney" style="left: 15px;"></div>
+            <div class="window" style="left: 10px; top: 45%; width: 20px; height: 18px;"></div>
+            <div class="window" style="right: 10px; top: 45%; width: 20px; height: 18px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 20px; height: 30px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: 40%; top: calc(20% + 72px); width: 90px; height: 35px;">
+            <div class="parking-line" style="left: 20px; top: 5px; width: 2px; height: 25px;"></div>
+            <div class="parking-line" style="left: 45px; top: 5px; width: 2px; height: 25px;"></div>
+            <div class="parking-line" style="left: 70px; top: 5px; width: 2px; height: 25px;"></div>
+        </div>
+        
+        <!-- Cars in pub parking -->
+        <div class="car" style="left: calc(40% + 25px); top: calc(20% + 77px); width: 35px; height: 20px;">
+            <div class="car-body" style="width: 100%; height: 100%; background-color: #4040d0;"></div>
+            <div class="car-window" style="left: 5px; top: 3px; width: 10px; height: 8px;"></div>
+            <div class="car-window" style="right: 5px; top: 3px; width: 10px; height: 8px;"></div>
+        </div>
+        
+        <div class="building-label" style="left: calc(40% + 25px); top: calc(20% + 25px);">THE PUB</div>
+        
+        <div class="bin" style="left: calc(40% + 92px); top: 22%;"></div>
+        <div class="bench" style="left: calc(40% + 92px); top: 26%;"></div>
+        
+        <!-- Bus stop -->
+        <div class="bus-stop" style="left: calc(35% + 60px); top: 30%;">
+            <div class="bus-shelter">
+                <div class="bus-shelter-roof"></div>
+            </div>
+            <div class="bench" style="left: 5px; bottom: 5px; width: 30px; height: 8px;"></div>
+        </div>
+        
+        <!-- BLOCK 4: Corner shops (15-35% x 35-55%) -->
+        <div class="building" style="left: 20%; top: 40%; width: 80px; height: 60px;">
+            <div class="roof roof-corrugated"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        
+        <div class="building-label" style="left: calc(20% + 10px); top: calc(40% + 20px);">FISH & CHIPS</div>
+        
+        <div class="building" style="left: calc(20% + 85px); top: 38%; width: 60px; height: 55px;">
+            <div class="roof roof-tile"></div>
+            <div class="shopfront">
+                <div class="shop-window"></div>
+            </div>
+        </div>
+        
+        <div class="building-label" style="left: calc(20% + 90px); top: calc(38% + 18px);">BOTTLE-O</div>
+        
+        <!-- BLOCK 5: Servo area (45-65% x 35-55%) -->
+        <div class="building" style="left: 46%; top: 38%; width: 100px; height: 65px;">
+            <div class="roof roof-corrugated" style="background-color: #d03030;"></div>
+            <div class="ac-unit" style="right: 10px;"></div>
+            <div class="ac-unit" style="right: 35px;"></div>
+        </div>
+        <div class="parking-lot" style="left: 46%; top: calc(38% + 67px); width: 100px; height: 40px;">
+            <div class="parking-line" style="top: 8px; left: 5px; width: 90px; height: 2px;"></div>
+            <div class="parking-line" style="top: 20px; left: 5px; width: 90px; height: 2px;"></div>
+            <div class="parking-line" style="top: 32px; left: 5px; width: 90px; height: 2px;"></div>
+        </div>
+        
+        <div class="building-label" style="left: calc(46% + 35px); top: calc(38% + 25px); background-color: #d03030; color: white; border-color: #d03030;">SERVO</div>
+        
+        <!-- Power poles with overhead perspective -->
+        <div class="power-pole" style="left: calc(35% - 35px); top: 20%;">
+            <div class="power-crossbar"></div>
+        </div>
+        <div class="power-pole" style="left: calc(35% - 35px); top: 50%;">
+            <div class="power-crossbar"></div>
+        </div>
+        <div class="power-pole" style="left: calc(35% - 35px); top: 80%;">
+            <div class="power-crossbar"></div>
+        </div>
+        <div class="power-pole" style="left: calc(15% - 35px); top: 10%;">
+            <div class="power-crossbar"></div>
+        </div>
+        <div class="power-pole" style="left: calc(15% - 35px); top: 40%;">
+            <div class="power-crossbar"></div>
+        </div>
+        <div class="power-pole" style="left: calc(15% - 35px); top: 70%;">
+            <div class="power-crossbar"></div>
+        </div>
+        
+        <!-- Power lines properly connecting poles -->
+        <!-- Vertical lines connecting poles along streets -->
+        <div class="power-line" style="left: calc(15% - 35px); top: 10%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(15% - 33px); top: 10%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(15% - 35px); top: 40%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(15% - 33px); top: 40%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(35% - 35px); top: 20%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(35% - 33px); top: 20%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(35% - 35px); top: 50%; width: 1px; height: 30%;"></div>
+        <div class="power-line" style="left: calc(35% - 33px); top: 50%; width: 1px; height: 30%;"></div>
+        
+        <!-- Horizontal lines connecting pole columns at matching heights -->
+        <div class="power-line" style="left: calc(15% - 35px); top: 20%; width: 20%; height: 1px;"></div>
+        <div class="power-line" style="left: calc(15% - 33px); top: 20%; width: 20%; height: 1px;"></div>
+        <div class="power-line" style="left: calc(15% - 35px); top: 50%; width: 20%; height: 1px;"></div>
+        <div class="power-line" style="left: calc(15% - 33px); top: 50%; width: 20%; height: 1px;"></div>
+        
+        <!-- Street lights -->
+        <div class="street-light" style="left: calc(35% + 60px); top: 25%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        <div class="street-light" style="left: calc(35% - 25px); top: 45%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        <div class="street-light" style="left: calc(35% + 60px); top: 65%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        <div class="street-light" style="left: calc(15% - 25px); top: 25%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        <div class="street-light" style="left: calc(15% + 50px); top: 50%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        <div class="street-light" style="left: calc(15% - 25px); top: 65%;">
+            <div class="light-base"></div>
+            <div class="light-glow"></div>
+        </div>
+        
+        <!-- Traffic lights at major intersection -->
+        <div class="traffic-light" style="left: calc(35% + 5px); top: calc(55% + 5px);">
+            <div class="traffic-light-base"></div>
+            <div class="traffic-light-box"></div>
+        </div>
+        <div class="traffic-light" style="left: calc(35% + 45px); top: calc(55% + 45px);">
+            <div class="traffic-light-base"></div>
+            <div class="traffic-light-box"></div>
+        </div>
+        
+        <!-- Manhole covers -->
+        <div class="manhole" style="left: calc(35% + 20px); top: 30%;"></div>
+        <div class="manhole" style="left: calc(15% + 15px); top: 45%;"></div>
+        <div class="manhole" style="left: calc(35% + 20px); top: 70%;"></div>
+        <div class="manhole" style="left: 25%; top: calc(55% + 20px);"></div>
+        
+        <!-- Storm drains -->
+        <div class="storm-drain" style="left: calc(35% - 10px); top: calc(15% + 52px);"></div>
+        <div class="storm-drain" style="left: calc(35% + 55px); top: calc(35% + 47px);"></div>
+        <div class="storm-drain" style="left: calc(15% - 10px); top: calc(55% + 52px);"></div>
+        <div class="storm-drain" style="left: calc(15% + 48px); top: calc(75% + 47px);"></div>
+        
+        <!-- Road patches and cracks for realism -->
+        <div class="road-patch" style="left: calc(35% + 10px); top: 25%; width: 30px; height: 15px; border-radius: 40%;"></div>
+        <div class="road-patch" style="left: calc(15% + 5px); top: 42%; width: 35px; height: 20px; border-radius: 30%;"></div>
+        <div class="road-patch" style="left: 25%; top: calc(55% + 15px); width: 40px; height: 25px; border-radius: 35%;"></div>
+        
+        <div class="road-crack" style="left: calc(35% + 15px); top: 40%; width: 2px; height: 40px; transform: rotate(15deg);"></div>
+        <div class="road-crack" style="left: calc(15% + 20px); top: 60%; width: 1px; height: 50px; transform: rotate(-10deg);"></div>
+        <div class="road-crack" style="left: 30%; top: calc(75% + 10px); width: 35px; height: 1px;"></div>
+        
+        <!-- BLOCK 6: Residential area (0-30% x 55-75%) -->
+        <div class="grass" style="left: 1%; top: 58%; width: 28%; height: 15%;"></div>
+        
+        <div class="building" style="left: 3%; top: 60%; width: 55px; height: 45px;">
+            <div class="roof roof-tile"></div>
+            <div class="chimney" style="left: 10px;"></div>
+            <div class="window" style="left: 8px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="window" style="right: 8px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 14px; height: 20px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="letterbox" style="left: calc(3% + 57px); top: calc(60% + 45px);"></div>
+        
+        <div class="building" style="left: 10%; top: 61%; width: 50px; height: 42px;">
+            <div class="roof roof-tile"></div>
+            <div class="window" style="left: 15px; top: 45%; width: 20px; height: 12px;"></div>
+            <div class="door" style="right: 5px; bottom: 0; width: 12px; height: 18px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="letterbox" style="left: calc(10% + 52px); top: calc(61% + 42px);"></div>
+        
+        <div class="building" style="left: 18%; top: 60%; width: 55px; height: 45px;">
+            <div class="roof roof-tile"></div>
+            <div class="ac-unit" style="left: 10px;"></div>
+            <div class="window" style="left: 8px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="window" style="right: 8px; top: 45%; width: 15px; height: 12px;"></div>
+            <div class="door" style="left: 5px; bottom: 0; width: 12px; height: 18px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="letterbox" style="left: calc(18% + 57px); top: calc(60% + 47px);"></div>
+        
+        <div class="tree" style="left: 6%; top: 67%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        <div class="tree" style="left: 14%; top: 68%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        <div class="tree" style="left: 25%; top: 66%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        
+        <div class="bush" style="left: 4%; top: 71%;"></div>
+        <div class="bush" style="left: 12%; top: 70%;"></div>
+        
+        <div class="fence fence-horizontal" style="left: 2%; top: calc(60% + 47px); width: 26%;"></div>
+        <div class="fence fence-vertical" style="left: calc(3% + 57px); top: 60%; height: calc(47px + 5px);"></div>
+        <div class="fence fence-vertical" style="left: calc(10% + 52px); top: 61%; height: calc(44px + 5px);"></div>
+        
+        <!-- BLOCK 7: RSL Club (20-40% x 75-90%) -->
+        <div class="building" style="left: 22%; top: 78%; width: 120px; height: 60px;">
+            <div class="roof roof-tile"></div>
+            <div class="chimney" style="left: 20px;"></div>
+            <div class="chimney" style="right: 20px;"></div>
+            <div class="window" style="left: 15px; top: 45%; width: 25px; height: 15px;"></div>
+            <div class="window" style="right: 15px; top: 45%; width: 25px; height: 15px;"></div>
+            <div class="door" style="left: 50%; bottom: 0; width: 20px; height: 25px; transform: translateX(-50%);">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        <div class="parking-lot" style="left: calc(22% + 122px); top: 78%; width: 50px; height: 60px;">
+            <div class="parking-line" style="left: 10px; top: 5px; width: 2px; height: 50px;"></div>
+            <div class="parking-line" style="left: 25px; top: 5px; width: 2px; height: 50px;"></div>
+            <div class="parking-line" style="left: 40px; top: 5px; width: 2px; height: 50px;"></div>
+        </div>
+        
+        <div class="building-label" style="left: calc(22% + 35px); top: calc(78% + 20px);">RSL CLUB</div>
+        
+        <!-- BBQ Area near RSL -->
+        <div class="bbq-area" style="left: calc(22% - 30px); top: 80%;">
+            <div class="bbq">
+                <div class="bbq-grill"></div>
+            </div>
+            <div class="bench" style="left: 30px; top: 0; width: 30px; height: 10px;"></div>
+        </div>
+        
+        <!-- BLOCK 8: Caravan Park (55-70% x 55-85%) -->
+        <div class="grass" style="left: 56%; top: 57%; width: 13%; height: 26%;"></div>
+        
+        <div class="building-label" style="left: 58%; top: calc(57% + 5px); font-size: 7px;">CARAVAN PARK</div>
+        
+        <div class="building" style="left: 58%; top: 62%; width: 35px; height: 30px; background-color: #e0d0c0;">
+            <div class="roof roof-corrugated" style="height: 30%;"></div>
+            <div class="window" style="left: 10px; top: 40%; width: 15px; height: 10px;"></div>
+            <div class="door" style="right: 3px; bottom: 0; width: 10px; height: 15px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        
+        <div class="building" style="left: 63%; top: 62%; width: 35px; height: 30px; background-color: #e0d0c0;">
+            <div class="roof roof-corrugated" style="height: 30%;"></div>
+            <div class="window" style="right: 10px; top: 40%; width: 15px; height: 10px;"></div>
+            <div class="door" style="left: 3px; bottom: 0; width: 10px; height: 15px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        
+        <div class="building" style="left: 58%; top: 70%; width: 35px; height: 30px; background-color: #d0c0b0;">
+            <div class="roof roof-corrugated" style="height: 30%;"></div>
+            <div class="window" style="left: 10px; top: 40%; width: 15px; height: 10px;"></div>
+            <div class="door" style="right: 3px; bottom: 0; width: 10px; height: 15px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        
+        <div class="building" style="left: 63%; top: 70%; width: 35px; height: 30px; background-color: #d0c0b0;">
+            <div class="roof roof-corrugated" style="height: 30%;"></div>
+            <div class="window" style="right: 10px; top: 40%; width: 15px; height: 10px;"></div>
+            <div class="door" style="left: 3px; bottom: 0; width: 10px; height: 15px;">
+                <div class="door-handle"></div>
+            </div>
+        </div>
+        
+        <div class="tree" style="left: 60%; top: 78%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        <div class="tree" style="left: 66%; top: 77%; width: 35px; height: 45px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        
+        <div class="fence fence-horizontal" style="left: 56%; top: 57%; width: 13%;"></div>
+        <div class="fence fence-horizontal" style="left: 56%; top: 83%; width: 13%;"></div>
+        <div class="fence fence-vertical" style="left: 56%; top: 57%; height: 26%;"></div>
+        <div class="fence fence-vertical" style="left: 69%; top: 57%; height: 26%;"></div>
+        
+        <!-- BBQ area in caravan park -->
+        <div class="bbq-area" style="left: 60%; top: 65%;">
+            <div class="bbq" style="width: 20px; height: 15px;">
+                <div class="bbq-grill"></div>
+            </div>
+        </div>
+        
+        <!-- Beach access path -->
+        <div class="beach-path" style="left: 65%; top: 40%; width: 20px; height: 20%;"></div>
+        <div class="beach-path" style="left: calc(65% + 20px); top: 50%; width: calc(13% - 20px); height: 20px;"></div>
+        
+        <!-- Beach Infrastructure -->
+        <div class="lifeguard-tower" style="left: 80%; top: 30%;">
+            <div class="tower-platform">
+                <div class="window" style="left: 8px; top: 8px; width: 19px; height: 12px;"></div>
+            </div>
+            <div class="tower-legs">
+                <div class="tower-leg"></div>
+                <div class="tower-leg"></div>
+            </div>
+        </div>
+        
+        <!-- Beach flags -->
+        <div class="beach-flag" style="left: 78%; top: 45%;">
+            <div class="flag-pole"></div>
+            <div class="flag flag-yellow"></div>
+        </div>
+        
+        <div class="beach-flag" style="left: 86%; top: 45%;">
+            <div class="flag-pole"></div>
+            <div class="flag flag-yellow"></div>
+        </div>
+        
+        <!-- Beach shower -->
+        <div class="beach-shower" style="left: 77%; top: 55%;">
+            <div class="shower-pole"></div>
+            <div class="shower-head"></div>
+        </div>
+        
+        <!-- Beach elements - properly on sand (78-92%) -->
+        <div class="palm-tree" style="left: 76%; top: 15%;">
+            <div class="palm-trunk"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+        </div>
+        
+        <div class="beach-umbrella" style="left: 80%; top: 48%;">
+            <div class="umbrella-top">
+                <div class="umbrella-stripes" style="--color1: #e87878; --color2: #f0f0f0;"></div>
+            </div>
+            <div class="umbrella-pole"></div>
+        </div>
+        <div class="beach-towel" style="left: 79%; top: 54%; --color1: #7878e8; --color2: #f0f0f0;"></div>
+        
+        <div class="beach-umbrella" style="left: 85%; top: 58%;">
+            <div class="umbrella-top">
+                <div class="umbrella-stripes" style="--color1: #78e878; --color2: #f0f0f0;"></div>
+            </div>
+            <div class="umbrella-pole"></div>
+        </div>
+        <div class="beach-towel" style="left: 86%; top: 64%; --color1: #e8e878; --color2: #888888;"></div>
+        
+        <div class="beach-umbrella" style="left: 82%; top: 73%;">
+            <div class="umbrella-top">
+                <div class="umbrella-stripes" style="--color1: #e8a878; --color2: #f0f0f0;"></div>
+            </div>
+            <div class="umbrella-pole"></div>
+        </div>
+        
+        <!-- Surfboards -->
+        <div class="surfboard" style="left: 84%; top: 52%; background-color: #40a0d0;"></div>
+        <div class="surfboard" style="left: 82%; top: 65%; background-color: #d0d040; transform: rotate(10deg);"></div>
+        
+        <!-- Beach people -->
+        <div class="person" style="left: 81%; top: 50%;">
+            <div class="person-body" style="--shirt-color: #d04040;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="person" style="left: 87%; top: 62%;">
+            <div class="person-body" style="--shirt-color: #4040d0;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="palm-tree" style="left: 88%; top: 80%;">
+            <div class="palm-trunk"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+            <div class="palm-frond"></div>
+        </div>
+        
+        <div class="bin" style="left: 77%; top: 50%;"></div>
+        <div class="bench" style="left: 78%; top: 35%;"></div>
+        
+        <!-- Additional detail elements -->
+        
+        <!-- Park area with playground (5-12% x 40-50%) -->
+        <div class="grass" style="left: 5%; top: 40%; width: 7%; height: 10%;"></div>
+        <div class="playground" style="left: calc(5% + 10px); top: calc(40% + 10px);">
+            <div class="swing-set">
+                <div class="swing-frame"></div>
+                <div class="swing"></div>
+                <div class="swing"></div>
+            </div>
+        </div>
+        <div class="playground" style="left: calc(5% + 55px); top: calc(40% + 15px);">
+            <div class="slide">
+                <div class="slide-ramp"></div>
+                <div class="slide-ladder"></div>
+            </div>
+        </div>
+        <div class="picnic-table" style="left: calc(5% + 10px); top: calc(40% + 50px);">
+            <div class="table-top"></div>
+            <div class="table-bench"></div>
+            <div class="table-bench"></div>
+        </div>
+        
+        <!-- Dog park (45-52% x 18-28%) -->
+        <div class="grass" style="left: 45%; top: 18%; width: 7%; height: 10%;"></div>
+        <div class="dog-park-fence" style="left: 45%; top: 18%; width: 7%; height: 10%;"></div>
+        <div class="dog-park-sign" style="left: calc(45% + 5px); top: calc(18% - 8px);">DOG PARK</div>
+        <div class="tree" style="left: 46%; top: 20%; width: 30px; height: 40px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        <div class="tree" style="left: 50%; top: 23%; width: 30px; height: 40px;">
+            <div class="tree-trunk"></div>
+            <div class="tree-crown"></div>
+        </div>
+        
+        <!-- Skate park (10-18% x 78-85%) -->
+        <div class="grass" style="left: 10%; top: 78%; width: 8%; height: 7%;"></div>
+        <div class="skate-ramp" style="left: 11%; top: 80%; width: 30px; height: 15px;"></div>
+        <div class="skate-ramp" style="left: 15%; top: 81%; width: 25px; height: 12px;"></div>
+        <div class="skate-rail" style="left: 12%; top: 83%; width: 40px; height: 3px;"></div>
+        
+        <!-- Boat ramp (73-78% x 60-70%) -->
+        <div class="boat-ramp" style="left: 73%; top: 60%; width: 5%; height: 10%; transform: skewX(-10deg);"></div>
+        
+        <!-- Small pier (85-92% x 35-40%) -->
+        <div class="pier" style="left: 85%; top: 35%; width: 7%; height: 5%;">
+            <div class="pier-post" style="left: 5px; top: 5px;"></div>
+            <div class="pier-post" style="right: 5px; top: 5px;"></div>
+            <div class="pier-post" style="left: 5px; bottom: 5px;"></div>
+            <div class="pier-post" style="right: 5px; bottom: 5px;"></div>
+        </div>
+        
+        <!-- More cars placed properly on roads -->
+        <div class="car" style="left: calc(15% + 10px); top: calc(15% + 15px); width: 30px; height: 18px; transform: rotate(90deg);">
+            <div class="car-body" style="width: 100%; height: 100%; background-color: #60a060;"></div>
+            <div class="car-window" style="left: 3px; top: 3px; width: 8px; height: 6px;"></div>
+            <div class="car-window" style="right: 3px; top: 3px; width: 8px; height: 6px;"></div>
+        </div>
+        
+        <div class="car" style="left: 25%; top: calc(55% + 10px); width: 32px; height: 18px;">
+            <div class="car-body" style="width: 100%; height: 100%; background-color: #a0a040;"></div>
+            <div class="car-window" style="left: 4px; top: 3px; width: 10px; height: 7px;"></div>
+            <div class="car-window" style="right: 4px; top: 3px; width: 10px; height: 7px;"></div>
+        </div>
+        
+        <div class="car" style="left: calc(35% + 10px); top: 85%; width: 30px; height: 17px; transform: rotate(180deg);">
+            <div class="car-body" style="width: 100%; height: 100%; background-color: #808080;"></div>
+            <div class="car-window" style="left: 3px; top: 2px; width: 9px; height: 6px;"></div>
+            <div class="car-window" style="right: 3px; top: 2px; width: 9px; height: 6px;"></div>
+        </div>
+        
+        <!-- More people walking on sidewalks -->
+        <div class="person" style="left: calc(35% + 58px); top: 20%;">
+            <div class="person-body" style="--shirt-color: #60a060;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="person" style="left: calc(35% - 10px); top: 32%;">
+            <div class="person-body" style="--shirt-color: #a06060;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="person" style="left: calc(15% + 48px); top: 65%;">
+            <div class="person-body" style="--shirt-color: #6060a0;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="person" style="left: calc(35% - 10px); top: 45%;">
+            <div class="person-body" style="--shirt-color: #a0a060;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <div class="person" style="left: calc(15% - 10px); top: 82%;">
+            <div class="person-body" style="--shirt-color: #404040;"></div>
+            <div class="person-head"></div>
+        </div>
+        
+        <!-- Seagulls near beach -->
+        <div class="seagull" style="top: 40%; left: 75%; animation-delay: 0s;"></div>
+        <div class="seagull" style="top: 55%; left: 70%; animation-delay: -3s;"></div>
+        <div class="seagull" style="top: 65%; left: 73%; animation-delay: -7s;"></div>
+        
+        <!-- More bins and benches -->
+        <div class="bin" style="left: calc(15% - 15px); top: 45%;"></div>
+        <div class="bench" style="left: calc(35% + 60px); top: 62%;"></div>
+        <div class="bin" style="left: calc(35% + 60px); top: 40%;"></div>
+        <div class="bench" style="left: calc(22% + 125px); top: 85%;"></div>
+        
+        <!-- Additional letterboxes properly placed near houses -->
+        <div class="letterbox" style="left: calc(8% + 47px); top: calc(3% + 42px);"></div>
+        <div class="letterbox" style="left: calc(25% + 35px); top: calc(66% + 47px);"></div>
+        
+        <!-- More garden beds -->
+        <div class="garden-bed" style="left: 42%; top: 5%; width: 35px; height: 15px;">
+            <div class="flowers"></div>
+        </div>
+        <div class="garden-bed" style="left: 8%; top: 50%; width: 30px; height: 18px;">
+            <div class="flowers"></div>
+        </div>
+        <div class="garden-bed" style="left: 55%; top: 15%; width: 25px; height: 15px;">
+            <div class="flowers"></div>
+        </div>
+        
+        <!-- More bushes scattered around -->
+        <div class="bush" style="left: 38%; top: 8%;"></div>
+        <div class="bush" style="left: 52%; top: 25%;"></div>
+        <div class="bush" style="left: 28%; top: 48%;"></div>
+        <div class="bush" style="left: 44%; top: 70%;"></div>
+        <div class="bush" style="left: 17%; top: 88%;"></div>
+        
     </div>
     
-    <script src="script.js"></script>
+    <script>
+        // Future interactivity placeholder
+        console.log('Dazza\'s beach town loaded - Welcome to the Gold Coast mate!');
+    </script>
 </body>
 </html>
