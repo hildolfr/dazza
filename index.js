@@ -66,13 +66,8 @@ async function main() {
         console.log(`Process exiting with code: ${code}`);
     });
     
-    // Additional safety for hanging processes
-    process.on('beforeExit', (code) => {
-        console.log(`Process about to exit with code: ${code}`);
-        // Force exit if there are still handles keeping the process alive
-        // Exit immediately
-        process.exit(code);
-    });
+    // Remove the beforeExit handler - it was preventing reconnection timers from firing
+    // The process should stay alive as long as there are active connections or timers
     
     try {
         console.log('Starting CyTube Bot...');
