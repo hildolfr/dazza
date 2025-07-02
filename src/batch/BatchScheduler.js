@@ -204,8 +204,12 @@ class BatchScheduler extends EventEmitter {
             await this.db.run(
                 `UPDATE batch_job_history 
                  SET completed_at = ?, status = ?, error_message = ?, duration_ms = ?
-                 WHERE job_name = ? AND completed_at IS NULL
-                 ORDER BY id DESC LIMIT 1`,
+                 WHERE id = (
+                     SELECT id FROM batch_job_history 
+                     WHERE job_name = ? AND completed_at IS NULL 
+                     ORDER BY id DESC 
+                     LIMIT 1
+                 )`,
                 [Date.now(), 'error', error.message, duration, name]
             );
 
