@@ -371,7 +371,7 @@ export const RoomEventHandlers = {
         
         // Check if we've greeted this user recently
         const lastGreeting = room.lastGreetings.get(user.name);
-        if (lastGreeting && (now - lastGreeting) < 3600000) { // 1 hour
+        if (lastGreeting && (now - lastGreeting) < 28800000) { // 8 hours
             return;
         }
         
