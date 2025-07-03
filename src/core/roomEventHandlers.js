@@ -248,6 +248,15 @@ export const RoomEventHandlers = {
             );
         }
         
+        // Track media play
+        if (this.mediaTracker) {
+            // Pass room ID as part of the media object for multi-room tracking
+            const mediaWithRoom = { ...media, _roomId: roomId };
+            this.mediaTracker.recordMediaPlay(mediaWithRoom).catch(err =>
+                this.logger.error(`Failed to record media play in room ${roomId}`, { error: err.message })
+            );
+        }
+        
         // Emit events for other systems
         this.emit('room:mediaChange', { roomId, media });
         
@@ -314,6 +323,15 @@ export const RoomEventHandlers = {
      */
     handleQueue(roomId, data) {
         this.logger.debug(`Queue event in room ${roomId}:`, data);
+        
+        // Track media queue
+        if (this.mediaTracker && data.item) {
+            // Pass room ID as part of the item for multi-room tracking
+            const itemWithRoom = { ...data.item, _roomId: roomId };
+            this.mediaTracker.recordMediaQueued(itemWithRoom).catch(err =>
+                this.logger.error(`Failed to record media queue in room ${roomId}`, { error: err.message })
+            );
+        }
         
         // Emit general event
         this.emit('room:queue', { roomId, data });

@@ -79,3 +79,6 @@ yarn-error.log*
 
 # Test files
 test_event_cleanup.js
+
+# Room configurations
+rooms/

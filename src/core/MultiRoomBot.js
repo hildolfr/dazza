@@ -31,6 +31,7 @@ import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
 import RoomContext from '../RoomContext.js';
 import { applyRoomEventHandlers } from './roomEventHandlers.js';
 import { setupHeistHandlers } from './heistEventHandlers.js';
+import MediaTracker from '../modules/media/MediaTracker.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +77,7 @@ export class MultiRoomBot extends EventEmitter {
         this.imageHealthChecker = null;
         this.cashMonitor = null;
         this.memoryMonitor = null;
+        this.mediaTracker = null;
         
         // Ollama integration
         this.ollama = config.ollama?.enabled ? new OllamaService(config) : null;
@@ -115,6 +117,12 @@ export class MultiRoomBot extends EventEmitter {
             
             this.imageHealthChecker = new ImageHealthChecker(this);
             this.imageHealthChecker.start();
+            
+            // Initialize MediaTracker (single instance for all rooms)
+            this.mediaTracker = new MediaTracker();
+            this.mediaTracker.initialize({
+                roomId: 'multi-room' // Special identifier for multi-room mode
+            });
             
             this.cashMonitor = new CashMonitor(this.db, this.logger, 60000);
             
@@ -687,6 +695,7 @@ export class MultiRoomBot extends EventEmitter {
         // Stop services
         if (this.memoryMonitor) this.memoryMonitor.stop();
         if (this.imageHealthChecker) this.imageHealthChecker.stop();
+        if (this.mediaTracker) this.mediaTracker.destroy();
         if (this.cashMonitor) this.cashMonitor.stop();
         if (this.batchScheduler) this.batchScheduler.stop();
         if (this.apiServer) await this.apiServer.stop();
