@@ -3,6 +3,7 @@ node_modules/
 login.txt
 *.db
 *.db-journal
+media_encountered.db
 cytube_bot.log
 logs/
 *.log

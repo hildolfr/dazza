@@ -25,6 +25,7 @@ import { extractImageUrls } from '../utils/imageDetector.js';
 import { ImageHealthChecker } from '../modules/imageHealthChecker.js';
 import BatchScheduler from '../batch/BatchScheduler.js';
 import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
+import MediaTracker from '../modules/media/MediaTracker.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -103,6 +104,9 @@ export class CyTubeBot extends EventEmitter {
         // Memory monitoring
         this.memoryMonitor = null;
         
+        // Media tracking
+        this.mediaTracker = null;
+        
         // Periodic task intervals
         this.reminderInterval = null;
         this.statsInterval = null;
@@ -148,6 +152,12 @@ export class CyTubeBot extends EventEmitter {
             // Initialize ImageHealthChecker
             this.imageHealthChecker = new ImageHealthChecker(this);
             this.imageHealthChecker.start();
+            
+            // Initialize MediaTracker
+            this.mediaTracker = new MediaTracker();
+            this.mediaTracker.initialize({
+                roomId: this.config.cytube.channel
+            });
             
             // Initialize CashMonitor (10 second interval)
             this.cashMonitor = new CashMonitor(this.db, this.logger, 60000); // Changed from 10s to 60s to reduce performance impact
@@ -1040,6 +1050,13 @@ export class CyTubeBot extends EventEmitter {
                 this.logger.error('Failed to handle media change for video payout', { error: err.message })
             );
         }
+        
+        // Track media play
+        if (this.mediaTracker) {
+            this.mediaTracker.recordMediaPlay(data).catch(err =>
+                this.logger.error('Failed to record media play', { error: err.message })
+            );
+        }
     }
     
     handleMediaUpdate(data) {
@@ -1080,6 +1097,13 @@ export class CyTubeBot extends EventEmitter {
                 this.playlist.push(data.item);
             }
             this.logger.debug(`Video queued: ${data.item.title}`);
+            
+            // Track media queue
+            if (this.mediaTracker) {
+                this.mediaTracker.recordMediaQueued(data.item).catch(err =>
+                    this.logger.error('Failed to record media queue', { error: err.message })
+                );
+            }
         }
     }
     
@@ -2238,6 +2262,11 @@ export class CyTubeBot extends EventEmitter {
         // Stop image health checker
         if (this.imageHealthChecker) {
             this.imageHealthChecker.stop();
+        }
+        
+        // Stop media tracker
+        if (this.mediaTracker) {
+            this.mediaTracker.destroy();
         }
         
         // Shutdown managers in parallel
