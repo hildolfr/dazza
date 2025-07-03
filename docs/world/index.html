@@ -1744,31 +1744,7 @@
             z-index: 7;
         }
         
-        /* People figures */
-        .person {
-            position: absolute;
-            z-index: 18;
-        }
-        
-        .person-body {
-            position: absolute;
-            bottom: 0;
-            width: 8px;
-            height: 12px;
-            background-color: var(--shirt-color);
-            border-radius: 20% 20% 0 0;
-        }
-        
-        .person-head {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 6px;
-            height: 6px;
-            background-color: #f0c0a0;
-            border-radius: 50%;
-        }
+        /* REMOVED - Consolidated with other person CSS below */
         
         /* Stop sign - overhead view perspective */
         .stop-sign {
@@ -1886,6 +1862,457 @@
             height: 25px;
             background-color: #f0f0f0;
         }
+        
+        /* People and animations */
+        .person {
+            position: absolute;
+            width: 20px;
+            height: 36px;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .person-head {
+            width: 12px;
+            height: 12px;
+            background-color: #fdbcb4;
+            border-radius: 50%;
+            border: 1px solid #333;
+            position: relative;
+            z-index: 3;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        /* Eyes */
+        .person-head::before,
+        .person-head::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: #333;
+            border-radius: 50%;
+            top: 4px;
+        }
+        
+        .person-head::before {
+            left: 3px;
+        }
+        
+        .person-head::after {
+            right: 3px;
+        }
+        
+        .person-body {
+            width: 14px;
+            height: 18px;
+            margin-top: -2px;
+            background-color: var(--shirt-color, #4080c0);
+            border: 1px solid #333;
+            border-radius: 4px 4px 2px 2px;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        /* Arms */
+        .person-body::before,
+        .person-body::after {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 12px;
+            background-color: #fdbcb4;
+            border: 1px solid #333;
+            top: 2px;
+            border-radius: 2px;
+        }
+        
+        .person-body::before {
+            left: -3px;
+            transform: rotate(-5deg);
+        }
+        
+        .person-body::after {
+            right: -3px;
+            transform: rotate(5deg);
+        }
+        
+        .person-legs {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            margin-top: -2px;
+            z-index: 1;
+        }
+        
+        .person-legs .leg {
+            width: 5px;
+            height: 10px;
+            background-color: #2d4a7b;
+            border: 1px solid #333;
+            border-radius: 2px 2px 50% 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .person-walking-horizontal {
+            animation: walkHorizontal 20s linear infinite;
+        }
+        
+        @keyframes walkHorizontal {
+            0% { 
+                left: 0;
+            }
+            45% { 
+                left: 65%;
+            }
+            50% {
+                left: 65%;
+                transform: scaleX(-1);
+            }
+            95% {
+                left: 0;
+                transform: scaleX(-1);
+            }
+            100% {
+                left: 0;
+                transform: scaleX(1);
+            }
+        }
+        
+        .person-walking-vertical {
+            animation: walkVertical 15s linear infinite;
+        }
+        
+        @keyframes walkVertical {
+            0% { 
+                top: 20%;
+            }
+            45% { 
+                top: 70%;
+            }
+            50% {
+                top: 70%;
+                transform: scaleX(-1);
+            }
+            95% {
+                top: 20%;
+                transform: scaleX(-1);
+            }
+            100% {
+                top: 20%;
+                transform: scaleX(1);
+            }
+        }
+        
+        .person-beach {
+            width: 20px;
+            height: 36px;
+        }
+        
+        .person-beach .person-body {
+            background-color: #ff6b6b;
+            height: 14px;
+        }
+        
+        .surfer {
+            position: absolute;
+            z-index: 15;
+            animation: surf 10s ease-in-out infinite;
+        }
+        
+        .surfer .person {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .surfboard {
+            position: absolute;
+            width: 35px;
+            height: 10px;
+            background-color: #ffeb3b;
+            border-radius: 50% 20% 20% 50%;
+            border: 1px solid #e5d233;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* Surfboard fin */
+        .surfboard::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-bottom: 6px solid #d4c231;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        @keyframes surf {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(50px) translateY(-5px); }
+        }
+        
+        /* Animals */
+        .dog {
+            position: absolute;
+            width: 30px;
+            height: 20px;
+            z-index: 15;
+        }
+        
+        .dog-body {
+            width: 20px;
+            height: 12px;
+            background-color: #8b4513;
+            border: 1px solid #333;
+            border-radius: 5px;
+            position: relative;
+            margin-left: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .dog-head {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #8b4513;
+            border: 1px solid #333;
+            border-radius: 50%;
+            right: -8px;
+            top: 1px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        /* Dog eyes */
+        .dog-head::before,
+        .dog-head::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: #000;
+            border-radius: 50%;
+            top: 3px;
+        }
+        
+        .dog-head::before {
+            left: 2px;
+        }
+        
+        .dog-head::after {
+            right: 2px;
+        }
+        
+        /* Dog nose/snout */
+        .dog-body::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 3px;
+            background-color: #333;
+            border-radius: 50%;
+            right: -2px;
+            top: 4px;
+        }
+        
+        /* Dog ears */
+        .dog-body::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 4px;
+            background-color: #8b4513;
+            border: 1px solid #333;
+            border-radius: 50% 50% 0 0;
+            right: -3px;
+            top: -2px;
+            transform: rotate(-30deg);
+        }
+        
+        /* Simple tail */
+        .dog-tail {
+            position: absolute;
+            width: 10px;
+            height: 4px;
+            background-color: #8b4513;
+            border: 1px solid #333;
+            left: -8px;
+            top: 3px;
+            transform: rotate(-30deg);
+            border-radius: 80% 20% 20% 80%;
+            transform-origin: right center;
+            animation: wag 2s ease-in-out infinite;
+        }
+        
+        @keyframes wag {
+            0%, 100% { transform: rotate(-30deg); }
+            25% { transform: rotate(-45deg); }
+            75% { transform: rotate(-15deg); }
+        }
+        
+        /* Four simple legs */
+        .dog-legs {
+            position: absolute;
+            bottom: -5px;
+            left: 3px;
+            width: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .dog-legs .leg {
+            width: 3px;
+            height: 5px;
+            background-color: #654321;
+            border: 1px solid #333;
+            border-radius: 0 0 50% 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .dog-walking {
+            animation: dogwalk 25s linear infinite;
+        }
+        
+        @keyframes dogwalk {
+            0% { 
+                left: 10%;
+            }
+            20% { 
+                left: 30%;
+            }
+            25% {
+                left: 30%;
+                transform: scaleX(-1);
+            }
+            45% {
+                left: 10%;
+                transform: scaleX(-1);
+            }
+            50% {
+                left: 10%;
+                transform: scaleX(1);
+            }
+            70% {
+                left: 50%;
+                transform: scaleX(1);
+            }
+            75% {
+                left: 50%;
+                transform: scaleX(-1);
+            }
+            95% {
+                left: 10%;
+                transform: scaleX(-1);
+            }
+            100% {
+                left: 10%;
+                transform: scaleX(1);
+            }
+        }
+        
+        .bird {
+            position: absolute;
+            width: 20px;
+            height: 14px;
+            z-index: 20;
+            left: -20px;
+            animation: fly 20s linear infinite;
+        }
+        
+        .bird-body {
+            width: 12px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 60% 40% 40% 60%;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        /* Bird beak */
+        .bird-body::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-left: 5px solid #ff9800;
+            left: -4px;
+            top: 1px;
+        }
+        
+        /* Bird eye */
+        .bird-body::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            left: 2px;
+            top: 2px;
+        }
+        
+        .bird-wing {
+            position: absolute;
+            width: 12px;
+            height: 5px;
+            background-color: #444;
+            top: 1px;
+            animation: flap 0.4s ease-in-out infinite;
+            border-radius: 70% 30% 30% 70%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .bird-wing.left {
+            left: -10px;
+            transform-origin: right center;
+        }
+        
+        .bird-wing.right {
+            right: -10px;
+            transform-origin: left center;
+            animation-delay: 0.2s;
+        }
+        
+        @keyframes fly {
+            0% { 
+                left: 10%;
+                top: 15%;
+            }
+            25% { 
+                left: 40%;
+                top: 20%;
+            }
+            50% { 
+                left: 60%;
+                top: 10%;
+            }
+            75% { 
+                left: 30%;
+                top: 18%;
+            }
+            100% { 
+                left: 10%;
+                top: 15%;
+            }
+        }
+        
+        @keyframes flap {
+            0%, 100% { transform: rotateZ(-15deg) scaleY(1); }
+            25% { transform: rotateZ(25deg) scaleY(0.9); }
+            50% { transform: rotateZ(45deg) scaleY(0.8); }
+            75% { transform: rotateZ(25deg) scaleY(0.9); }
+        }
     </style>
 </head>
 <body>
@@ -1896,9 +2323,24 @@
             <div class="cloud cloud1"></div>
             <div class="cloud cloud2"></div>
             <div class="cloud cloud3"></div>
-            <div class="bird" style="top: 15%; left: 20%;"></div>
-            <div class="bird" style="top: 25%; left: 60%; animation-delay: -5s;"></div>
-            <div class="bird" style="top: 20%; left: 40%; animation-delay: -10s;"></div>
+            <div class="bird" style="top: 15%; left: 20%;">
+                <div class="bird-body">
+                    <div class="bird-wing left"></div>
+                    <div class="bird-wing right"></div>
+                </div>
+            </div>
+            <div class="bird" style="top: 25%; left: 60%; animation-delay: -5s;">
+                <div class="bird-body">
+                    <div class="bird-wing left"></div>
+                    <div class="bird-wing right"></div>
+                </div>
+            </div>
+            <div class="bird" style="top: 20%; left: 40%; animation-delay: -10s;">
+                <div class="bird-body">
+                    <div class="bird-wing left"></div>
+                    <div class="bird-wing right"></div>
+                </div>
+            </div>
             <div class="storm-clouds"></div>
         </div>
         
@@ -2590,13 +3032,21 @@
         
         <!-- Beach people -->
         <div class="person" style="left: 81%; top: 50%;">
-            <div class="person-body" style="--shirt-color: #d04040;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #d04040;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="person" style="left: 87%; top: 62%;">
-            <div class="person-body" style="--shirt-color: #4040d0;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #4040d0;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="palm-tree" style="left: 88%; top: 80%;">
@@ -2685,28 +3135,48 @@
         
         <!-- More people walking on sidewalks -->
         <div class="person" style="left: calc(35% + 58px); top: 20%;">
-            <div class="person-body" style="--shirt-color: #60a060;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #60a060;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="person" style="left: calc(35% - 10px); top: 32%;">
-            <div class="person-body" style="--shirt-color: #a06060;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #a06060;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="person" style="left: calc(15% + 48px); top: 65%;">
-            <div class="person-body" style="--shirt-color: #6060a0;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #6060a0;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="person" style="left: calc(35% - 10px); top: 45%;">
-            <div class="person-body" style="--shirt-color: #a0a060;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #a0a060;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <div class="person" style="left: calc(15% - 10px); top: 82%;">
-            <div class="person-body" style="--shirt-color: #404040;"></div>
-            <div class="person-head"></div>
+        <div class="person-head"></div>
+        <div class="person-body" style="--shirt-color: #404040;"></div>
+        <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
         </div>
         
         <!-- Seagulls near beach -->
@@ -2799,7 +3269,7 @@
         <div class="building-label" style="left: calc(52% + 70px); top: calc(5% + 15px);">SMOKES</div>
         
         <!-- Another pub - The Surfie -->
-        <div class="building" style="left: 58%; top: 32%; width: 75px; height: 55px;">
+        <div class="building" style="left: 58%; top: 25%; width: 75px; height: 55px;">
             <div class="roof roof-tile"></div>
             <div class="window" style="left: 10px; top: 45%; width: 15px; height: 12px;"></div>
             <div class="window" style="right: 10px; top: 45%; width: 15px; height: 12px;"></div>
@@ -2807,12 +3277,12 @@
                 <div class="door-handle"></div>
             </div>
         </div>
-        <div class="parking-lot" style="left: 58%; top: calc(32% + 57px); width: 75px; height: 25px;">
+        <div class="parking-lot" style="left: 58%; top: calc(25% + 57px); width: 75px; height: 25px;">
             <div class="parking-line" style="left: 20px; top: 3px; width: 2px; height: 18px;"></div>
             <div class="parking-line" style="left: 40px; top: 3px; width: 2px; height: 18px;"></div>
             <div class="parking-line" style="left: 60px; top: 3px; width: 2px; height: 18px;"></div>
         </div>
-        <div class="building-label" style="left: calc(58% + 15px); top: calc(32% + 20px);">THE SURFIE</div>
+        <div class="building-label" style="left: calc(58% + 15px); top: calc(25% + 20px);">THE SURFIE</div>
         
         <!-- Third pub - Workers Club -->
         <div class="building" style="left: 2%; top: 85%; width: 85px; height: 50px;">
@@ -2885,7 +3355,7 @@
         <div class="building-label" style="left: calc(40% + 62px); top: calc(8% + 12px);">VINNIES</div>
         
         <!-- Sports Oval/Footy Field -->
-        <div class="sports-oval" style="left: 5%; top: 88%; width: 120px; height: 80px;">
+        <div class="sports-oval" style="left: 72%; top: 40%; width: 120px; height: 80px;">
             <div class="goal-posts" style="left: 10px; top: 50%; transform: translateY(-50%);">
                 <div class="goal-post" style="left: 0;"></div>
                 <div class="goal-post" style="left: 8px;"></div>
@@ -2895,7 +3365,7 @@
                 <div class="goal-post" style="left: 8px;"></div>
             </div>
         </div>
-        <div class="building-label" style="left: calc(5% + 40px); top: calc(88% + 35px); background-color: rgba(144,160,128,0.9);">FOOTY OVAL</div>
+        <div class="building-label" style="left: calc(72% + 40px); top: calc(40% + 85px); background-color: rgba(144,160,128,0.9);">FOOTY OVAL</div>
         
         <!-- Train Station on Railway St -->
         <div class="train-station" style="left: 1%; top: 65%; width: 130px; height: 40px;">
@@ -2912,7 +3382,7 @@
         <div class="building-label" style="left: calc(1% + 40px); top: calc(65% + 10px);">RAILWAY STATION</div>
         
         <!-- Replace some cars with utes -->
-        <div class="ute" style="left: calc(35% + 15px); top: 40%; width: 40px; height: 20px;">
+        <div class="ute" style="left: calc(35% + 15px); top: 40%; width: 40px; height: 20px; transform: rotate(90deg);">
             <div class="ute-cab" style="width: 60%; height: 100%; background-color: #ffffff;"></div>
             <div class="ute-tray" style="left: 60%; width: 40%; height: 100%;"></div>
             <div class="car-window" style="left: 5px; top: 3px; width: 15px; height: 8px; background-color: #506070; border: 1px solid #405060;"></div>
@@ -3029,5 +3499,190 @@
         console.log('Dazza\'s beach town loaded - Welcome to the Gold Coast mate!');
         console.log('Try the weather controls in the top right corner!');
     </script>
+    
+    <!-- Animated People and Animals -->
+    
+    <!-- People walking on sidewalks -->
+    <div class="person person-walking-horizontal" style="top: calc(15% - 25px);">
+        <div class="person-head"></div>
+        <div class="person-body"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="person person-walking-horizontal" style="top: calc(55% + 55px); animation-delay: 3s;">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #ff6b6b;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="person person-walking-horizontal" style="top: calc(75% - 25px); animation-delay: 5s;">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #4caf50;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <!-- Person walking on vertical road -->
+    <div class="person person-walking-vertical" style="left: calc(15% - 20px);">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #9575cd;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <!-- People at the beach (eastern side) -->
+    <div class="person person-beach" style="left: 85%; top: 45%;">
+        <div class="person-head"></div>
+        <div class="person-body"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="person person-beach" style="left: 88%; top: 65%;">
+        <div class="person-head"></div>
+        <div class="person-body"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <!-- Surfers -->
+    <div class="surfer" style="left: 92%; top: 30%;">
+        <div class="person person-beach">
+            <div class="person-head"></div>
+            <div class="person-body"></div>
+            <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
+        </div>
+        <div class="surfboard"></div>
+    </div>
+    
+    <div class="surfer" style="left: 90%; top: 50%; animation-delay: 5s;">
+        <div class="person person-beach">
+            <div class="person-head"></div>
+            <div class="person-body" style="background-color: #2196f3;"></div>
+            <div class="person-legs">
+                <div class="leg"></div>
+                <div class="leg"></div>
+            </div>
+        </div>
+        <div class="surfboard" style="background-color: #4caf50;"></div>
+    </div>
+    
+    <!-- Dogs -->
+    <div class="dog dog-walking" style="top: calc(15% - 18px);">
+        <div class="dog-body">
+            <div class="dog-tail"></div>
+        </div>
+        <div class="dog-head"></div>
+        <div class="dog-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="dog" style="left: 12%; top: 70%;">
+        <div class="dog-body" style="background-color: #333;">
+            <div class="dog-tail" style="background-color: #333;"></div>
+        </div>
+        <div class="dog-head" style="background-color: #333;"></div>
+        <div class="dog-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="dog dog-walking" style="top: calc(90% + 55px); animation-delay: 7s;">
+        <div class="dog-body" style="background-color: #d2691e;">
+            <div class="dog-tail" style="background-color: #d2691e;"></div>
+        </div>
+        <div class="dog-head" style="background-color: #d2691e;"></div>
+        <div class="dog-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <!-- Birds -->
+    <div class="bird">
+        <div class="bird-body">
+            <div class="bird-wing left"></div>
+            <div class="bird-wing right"></div>
+        </div>
+    </div>
+    
+    <div class="bird" style="animation-delay: 5s;">
+        <div class="bird-body">
+            <div class="bird-wing left"></div>
+            <div class="bird-wing right"></div>
+        </div>
+    </div>
+    
+    <div class="bird" style="animation-delay: 10s;">
+        <div class="bird-body" style="background-color: #fff;">
+            <div class="bird-wing left" style="background-color: #fff;"></div>
+            <div class="bird-wing right" style="background-color: #fff;"></div>
+        </div>
+    </div>
+    
+    <!-- People near shops -->
+    <div class="person" style="left: calc(20% + 30px); top: calc(2% + 10px);">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #9c27b0;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="person" style="left: calc(40% + 50px); top: calc(20% + 75px);">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #607d8b;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <!-- People at the RSL -->
+    <div class="person" style="left: calc(22% + 60px); top: calc(78% - 5px);">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #795548;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
+    <div class="person" style="left: calc(22% + 70px); top: calc(78% - 5px);">
+        <div class="person-head"></div>
+        <div class="person-body" style="background-color: #3f51b5;"></div>
+        <div class="person-legs">
+            <div class="leg"></div>
+            <div class="leg"></div>
+        </div>
+    </div>
+    
 </body>
 </html>
