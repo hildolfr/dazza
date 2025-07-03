@@ -198,8 +198,8 @@ export class HeistManager extends EventEmitter {
             
             // Create heist event
             const result = await this.db.run(
-                'INSERT INTO heist_events (status, created_at, room_id) VALUES (?, ?, ?)',
-                ['announced', Date.now(), room]
+                'INSERT INTO heist_events (status, state, created_at, announced_at, room_id, participant_count, total_payout) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                ['announced', 'announced', Date.now(), Date.now(), room, 0, 0]
             );
             this.currentHeistId = result.lastID;
             
