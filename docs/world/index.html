@@ -2984,7 +2984,19 @@
             width: 25px;
             height: 20px;
             z-index: 20;
-            animation: fly 20s linear infinite;
+        }
+        
+        /* Different flight patterns with direction changes */
+        .bird-flying-pattern1 {
+            animation: fly-pattern1 25s linear infinite;
+        }
+        
+        .bird-flying-pattern2 {
+            animation: fly-pattern2 30s linear infinite;
+        }
+        
+        .bird-flying-pattern3 {
+            animation: fly-pattern3 35s linear infinite;
         }
         
         /* Simple bird body - oval shape */
@@ -3082,49 +3094,118 @@
             }
         }
         
-        @keyframes fly {
+        /* Flight pattern 1: Left to right */
+        @keyframes fly-pattern1 {
             0% { 
                 left: -25px;
                 top: 20%;
+                transform: scaleX(1);
             }
             25% { 
                 left: 30%;
                 top: 15%;
+                transform: scaleX(1);
             }
             50% { 
                 left: 60%;
                 top: 25%;
+                transform: scaleX(1);
             }
             75% { 
                 left: 90%;
                 top: 18%;
+                transform: scaleX(1);
             }
             100% { 
                 left: 110%;
                 top: 20%;
+                transform: scaleX(1);
             }
         }
         
-        @keyframes fly {
+        /* Flight pattern 2: Circular with direction changes */
+        @keyframes fly-pattern2 {
             0% { 
                 left: 10%;
                 top: 15%;
+                transform: scaleX(1);
             }
             25% { 
-                left: 40%;
+                left: 70%;
                 top: 20%;
+                transform: scaleX(1);
+            }
+            26% {
+                transform: scaleX(-1);
             }
             50% { 
                 left: 60%;
                 top: 10%;
+                transform: scaleX(-1);
             }
             75% { 
-                left: 30%;
+                left: 20%;
                 top: 18%;
+                transform: scaleX(-1);
+            }
+            76% {
+                transform: scaleX(1);
             }
             100% { 
                 left: 10%;
                 top: 15%;
+                transform: scaleX(1);
+            }
+        }
+        
+        /* Flight pattern 3: Figure-8 with direction changes */
+        @keyframes fly-pattern3 {
+            0% { 
+                left: 20%;
+                top: 10%;
+                transform: scaleX(1);
+            }
+            20% { 
+                left: 50%;
+                top: 15%;
+                transform: scaleX(1);
+            }
+            25% {
+                transform: scaleX(-1);
+            }
+            40% { 
+                left: 30%;
+                top: 25%;
+                transform: scaleX(-1);
+            }
+            50% { 
+                left: 15%;
+                top: 20%;
+                transform: scaleX(-1);
+            }
+            51% {
+                transform: scaleX(1);
+            }
+            70% { 
+                left: 60%;
+                top: 12%;
+                transform: scaleX(1);
+            }
+            80% {
+                transform: scaleX(-1);
+            }
+            90% { 
+                left: 40%;
+                top: 8%;
+                transform: scaleX(-1);
+            }
+            91% {
+                transform: scaleX(1);
+            }
+            100% { 
+                left: 20%;
+                top: 10%;
+                transform: scaleX(1);
             }
         }
         
@@ -3141,7 +3222,7 @@
         <!-- Sky -->
         <div id="sky">
             <div id="sun"></div>
-            <div class="bird" style="animation-delay: 0s;">
+            <div class="bird bird-flying-pattern1" style="animation-delay: 0s;">
                 <div class="bird-body"></div>
                 <div class="bird-head">
                     <div class="bird-beak"></div>
@@ -3151,7 +3232,7 @@
                 <div class="bird-wing left"></div>
                 <div class="bird-wing right"></div>
             </div>
-            <div class="bird" style="animation-delay: -7s;">
+            <div class="bird bird-flying-pattern2" style="animation-delay: -7s;">
                 <div class="bird-body"></div>
                 <div class="bird-head">
                     <div class="bird-beak"></div>
@@ -3161,7 +3242,7 @@
                 <div class="bird-wing left"></div>
                 <div class="bird-wing right"></div>
             </div>
-            <div class="bird" style="animation-delay: -14s;">
+            <div class="bird bird-flying-pattern3" style="animation-delay: -14s;">
                 <div class="bird-body"></div>
                 <div class="bird-head">
                     <div class="bird-beak"></div>
@@ -4594,7 +4675,7 @@
     </div>
     
     <!-- Birds -->
-    <div class="bird" style="animation-delay: -3s;">
+    <div class="bird bird-flying-pattern2" style="animation-delay: -3s;">
         <div class="bird-body"></div>
         <div class="bird-head">
             <div class="bird-beak"></div>
@@ -4605,7 +4686,7 @@
         <div class="bird-wing right"></div>
     </div>
     
-    <div class="bird" style="animation-delay: -10s;">
+    <div class="bird bird-flying-pattern3" style="animation-delay: -10s;">
         <div class="bird-body"></div>
         <div class="bird-head">
             <div class="bird-beak"></div>
@@ -4616,7 +4697,7 @@
         <div class="bird-wing right"></div>
     </div>
     
-    <div class="bird" style="animation-delay: -16s;">
+    <div class="bird bird-flying-pattern1" style="animation-delay: -16s;">
         <div class="bird-body" style="background-color: #f0f0f0;"></div>
         <div class="bird-head" style="background-color: #f0f0f0;">
             <div class="bird-beak"></div>
