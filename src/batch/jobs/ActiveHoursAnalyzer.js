@@ -16,12 +16,13 @@ export class ActiveHoursAnalyzer extends BatchJob {
             CREATE TABLE IF NOT EXISTS user_active_hours (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL,
+                room_id TEXT NOT NULL DEFAULT 'fatpizza',
                 hour INTEGER NOT NULL,
                 message_count INTEGER DEFAULT 0,
                 word_count INTEGER DEFAULT 0,
                 avg_message_length INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(username, hour)
+                UNIQUE(username, room_id, hour)
             )
         `);
         
@@ -46,9 +47,19 @@ export class ActiveHoursAnalyzer extends BatchJob {
         }
         
         try {
+            // Check if room_id column exists
+            let hasRoomId = false;
+            try {
+                await this.db.get('SELECT room_id FROM messages LIMIT 1');
+                hasRoomId = true;
+            } catch (error) {
+                this.logger.warn('[ActiveHoursAnalyzer] room_id column not found in messages table');
+            }
+
             hourlyStats = await this.db.all(`
                 SELECT 
                     LOWER(username) as username,
+                    ${hasRoomId ? "COALESCE(room_id, 'fatpizza') as room_id," : "'fatpizza' as room_id,"}
                     CAST(strftime('%H', datetime(timestamp / 1000, 'unixepoch', ? || ' hours')) AS INTEGER) as hour,
                     COUNT(*) as message_count,
                     ${hasWordCount ? 'SUM(COALESCE(word_count, 0))' : '0'} as word_count,
@@ -56,7 +67,7 @@ export class ActiveHoursAnalyzer extends BatchJob {
                 FROM messages
                 WHERE LOWER(username) != ?
                     AND username NOT LIKE '[%]'
-                GROUP BY LOWER(username), hour
+                GROUP BY LOWER(username), ${hasRoomId ? 'room_id,' : ''} hour
             `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
         } catch (error) {
             this.logger.error(`[ActiveHoursAnalyzer] Failed to query messages: ${error.message}`);
@@ -75,10 +86,11 @@ export class ActiveHoursAnalyzer extends BatchJob {
             for (const stat of hourlyStats) {
                 await this.db.run(`
                     INSERT INTO user_active_hours 
-                    (username, hour, message_count, word_count, avg_message_length)
-                    VALUES (?, ?, ?, ?, ?)
+                    (username, room_id, hour, message_count, word_count, avg_message_length)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 `, [
                     stat.username,
+                    stat.room_id || 'fatpizza',
                     stat.hour,
                     stat.message_count,
                     stat.word_count || 0,

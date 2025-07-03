@@ -45,9 +45,18 @@ export class MessageContentAnalyzer extends BatchJob {
     }
 
     async analyzeUserMessages(username) {
+        // Check if word_count column exists
+        let hasWordCount = false;
+        try {
+            await this.db.get('SELECT word_count FROM messages LIMIT 1');
+            hasWordCount = true;
+        } catch (error) {
+            // Column doesn't exist
+        }
+
         // Get all messages for user
         const messages = await this.db.all(
-            'SELECT message, word_count FROM messages WHERE LOWER(username) = ?',
+            `SELECT message${hasWordCount ? ', word_count' : ''} FROM messages WHERE LOWER(username) = ?`,
             [username]
         );
 
