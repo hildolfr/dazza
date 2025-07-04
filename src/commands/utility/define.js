@@ -124,7 +124,7 @@ export default new Command({
             
             return { success: true };
         } catch (error) {
-            console.error('Define error:', error);
+            bot.logger.error('Define error:', error);
             const noDefMsg = noDefResponses[Math.floor(Math.random() * noDefResponses.length)]
                 .replace('{user}', user)
                 .replace('{word}', word);

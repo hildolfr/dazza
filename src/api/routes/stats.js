@@ -239,7 +239,7 @@ export function createStatsRoutes(apiServer) {
                             };
                     }
                 } catch (error) {
-                    console.error(`Error fetching ${type} leaderboard:`, error);
+                    apiServer.bot.logger.error(`Error fetching ${type} leaderboard:`, error);
                     return { type, title, error: true, data: [] };
                 }
             })
@@ -1255,7 +1255,7 @@ export function createStatsRoutes(apiServer) {
             });
             
         } catch (error) {
-            console.error(`Error fetching ${category} stats for ${username}:`, error);
+            apiServer.bot.logger.error(`Error fetching ${category} stats for ${username}:`, error);
             throw error;
         }
     }));
@@ -1454,7 +1454,7 @@ export function createStatsRoutes(apiServer) {
                     };
                 }
             } catch (error) {
-                console.error(`Error getting quote for ${username}:`, error);
+                apiServer.bot.logger.error(`Error getting quote for ${username}:`, error);
             }
         }));
         

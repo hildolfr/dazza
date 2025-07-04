@@ -59,7 +59,9 @@ export class Command {
         try {
             return await this.handler(bot, message, args);
         } catch (error) {
-            console.error(`Error in command ${this.name}:`, error);
+            if (bot.logger) {
+                bot.logger.error(`Error in command ${this.name}:`, error);
+            }
             return { success: false, error: 'ah shit somethin went wrong there' };
         }
     }

@@ -23,7 +23,11 @@ function loadCredentials() {
         
         return credentials;
     } catch (error) {
-        console.error('Failed to load credentials:', error.message);
+        // Can't use logger here as it would create circular dependency
+        // This runs before logger is initialized
+        if (process.env.NODE_ENV !== 'test') {
+            console.error('Failed to load credentials:', error.message);
+        }
         return {};
     }
 }

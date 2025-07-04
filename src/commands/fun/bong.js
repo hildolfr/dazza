@@ -23,7 +23,7 @@ export default new Command({
             // Increment daily counter
             newCount = await bot.db.incrementBongCount(today, message.roomId);
         } catch (error) {
-            console.error('Failed to update bong counter:', error);
+            bot.logger.error('Failed to update bong counter:', error);
         }
         
         const bongResponses = [

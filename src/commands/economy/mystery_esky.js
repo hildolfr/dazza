@@ -85,7 +85,7 @@ function calculateWinAmount() {
 }
 
 // Update mystery esky stats
-async function updateStats(db, username, won, amount, wasTrap = false, wasJackpot = false) {
+async function updateStats(db, logger, username, won, amount, wasTrap = false, wasJackpot = false) {
     try {
         // Initialize stats if user doesn't exist
         await db.run(`
@@ -126,7 +126,7 @@ async function updateStats(db, username, won, amount, wasTrap = false, wasJackpo
             `, [Date.now(), username]);
         }
     } catch (error) {
-        console.error('Failed to update mystery esky stats:', error);
+        logger.error('Failed to update mystery esky stats:', { error: error.message, stack: error.stack });
     }
 }
 
@@ -285,7 +285,7 @@ export default new Command({
                 // Update stats
                 if (bot.db) {
                     const netAmount = wasTrap ? -(cost + hospitalCost) : (winnings > 0 ? winnings - cost : -cost);
-                    await updateStats(bot.db, message.username, winnings > 0, Math.abs(netAmount), wasTrap, wasJackpot);
+                    await updateStats(bot.db, bot.logger, message.username, winnings > 0, Math.abs(netAmount), wasTrap, wasJackpot);
                 }
             }, 3000);
 

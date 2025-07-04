@@ -100,19 +100,26 @@ export class ConfigValidator {
         return path.split('.').reduce((current, key) => current?.[key], obj);
     }
 
-    printReport() {
+    printReport(logger = null) {
+        // Use provided logger or fall back to console for CLI usage
+        const log = logger || {
+            error: (...args) => console.error(...args),
+            warn: (...args) => console.warn(...args),
+            info: (...args) => console.log(...args)
+        };
+
         if (this.errors.length > 0) {
-            console.error('\n❌ Configuration Errors:');
-            this.errors.forEach(error => console.error(`   - ${error}`));
+            log.error('\n❌ Configuration Errors:');
+            this.errors.forEach(error => log.error(`   - ${error}`));
         }
 
         if (this.warnings.length > 0) {
-            console.warn('\n⚠️  Configuration Warnings:');
-            this.warnings.forEach(warning => console.warn(`   - ${warning}`));
+            log.warn('\n⚠️  Configuration Warnings:');
+            this.warnings.forEach(warning => log.warn(`   - ${warning}`));
         }
 
         if (this.errors.length === 0 && this.warnings.length === 0) {
-            console.log('\n✅ Configuration is valid');
+            log.info('\n✅ Configuration is valid');
         }
     }
 }

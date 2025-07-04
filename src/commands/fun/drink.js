@@ -29,7 +29,7 @@ export default new Command({
             const bladderState = await bot.db.getBladderState(canonicalUsername, message.roomId);
             bladderAmount = bladderState.current_amount;
         } catch (error) {
-            console.error('Failed to update drink counter:', error);
+            bot.logger.error('Failed to update drink counter:', error);
         }
         
         // Check what type of drink was requested

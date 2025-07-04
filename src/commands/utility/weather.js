@@ -153,7 +153,7 @@ export default new Command({
             bot.sendMessage(message.roomId, responses[Math.floor(Math.random() * responses.length)]);
             return { success: true };
         } catch (error) {
-            console.error('Weather error:', error);
+            bot.logger.error('Weather error:', error);
             if (error.message === 'Unknown location') {
                 bot.sendMessage(message.roomId, unknownLocationResponses[Math.floor(Math.random() * unknownLocationResponses.length)]);
             } else {

@@ -22,13 +22,15 @@ export function createErrorHandler(apiServer) {
         // Log to file
         apiServer.bot.logger.error('[API] Request error', errorDetails);
         
-        // Log to console for debugging
-        console.error(`[API Error ${errorId}]`, {
-            path: req.path,
-            method: req.method,
-            message: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        });
+        // Log to console for debugging in development only
+        if (process.env.NODE_ENV === 'development') {
+            apiServer.bot.logger.debug(`[API Error ${errorId}]`, {
+                path: req.path,
+                method: req.method,
+                message: err.message,
+                stack: err.stack
+            });
+        }
         
         // Determine status code
         const statusCode = err.status || err.statusCode || 500;

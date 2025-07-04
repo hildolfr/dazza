@@ -220,7 +220,7 @@ export default new Command({
                         bot.sendMessage(message.roomId, `HOLY SHIT! -${message.username} actually mugged dazza for $${amount}! legendary! (-${message.username} +5 trust)`);
                         
                         // Update mug stats
-                        await updateMugStats(bot.db, message.username, targetUsername, true, amount, message.roomId || 'fatpizza');
+                        await updateMugStats(bot.db, bot.logger, message.username, targetUsername, true, amount, message.roomId || 'fatpizza');
                     } else {
                         bot.sendMessage(message.roomId, `-${message.username} tried to mug dazza but he's broke as usual`);
                     }
@@ -243,10 +243,10 @@ export default new Command({
                         bot.sendMessage(message.roomId, `${reversalMsg} (-${message.username} -2 trust)`);
                         
                         // Update stats
-                        await updateMugStats(bot.db, message.username, 'dazza', false, -reversalAmount, message.roomId || 'fatpizza');
+                        await updateMugStats(bot.db, bot.logger, message.username, 'dazza', false, -reversalAmount, message.roomId || 'fatpizza');
                     } else {
                         bot.sendMessage(message.roomId, `*dazza beats up -${message.username}* would've robbed ya but you're broke!`);
-                        await updateMugStats(bot.db, message.username, 'dazza', false, 0, message.roomId || 'fatpizza');
+                        await updateMugStats(bot.db, bot.logger, message.username, 'dazza', false, 0, message.roomId || 'fatpizza');
                     }
                 }
                 
@@ -378,7 +378,7 @@ export default new Command({
                     
                     bot.sendMessage(message.roomId, `${defendMsg} (-${message.username} -3 trust, -${targetUsername} +${defenseTrustGain} trust)`);
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
+                    await updateMugStats(bot.db, bot.logger, message.username, targetUsername, false, -fine, message.roomId || 'fatpizza');
                     return { success: true };
                 }
             }
@@ -419,7 +419,7 @@ export default new Command({
                         }, 2000);
                     }
                     
-                    await updateMugStats(bot.db, message.username, targetUsername, true, mugAmount, message.roomId || 'fatpizza');
+                    await updateMugStats(bot.db, bot.logger, message.username, targetUsername, true, mugAmount, message.roomId || 'fatpizza');
                 }
             } else {
                 // Failed mug
@@ -463,7 +463,7 @@ export default new Command({
 });
 
 // Helper function to update mug statistics
-async function updateMugStats(db, attacker, victim, success, amount, roomId = 'fatpizza') {
+async function updateMugStats(db, logger, attacker, victim, success, amount, roomId = 'fatpizza') {
     if (!db) return;
     
     try {
@@ -521,6 +521,6 @@ async function updateMugStats(db, attacker, victim, success, amount, roomId = 'f
         `, [attacker, amount, success ? `Mugged ${victim}` : `Failed to mug ${victim}`, roomId, now]);
         
     } catch (error) {
-        console.error('Failed to update mug stats:', error);
+        logger.error('Failed to update mug stats:', { error: error.message, stack: error.stack });
     }
 }

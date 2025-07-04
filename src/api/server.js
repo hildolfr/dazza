@@ -180,7 +180,7 @@ export class ApiServer extends EventEmitter {
                 resolve();
             }).on('error', (err) => {
                 this.bot.logger.error('API server failed to start', { error: err.message, stack: err.stack });
-                console.error('[API] Failed to start server:', err.message);
+                this.bot.logger.error('[API] Failed to start server:', err.message);
                 reject(err);
             });
         });
