@@ -1,10 +1,11 @@
 import { Command } from './base.js';
 
 export class CommandRegistry {
-    constructor() {
+    constructor(logger = null) {
         this.commands = new Map();
         this.aliases = new Map();
         this.categories = new Map();
+        this.logger = logger || console;
     }
 
     register(command) {
@@ -25,7 +26,7 @@ export class CommandRegistry {
         }
         this.categories.get(command.category).push(command);
 
-        console.log(`Registered command: ${command.name}`);
+        this.logger.debug(`Registered command: ${command.name}`);
     }
 
     get(name) {

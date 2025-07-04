@@ -16,7 +16,6 @@ import { createStatsRoutes } from './routes/stats.js';
 import { createChatRoutes } from './routes/chat.js';
 import { setupWebSocketEvents } from './websocket/events.js';
 import { UpnpManager } from '../services/upnpManager.js';
-import { DoubleNatUpnpManager } from '../services/doubleNatUpnp.js';
 import { EnhancedDoubleNatManager } from '../services/enhancedDoubleNat.js';
 
 export class ApiServer extends EventEmitter {

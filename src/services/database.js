@@ -6,13 +6,20 @@ import { videoPayoutSchema } from '../modules/video_payout/schema_compat.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
 import { cooldownSchema } from '../utils/cooldownSchema_compat.js';
 import MigrationRunner from '../migrations/runner.js';
+import { createLogger } from '../utils/logger.js';
 
 class Database {
-    constructor(dbPath, botUsername = 'dazza') {
+    constructor(dbPath, botUsername = 'dazza', options = {}) {
         this.dbPath = dbPath;
         this.botUsername = botUsername.toLowerCase();
         this.db = null;
         this.bot = null; // Bot reference for WebSocket events
+        
+        // Initialize logger - use provided logger or create a default one
+        this.logger = options.logger || createLogger({
+            level: options.logLevel || 'info',
+            console: options.logToConsole !== false
+        });
         
         // Bind promisified methods after database is initialized
         this.run = null;
@@ -28,10 +35,10 @@ class Database {
         return new Promise((resolve, reject) => {
             this.db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) {
-                    console.error('Failed to open database:', err);
+                    this.logger.error('Failed to open database:', err);
                     reject(err);
                 } else {
-                    console.log('Connected to SQLite database');
+                    this.logger.info('Connected to SQLite database');
                     
                     // Create promisified methods
                     this.get = promisify(this.db.get.bind(this.db));
@@ -60,10 +67,10 @@ class Database {
     }
 
     async createTables() {
-        console.log('Starting createTables...');
+        this.logger.info('Starting createTables...');
         
         // Create messages table
-        console.log('Creating messages table...');
+        this.logger.info('Creating messages table...');
         await this.run(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,30 +224,30 @@ class Database {
         await this.run('CREATE INDEX IF NOT EXISTS idx_private_messages_timestamp ON private_messages(timestamp)');
 
         // Initialize heist schema
-        console.log('Initializing heist schema...');
+        this.logger.info('Initializing heist schema...');
         try {
             await heistSchema.initialize(this);
-            console.log('Heist schema initialized successfully');
+            this.logger.info('Heist schema initialized successfully');
         } catch (error) {
             console.error('Error initializing heist schema:', error.message);
             throw error;
         }
 
         // Initialize video payout schema
-        console.log('Initializing video payout schema...');
+        this.logger.info('Initializing video payout schema...');
         try {
             await videoPayoutSchema.initialize(this);
-            console.log('Video payout schema initialized successfully');
+            this.logger.info('Video payout schema initialized successfully');
         } catch (error) {
             console.error('Error initializing video payout schema:', error.message);
             throw error;
         }
 
         // Initialize cooldown schema
-        console.log('Initializing cooldown schema...');
+        this.logger.info('Initializing cooldown schema...');
         try {
             await cooldownSchema.initialize(this);
-            console.log('Cooldown schema initialized successfully');
+            this.logger.info('Cooldown schema initialized successfully');
         } catch (error) {
             console.error('Error initializing cooldown schema:', error.message);
             throw error;
@@ -249,7 +256,7 @@ class Database {
         // Add migration for tells table via_pm column
         try {
             await this.run('ALTER TABLE tells ADD COLUMN via_pm INTEGER DEFAULT 0');
-            console.log('Added via_pm column to tells table');
+            this.logger.info('Added via_pm column to tells table');
         } catch (error) {
             // Column might already exist, ignore error
             if (!error.message.includes('duplicate column name')) {
@@ -257,7 +264,7 @@ class Database {
             }
         }
 
-        console.log('Database tables created successfully');
+        this.logger.info('Database tables created successfully');
     }
 
     async runMigrations() {
@@ -1140,7 +1147,7 @@ class Database {
             `, [url]);
             
             if (existingImage && !existingImage.is_active) {
-                console.log(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
+                this.logger.info(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
             }
             
             // Check if user is at the image limit
@@ -1168,7 +1175,7 @@ class Database {
                     )
                 `, [username, url, username, url, imagesToRemove]);
                 
-                console.log(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
+                this.logger.info(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
             }
             
             await this.run(`

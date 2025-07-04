@@ -2,6 +2,14 @@
 
 This directory contains SSL certificates for enabling HTTPS on the API server.
 
+## ⚠️ IMPORTANT SECURITY NOTICE
+
+**NEVER commit SSL certificates or private keys to version control!**
+
+- All `.crt`, `.key`, `.pem`, and `.csr` files in this directory are ignored by git
+- If you accidentally commit certificates, you must regenerate them immediately
+- The current certificates in this directory are for local use only
+
 ## Quick Start
 
 ### For Development (Self-Signed Certificate)

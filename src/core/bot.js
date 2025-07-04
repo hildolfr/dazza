@@ -17,7 +17,6 @@ import { loadCommands } from '../commands/index.js';
 import { HeistManager } from '../modules/heist/index.js';
 import { VideoPayoutManager } from '../modules/video_payout/index.js';
 import { PissingContestManager } from '../modules/pissing_contest/index.js';
-import GalleryUpdater from '../modules/galleryUpdater.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 import { CashMonitor } from '../utils/cashMonitor.js';
 import { ApiServer } from '../api/server.js';
@@ -40,14 +39,19 @@ export class CyTubeBot extends EventEmitter {
             maxRequests: 15, // 15 commands per minute
             warnThreshold: 0.8 // Warn at 12 commands
         });
-        this.db = new Database(config.database.path, config.bot.username);
-        this.commands = null;
-        this.heistManager = null; // Initialize after database
-        this.galleryUpdater = null; // Initialize after database
+        
+        // Initialize logger first so it can be passed to other services
         this.logger = createLogger({
             level: config.logging?.level || 'info',
             console: config.logging?.console !== false
         });
+        
+        // Now create database with logger
+        this.db = new Database(config.database.path, config.bot.username, {
+            logger: this.logger
+        });
+        this.commands = null;
+        this.heistManager = null; // Initialize after database
         
         // Bot state
         this.username = config.bot.username; // Store bot username for commands
@@ -130,7 +134,7 @@ export class CyTubeBot extends EventEmitter {
             this.db.setBot(this); // Set bot reference for WebSocket events
             
             // Load commands
-            this.commands = await loadCommands();
+            this.commands = await loadCommands(this.logger);
             
             // Initialize HeistManager with bot reference
             this.heistManager = new HeistManager(this.db, this);
@@ -145,9 +149,6 @@ export class CyTubeBot extends EventEmitter {
             // Initialize PissingContestManager
             this.pissingContestManager = new PissingContestManager(this);
             
-            // Initialize GalleryUpdater - DISABLED: Using real-time API instead
-            // this.galleryUpdater = new GalleryUpdater(this.db, this.logger);
-            // this.galleryUpdater.start();
             
             // Initialize ImageHealthChecker
             this.imageHealthChecker = new ImageHealthChecker(this);
@@ -542,8 +543,8 @@ export class CyTubeBot extends EventEmitter {
             return;
         }
         
-        // Log all other users' messages to console
-        console.log(`[${data.username}]: ${data.msg}`);
+        // Log all other users' messages
+        this.logger.info(`[${data.username}]: ${data.msg}`);
         
         // Add to message history for context (only for other users' messages)
         this.addToMessageHistory(data.username, data.msg, messageTime);
@@ -1313,7 +1314,7 @@ export class CyTubeBot extends EventEmitter {
                     // Track the message before sending
                     this.trackBotMessage(processedMsg);
                     
-                    console.log(`[${this.username}]: ${processedMsg}`);
+                    this.logger.info(`[${this.username}]: ${processedMsg}`);
                     this.connection.sendChatMessage(processedMsg);
                 }, delay);
                 // Add 2-4 seconds between messages
@@ -1335,8 +1336,8 @@ export class CyTubeBot extends EventEmitter {
         // Track the message before sending
         this.trackBotMessage(processedMessage);
         
-        // Log bot's own messages to console
-        console.log(`[${this.username}]: ${processedMessage}`);
+        // Log bot's own messages
+        this.logger.info(`[${this.username}]: ${processedMessage}`);
         
         this.connection.sendChatMessage(processedMessage);
     }
@@ -2284,9 +2285,6 @@ export class CyTubeBot extends EventEmitter {
         await Promise.all(shutdownPromises);
         
         // Stop gallery updater
-        if (this.galleryUpdater) {
-            this.galleryUpdater.stop();
-        }
         
         // Stop API server (this will also close WebSocket connections)
         if (this.apiServer) {

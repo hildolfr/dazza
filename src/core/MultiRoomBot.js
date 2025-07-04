@@ -59,7 +59,9 @@ export class MultiRoomBot extends EventEmitter {
         
         // Global services (shared across all rooms)
         this.personality = new DazzaPersonality();
-        this.db = new Database(config.database.path, config.bot.username);
+        this.db = new Database(config.database.path, config.bot.username, {
+            logger: this.logger
+        });
         this.commands = null;
         this.cooldowns = new CooldownManager(); // Global cooldowns
         this.memoryManager = new MemoryManager();
@@ -103,7 +105,7 @@ export class MultiRoomBot extends EventEmitter {
             this.db.setBot(this);
             
             // Load commands
-            this.commands = await loadCommands();
+            this.commands = await loadCommands(this.logger);
             
             // Initialize global managers
             this.heistManager = new HeistManager(this.db, this);
@@ -175,9 +177,61 @@ export class MultiRoomBot extends EventEmitter {
         const roomsDir = path.join(__dirname, '../../rooms');
         
         try {
+            // Check if rooms directory exists, create if not
+            try {
+                await fs.promises.access(roomsDir);
+            } catch (error) {
+                this.logger.warn('Rooms directory not found, creating it...');
+                await fs.promises.mkdir(roomsDir, { recursive: true });
+                
+                // Create example room file
+                const exampleContent = `// Example room configuration
+// Copy this file and rename it to match your CyTube room name
+// e.g., fatpizza.js, always_sunny.js, etc.
+
+export default {
+    // Required: The exact room name on CyTube
+    name: 'example_room',
+    
+    // Optional: Enable/disable the bot for this room
+    enabled: false, // Set to true to enable this room
+    
+    // Optional: Room-specific settings
+    settings: {
+        // Custom welcome message
+        welcomeMessage: 'Welcome to the example room!',
+        
+        // Command prefix (default: '!')
+        commandPrefix: '!',
+        
+        // Enable/disable specific features
+        features: {
+            economy: true,
+            fishing: true,
+            heists: true,
+            bongs: true,
+            drinks: true,
+            gallery: true
+        },
+        
+        // Room-specific cooldowns (milliseconds)
+        cooldowns: {
+            bong: 10000,    // 10 seconds
+            drink: 8000,    // 8 seconds
+            fish: 7200000   // 2 hours
+        }
+    }
+};
+`;
+                await fs.promises.writeFile(path.join(roomsDir, 'example_room.js'), exampleContent);
+                this.logger.info('Created example room configuration in rooms/example_room.js');
+                this.logger.warn('No active rooms configured! Please create room configurations in the rooms/ directory.');
+            }
+            
             const files = await fs.promises.readdir(roomsDir);
             const roomFiles = files.filter(f => f.endsWith('.js'));
             
+            let activeRooms = 0;
             for (const file of roomFiles) {
                 const roomId = path.basename(file, '.js');
                 const roomConfigPath = path.join(roomsDir, file);
@@ -188,12 +242,17 @@ export class MultiRoomBot extends EventEmitter {
                     if (roomConfig.default?.enabled || roomConfig.enabled) {
                         const config = roomConfig.default || roomConfig;
                         await this.joinRoom(roomId, config);
+                        activeRooms++;
                     } else {
                         this.logger.info(`Room ${roomId} is disabled, skipping`);
                     }
                 } catch (error) {
                     this.logger.error(`Failed to load room config for ${roomId}:`, error);
                 }
+            }
+            
+            if (activeRooms === 0) {
+                this.logger.warn('No active rooms found! Please enable at least one room in the rooms/ directory.');
             }
         } catch (error) {
             this.logger.error('Failed to load rooms directory:', error);

@@ -5,9 +5,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function loadCommands() {
-    const registry = new CommandRegistry();
+export async function loadCommands(logger = null) {
+    const registry = new CommandRegistry(logger);
     const categories = ['basic', 'fun', 'utility', 'stats', 'communication', 'economy', 'admin'];
+    
+    // Use console as fallback if no logger provided
+    const log = logger || console;
     
     for (const category of categories) {
         const categoryPath = path.join(__dirname, category);
@@ -26,16 +29,16 @@ export async function loadCommands() {
                         registry.register(command);
                     }
                 } catch (error) {
-                    console.error(`Failed to load command ${file}:`, error);
+                    log.error(`Failed to load command ${file}:`, error);
                 }
             }
         } catch (error) {
             // Category directory might not exist yet
-            console.log(`No commands found in category: ${category}`);
+            log.debug(`No commands found in category: ${category}`);
         }
     }
     
-    console.log(`Loaded ${registry.getAll().length} commands`);
+    log.info(`Loaded ${registry.getAll().length} commands`);
     return registry;
 }
 

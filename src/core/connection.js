@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import EventEmitter from 'events';
+import { createLogger } from '../utils/logger.js';
 
 export class CyTubeConnection extends EventEmitter {
     constructor(roomId, config) {
@@ -16,6 +17,10 @@ export class CyTubeConnection extends EventEmitter {
         this.reconnectTimer = null;
         this.lastConnectionAttempt = 0;
         this.minTimeBetweenAttempts = 2000; // 2 seconds minimum
+        this.logger = createLogger({
+            level: config.logging?.level || 'info',
+            console: config.logging?.console !== false
+        });
     }
 
     async connect() {
@@ -36,7 +41,7 @@ export class CyTubeConnection extends EventEmitter {
         
         // Fetch socket configuration from CyTube
         const socketUrl = await this.getSocketConfig();
-        console.log(`Connecting to ${socketUrl}...`);
+        this.logger.info(`Connecting to ${socketUrl}...`);
         
         this.socket = io(socketUrl, {
             transports: ['websocket'],
@@ -57,7 +62,7 @@ export class CyTubeConnection extends EventEmitter {
                 this.connected = true;
                 this.reconnectAttempts = 0;
                 this.setConnectionState('connected');
-                console.log('Connected to CyTube server');
+                this.logger.info('Connected to CyTube server');
                 resolve();
             });
 
@@ -79,14 +84,14 @@ export class CyTubeConnection extends EventEmitter {
     setupEventHandlers() {
         // Remove all existing listeners first to prevent duplicates
         if (this.socket) {
-            console.log('Removing existing socket listeners to prevent duplicates');
+            this.logger.debug('Removing existing socket listeners to prevent duplicates');
             this.socket.removeAllListeners();
         }
         
-        console.log('Setting up socket event handlers');
+        this.logger.debug('Setting up socket event handlers');
         
         this.socket.on('disconnect', (reason) => {
-            console.log(`Disconnected: ${reason}`);
+            this.logger.info(`Disconnected: ${reason}`);
             this.connected = false;
             this.authenticated = false;
             this.setConnectionState('disconnected');
@@ -125,7 +130,7 @@ export class CyTubeConnection extends EventEmitter {
             throw new Error('Not connected to server');
         }
 
-        console.log(`Joining channel: ${channel}`);
+        this.logger.info(`Joining channel: ${channel}`);
         this.socket.emit('joinChannel', { name: channel });
 
         return new Promise((resolve, reject) => {
@@ -143,7 +148,7 @@ export class CyTubeConnection extends EventEmitter {
             // CyTube might send rank or channelOpts to indicate successful join
             const handleJoinSuccess = () => {
                 cleanup();
-                console.log(`Joined channel successfully`);
+                this.logger.info(`Joined channel successfully`);
                 resolve();
             };
 
@@ -162,7 +167,7 @@ export class CyTubeConnection extends EventEmitter {
             throw new Error('Not connected to server');
         }
 
-        console.log(`Logging in as: ${username}`);
+        this.logger.info(`Logging in as: ${username}`);
         this.socket.emit('login', { name: username, pw: password });
 
         return new Promise((resolve, reject) => {
@@ -179,7 +184,7 @@ export class CyTubeConnection extends EventEmitter {
             this.socket.once('login', (data) => {
                 cleanup();
                 this.authenticated = true;
-                console.log('Login successful');
+                this.logger.info('Login successful');
                 resolve(data);
             });
 
@@ -242,7 +247,7 @@ export class CyTubeConnection extends EventEmitter {
         const delay = Math.min(baseDelay + jitter, 300000); // Max 5 minutes
         
         this.setConnectionState('reconnecting');
-        console.log(`Reconnecting in ${Math.round(delay/1000)}s (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        this.logger.info(`Reconnecting in ${Math.round(delay/1000)}s (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         
         this.reconnectTimer = setTimeout(() => {
             this.reconnectTimer = null;
@@ -282,10 +287,10 @@ export class CyTubeConnection extends EventEmitter {
                 throw new Error('No available servers in socket config');
             }
             
-            console.log(`Using socket server: ${server.url}`);
+            this.logger.info(`Using socket server: ${server.url}`);
             return server.url;
         } catch (error) {
-            console.error('Failed to fetch socket config:', error);
+            this.logger.error('Failed to fetch socket config:', error);
             throw error;
         }
     }
