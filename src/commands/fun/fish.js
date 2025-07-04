@@ -103,12 +103,12 @@ const fishingSpots = [
 
 // Bait types affect catch chances
 const baitTypes = {
-    worm: { bonus: 1.0, cost: 0 },
-    prawn: { bonus: 1.2, cost: 2 },
-    squid: { bonus: 1.3, cost: 3 },
-    lure: { bonus: 1.1, cost: 5 },
-    servo_pie: { bonus: 0.8, cost: 1 },
-    ciggie_butt: { bonus: 0.5, cost: 0 }
+    worm: { bonus: 1.00, cost: 0 },      // Baseline, free
+    ciggie_butt: { bonus: 0.97, cost: 0 }, // 3% worse but free
+    servo_pie: { bonus: 1.01, cost: 5 },   // 1% better
+    lure: { bonus: 1.02, cost: 15 },      // 2% better
+    prawn: { bonus: 1.024, cost: 25 },    // 2.4% better
+    squid: { bonus: 1.03, cost: 40 }       // 3% better (best)
 };
 
 export default new Command({
@@ -203,7 +203,9 @@ export default new Command({
             }
             
             // Determine catch
-            const catchRoll = Math.random() * spot.quality * bait.bonus;
+            let catchRoll = Math.random() * spot.quality * bait.bonus;
+            // Normalize to 0-1 range to prevent breaking probability tiers
+            catchRoll = Math.min(1.0, catchRoll);
             const specialRoll = Math.random();
             
             // Build PM message with fishing story

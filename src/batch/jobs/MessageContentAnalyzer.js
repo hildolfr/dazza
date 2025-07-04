@@ -199,22 +199,15 @@ export class MessageContentAnalyzer extends BatchJob {
         // Clear existing vocabulary for user
         await this.db.run('DELETE FROM user_vocabulary WHERE username = ?', [username]);
         
-        // Insert new vocabulary in batches
+        // Insert new vocabulary without explicit transaction (let SQLite handle it)
         const batchSize = 100;
         for (let i = 0; i < vocabArray.length; i += batchSize) {
             const batch = vocabArray.slice(i, i + batchSize);
-            await this.db.run('BEGIN TRANSACTION');
-            try {
-                for (const word of batch) {
-                    await this.db.run(
-                        'INSERT OR IGNORE INTO user_vocabulary (username, word) VALUES (?, ?)',
-                        [username, word]
-                    );
-                }
-                await this.db.run('COMMIT');
-            } catch (error) {
-                await this.db.run('ROLLBACK');
-                throw error;
+            for (const word of batch) {
+                await this.db.run(
+                    'INSERT OR IGNORE INTO user_vocabulary (username, word) VALUES (?, ?)',
+                    [username, word]
+                );
             }
         }
     }

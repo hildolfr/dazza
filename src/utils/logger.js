@@ -76,9 +76,18 @@ class Logger {
 
     formatMessage(level, message, context = {}) {
         const timestamp = new Date().toISOString();
-        const contextStr = Object.keys(context).length > 0 
-            ? ` ${JSON.stringify(context)}` 
-            : '';
+        let contextStr = '';
+        
+        if (context instanceof Error) {
+            // Handle Error objects specially to capture message and stack
+            contextStr = ` ${JSON.stringify({
+                message: context.message,
+                stack: context.stack,
+                ...context // Include any other enumerable properties
+            })}`;
+        } else if (Object.keys(context).length > 0) {
+            contextStr = ` ${JSON.stringify(context)}`;
+        }
         
         return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;
     }
