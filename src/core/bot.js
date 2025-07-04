@@ -383,15 +383,12 @@ export class CyTubeBot extends EventEmitter {
         
         // Handle memory warnings
         this.memoryMonitor.on('warning', (data) => {
-            this.logger.warn('Memory warning', data);
-            // Log to console for immediate visibility
-            console.warn(`⚠️  Memory Warning: Heap at ${data.heapPercent}% (${data.heapUsedMB}MB / ${data.heapLimitMB}MB)`);
+            this.logger.warn(`Memory Warning: Heap at ${data.heapPercent}% (${data.heapUsedMB}MB / ${data.heapLimitMB}MB)`, data);
         });
         
         // Handle critical memory situations
         this.memoryMonitor.on('critical', (data) => {
-            this.logger.error('Memory critical', data);
-            console.error(`🚨 CRITICAL: Memory at ${data.heapPercent}% - ${data.suggestion}`);
+            this.logger.error(`CRITICAL: Memory at ${data.heapPercent}% - ${data.suggestion}`, data);
             
             // Try to free up memory
             if (global.gc) {
@@ -405,10 +402,7 @@ export class CyTubeBot extends EventEmitter {
         
         // Handle memory leak detection
         this.memoryMonitor.on('leak-detected', (data) => {
-            this.logger.error('Potential memory leak detected', data);
-            console.error(`💧 Memory Leak Detected: ${data.suggestion}`);
-            console.error(`   Average growth: ${data.avgGrowthPercent}% per sample`);
-            console.error(`   Total increase: ${data.totalIncreaseMB}MB over ${data.windowSizeMinutes} minutes`);
+            this.logger.error(`Memory Leak Detected: ${data.suggestion}\n   Average growth: ${data.avgGrowthPercent}% per sample\n   Total increase: ${data.totalIncreaseMB}MB over ${data.windowSizeMinutes} minutes`, data);
         });
         
         // Log when GC is forced

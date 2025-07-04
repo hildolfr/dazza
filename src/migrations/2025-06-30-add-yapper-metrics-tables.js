@@ -1,4 +1,4 @@
-export const up = async (db) => {
+export const up = async (db, logger = console) => {
         // Add word count columns to existing tables
         await db.run(`
             ALTER TABLE user_stats 
@@ -134,7 +134,7 @@ export const up = async (db) => {
         await db.run('CREATE INDEX IF NOT EXISTS idx_messages_word_count ON messages(word_count) WHERE word_count IS NOT NULL');
 };
 
-export const down = async (db) => {
+export const down = async (db, logger = console) => {
         // Drop new tables
         await db.run('DROP TABLE IF EXISTS chat_achievements');
         await db.run('DROP TABLE IF EXISTS achievement_definitions');
@@ -145,5 +145,5 @@ export const down = async (db) => {
         
         // Remove columns (SQLite doesn't support DROP COLUMN, would need to recreate tables)
         // For now, we'll leave the columns as they don't hurt
-        console.log('Note: word_count columns in messages and user_stats tables were not removed (SQLite limitation)');
+        logger.info('Note: word_count columns in messages and user_stats tables were not removed (SQLite limitation)');
 };

@@ -67,7 +67,11 @@ async function main() {
 
 // Run if called directly
 if (process.argv[1] === new URL(import.meta.url).pathname) {
-    main().catch(console.error);
+    main().catch(error => {
+        const logger = createLogger();
+        logger.error('Failed to run word count analysis:', error);
+        process.exit(1);
+    });
 }
 
 export default main;

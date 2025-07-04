@@ -5,7 +5,7 @@
  * and sets existing data to 'fatpizza' as the default room.
  */
 
-export const up = async (db) => {
+export const up = async (db, logger = console) => {
         // Start transaction
         await db.run('BEGIN TRANSACTION');
         
@@ -141,7 +141,7 @@ export const up = async (db) => {
             // Commit transaction
             await db.run('COMMIT');
             
-            console.log('Successfully added room support to database schema');
+            logger.info('Successfully added room support to database schema');
         } catch (error) {
             // Rollback on error
             await db.run('ROLLBACK');
@@ -149,7 +149,7 @@ export const up = async (db) => {
         }
     }
 
-export const down = async (db) => {
+export const down = async (db, logger = console) => {
     // This is a major structural change - down migration would lose data
     // Only implement if absolutely necessary
     throw new Error('Down migration not implemented for room support - would result in data loss');

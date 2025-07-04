@@ -5,7 +5,7 @@
  * the new multiroom HeistManager with proper status tracking and participation.
  */
 
-export const up = async (db) => {
+export const up = async (db, logger = console) => {
     // Start transaction
     await db.run('BEGIN TRANSACTION');
     
@@ -46,7 +46,7 @@ export const up = async (db) => {
         const hasTrustScore = economyInfo.some(col => col.name === 'trust_score');
         
         if (!hasTrustScore) {
-            console.log('Adding trust_score column to user_economy...');
+            logger.info('Adding trust_score column to user_economy...');
             await db.run(`ALTER TABLE user_economy ADD COLUMN trust_score INTEGER DEFAULT 0`);
             
             // Copy from trust column if it exists
@@ -92,18 +92,18 @@ export const up = async (db) => {
         await db.run(`CREATE INDEX IF NOT EXISTS idx_heist_participants_username ON heist_participants(username)`);
         
         await db.run('COMMIT');
-        console.log('Successfully updated heist schema for multiroom support');
+        logger.info('Successfully updated heist schema for multiroom support');
         
     } catch (error) {
         await db.run('ROLLBACK');
-        console.error('Migration error details:', error.message);
-        console.error('Migration error stack:', error.stack);
+        logger.error('Migration error details:', error.message);
+        logger.error('Migration error stack:', error.stack);
         throw error;
     }
 };
 
-export const down = async (db) => {
+export const down = async (db, logger = console) => {
     // This migration is backward compatible - columns are added, not removed
     // Down migration would only remove the new columns if needed
-    console.log('Down migration not implemented - changes are backward compatible');
+    logger.info('Down migration not implemented - changes are backward compatible');
 };

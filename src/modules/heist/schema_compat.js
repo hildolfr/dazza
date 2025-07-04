@@ -3,6 +3,9 @@
  * This schema is designed to work with the existing table structures
  */
 
+import { createLogger } from '../../utils/logger.js';
+const logger = createLogger('HeistSchemaCompat');
+
 export const heistSchema = {
     // Keep the initialize method for compatibility
     async initialize(database) {
@@ -18,9 +21,9 @@ export const heistSchema = {
             await database.run('CREATE INDEX IF NOT EXISTS idx_pissing_contest_challenges_status ON pissing_contest_challenges(status)');
         } catch (error) {
             // Ignore errors if indexes already exist
-            console.log('Some indexes may already exist, continuing...');
+            logger.debug('Some indexes may already exist, continuing...');
         }
         
-        console.log('Heist tables compatibility check completed');
+        logger.info('Heist tables compatibility check completed');
     }
 };

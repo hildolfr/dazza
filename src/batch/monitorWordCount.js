@@ -162,4 +162,8 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-main().catch(console.error);
+main().catch(error => {
+    const logger = createLogger();
+    logger.error('Monitor failed:', error);
+    process.exit(1);
+});

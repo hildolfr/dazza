@@ -88,7 +88,7 @@ export class PissingContestManager {
         // Store challenge
         roomChallenges.set(normalizedChallenger, challenge);
         
-        console.log(`[PissingContest] Created challenge:`, {
+        this.bot.logger.debug(`[PissingContest] Created challenge:`, {
             challenger: challenge.challenger,
             challenged: challenge.challenged,
             amount: challenge.amount,
@@ -101,7 +101,7 @@ export class PissingContestManager {
             const currentRoomChallenges = this.getRoomMap(this.activeChallenges, roomId);
             if (currentRoomChallenges.get(normalizedChallenger)?.status === 'pending') {
                 currentRoomChallenges.delete(normalizedChallenger);
-                console.log(`[PissingContest] Challenge expired for ${challenger}`);
+                this.bot.logger.debug(`[PissingContest] Challenge expired for ${challenger}`);
                 this.bot.sendMessage(`-${challenger} got stood up! Nobody wants to see that tiny thing`);
             }
         }, 30000);
@@ -119,13 +119,13 @@ export class PissingContestManager {
         
         // Debug logging
         if (roomChallenges.size > 0) {
-            console.log(`[PissingContest] Looking for challenges for ${username} (normalized: ${normalized}) in room ${roomId}`);
-            console.log(`[PissingContest] Active challenges in room:`, Array.from(roomChallenges.values()));
+            this.bot.logger.debug(`[PissingContest] Looking for challenges for ${username} (normalized: ${normalized}) in room ${roomId}`);
+            this.bot.logger.debug(`[PissingContest] Active challenges in room:`, Array.from(roomChallenges.values()));
         }
         
         for (const [challenger, challenge] of roomChallenges.entries()) {
             if (challenge.challenged.toLowerCase() === normalized && challenge.status === 'pending') {
-                console.log(`[PissingContest] Found challenge for ${username}:`, challenge);
+                this.bot.logger.debug(`[PissingContest] Found challenge for ${username}:`, challenge);
                 return challenge;
             }
         }
@@ -594,7 +594,7 @@ export class PissingContestManager {
             await this.updateStats(winner, true, amount, null);
             await this.updateStats(loser, false, amount, null);
         } catch (error) {
-            console.error('Error handling pissing contest failure:', error);
+            this.bot.logger.error('Error handling pissing contest failure:', error);
             this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
         }
     }
@@ -621,7 +621,7 @@ export class PissingContestManager {
             await this.updateAnalytics(winner);
             await this.updateAnalytics(loser);
         } catch (error) {
-            console.error('Error handling pissing contest outcome:', error);
+            this.bot.logger.error('Error handling pissing contest outcome:', error);
             this.bot.sendMessage('somethin went wrong with the payout, but the contest is done');
         }
     }
@@ -801,7 +801,7 @@ export class PissingContestManager {
             const bladderState = await this.db.getBladderState(normalized, roomId);
             return bladderState.current_amount || 0;
         } catch (error) {
-            console.error('Error getting bladder state:', error);
+            this.bot.logger.error('Error getting bladder state:', error);
             return 0;
         }
     }
@@ -856,7 +856,7 @@ export class PissingContestManager {
             `, [Date.now(), normalized]);
             
         } catch (error) {
-            console.error('Error updating stats:', error);
+            this.bot.logger.error('Error updating stats:', error);
         }
     }
 
@@ -903,7 +903,7 @@ export class PissingContestManager {
                 `, [rarestChar?.characteristic, favoriteLocation?.location, normalized]);
             }
         } catch (error) {
-            console.error('Error updating analytics:', error);
+            this.bot.logger.error('Error updating analytics:', error);
         }
     }
 
@@ -932,7 +932,7 @@ export class PissingContestManager {
                 charA.name, charB.name, location.name, weather.name
             ]);
         } catch (error) {
-            console.error('Error saving match:', error);
+            this.bot.logger.error('Error saving match:', error);
         }
     }
 
@@ -965,7 +965,7 @@ export class PissingContestManager {
                     await this.bot.heistManager.deductMoney(challenger, challengerCondition.fine);
                     this.bot.sendMessage(challengerCondition.fineMessage || `Medical bill! -${challenger} loses $${challengerCondition.fine}`);
                 } catch (error) {
-                    console.error('Error deducting fine from challenger:', error);
+                    this.bot.logger.error('Error deducting fine from challenger:', error);
                     this.bot.sendMessage(`tried to fine -${challenger} but somethin went wrong`);
                 }
             }, 6000);
@@ -977,7 +977,7 @@ export class PissingContestManager {
                     await this.bot.heistManager.deductMoney(challenged, challengedCondition.fine);
                     this.bot.sendMessage(challengedCondition.fineMessage || `Medical bill! -${challenged} loses $${challengedCondition.fine}`);
                 } catch (error) {
-                    console.error('Error deducting fine from challenged:', error);
+                    this.bot.logger.error('Error deducting fine from challenged:', error);
                     this.bot.sendMessage(`tried to fine -${challenged} but somethin went wrong`);
                 }
             }, 6500);

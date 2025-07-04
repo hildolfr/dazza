@@ -2,6 +2,9 @@
  * Compatibility schema for existing video payout tables
  */
 
+import { createLogger } from '../../utils/logger.js';
+const logger = createLogger('VideoPayoutSchemaCompat');
+
 export const videoPayoutSchema = {
     async initialize(database) {
         // Tables already exist, just ensure indexes are created
@@ -15,9 +18,9 @@ export const videoPayoutSchema = {
             await database.run('CREATE INDEX IF NOT EXISTS idx_video_watchers_username ON video_watchers(username)');
             await database.run('CREATE INDEX IF NOT EXISTS idx_video_watchers_rewarded ON video_watchers(rewarded)');
         } catch (error) {
-            console.log('Some video payout indexes may already exist, continuing...');
+            logger.debug('Some video payout indexes may already exist, continuing...');
         }
         
-        console.log('Video payout tables compatibility check completed');
+        logger.info('Video payout tables compatibility check completed');
     }
 };

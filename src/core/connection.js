@@ -72,7 +72,7 @@ export class CyTubeConnection extends EventEmitter {
                 
                 // Check for rate limit error
                 if (error.message && error.message.includes('Rate limit')) {
-                    console.error('Rate limited by server! Backing off...');
+                    this.logger.error('Rate limited by server! Backing off...');
                     this.reconnectDelay = Math.min(this.reconnectDelay * 2, 60000); // Double delay, max 1 minute
                 }
                 
@@ -103,7 +103,7 @@ export class CyTubeConnection extends EventEmitter {
         });
 
         this.socket.on('error', (error) => {
-            console.error('Socket error:', error);
+            this.logger.error('Socket error:', error);
             this.emit('error', error);
         });
 
@@ -190,7 +190,7 @@ export class CyTubeConnection extends EventEmitter {
 
             this.socket.once('loginError', (error) => {
                 cleanup();
-                console.error('Login failed:', error);
+                this.logger.error('Login failed:', error);
                 reject(new Error(error));
             });
         });
@@ -198,7 +198,7 @@ export class CyTubeConnection extends EventEmitter {
 
     sendChatMessage(message) {
         if (!this.connected) {
-            console.error('Cannot send message: not connected');
+            this.logger.error('Cannot send message: not connected');
             return;
         }
 
@@ -234,7 +234,7 @@ export class CyTubeConnection extends EventEmitter {
         }
         
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error('Max reconnection attempts reached');
+            this.logger.error('Max reconnection attempts reached');
             this.emit('reconnectFailed');
             return;
         }

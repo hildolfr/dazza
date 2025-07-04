@@ -1,5 +1,5 @@
-export async function up(db) {
-    console.log('Adding original_poster and most_recent_poster columns to user_images...');
+export async function up(db, logger = console) {
+    logger.info('Adding original_poster and most_recent_poster columns to user_images...');
     
     // SQLite doesn't support dropping constraints directly, so we need to recreate the table
     await db.run('BEGIN TRANSACTION');
@@ -54,15 +54,15 @@ export async function up(db) {
         await db.run('CREATE INDEX idx_user_images_url ON user_images(url)');
         
         await db.run('COMMIT');
-        console.log('Successfully updated user_images table schema');
+        logger.info('Successfully updated user_images table schema');
     } catch (error) {
         await db.run('ROLLBACK');
         throw error;
     }
 }
 
-export async function down(db) {
-    console.log('Reverting user_images table to previous schema...');
+export async function down(db, logger = console) {
+    logger.info('Reverting user_images table to previous schema...');
     
     await db.run('BEGIN TRANSACTION');
     
@@ -109,7 +109,7 @@ export async function down(db) {
         await db.run('CREATE INDEX idx_user_images_next_check ON user_images(next_check_at) WHERE is_active = 0 AND next_check_at IS NOT NULL');
         
         await db.run('COMMIT');
-        console.log('Successfully reverted user_images table schema');
+        logger.info('Successfully reverted user_images table schema');
     } catch (error) {
         await db.run('ROLLBACK');
         throw error;

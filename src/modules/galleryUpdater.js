@@ -48,7 +48,7 @@ class GalleryUpdater {
         } catch (error) {
             // Network errors or timeouts - don't prune these
             // Could be temporary issues or CORS restrictions
-            console.log(`Skipping health check for ${url}: ${error.message}`);
+            this.logger.debug(`Skipping health check for ${url}: ${error.message}`);
             return true; // Assume healthy on error
         }
     }

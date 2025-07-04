@@ -12,7 +12,7 @@
  * - coin_flip_challenges: Track coin flip challenges between users
  */
 
-export const up = async (db) => {
+export const up = async (db, logger = console) => {
     // Create command_cooldowns table
     await db.run(`
         CREATE TABLE IF NOT EXISTS command_cooldowns (
@@ -171,10 +171,10 @@ export const up = async (db) => {
         `);
     }
     
-    console.log('Successfully created game-related tables and indexes');
+    logger.info('Successfully created game-related tables and indexes');
 };
 
-export const down = async (db) => {
+export const down = async (db, logger = console) => {
     // Drop triggers first
     const tables = [
         'mystery_box_stats',
@@ -211,5 +211,5 @@ export const down = async (db) => {
     await db.run('DROP TABLE IF EXISTS mug_stats');
     await db.run('DROP TABLE IF EXISTS coin_flip_challenges');
     
-    console.log('Successfully dropped game-related tables');
+    logger.info('Successfully dropped game-related tables');
 };

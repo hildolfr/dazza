@@ -107,7 +107,8 @@ async function main() {
         // Check for invalid analyzer names
         const invalid = analyzersToRun.filter(name => !analyzers[name]);
         if (invalid.length > 0) {
-            console.error(`❌ Unknown analyzers: ${invalid.join(', ')}`);
+            logger.error(`Unknown analyzers: ${invalid.join(', ')}`);
+            console.log(`❌ Unknown analyzers: ${invalid.join(', ')}`);
             console.log('Run with --help to see available analyzers');
             process.exit(1);
         }
@@ -145,8 +146,8 @@ async function main() {
             }
             
         } catch (error) {
-            console.error(`❌ ${name} failed:`, error.message);
             logger.error(`${name} failed:`, error);
+            console.log(`❌ ${name} failed: ${error.message}`);
         }
     }
     
@@ -158,6 +159,8 @@ async function main() {
 
 // Run the script
 main().catch(error => {
-    console.error('Fatal error:', error);
+    const logger = createLogger({ level: 'error', console: true });
+    logger.error('Fatal error:', error);
+    console.log('❌ Fatal error:', error.message);
     process.exit(1);
 });

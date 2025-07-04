@@ -229,7 +229,7 @@ class Database {
             await heistSchema.initialize(this);
             this.logger.info('Heist schema initialized successfully');
         } catch (error) {
-            console.error('Error initializing heist schema:', error.message);
+            this.logger.error('Error initializing heist schema:', error.message);
             throw error;
         }
 
@@ -239,7 +239,7 @@ class Database {
             await videoPayoutSchema.initialize(this);
             this.logger.info('Video payout schema initialized successfully');
         } catch (error) {
-            console.error('Error initializing video payout schema:', error.message);
+            this.logger.error('Error initializing video payout schema:', error.message);
             throw error;
         }
 
@@ -249,7 +249,7 @@ class Database {
             await cooldownSchema.initialize(this);
             this.logger.info('Cooldown schema initialized successfully');
         } catch (error) {
-            console.error('Error initializing cooldown schema:', error.message);
+            this.logger.error('Error initializing cooldown schema:', error.message);
             throw error;
         }
 
@@ -260,7 +260,7 @@ class Database {
         } catch (error) {
             // Column might already exist, ignore error
             if (!error.message.includes('duplicate column name')) {
-                console.error('Error adding via_pm column:', error.message);
+                this.logger.error('Error adding via_pm column:', error.message);
             }
         }
 
@@ -272,7 +272,7 @@ class Database {
             const runner = new MigrationRunner(this);
             await runner.runMigrations();
         } catch (error) {
-            console.error('Failed to run migrations:', error);
+            this.logger.error('Failed to run migrations:', error);
             throw error;
         }
     }
@@ -1204,7 +1204,7 @@ class Database {
                 limitEnforced: activeCount.count >= IMAGE_LIMIT
             };
         } catch (error) {
-            console.error('Error adding user image:', error);
+            this.logger.error('Error adding user image:', error);
             return { success: false, error: error.message };
         }
     }
@@ -1415,7 +1415,7 @@ class Database {
             });
         } catch (error) {
             // Log but don't throw - cleanup should be best effort
-            console.warn('Database cleanup warning:', error.message);
+            this.logger.warn('Database cleanup warning:', error.message);
         }
     }
 

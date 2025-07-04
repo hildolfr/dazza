@@ -3,6 +3,9 @@
  * This is imported by database.js to initialize tables
  */
 
+import { createLogger } from '../../utils/logger.js';
+const logger = createLogger('HeistSchema');
+
 export const heistSchema = {
     // SQL for creating user_economy table
     createUserEconomyTable: `
@@ -114,6 +117,6 @@ export const heistSchema = {
         await database.run(this.createCoinFlipChallengesIndex);
         await database.run(this.createPissingContestChallengesIndex);
         
-        console.log('Heist tables initialized');
+        logger.info('Heist tables initialized');
     }
 };
