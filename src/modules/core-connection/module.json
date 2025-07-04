@@ -1,0 +1,20 @@
+{
+  "name": "core-connection",
+  "version": "1.0.0",
+  "description": "CyTube websocket connection manager",
+  "type": "core",
+  "author": "Dazza Bot",
+  "dependencies": [],
+  "config": {
+    "reconnectDelay": 5000,
+    "maxReconnectAttempts": 10,
+    "heartbeatInterval": 30000,
+    "socketOptions": {
+      "transports": ["websocket"],
+      "reconnection": true,
+      "reconnectionDelay": 1000,
+      "reconnectionDelayMax": 5000,
+      "reconnectionAttempts": 5
+    }
+  }
+}

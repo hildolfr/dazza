@@ -1,0 +1,26 @@
+{
+  "name": "core-database",
+  "version": "1.0.0",
+  "description": "Database connection and query management",
+  "type": "core",
+  "author": "Dazza Bot",
+  "dependencies": [],
+  "config": {
+    "mainDatabase": {
+      "path": "./cytube_stats.db",
+      "options": {
+        "verbose": false
+      }
+    },
+    "mediaDatabase": {
+      "path": "./media_encountered.db",
+      "options": {
+        "verbose": false
+      }
+    },
+    "migrations": {
+      "autoRun": true,
+      "directory": "./migrations"
+    }
+  }
+}

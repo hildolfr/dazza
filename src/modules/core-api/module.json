@@ -1,0 +1,22 @@
+{
+  "name": "core-api",
+  "version": "1.0.0",
+  "description": "HTTP/WebSocket server for external access",
+  "type": "core",
+  "required": true,
+  "dependencies": [],
+  "config": {
+    "port": 3001,
+    "host": "0.0.0.0",
+    "cors": {
+      "origin": "*",
+      "credentials": true
+    },
+    "rateLimit": {
+      "windowMs": 60000,
+      "max": 100
+    },
+    "bodyLimit": "10mb",
+    "staticCache": 3600000
+  }
+}

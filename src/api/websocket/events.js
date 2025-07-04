@@ -21,14 +21,21 @@ export function setupWebSocketEvents(apiServer) {
         bot.logger.debug('[API] WebSocket client connected', clientInfo);
         
         // Send welcome message with current state
+        // For MultiRoomBot, get the first active connection
+        const firstConnection = bot.connections ? Array.from(bot.connections.values())[0] : bot.connection;
+        const isConnected = firstConnection?.connected || false;
+        const channel = firstConnection?.channel || null;
+        const username = firstConnection?.username || null;
+        const room = firstConnection?.room || 'fatpizza';
+        
         socket.emit('welcome', {
             version: '1.0.0',
             timestamp: Date.now(),
             bot: {
-                connected: bot.connection?.connected || false,
-                channel: bot.connection?.channel || null,
-                username: bot.connection?.username || null,
-                room: bot.connection?.room || 'fatpizza'
+                connected: isConnected,
+                channel: channel,
+                username: username,
+                room: room
             }
         });
         
@@ -122,19 +129,35 @@ export function setupWebSocketEvents(apiServer) {
     };
     
     // When bot connects/disconnects
-    registerBotListener('connected', () => {
+    registerBotListener('connected', (data) => {
+        // For MultiRoomBot, data might contain room info
+        const roomId = data?.room || 'fatpizza';
+        const connection = bot.connections?.get(roomId) || bot.connection;
+        
         apiServer.broadcastToTopic('bot', 'bot:connected', {
-            channel: bot.connection.channel,
-            username: bot.connection.username,
-            room: bot.connection.room || 'fatpizza'
+            channel: connection?.channel || roomId,
+            username: connection?.username || bot.config?.cytube?.username,
+            room: roomId
         });
     });
     
     // When userlist is loaded
     registerBotListener('userlist:loaded', (data) => {
-        const room = data?.room || bot.connection?.room || 'fatpizza';
-        const currentUsers = bot.userlist ? bot.userlist.size : 0;
-        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        const room = data?.room || 'fatpizza';
+        
+        // For MultiRoomBot, get userlist from room context
+        let currentUsers = 0;
+        let afkUsers = 0;
+        
+        if (bot.rooms && bot.rooms.has(room)) {
+            const roomContext = bot.rooms.get(room);
+            currentUsers = roomContext.userlist ? roomContext.userlist.size : 0;
+            afkUsers = roomContext.getAFKUsers ? roomContext.getAFKUsers().length : 0;
+        } else if (bot.userlist) {
+            // Fallback for single room bot
+            currentUsers = bot.userlist.size;
+            afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        }
         
         // Broadcast to room-specific topic if available
         apiServer.broadcastToTopic(`chat:${room}`, 'chat:usercount', {
@@ -225,8 +248,17 @@ export function setupWebSocketEvents(apiServer) {
         apiServer.broadcastToTopic('chat', 'chat:user:join', { username, room });
         
         // Also broadcast updated user count
-        const currentUsers = bot.userlist ? bot.userlist.size : 0;
-        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        let currentUsers = 0;
+        let afkUsers = 0;
+        
+        if (bot.rooms && bot.rooms.has(room)) {
+            const roomContext = bot.rooms.get(room);
+            currentUsers = roomContext.userlist ? roomContext.userlist.size : 0;
+            afkUsers = roomContext.getAFKUsers ? roomContext.getAFKUsers().length : 0;
+        } else if (bot.userlist) {
+            currentUsers = bot.userlist.size;
+            afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        }
         const userCountPayload = {
             total: currentUsers,
             active: currentUsers - afkUsers,
@@ -246,8 +278,17 @@ export function setupWebSocketEvents(apiServer) {
         apiServer.broadcastToTopic('chat', 'chat:user:leave', { username, room });
         
         // Also broadcast updated user count
-        const currentUsers = bot.userlist ? bot.userlist.size : 0;
-        const afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        let currentUsers = 0;
+        let afkUsers = 0;
+        
+        if (bot.rooms && bot.rooms.has(room)) {
+            const roomContext = bot.rooms.get(room);
+            currentUsers = roomContext.userlist ? roomContext.userlist.size : 0;
+            afkUsers = roomContext.getAFKUsers ? roomContext.getAFKUsers().length : 0;
+        } else if (bot.userlist) {
+            currentUsers = bot.userlist.size;
+            afkUsers = bot.getAFKUsers ? bot.getAFKUsers().length : 0;
+        }
         const userCountPayload = {
             total: currentUsers,
             active: currentUsers - afkUsers,
@@ -277,9 +318,13 @@ export function setupWebSocketEvents(apiServer) {
     // Periodic stats broadcast
     const statsBroadcastInterval = setInterval(() => {
         if (io.engine.clientsCount > 0) {
+            // For MultiRoomBot, check if any connection is active
+            const firstConnection = bot.connections ? Array.from(bot.connections.values())[0] : bot.connection;
+            const isConnected = firstConnection?.connected || false;
+            
             // Get current stats
             const stats = {
-                connected: bot.connection?.connected || false,
+                connected: isConnected,
                 uptime: bot.startTime ? Math.floor((Date.now() - bot.startTime) / 1000) : 0,
                 clients: io.engine.clientsCount
             };

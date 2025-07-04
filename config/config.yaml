@@ -1,0 +1,35 @@
+# User configuration for CyTube bot
+
+# Connection settings
+rooms:
+  - room: fatpizza
+    server: https://cytu.be
+    username: ${BOT_USERNAME}
+    password: ${BOT_PASSWORD}
+
+# Module overrides
+modules:
+  # Core modules are always enabled
+  core-database:
+    enabled: true
+  
+  core-api:
+    enabled: true
+    port: 3001
+  
+  core-connection:
+    enabled: true
+  
+  # Feature modules can be toggled
+  command-handler:
+    enabled: false  # Disable until converted
+  
+  economy:
+    enabled: false  # Disable until converted
+  
+  greeting:
+    enabled: false  # Disable until converted
+
+# Logging
+logging:
+  level: info

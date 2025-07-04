@@ -518,8 +518,19 @@ export function createStatsRoutes(apiServer) {
         }
         
         // Get current user count from bot's userlist
-        const currentUsers = apiServer.bot.userlist ? apiServer.bot.userlist.size : 0;
-        const afkUsers = apiServer.bot.getAFKUsers ? apiServer.bot.getAFKUsers().length : 0;
+        let currentUsers = 0;
+        let afkUsers = 0;
+        
+        // For MultiRoomBot, get userlist from room context
+        if (apiServer.bot.rooms && apiServer.bot.rooms.has(room)) {
+            const roomContext = apiServer.bot.rooms.get(room);
+            currentUsers = roomContext.userlist ? roomContext.userlist.size : 0;
+            afkUsers = roomContext.getAFKUsers ? roomContext.getAFKUsers().length : 0;
+        } else if (apiServer.bot.userlist) {
+            // Fallback for single room bot
+            currentUsers = apiServer.bot.userlist.size;
+            afkUsers = apiServer.bot.getAFKUsers ? apiServer.bot.getAFKUsers().length : 0;
+        }
         
         res.json({
             success: true,
@@ -538,8 +549,8 @@ export function createStatsRoutes(apiServer) {
                     totalDrinks: totalDrinks.count
                 },
                 connection: {
-                    connected: apiServer.bot.connection?.connected || false,
-                    channel: apiServer.bot.connection?.channel || null
+                    connected: apiServer.bot.connections ? Array.from(apiServer.bot.connections.values())[0]?.connected || false : apiServer.bot.connection?.connected || false,
+                    channel: apiServer.bot.connections ? Array.from(apiServer.bot.connections.values())[0]?.channel || null : apiServer.bot.connection?.channel || null
                 },
                 memory: memoryStats,
                 room: room

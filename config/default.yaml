@@ -1,0 +1,148 @@
+# Default configuration for CyTube bot
+
+app:
+  name: dazza-bot
+  version: 2.0.0
+  environment: production
+
+# Core settings
+core:
+  # Performance monitoring settings
+  performance:
+    sampleInterval: 60000 # 1 minute
+    memoryWarningThreshold: 104857600 # 100MB
+    cpuWarningThreshold: 80 # 80%
+  
+  # Error handling settings
+  errorHandler:
+    maxRetries: 5
+    retryDelay: 1000
+    maxRetryDelay: 30000
+    shutdownTimeout: 30000
+  
+  # Scheduler settings
+  scheduler:
+    timezone: Australia/Sydney
+    maxConcurrent: 10
+  
+  # Event bus settings
+  eventBus:
+    maxListeners: 100
+    logEvents: false
+    eventHistory: 1000
+
+# Database settings
+database:
+  type: sqlite
+  path: ./cytube_stats.db
+  options:
+    verbose: false
+    
+# Media database settings
+mediaDatabase:
+  type: sqlite
+  path: ./media_encountered.db
+  options:
+    verbose: false
+
+# API server settings
+api:
+  enabled: true
+  port: 3001
+  host: 0.0.0.0
+  cors:
+    enabled: true
+    origins: ['*']
+  rateLimit:
+    windowMs: 60000
+    max: 100
+
+# CyTube connection settings
+connection:
+  server: https://cytu.be
+  secure: true
+  reconnectDelay: 5000
+  maxReconnectAttempts: 10
+  
+# Module settings
+modules:
+  # Core modules are always enabled
+  core-database:
+    enabled: true
+  
+  core-api:
+    enabled: true
+  
+  core-connection:
+    enabled: true
+  
+  # Feature modules can be toggled
+  command-handler:
+    enabled: true
+    prefix: '!'
+    cooldownTime: 3000
+    maxCommandLength: 500
+  
+  economy:
+    enabled: true
+    startingBalance: 1000
+    dailyAmount: 100
+    maxBalance: 1000000
+  
+  greeting:
+    enabled: true
+    joinDelay: 2000
+    customGreetings: {}
+  
+  heist:
+    enabled: true
+    minPlayers: 2
+    maxPlayers: 10
+    planningTime: 60000
+    cooldown: 300000
+  
+  gallery:
+    enabled: true
+    maxImagesPerUser: 100
+    healthCheckInterval: 3600000 # 1 hour
+    pruneAfterDays: 7
+  
+  fishing:
+    enabled: true
+    castCooldown: 30000
+    rarityCooldown: 300000
+  
+  gambling:
+    enabled: true
+    maxBet: 10000
+    minBet: 10
+  
+  stats-collector:
+    enabled: true
+    trackMessages: true
+    trackMedia: true
+    trackEvents: true
+  
+  image-health-checker:
+    enabled: true
+    batchSize: 10
+    checkInterval: 3600000 # 1 hour
+    maxFailures: 3
+  
+  media-tracker:
+    enabled: true
+    trackQueue: true
+    trackPlays: true
+
+# Logging settings
+logging:
+  level: info
+  format: json
+  console:
+    enabled: true
+    colorize: true
+  file:
+    enabled: true
+    path: ./logs
+    maxSize: 10485760 # 10MB
+    maxFiles: 5
