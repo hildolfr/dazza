@@ -125,7 +125,7 @@ export default new Command({
 
             // Check persistent cooldown if database is available
             if (bot.db && this.persistentCooldown) {
-                const cooldownManager = new PersistentCooldownManager(bot.db);
+                const cooldownManager = new PersistentCooldownManager(bot.db, bot.logger);
                 const cooldownCheck = await cooldownManager.check(this.name, message.username, this.cooldown);
                 
                 if (!cooldownCheck.allowed) {

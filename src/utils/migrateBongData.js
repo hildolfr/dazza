@@ -1,9 +1,12 @@
 import Database from '../services/database.js';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { createLogger } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const logger = createLogger();
 
 // UTC+10 timezone offset in milliseconds (server is UTC-8, so +18 hours total)
 const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
@@ -15,10 +18,10 @@ async function migrateHistoricalData() {
     
     try {
         await db.init();
-        console.log('Connected to database');
+        logger.info('Connected to database');
         
         // Step 1: Update hour field for all existing bong records
-        console.log('Updating hour field for existing records...');
+        logger.info('Updating hour field for existing records...');
         await db.run(`
             UPDATE user_bongs 
             SET hour = CAST(strftime('%H', datetime((timestamp + ${TIMEZONE_OFFSET})/1000, 'unixepoch')) AS INTEGER)
@@ -26,7 +29,7 @@ async function migrateHistoricalData() {
         `);
         
         const hourUpdateCount = await db.get('SELECT changes() as count');
-        console.log(`Updated ${hourUpdateCount.count} records with hour data`);
+        logger.info(`Updated ${hourUpdateCount.count} records with hour data`);
         
         // Step 2: Get all users with bong records
         const users = await db.all(`
@@ -35,7 +38,7 @@ async function migrateHistoricalData() {
             ORDER BY username
         `);
         
-        console.log(`Processing ${users.length} users for session calculation...`);
+        logger.info(`Processing ${users.length} users for session calculation...`);
         
         // Step 3: Calculate sessions for each user
         for (const user of users) {
@@ -43,18 +46,18 @@ async function migrateHistoricalData() {
             await calculateUserStreaks(db, user.username);
         }
         
-        console.log('Migration completed successfully!');
+        logger.info('Migration completed successfully!');
         
         // Display some stats
         const sessionCount = await db.get('SELECT COUNT(*) as count FROM bong_sessions');
         const streakCount = await db.get('SELECT COUNT(*) as count FROM user_bong_streaks');
         
-        console.log(`\nMigration Summary:`);
-        console.log(`- Total sessions created: ${sessionCount.count}`);
-        console.log(`- Total users with streaks: ${streakCount.count}`);
+        logger.info('\nMigration Summary:');
+        logger.info(`- Total sessions created: ${sessionCount.count}`);
+        logger.info(`- Total users with streaks: ${streakCount.count}`);
         
     } catch (error) {
-        console.error('Migration failed:', error);
+        logger.error('Migration failed:', error);
     } finally {
         await db.close();
     }
@@ -116,7 +119,7 @@ async function calculateUserSessions(db, username) {
         `, [username, session.start, session.end, session.cones, session.maxConesPerHour]);
     }
     
-    console.log(`Created ${sessions.length} sessions for ${username}`);
+    logger.info(`Created ${sessions.length} sessions for ${username}`);
 }
 
 function calculateMaxConesPerHour(timestamps) {
@@ -193,4 +196,4 @@ async function calculateUserStreaks(db, username) {
 }
 
 // Run the migration
-migrateHistoricalData().catch(console.error);
+migrateHistoricalData().catch(error => logger.error('Migration script error:', error));

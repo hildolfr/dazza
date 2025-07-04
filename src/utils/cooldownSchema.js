@@ -1,3 +1,7 @@
+import { createLogger } from './logger.js';
+
+const logger = createLogger();
+
 export const cooldownSchema = {
     // SQL for creating cooldowns table
     createCooldownsTable: `
@@ -23,6 +27,6 @@ export const cooldownSchema = {
         await database.run(this.createCooldownKeyIndex);
         await database.run(this.createCooldownExpiresIndex);
         
-        console.log('Cooldowns table initialized');
+        logger.info('Cooldowns table initialized');
     }
 };

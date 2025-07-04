@@ -1,6 +1,7 @@
 export class PersistentCooldownManager {
-    constructor(database) {
+    constructor(database, logger) {
         this.database = database;
+        this.logger = logger;
     }
 
     async check(commandName, username, duration) {
@@ -30,7 +31,7 @@ export class PersistentCooldownManager {
             return { allowed: true };
             
         } catch (error) {
-            console.error('PersistentCooldownManager error:', error);
+            this.logger.error('PersistentCooldownManager error:', error);
             // In case of error, allow the command (fail open)
             return { allowed: true };
         }
@@ -43,7 +44,7 @@ export class PersistentCooldownManager {
                 [commandName, username]
             );
         } catch (error) {
-            console.error('PersistentCooldownManager reset error:', error);
+            this.logger.error('PersistentCooldownManager reset error:', error);
         }
     }
 
@@ -58,7 +59,7 @@ export class PersistentCooldownManager {
                 await this.database.run('DELETE FROM cooldowns');
             }
         } catch (error) {
-            console.error('PersistentCooldownManager clear error:', error);
+            this.logger.error('PersistentCooldownManager clear error:', error);
         }
     }
 
@@ -70,7 +71,7 @@ export class PersistentCooldownManager {
             );
             return result ? result.last_used : null;
         } catch (error) {
-            console.error('PersistentCooldownManager getCooldown error:', error);
+            this.logger.error('PersistentCooldownManager getCooldown error:', error);
             return null;
         }
     }
@@ -84,7 +85,7 @@ export class PersistentCooldownManager {
                 [cutoffTime]
             );
         } catch (error) {
-            console.error('PersistentCooldownManager cleanup error:', error);
+            this.logger.error('PersistentCooldownManager cleanup error:', error);
         }
     }
 }

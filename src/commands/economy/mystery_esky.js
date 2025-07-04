@@ -162,7 +162,7 @@ export default new Command({
 
             // Check persistent cooldown (5 minutes)
             if (bot.db && this.persistentCooldown) {
-                const cooldownManager = new PersistentCooldownManager(bot.db);
+                const cooldownManager = new PersistentCooldownManager(bot.db, bot.logger);
                 const cooldownCheck = await cooldownManager.check(this.name, message.username, 300000); // 5 minutes
                 
                 if (!cooldownCheck.allowed) {

@@ -1,7 +1,10 @@
+import { getLogger } from './logger.js';
+
 export class MemoryManager {
     constructor(maxAge = 24 * 60 * 60 * 1000) { // 24 hours default
         this.maxAge = maxAge;
         this.cleanupInterval = null;
+        this.logger = getLogger();
     }
 
     startCleanup(map, interval = 60 * 60 * 1000) { // Clean every hour
@@ -32,7 +35,7 @@ export class MemoryManager {
         }
         
         if (removed > 0) {
-            console.log(`Memory cleanup: removed ${removed} old entries`);
+            this.logger.info(`Memory cleanup: removed ${removed} old entries`);
         }
     }
 }
