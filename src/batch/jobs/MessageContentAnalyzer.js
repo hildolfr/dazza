@@ -21,7 +21,7 @@ export class MessageContentAnalyzer extends BatchJob {
             FROM messages
             WHERE LOWER(username) != ?
                 AND username NOT LIKE '[%]'
-        `, [this.db.botUsername]);
+        `, ['dazza']);
 
         this.logger.info(`[MessageContentAnalyzer] Analyzing content for ${users.length} users`);
 

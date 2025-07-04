@@ -68,7 +68,7 @@ export class ActiveHoursAnalyzer extends BatchJob {
                 WHERE LOWER(username) != ?
                     AND username NOT LIKE '[%]'
                 GROUP BY LOWER(username), ${hasRoomId ? 'room_id,' : ''} hour
-            `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, this.db.botUsername]);
+            `, [this.timezoneOffset >= 0 ? `+${this.timezoneOffset}` : `${this.timezoneOffset}`, 'dazza']);
         } catch (error) {
             this.logger.error(`[ActiveHoursAnalyzer] Failed to query messages: ${error.message}`);
             throw error;

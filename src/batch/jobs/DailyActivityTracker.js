@@ -31,7 +31,7 @@ export class DailyActivityTracker extends BatchJob {
                 AND LOWER(username) != ?
                 AND username NOT LIKE '[%]'
             GROUP BY LOWER(username), DATE(timestamp / 1000, 'unixepoch')
-        `, [lastDate, this.db.botUsername]);
+        `, [lastDate, 'dazza']);
 
         this.logger.info(`[DailyActivityTracker] Found ${activities.length} user-day combinations to process`);
 
