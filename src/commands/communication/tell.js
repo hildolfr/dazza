@@ -118,7 +118,7 @@ export default new Command({
             
             return { success: true };
         } catch (error) {
-            console.error('Tell command error:', error);
+            bot.logger.error('Tell command error:', error);
             const errorMsg = bot.personality.getResponse('error');
             respond(bot, message, errorMsg);
             return { success: false };

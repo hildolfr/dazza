@@ -31,7 +31,7 @@ export default new Command({
             
             return { success: true };
         } catch (error) {
-            console.error('Quote command error:', error);
+            bot.logger.error('Quote command error:', error);
             bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
