@@ -26,7 +26,7 @@ export default new Command({
             
             return { success: true };
         } catch (error) {
-            console.error('Channelstats command error:', error);
+            bot.logger.error('Channelstats command error:', error);
             bot.sendMessage(message.roomId, bot.personality.getResponse('error'));
             return { success: false };
         }
