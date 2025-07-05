@@ -309,39 +309,15 @@ class CommandHandlerModule extends BaseModule {
     // ===== Legacy Adapter Initialization =====
     
     initializeLegacyAdapters() {
-        try {
-            // Initialize database adapter
-            this.legacyDb = new LegacyDatabaseAdapter(this.context.services);
-            this.legacyDb.setLogger(this.logger);
-            
-            // Initialize heist manager adapter
-            this.legacyHeistManager = new LegacyHeistManagerAdapter(this.context.services);
-            this.legacyHeistManager.setLogger(this.logger);
-            
-            // Initialize personality adapter
-            this.legacyPersonality = new LegacyPersonalityAdapter(this.context.services);
-            this.legacyPersonality.setLogger(this.logger);
-            
-            // Initialize video payout adapter
-            this.legacyVideoPayoutManager = new LegacyVideoPayoutAdapter(this.context.services);
-            this.legacyVideoPayoutManager.setLogger(this.logger);
-            
-            this.logger.info('Legacy adapters initialized', {
-                database: this.legacyDb.isReady(),
-                heistManager: this.legacyHeistManager.isReady(),
-                personality: this.legacyPersonality.isReady(),
-                videoPayoutManager: this.legacyVideoPayoutManager.isReady()
-            });
-            
-        } catch (error) {
-            this.logger.error('Failed to initialize legacy adapters:', error);
-            
-            // Provide fallback null adapters
-            this.legacyDb = null;
-            this.legacyHeistManager = null;
-            this.legacyPersonality = null;
-            this.legacyVideoPayoutManager = null;
-        }
+        // Legacy adapters are deprecated and no longer needed
+        // The modular system provides command execution without these adapters
+        this.logger.info('Skipping legacy adapter initialization - using modern modular command system');
+        
+        // Set adapters to null to maintain compatibility
+        this.legacyDb = null;
+        this.legacyHeistManager = null;
+        this.legacyPersonality = null;
+        this.legacyVideoPayoutManager = null;
     }
     
     // ===== Service Refresh =====
