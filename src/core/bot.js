@@ -1309,7 +1309,20 @@ export class CyTubeBot extends EventEmitter {
         this.connection.sendChatMessage(processedMessage);
     }
 
-    isAdmin(username) {
+    async isAdmin(username) {
+        // Try to use new permissions module if available
+        if (this.commandHandler?.permissionService) {
+            try {
+                return await this.commandHandler.permissionService.isAdmin(username);
+            } catch (error) {
+                this.logger.warn('Failed to check admin status with permissions service, falling back to legacy', {
+                    error: error.message,
+                    username
+                });
+            }
+        }
+        
+        // Fallback to legacy admin check
         return this.admins.has(username.toLowerCase());
     }
     

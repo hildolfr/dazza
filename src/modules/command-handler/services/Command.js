@@ -28,7 +28,7 @@ class Command {
             return { success: false, error: 'nah that command\'s fucked mate, turned off' };
         }
 
-        if (this.adminOnly && !bot.isAdmin(message.username)) {
+        if (this.adminOnly && !(await bot.isAdmin(message.username))) {
             return { success: false, error: 'piss off mate, that\'s for the big dogs only' };
         }
 
@@ -39,7 +39,7 @@ class Command {
             if (!allowedToAll) {
                 // Check if 'Admin' is in the users array and user is admin
                 const allowedToAdmins = this.users.some(u => u.toLowerCase() === 'admin');
-                const isUserAdmin = bot.isAdmin(message.username);
+                const isUserAdmin = await bot.isAdmin(message.username);
                 
                 if (allowedToAdmins && isUserAdmin) {
                     // User is admin and command allows admins

@@ -185,7 +185,7 @@ export class CommandHandler {
         // Fallback to legacy admin check
         const command = this.bot.commands.get(commandName);
         if (command && command.adminOnly) {
-            const isAdmin = this.bot.isAdmin(username);
+            const isAdmin = await this.bot.isAdmin(username);
             return {
                 allowed: isAdmin,
                 reason: isAdmin ? 'admin_access' : 'admin_required'
