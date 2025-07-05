@@ -82,12 +82,7 @@ export class CyTubeBot extends EventEmitter {
         this.lastGreetings = new Map();
         this.admins = new Set(config.admins || []);
         
-        // Greeting system
-        this.lastGreetingTime = 0;
-        this.greetingCooldown = this.getRandomGreetingCooldown(); // 5-15 minutes
-        this.recentJoins = []; // Track recent joins to avoid spam
-        this.pendingGreeting = null; // Track pending greeting timeout
-        // userDepartureTimes moved to user-management module
+        // Greeting system now handled by greeting-system module
         
         // URL comment cooldown - random between 2-15 minutes (Dazza's drunk and unreliable)
         this.lastUrlCommentTime = 0;
@@ -160,9 +155,13 @@ export class CyTubeBot extends EventEmitter {
             // Load all modules automatically
             await this.loadAllModules();
             
-            // Set up integration with user management module for greeting system
-            this.eventBus.on('user:joined', (data) => {
-                this.handleUserJoinForGreeting({ name: data.username });
+            // User join events now handled by greeting-system module via user:joined events
+            
+            // Set up greeting system bot:send event handler
+            this.eventBus.on('bot:send', (data) => {
+                if (data.message) {
+                    this.sendMessage(data.message);
+                }
             });
             
             // Skip command handler for now due to CommonJS compatibility issue
@@ -419,6 +418,7 @@ export class CyTubeBot extends EventEmitter {
         this.memoryMonitor.trackDataStructure('messageHistory', this.messageHistory);
         this.memoryMonitor.trackDataStructure('pendingMentionTimeouts', this.pendingMentionTimeouts);
         this.memoryMonitor.trackDataStructure('recentBotMessages', this.recentBotMessages);
+        // Greeting-related data structures now tracked by greeting-system module
         
         // Handle memory warnings
         this.memoryMonitor.on('warning', (data) => {
@@ -858,38 +858,7 @@ export class CyTubeBot extends EventEmitter {
     // handleUserlist moved to user-management module
 
     // handleUserJoin moved to user-management module
-    // Greeting system still handled here due to complex integration
-    handleUserJoinForGreeting(user) {
-        // Track join for spam prevention
-        this.recentJoins.push(Date.now());
-
-        // Check if we should greet
-        if (this.config.greeting.enabled && this.shouldGreetUser(user.name)) {
-            // Cancel any pending greeting
-            if (this.pendingGreeting) {
-                clearTimeout(this.pendingGreeting);
-                this.pendingGreeting = null;
-            }
-            
-            // Random typing delay between 1-3 seconds
-            const typingDelay = 1000 + Math.random() * 2000;
-            
-            this.pendingGreeting = setTimeout(async () => {
-                // Double-check we haven't been cancelled
-                if (!this.pendingGreeting) return;
-                
-                const greeting = await this.getRandomGreeting(user.name);
-                this.sendMessage(greeting);
-                
-                // Update greeting tracking
-                this.lastGreetingTime = Date.now();
-                this.greetingCooldown = this.getRandomGreetingCooldown();
-                this.pendingGreeting = null;
-                
-                this.logger.debug(`Greeted ${user.name}, next greeting possible in ${Math.round(this.greetingCooldown / 60000)} minutes`);
-            }, typingDelay);
-        }
-    }
+    // Greeting system moved to greeting-system module
 
     // handleUserLeave moved to user-management module
 
@@ -1382,7 +1351,7 @@ export class CyTubeBot extends EventEmitter {
             this.logger.info('Bot stats', stats);
         }, 5 * 60 * 1000); // Every 5 minutes
         
-        // Start memory cleanup for greeting map
+        // Start memory cleanup for legacy greeting map (greeting system now modular)
         this.memoryManager.startCleanup(this.lastGreetings);
         
         // Start rate limiter cleanup
@@ -1405,10 +1374,7 @@ export class CyTubeBot extends EventEmitter {
         }, 60000); // Every minute
     }
 
-    getRandomGreetingCooldown() {
-        // Random cooldown between 5-15 minutes
-        return 300000 + Math.random() * 600000; // 5 min + 0-10 min
-    }
+    // getRandomGreetingCooldown moved to greeting-system module
     
     getRandomUrlCooldown() {
         // Random cooldown between 2-15 minutes (Dazza's attention span varies when drunk)
@@ -1420,111 +1386,9 @@ export class CyTubeBot extends EventEmitter {
         return 5000 + Math.random() * 10000; // 5s + 0-10s
     }
     
-    shouldGreetUser(username) {
-        // Don't greet if not fully ready
-        if (!this.ready) return false;
-        
-        // Don't greet ourselves
-        if (username.toLowerCase() === this.config.bot.username.toLowerCase()) return false;
-        
-        // Check if user recently left (within 2 minutes) using user management service
-        const userManagementService = this.services.get('userManagement');
-        if (userManagementService && userManagementService.hasRecentlyDeparted(username)) {
-            this.logger.debug(`Not greeting ${username} - recently departed`);
-            return false;
-        }
-        
-        // Check if enough time has passed since last greeting
-        const now = Date.now();
-        if (now - this.lastGreetingTime < this.greetingCooldown) return false;
-        
-        // Clear old joins from recent list (older than 30 seconds)
-        this.recentJoins = this.recentJoins.filter(join => now - join < 30000);
-        
-        // Don't greet if there's been a lot of recent activity
-        if (this.recentJoins.length > 2) return false;
-        
-        // Add some randomness - 70% chance to greet when conditions are met
-        return Math.random() < 0.7;
-    }
+    // shouldGreetUser moved to greeting-system module
     
-    async getRandomGreeting(username) {
-        // Check if this is a first-time user
-        try {
-            const userStats = await this.db.get(
-                'SELECT first_seen FROM user_stats WHERE username = ?',
-                [username]
-            );
-            
-            // If no stats exist, this is a first-time user
-            if (!userStats) {
-                const firstTimeGreetings = [
-                    `oi ${username}, I haven't seen you around here before!`,
-                    `who the fuck is ${username}? never seen ya before mate`,
-                    `${username}? new face! welcome to the shitshow`,
-                    `fuckin hell, fresh meat! welcome ${username}`,
-                    `${username}! first time? this place'll ruin ya`,
-                    `never seen ${username} before, you a cop?`,
-                    `${username}'s new! someone get 'em a beer`,
-                    `oi everyone, ${username}'s a virgin! first timer!`,
-                    `${username}? don't recognize ya mate, welcome aboard`,
-                    `new cunt alert! ${username}'s here for the first time`,
-                    `${username}! fresh face, prepare to be corrupted`,
-                    `who invited ${username}? kidding, welcome newbie`,
-                    `${username}'s cherry's about to be popped, first timer!`,
-                    `strewth, ${username}! never seen ya round these parts`,
-                    `${username}? you lost mate? welcome anyway`,
-                    `fresh blood! ${username}'s new to this circus`,
-                    `${username}! hope you're ready for this shitshow`,
-                    `never seen ${username} before, must be fresh off the boat`,
-                    `oi ${username}, first time? you're in for a treat`,
-                    `${username}'s new! quick, act normal everyone`,
-                    `welcome ${username}! we don't bite... much`,
-                    `${username}? new face! this your first rodeo?`,
-                    `fuckin oath, ${username}'s a first timer!`
-                ];
-                
-                return firstTimeGreetings[Math.floor(Math.random() * firstTimeGreetings.length)];
-            }
-        } catch (err) {
-            this.logger.error('Error checking if user is first-time:', err);
-            // Fall through to regular greetings on error
-        }
-        
-        // Regular greetings for returning users
-        const greetings = [
-            `oi ${username}, how's it goin mate`,
-            `${username}! good to see ya cobber`,
-            `fuckin hell ${username}'s here`,
-            `${username} mate! pull up a chair`,
-            `look who rocked up, ${username}!`,
-            `${username}! just in time for a cone`,
-            `ey ${username}, grab us a beer while you're up`,
-            `${username}'s here, party can start now`,
-            `about time ${username} showed up`,
-            `${username}! where ya been mate`,
-            `well well well, if it isn't ${username}`,
-            `${username} ya legend`,
-            `${username}! thought you were dead mate`,
-            `${username} just in time, we're gettin on the piss`,
-            `strewth, ${username}'s graced us with their presence`,
-            `${username} mate, long time no see`,
-            `${username}! ya missed all the good stuff`,
-            `look what the cat dragged in, ${username}`,
-            `${username}! still breathin I see`,
-            `${username} decided to show up ay`,
-            `g'day ${username}`,
-            `${username}! ya beauty`,
-            `finally ${username}, been waitin for ages`,
-            `${username} rocks up fashionably late as usual`,
-            `there's ${username}, hide the bongs`,
-            `${username}! shazza's been askin about ya`,
-            `${username} in the house`,
-            `bloody oath, ${username}'s here`
-        ];
-        
-        return greetings[Math.floor(Math.random() * greetings.length)];
-    }
+    // getRandomGreeting moved to greeting-system module
 
     /**
      * Add message to history buffer
@@ -2049,11 +1913,7 @@ export class CyTubeBot extends EventEmitter {
             await this.batchScheduler.stop();
         }
         
-        // Cancel all pending timeouts
-        if (this.pendingGreeting) {
-            clearTimeout(this.pendingGreeting);
-            this.pendingGreeting = null;
-        }
+        // Cancel all pending timeouts (greeting timeouts now handled by greeting-system module)
         
         // Clear all pending mention timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));

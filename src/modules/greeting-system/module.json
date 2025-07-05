@@ -4,7 +4,7 @@
     "description": "User greeting system with spam prevention and first-time detection",
     "type": "feature",
     "enabled": true,
-    "requires": ["core-database"],
+    "requires": ["core-database", "user-management"],
     "optional": [],
     "config": {
         "enabled": true,
@@ -19,7 +19,7 @@
         "departureCleanupAge": 3600000
     },
     "events": {
-        "subscribes": ["user.join", "user.leave"],
-        "publishes": ["user.greeted", "user.departure"]
+        "subscribes": ["user:joined", "user:left"],
+        "publishes": ["user:greeted", "user:departure", "bot:send"]
     }
 }

@@ -15,8 +15,8 @@ class GreetingService {
         this.greetingCooldown = this.getRandomGreetingCooldown();
         this.recentJoins = [];
         this.pendingGreeting = null;
-        this.userDepartureTimes = new Map();
-        this.userlist = new Map();
+        // userDepartureTimes now handled by User Management System
+        // userlist now handled by User Management System
     }
 
     async initialize() {
@@ -32,8 +32,7 @@ class GreetingService {
         }
         
         this.recentJoins = [];
-        this.userDepartureTimes.clear();
-        this.userlist.clear();
+        // userDepartureTimes and userlist now handled by User Management System
         this.ready = false;
         
         this.logger.info('GreetingService cleaned up');
@@ -51,10 +50,7 @@ class GreetingService {
 
         this.logger.debug(`handleUserJoin called for ${user.name} at ${new Date().toISOString()}`);
         
-        // Update userlist
-        this.userlist.set(user.name.toLowerCase(), user);
-        
-        // Track join for spam prevention
+        // Track join for spam prevention (userlist now handled by User Management System)
         this.recentJoins.push(Date.now());
 
         // Check if we should greet
@@ -72,16 +68,8 @@ class GreetingService {
             return;
         }
 
-        // Remove from userlist
-        this.userlist.delete(user.name.toLowerCase());
-        
-        // Track departure time for greeting cooldown
-        this.userDepartureTimes.set(user.name.toLowerCase(), Date.now());
-        
-        // Clean up old departure times (older than 1 hour)
-        this.cleanupDepartureTimes();
-        
-        this.logger.debug(`User ${user.name} left, tracking departure time`);
+        // User departure tracking now handled by User Management System
+        this.logger.debug(`User ${user.name} left, departure tracking handled by User Management System`);
     }
 
     /**
@@ -93,24 +81,23 @@ class GreetingService {
         // Don't greet if not fully ready
         if (!this.ready) return false;
         
-        // Check if user recently left (within configured duration)
-        const userLower = username.toLowerCase();
-        const departureTime = this.userDepartureTimes.get(userLower);
-        if (departureTime) {
-            const timeSinceDeparture = Date.now() - departureTime;
-            if (timeSinceDeparture < this.config.departureTrackingDuration) {
-                this.logger.debug(`Not greeting ${username} - only gone for ${Math.round(timeSinceDeparture / 1000)}s`);
-                return false;
-            }
-            // Remove from tracking since they've been gone long enough
-            this.userDepartureTimes.delete(userLower);
+        // Don't greet ourselves (check against bot username if configured)
+        if (this.config.botUsername && username.toLowerCase() === this.config.botUsername.toLowerCase()) {
+            return false;
+        }
+        
+        // Check if user recently left using User Management Service
+        const userManagementService = this.services.get('userManagement');
+        if (userManagementService && userManagementService.hasRecentlyDeparted(username)) {
+            this.logger.debug(`Not greeting ${username} - recently departed`);
+            return false;
         }
         
         // Check if enough time has passed since last greeting
         const now = Date.now();
         if (now - this.lastGreetingTime < this.greetingCooldown) return false;
         
-        // Clear old joins from recent list
+        // Clear old joins from recent list (older than 30 seconds)
         this.recentJoins = this.recentJoins.filter(join => 
             now - join < this.config.recentJoinWindow
         );
@@ -275,17 +262,7 @@ class GreetingService {
             Math.random() * (this.config.maxCooldown - this.config.minCooldown);
     }
 
-    /**
-     * Clean up old departure times
-     */
-    cleanupDepartureTimes() {
-        const cutoff = Date.now() - this.config.departureCleanupAge;
-        for (const [username, time] of this.userDepartureTimes) {
-            if (time < cutoff) {
-                this.userDepartureTimes.delete(username);
-            }
-        }
-    }
+    // cleanupDepartureTimes now handled by User Management System
 
     /**
      * Send a message to the room
@@ -316,13 +293,12 @@ class GreetingService {
             ready: this.ready,
             name: 'GreetingService',
             stats: {
-                activeUsers: this.userlist.size,
                 recentJoins: this.recentJoins.length,
-                trackedDepartures: this.userDepartureTimes.size,
                 lastGreetingTime: this.lastGreetingTime,
                 nextGreetingAvailable: this.lastGreetingTime + this.greetingCooldown,
                 cooldownRemaining: Math.max(0, (this.lastGreetingTime + this.greetingCooldown) - Date.now()),
                 hasPendingGreeting: !!this.pendingGreeting
+                // activeUsers and trackedDepartures now provided by User Management System
             }
         };
     }

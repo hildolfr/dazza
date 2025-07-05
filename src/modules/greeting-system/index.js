@@ -10,7 +10,7 @@ class GreetingSystemModule extends BaseModule {
     constructor(context) {
         super(context);
         this.name = 'greeting-system';
-        this.dependencies = ['core-database'];
+        this.dependencies = ['core-database', 'user-management'];
         this.optionalDependencies = [];
         this.greetingService = null;
         
@@ -26,7 +26,8 @@ class GreetingSystemModule extends BaseModule {
             recentJoinWindow: 30000,       // 30 seconds window for recent join tracking
             departureTrackingDuration: 120000,  // 2 minutes - don't greet if user left recently
             departureCleanupAge: 3600000,  // 1 hour - clean up old departure times
-            ...context.userConfig          // Allow override from config
+            botUsername: context.config?.bot?.username,  // Bot's username to avoid self-greetings
+            ...context.config?.greeting    // Allow override from config
         };
     }
 
@@ -62,9 +63,9 @@ class GreetingSystemModule extends BaseModule {
             }
         });
         
-        // Subscribe to user join and leave events
-        this.subscribe('user:join', this.handleUserJoin.bind(this));
-        this.subscribe('user:leave', this.handleUserLeave.bind(this));
+        // Subscribe to user join and leave events from User Management System
+        this.subscribe('user:joined', this.handleUserJoin.bind(this));
+        this.subscribe('user:left', this.handleUserLeave.bind(this));
         
         this.logger.info('Greeting System module started');
     }
@@ -80,13 +81,13 @@ class GreetingSystemModule extends BaseModule {
     }
 
     /**
-     * Handle user join events
+     * Handle user join events from User Management System
      * @param {Object} data - User join event data
      */
     async handleUserJoin(data) {
-        const { username, room } = data;
+        const { username } = data;
         
-        if (!username || !room) {
+        if (!username) {
             this.logger.warn('Invalid user join data for greeting', { data });
             return;
         }
@@ -95,11 +96,14 @@ class GreetingSystemModule extends BaseModule {
             // Create user object for greeting service
             const user = { name: username };
             
+            // Create room context for sending messages
+            const roomContext = this.createRoomContext();
+            
             // Handle the join
-            await this.greetingService.handleUserJoin(user, room);
+            await this.greetingService.handleUserJoin(user, roomContext);
             
             // Emit event for other modules
-            this.emit('user:greeted', { username, room });
+            this.emit('user:greeted', { username });
             
         } catch (error) {
             this.logger.error('Error handling user join for greeting', {
@@ -110,7 +114,7 @@ class GreetingSystemModule extends BaseModule {
     }
 
     /**
-     * Handle user leave events
+     * Handle user leave events from User Management System
      * @param {Object} data - User leave event data
      */
     handleUserLeave(data) {
@@ -137,6 +141,18 @@ class GreetingSystemModule extends BaseModule {
                 username
             });
         }
+    }
+
+    /**
+     * Create room context for service integrations
+     * @returns {Object} Room context with sendMessage function
+     */
+    createRoomContext() {
+        return {
+            sendMessage: (message) => {
+                this.emit('bot:send', { message });
+            }
+        };
     }
 
     /**
