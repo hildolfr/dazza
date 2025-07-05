@@ -27,8 +27,26 @@ export async function getCanonicalUsername(bot, username) {
     // Check if user is currently online (most authoritative source)
     let onlineUser = null;
     
-    // Handle both single-room bot and multi-room bot
-    if (bot.userlist && bot.userlist.values) {
+    // Handle modular system with services
+    if (bot._context && bot._context.services) {
+        // Modular system - get userlist through userManagement service
+        const userManagementService = bot._context.services.get('userManagement');
+        if (userManagementService) {
+            try {
+                const userlist = userManagementService.getUserlist();
+                if (userlist && userlist.has) {
+                    onlineUser = userlist.get(lowerUsername);
+                    if (onlineUser && onlineUser.name) {
+                        onlineUser = { name: onlineUser.name };
+                    }
+                }
+            } catch (error) {
+                // Fallback silently if userManagement service not available
+            }
+        }
+    }
+    // Handle legacy bot structures
+    else if (bot.userlist && bot.userlist.values) {
         // Single room bot
         onlineUser = Array.from(bot.userlist.values())
             .find(u => u.name.toLowerCase() === lowerUsername);

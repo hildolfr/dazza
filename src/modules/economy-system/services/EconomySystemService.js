@@ -35,7 +35,14 @@ class EconomySystemService {
             
             // Initialize HeistManager
             if (this.config.enableHeists) {
-                this.heistManager = new HeistManager(db, this.bot);
+                // Create bot context with services for modular compatibility
+                const botContext = {
+                    ...this.bot,
+                    _context: {
+                        services: this.services
+                    }
+                };
+                this.heistManager = new HeistManager(db, botContext);
                 this.setupHeistHandlers();
                 await this.heistManager.init();
                 this.logger.info('HeistManager initialized');
@@ -51,7 +58,15 @@ class EconomySystemService {
             
             // Initialize PissingContestManager
             if (this.config.enablePissingContests) {
-                this.pissingContestManager = new PissingContestManager(this.bot);
+                // Create bot context with db for compatibility
+                const botContextWithDb = {
+                    ...this.bot,
+                    db: db,
+                    _context: {
+                        services: this.services
+                    }
+                };
+                this.pissingContestManager = new PissingContestManager(botContextWithDb);
                 this.logger.info('PissingContestManager initialized');
             }
             
