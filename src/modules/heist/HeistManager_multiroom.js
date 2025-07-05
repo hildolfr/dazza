@@ -506,11 +506,11 @@ export class HeistManager extends EventEmitter {
 
     // Helper to check if user is a system user
     isSystemUser(username) {
-        // Handle non-string usernames gracefully
+        // Validate username is a string before calling toLowerCase
         if (typeof username !== 'string') {
             this.logger.warn('isSystemUser called with non-string username', {
                 username,
-                type: typeof username,
+                usernameType: typeof username,
                 value: JSON.stringify(username)
             });
             return false;
