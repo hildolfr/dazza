@@ -20,6 +20,16 @@ class CoreConnectionModule extends BaseModule {
             await this.createConnection(roomConfig);
         }
         
+        // Register connection service early for other modules
+        // Provide the primary connection (first room) as the main connection service
+        const primaryConnection = this.connections.values().next().value;
+        if (primaryConnection) {
+            this.eventBus.emit('service:register', {
+                name: 'connection',
+                service: primaryConnection
+            });
+        }
+        
         // Listen for connection requests
         this.subscribe('connection:create', this.handleConnectionCreate.bind(this));
         this.subscribe('connection:destroy', this.handleConnectionDestroy.bind(this));

@@ -4,10 +4,11 @@
  * and chat event routing. Extracted from bot.js for modular architecture.
  */
 class ConnectionHandler {
-    constructor(services, config, logger) {
+    constructor(services, config, logger, eventBus) {
         this.services = services;
         this.config = config;
         this.logger = logger;
+        this.eventBus = eventBus;
         
         // Tracking structures
         this.pendingMentionTimeouts = new Set();
@@ -28,11 +29,19 @@ class ConnectionHandler {
     async initialize() {
         // Get required services
         this.database = this.services.get('database');
-        this.eventBus = this.services.get('eventBus');
         this.connection = this.services.get('connection');
         
         // Optional services
         this.messageProcessor = this.services.get('messageProcessor');
+        
+        // Debug logging to see what services are available
+        this.logger.info('Checking services availability', {
+            database: !!this.database,
+            eventBus: !!this.eventBus,
+            connection: !!this.connection,
+            messageProcessor: !!this.messageProcessor,
+            allServices: Array.from(this.services.keys ? this.services.keys() : [])
+        });
         
         if (!this.database || !this.eventBus || !this.connection) {
             throw new Error('Required services not available for ConnectionHandler');

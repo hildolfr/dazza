@@ -21,7 +21,8 @@ class ConnectionHandlerModule extends BaseModule {
         this.connectionHandler = new ConnectionHandler(
             this._context.services,
             this.config,
-            this.logger
+            this.logger,
+            this.eventBus
         );
         
         this.logger.info('Connection Handler module initialized');
