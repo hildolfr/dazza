@@ -37,7 +37,7 @@ class EconomySystemService {
             
             // Get economy services from registry
             this.heistService = this.services.get('heist');
-            this.videoPayoutService = this.services.get('videoPayout');
+            this.videoPayoutService = this.services.get('video-payout');
             this.pissingContestService = this.services.get('pissingContest');
             
             // Get legacy manager instances for backward compatibility
@@ -86,7 +86,7 @@ class EconomySystemService {
         while (Date.now() - startTime < timeout) {
             // Check if all required services are available
             const hasHeist = this.services.has('heist');
-            const hasVideoPayout = this.services.has('videoPayout');
+            const hasVideoPayout = this.services.has('video-payout');
             const hasPissingContest = this.services.has('pissingContest');
             
             if (hasHeist && hasVideoPayout && hasPissingContest) {
@@ -101,7 +101,7 @@ class EconomySystemService {
         // Log what services are missing
         const missing = [];
         if (!this.services.has('heist')) missing.push('heist');
-        if (!this.services.has('videoPayout')) missing.push('videoPayout');
+        if (!this.services.has('video-payout')) missing.push('video-payout');
         if (!this.services.has('pissingContest')) missing.push('pissingContest');
         
         this.logger.warn(`Some economy services are not available after ${timeout}ms: ${missing.join(', ')}`);

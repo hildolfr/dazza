@@ -33,9 +33,9 @@ class CharacterPersonalityModule extends BaseModule {
         // Initialize the character service
         await this.characterService.initialize();
         
-        // Register service
+        // Register service (using 'personality' name for legacy compatibility)
         this.eventBus.emit('service:register', { 
-            name: 'character', 
+            name: 'personality', 
             service: this.characterService 
         });
         

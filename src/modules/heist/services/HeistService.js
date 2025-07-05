@@ -95,16 +95,20 @@ class HeistService {
         }
 
         try {
-            // Forward message to heist manager
+            // Forward message to heist manager with correct parameters
             if (typeof this.heistManager.handleMessage === 'function') {
-                await this.heistManager.handleMessage(data);
+                await this.heistManager.handleMessage(
+                    data.username, 
+                    data.message || data.msg, 
+                    data.roomId || 'fatpizza'
+                );
             }
             
         } catch (error) {
             this.logger.error('Error handling heist message', {
                 error: error.message,
                 username: data.username,
-                message: data.message
+                message: data.message || data.msg
             });
         }
     }

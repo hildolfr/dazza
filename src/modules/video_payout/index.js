@@ -45,9 +45,9 @@ class VideoPayoutModule extends BaseModule {
         await this.payoutService.initialize();
         await this.payoutService.start();
         
-        // Register service for other modules to use
+        // Register service for other modules to use (using 'video-payout' name for legacy compatibility)
         this.eventBus.emit('service:register', { 
-            name: 'videoPayout', 
+            name: 'video-payout', 
             service: {
                 handleMediaChange: this.payoutService.handleMediaChange.bind(this.payoutService),
                 handleUserJoin: this.payoutService.handleUserJoin.bind(this.payoutService),

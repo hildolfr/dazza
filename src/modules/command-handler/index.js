@@ -45,8 +45,7 @@ class CommandHandlerModule extends BaseModule {
         // Initialize rate limiter
         this.rateLimiter = new Map();
         
-        // Initialize legacy adapters
-        this.initializeLegacyAdapters();
+        // Legacy adapters will be initialized in start() phase
         
         // Subscribe to chat events
         this.subscribe('chat:message', this.handleChatMessage.bind(this));
@@ -57,6 +56,9 @@ class CommandHandlerModule extends BaseModule {
 
     async start() {
         await super.start();
+        
+        // Initialize legacy adapters now that services are available
+        this.initializeLegacyAdapters();
         
         // Provide command handling capabilities to other modules
         this.eventBus.on('command.register', this.registerCommand.bind(this));
