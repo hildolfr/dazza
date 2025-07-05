@@ -6,8 +6,12 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import RouteManager from './services/RouteManager.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class CoreApiModule extends BaseModule {
     constructor(context) {

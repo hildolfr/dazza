@@ -12,7 +12,7 @@ class RouteManager extends EventEmitter {
     
     // ===== Route Management =====
     
-    registerRoute(moduleId, method, path, handler, options = {}) {
+    async registerRoute(moduleId, method, path, handler, options = {}) {
         const routeKey = `${method.toUpperCase()} ${path}`;
         const fullPath = `/api/${moduleId}${path}`;
         
@@ -38,7 +38,7 @@ class RouteManager extends EventEmitter {
         }
         
         if (options.rateLimit) {
-            middlewares.push(this._getRateLimitMiddleware(options.rateLimit));
+            middlewares.push(await this._getRateLimitMiddleware(options.rateLimit));
         }
         
         // Register with Express
@@ -127,7 +127,7 @@ class RouteManager extends EventEmitter {
         };
     }
     
-    _getRateLimitMiddleware(config) {
+    async _getRateLimitMiddleware(config) {
         const { default: rateLimit } = await import('express-rate-limit');
         
         return rateLimit({

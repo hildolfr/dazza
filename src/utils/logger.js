@@ -161,6 +161,13 @@ class Logger {
     connection(event, details = {}) {
         this.info(`Connection ${event}`, details);
     }
+
+    // Child logger method for module compatibility
+    child(metadata = {}) {
+        const childLogger = Object.create(this);
+        childLogger.metadata = { ...this.metadata, ...metadata };
+        return childLogger;
+    }
 }
 
 // Create singleton instance

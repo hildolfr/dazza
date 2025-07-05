@@ -153,7 +153,7 @@ async function batchNormalizeUsernames(bot, usernames) {
     return result;
 }
 
-module.exports = {
+export {
     normalizeUsernameForDb,
     getCanonicalUsername,
     usernamesMatch,

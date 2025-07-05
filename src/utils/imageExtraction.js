@@ -47,7 +47,7 @@ function isImageUrl(url) {
     return IMAGE_REGEX.test(url);
 }
 
-module.exports = {
+export {
     extractImageUrls,
     isImageUrl
 };

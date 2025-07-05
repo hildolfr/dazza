@@ -1,0 +1,37 @@
+{
+    "name": "memory-management",
+    "version": "1.0.0",
+    "description": "Comprehensive memory monitoring and cache management system extracted from bot.js",
+    "type": "core",
+    "enabled": true,
+    "requires": [],
+    "optional": [],
+    "config": {
+        "memory": {
+            "warningThreshold": 0.85,
+            "criticalThreshold": 0.95,
+            "checkInterval": 60000,
+            "historySize": 60,
+            "warningCooldown": 300000,
+            "leakDetectionWindow": 10,
+            "leakGrowthThreshold": 0.05
+        },
+        "cache": {
+            "messageCacheDuration": 30000,
+            "maxProcessedMessages": 100,
+            "greetingCacheAge": 3600000,
+            "mentionCacheAge": 3600000,
+            "historyMaxSize": 1000,
+            "cleanupInterval": 60000
+        },
+        "botMessageTracking": {
+            "cacheDuration": 30000,
+            "cleanupInterval": 60000,
+            "maxTrackedMessages": 1000
+        }
+    },
+    "events": {
+        "subscribes": ["bot:ready", "bot:stop"],
+        "publishes": ["memory:warning", "memory:critical", "memory:leak-detected", "memory:gc-forced", "cache:cleared"]
+    }
+}

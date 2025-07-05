@@ -162,7 +162,7 @@ function extractDomain(url) {
     }
 }
 
-module.exports = {
+export {
     detectUrls,
     extractDomain,
     isAllowedUrl,

@@ -25,7 +25,14 @@ import { ImageHealthChecker } from '../modules/imageHealthChecker.js';
 import BatchScheduler from '../batch/BatchScheduler.js';
 import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
 import MediaTracker from '../modules/media/MediaTracker.js';
-import { CommandHandler } from './command-handler.js';
+// CommandHandler will be imported dynamically due to CommonJS format
+import EventBus from './EventBus.js';
+import ModuleLoader from './ModuleLoader.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -47,6 +54,17 @@ export class CyTubeBot extends EventEmitter {
             console: config.logging?.console !== false
         });
         
+        // Initialize modular architecture components
+        this.eventBus = new EventBus();
+        this.services = new Map();
+        this.modules = new Map();
+        
+        // Set up service registration
+        this.eventBus.on('service:register', ({ name, service }) => {
+            this.services.set(name, service);
+            this.logger.info(`Service registered: ${name}`);
+        });
+        
         // Now create database with logger
         this.db = new Database(config.database.path, config.bot.username, {
             logger: this.logger
@@ -54,8 +72,8 @@ export class CyTubeBot extends EventEmitter {
         this.commands = null;
         this.heistManager = null; // Initialize after database
         
-        // Initialize command handler - will be configured after commands are loaded
-        this.commandHandler = new CommandHandler(this);
+        // Command handler will be initialized in init() method
+        this.commandHandler = null;
         
         // Bot state
         this.username = config.bot.username; // Store bot username for commands
@@ -116,7 +134,6 @@ export class CyTubeBot extends EventEmitter {
         this.mediaTracker = null;
         
         // Periodic task intervals
-        this.reminderInterval = null;
         this.statsInterval = null;
         
         // Ready flag - don't process commands until fully initialized
@@ -136,6 +153,23 @@ export class CyTubeBot extends EventEmitter {
             // Initialize database
             await this.db.init();
             this.db.setBot(this); // Set bot reference for WebSocket events
+            
+            // Register database service for modules
+            this.services.set('database', this.db);
+            
+            // Load tell-system module
+            await this.loadTellSystemModule();
+            
+            // Load reminder-system module
+            await this.loadReminderSystemModule();
+            
+            // Load memory-management module
+            await this.loadMemoryManagementModule();
+            
+            // Skip command handler for now due to CommonJS compatibility issue
+            // const { default: CommandHandler } = await import('./command-handler.js');
+            // this.commandHandler = new CommandHandler(this);
+            this.commandHandler = { refreshServices: () => {} }; // Mock for now
             
             // Load commands
             this.commands = await loadCommands(this.logger);
@@ -677,8 +711,8 @@ export class CyTubeBot extends EventEmitter {
                 }
             }
 
-            // Check for tells
-            await this.checkAndDeliverTells(data.username);
+            // Check for tells via module
+            this.checkAndDeliverTells(data.username);
             
             // Notify heist manager of message activity
             if (this.heistManager) {
@@ -933,25 +967,14 @@ export class CyTubeBot extends EventEmitter {
             );
         }
 
-        // Check for tells after a short delay (to let them settle in)
-        // Use a unique timeout key to prevent duplicate checks
-        const tellCheckKey = `tellCheck_${user.name}_${Date.now()}`;
-        if (!this.pendingTellChecks) {
-            this.pendingTellChecks = new Set();
-        }
-        
-        // If we already have a pending check for this user, skip
-        const hasPendingCheck = Array.from(this.pendingTellChecks).some(key => 
-            key.startsWith(`tellCheck_${user.name}_`)
-        );
-        
-        if (!hasPendingCheck) {
-            this.pendingTellChecks.add(tellCheckKey);
-            setTimeout(() => {
-                this.checkAndDeliverTells(user.name);
-                this.pendingTellChecks.delete(tellCheckKey);
-            }, 2000);
-        }
+        // Emit user join event for tell-system module to handle
+        this.eventBus.emit('user:join', {
+            username: user.name,
+            room: {
+                sendMessage: (message) => this.sendMessage(message),
+                sendPM: (username, message) => this.sendPrivateMessage(username, message)
+            }
+        });
     }
 
     handleUserLeave(user) {
@@ -1127,11 +1150,17 @@ export class CyTubeBot extends EventEmitter {
                 this.emit('userlist:loaded'); // Reuse the same event to trigger count update
             }
             
-            // If user just came back from AFK, check for tells
+            // If user just came back from AFK, emit event for tell-system module
             if (wasAFK && !data.afk) {
-                this.logger.debug(`${data.name} returned from AFK, checking for tells`);
+                this.logger.debug(`${data.name} returned from AFK, emitting user join event`);
                 setTimeout(() => {
-                    this.checkAndDeliverTells(data.name);
+                    this.eventBus.emit('user:join', {
+                        username: data.name,
+                        room: {
+                            sendMessage: (message) => this.sendMessage(message),
+                            sendPM: (username, message) => this.sendPrivateMessage(username, message)
+                        }
+                    });
                 }, 1500); // Small delay to make it feel natural
             }
         }
@@ -1161,10 +1190,6 @@ export class CyTubeBot extends EventEmitter {
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
         
-        // Clear pending tell checks
-        if (this.pendingTellChecks) {
-            this.pendingTellChecks.clear();
-        }
         
         // Clear message history and processed messages to avoid stale data
         this.messageHistory = [];
@@ -1197,10 +1222,6 @@ export class CyTubeBot extends EventEmitter {
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
         
-        // Clear pending tell checks
-        if (this.pendingTellChecks) {
-            this.pendingTellChecks.clear();
-        }
         
         // Clear any stale data before reconnecting
         this.messageHistory = [];
@@ -1467,146 +1488,33 @@ export class CyTubeBot extends EventEmitter {
         return isRecent;
     }
 
-    async checkAndDeliverTells(username) {
-        try {
-            const tells = await this.db.getTellsForUser(username);
+    checkAndDeliverTells(username) {
+        // Use the tell-system module service if available, otherwise fall back to legacy
+        const tellService = this.services.get('tellSystem');
+        if (tellService) {
+            // Create room context for the module
+            const roomContext = {
+                sendMessage: (message) => this.sendMessage(message),
+                sendPM: (username, message) => this.sendPrivateMessage(username, message)
+            };
             
-            for (let i = 0; i < tells.length; i++) {
-                const tell = tells[i];
-                const timeDiff = Date.now() - tell.created_at;
-                const minutes = Math.floor(timeDiff / 60000);
-                const hours = Math.floor(minutes / 60);
-                const days = Math.floor(hours / 24);
-                
-                let timeAgo;
-                if (days > 0) {
-                    timeAgo = `${days} day${days > 1 ? 's' : ''} ago`;
-                } else if (hours > 0) {
-                    timeAgo = `${hours} hour${hours > 1 ? 's' : ''} ago`;
-                } else if (minutes > 0) {
-                    timeAgo = `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-                } else {
-                    timeAgo = 'just now';
+            // Use the module service
+            tellService.checkAndDeliverTells(username, roomContext);
+        } else {
+            // Emit event for the module to handle if service not available
+            this.eventBus.emit('user:join', {
+                username: username,
+                room: {
+                    sendMessage: (message) => this.sendMessage(message),
+                    sendPM: (username, message) => this.sendPrivateMessage(username, message)
                 }
-                
-                const deliveryMessages = [
-                    `oi ${username}! ${tell.from_user} told me to tell ya "${tell.message}" (${timeAgo})`,
-                    `${username} mate, got a message from ${tell.from_user} for ya: "${tell.message}" (${timeAgo})`,
-                    `ey ${username}, ${tell.from_user} left this for ya ${timeAgo}: "${tell.message}"`,
-                    `${username}! ${tell.from_user} said to pass this on: "${tell.message}" (${timeAgo})`,
-                    `about time ya showed up ${username}, ${tell.from_user} wanted me to tell ya: "${tell.message}" (${timeAgo})`
-                ];
-                
-                // Delay messages slightly to avoid spam
-                setTimeout(() => {
-                    if (tell.via_pm) {
-                        // Tell was sent via PM, deliver privately
-                        const publicNotifications = [
-                            `oi ${username}, check ya PMs mate!`,
-                            `${username}, ya got a private message waiting`,
-                            `psst ${username}, slide into ya DMs for a message`,
-                            `${username} mate, check ya inbox`
-                        ];
-                        
-                        this.sendMessage(publicNotifications[Math.floor(Math.random() * publicNotifications.length)]);
-                        
-                        // Send the actual message via PM
-                        const pmMessage = `Private message from ${tell.from_user} (${timeAgo}): "${tell.message}"`;
-                        this.sendPrivateMessage(username, pmMessage);
-                    } else {
-                        // Regular public tell
-                        this.sendMessage(deliveryMessages[Math.floor(Math.random() * deliveryMessages.length)]);
-                    }
-                }, 1500 + (i * 2000));
-                
-                await this.db.markTellDelivered(tell.id);
-            }
-        } catch (error) {
-            this.logger.error('Failed to deliver tells', { error: error.message, username });
+            });
         }
     }
 
-    async checkReminders() {
-        try {
-            const reminders = await this.db.getDueReminders();
-            
-            for (const reminder of reminders) {
-                let delivered = false;
-                
-                if (reminder.to_user === '@me') {
-                    // Always deliver self-reminders
-                    const selfDeliveries = [
-                        `oi -${reminder.from_user} ya wanted me to remind ya: ${reminder.message}`,
-                        `-${reminder.from_user} mate, reminder time: ${reminder.message}`,
-                        `ey -${reminder.from_user}, you told me to bug ya about this: ${reminder.message}`,
-                        `*taps -${reminder.from_user} on shoulder* time for: ${reminder.message}`,
-                        `WAKE UP -${reminder.from_user}! ${reminder.message}`,
-                        `reminder for -${reminder.from_user}: ${reminder.message}`,
-                        `-${reminder.from_user}! oi! ${reminder.message}`,
-                        `this is your reminder -${reminder.from_user}: ${reminder.message}`
-                    ];
-                    this.sendMessage(selfDeliveries[Math.floor(Math.random() * selfDeliveries.length)]);
-                    delivered = true;
-                } else {
-                    // Check if target user is online
-                    const user = this.userlist.get(reminder.to_user.toLowerCase());
-                    if (user) {
-                        // Calculate how late the reminder is
-                        const now = Date.now();
-                        const lateness = now - reminder.remind_at;
-                        
-                        // If more than 1 minute late, mention it
-                        if (lateness > 60000) {
-                            const lateMinutes = Math.floor(lateness / 60000);
-                            const lateHours = Math.floor(lateMinutes / 60);
-                            
-                            let lateText;
-                            if (lateHours > 0) {
-                                lateText = `${lateHours}h ${lateMinutes % 60}m late`;
-                            } else {
-                                lateText = `${lateMinutes}m late`;
-                            }
-                            
-                            const lateDeliveries = [
-                                `-${reminder.to_user} oi listen up, -${reminder.from_user} wanted me to tell ya: ${reminder.message} (sorry mate, ${lateText} - you were offline)`,
-                                `finally caught ya -${reminder.to_user}! -${reminder.from_user} wanted me to tell ya: ${reminder.message} (${lateText} late, where were ya?)`,
-                                `-${reminder.to_user}! about bloody time! -${reminder.from_user} said: ${reminder.message} (${lateText} ago)`,
-                                `ey -${reminder.to_user}, got a late message from -${reminder.from_user}: ${reminder.message} (supposed to be ${lateText} ago)`,
-                                `-${reminder.to_user} ya finally showed up! -${reminder.from_user} wanted ya to know: ${reminder.message} (${lateText} late)`
-                            ];
-                            this.sendMessage(lateDeliveries[Math.floor(Math.random() * lateDeliveries.length)]);
-                        } else {
-                            const onTimeDeliveries = [
-                                `-${reminder.to_user} oi listen up, -${reminder.from_user} wanted me to tell ya: ${reminder.message}`,
-                                `message for -${reminder.to_user} from -${reminder.from_user}: ${reminder.message}`,
-                                `ey -${reminder.to_user}! -${reminder.from_user} says: ${reminder.message}`,
-                                `-${reminder.to_user} mate, -${reminder.from_user} told me to remind ya: ${reminder.message}`,
-                                `*pokes -${reminder.to_user}* message from -${reminder.from_user}: ${reminder.message}`,
-                                `attention -${reminder.to_user}! -${reminder.from_user} wants ya to know: ${reminder.message}`,
-                                `-${reminder.to_user}, got something for ya from -${reminder.from_user}: ${reminder.message}`
-                            ];
-                            this.sendMessage(onTimeDeliveries[Math.floor(Math.random() * onTimeDeliveries.length)]);
-                        }
-                        delivered = true;
-                    } else {
-                        // User is offline, keep checking until they come online
-                        this.logger.debug(`Reminder for offline user ${reminder.to_user}, will retry later`);
-                    }
-                }
-                
-                // Only mark as delivered if actually sent
-                if (delivered) {
-                    await this.db.markReminderDelivered(reminder.id);
-                }
-            }
-        } catch (error) {
-            this.logger.error('Failed to check reminders', { error: error.message });
-        }
-    }
 
     startPeriodicTasks() {
-        // Check reminders every minute
-        this.reminderInterval = setInterval(() => this.checkReminders(), this.config.reminder.checkInterval);
+        // Reminder checking is now handled by reminder-system module
         
         // Log stats periodically
         this.statsInterval = setInterval(() => {
@@ -2179,17 +2087,163 @@ export class CyTubeBot extends EventEmitter {
         });
     }
     
+    /**
+     * Load and initialize the memory-management module
+     */
+    async loadMemoryManagementModule() {
+        try {
+            // Create proper context for ModuleLoader
+            const loaderContext = {
+                eventBus: this.eventBus,
+                services: this.services,
+                logger: this.logger,
+                config: this.config, // Use full bot config
+                moduleRegistry: null, // We don't have this in legacy bot
+                scheduler: null,
+                performanceMonitor: null,
+                roomConnections: null,
+                api: null
+            };
+            
+            const moduleLoader = new ModuleLoader(loaderContext);
+            const modulePath = path.join(__dirname, '../modules/memory-management');
+            
+            // Load module info first
+            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
+            if (!moduleInfo) {
+                throw new Error('Failed to load memory-management module info');
+            }
+            
+            // Load and initialize the module
+            const memoryModule = await moduleLoader.loadModule(moduleInfo);
+            
+            // Initialize and start the module
+            await memoryModule.init();
+            await memoryModule.start();
+            
+            // Register bot data structures for monitoring
+            const memoryService = this.services.get('memoryManagement');
+            if (memoryService) {
+                memoryService.registerDataStructures({
+                    userlist: this.userlist,
+                    processedMessages: this.processedMessages,
+                    lastGreetings: this.lastGreetings,
+                    recentMentions: this.recentMentions,
+                    messageHistory: this.messageHistory,
+                    pendingMentionTimeouts: this.pendingMentionTimeouts,
+                    userDepartureTimes: this.userDepartureTimes,
+                    recentBotMessages: this.recentBotMessages
+                });
+            }
+            
+            // Store reference to module
+            this.modules.set('memory-management', memoryModule);
+            
+            this.logger.info('Memory-management module loaded and started');
+            
+        } catch (error) {
+            this.logger.error('Failed to load memory-management module', { error: error.message });
+            // Don't fail bot startup if module fails to load
+        }
+    }
+
+    /**
+     * Load and initialize the reminder-system module  
+     */
+    async loadReminderSystemModule() {
+        try {
+            // Create proper context for ModuleLoader
+            const loaderContext = {
+                eventBus: this.eventBus,
+                services: this.services,
+                logger: this.logger,
+                config: this.config, // Use full bot config
+                moduleRegistry: null, // We don't have this in legacy bot
+                scheduler: null,
+                performanceMonitor: null,
+                roomConnections: null,
+                api: null
+            };
+            
+            const moduleLoader = new ModuleLoader(loaderContext);
+            const modulePath = path.join(__dirname, '../modules/reminder-system');
+            
+            // Load module info first
+            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
+            if (!moduleInfo) {
+                throw new Error('Failed to load reminder-system module info');
+            }
+            
+            // Load and initialize the module
+            const reminderModule = await moduleLoader.loadModule(moduleInfo);
+            
+            // Initialize and start the module
+            await reminderModule.init();
+            await reminderModule.start();
+            
+            // Store reference to module
+            this.modules.set('reminder-system', reminderModule);
+            
+            this.logger.info('Reminder-system module loaded and started');
+            
+        } catch (error) {
+            this.logger.error('Failed to load reminder-system module', { error: error.message });
+            // Don't fail bot startup if module fails to load
+        }
+    }
+
+    /**
+     * Load and initialize the tell-system module
+     */
+    async loadTellSystemModule() {
+        try {
+            // Create proper context for ModuleLoader
+            const loaderContext = {
+                eventBus: this.eventBus,
+                services: this.services,
+                logger: this.logger,
+                config: this.config, // Use full bot config
+                moduleRegistry: null, // We don't have this in legacy bot
+                scheduler: null,
+                performanceMonitor: null,
+                roomConnections: null,
+                api: null
+            };
+            
+            const moduleLoader = new ModuleLoader(loaderContext);
+            const modulePath = path.join(__dirname, '../modules/tell-system');
+            
+            // Load module info first
+            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
+            if (!moduleInfo) {
+                throw new Error('Failed to load tell-system module info');
+            }
+            
+            // Load and initialize the module
+            const tellModule = await moduleLoader.loadModule(moduleInfo);
+            
+            // Initialize and start the module
+            await tellModule.init();
+            await tellModule.start();
+            
+            // Store reference to module
+            this.modules.set('tell-system', tellModule);
+            
+            this.logger.info('Tell-system module loaded and started');
+            
+        } catch (error) {
+            this.logger.error('Failed to load tell-system module', { error: error.message });
+            // Don't fail bot startup if module fails to load
+        }
+    }
+    
     async shutdown() {
         this.logger.info('Shutting down bot...');
         
         // Mark bot as not ready to prevent processing new messages
         this.ready = false;
         
-        // Stop periodic tasks
-        if (this.reminderInterval) {
-            clearInterval(this.reminderInterval);
-            this.reminderInterval = null;
-        }
+        // Stop periodic tasks (reminder checking is now handled by reminder-system module)
         if (this.statsInterval) {
             clearInterval(this.statsInterval);
             this.statsInterval = null;

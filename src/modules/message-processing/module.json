@@ -3,10 +3,8 @@
   "version": "1.0.0",
   "description": "Core message processing, filtering, and routing functionality extracted from bot.js",
   "type": "core",
-  "dependencies": [
-    "core-database",
-    "permissions",
-    "cooldown"
+  "requires": [
+    "core-database"
   ],
   "services": [
     "MessageProcessor",
