@@ -78,7 +78,7 @@ export class CyTubeBot extends EventEmitter {
         // Bot state
         this.username = config.bot.username; // Store bot username for commands
         this.startTime = Date.now();
-        this.userlist = new Map();
+        // userlist moved to user-management module
         this.lastGreetings = new Map();
         this.admins = new Set(config.admins || []);
         
@@ -87,7 +87,7 @@ export class CyTubeBot extends EventEmitter {
         this.greetingCooldown = this.getRandomGreetingCooldown(); // 5-15 minutes
         this.recentJoins = []; // Track recent joins to avoid spam
         this.pendingGreeting = null; // Track pending greeting timeout
-        this.userDepartureTimes = new Map(); // Track when users left to implement 2-minute cooldown
+        // userDepartureTimes moved to user-management module
         
         // URL comment cooldown - random between 2-15 minutes (Dazza's drunk and unreliable)
         this.lastUrlCommentTime = 0;
@@ -159,6 +159,11 @@ export class CyTubeBot extends EventEmitter {
             
             // Load all modules automatically
             await this.loadAllModules();
+            
+            // Set up integration with user management module for greeting system
+            this.eventBus.on('user:joined', (data) => {
+                this.handleUserJoinForGreeting({ name: data.username });
+            });
             
             // Skip command handler for now due to CommonJS compatibility issue
             // const { default: CommandHandler } = await import('./command-handler.js');
@@ -327,10 +332,11 @@ export class CyTubeBot extends EventEmitter {
         this.connection.on('pm', (data) => this.handlePrivateMessage(data));
         
         // User events
-        this.connection.on('userlist', (users) => this.handleUserlist(users));
-        this.connection.on('addUser', (user) => this.handleUserJoin(user));
-        this.connection.on('userLeave', (user) => this.handleUserLeave(user));
-        this.connection.on('setAFK', (data) => this.handleAFKUpdate(data));
+        // User events now handled by user-management module
+        this.connection.on('userlist', (users) => this.eventBus.emit('userlist', users));
+        this.connection.on('addUser', (user) => this.eventBus.emit('addUser', user));
+        this.connection.on('userLeave', (user) => this.eventBus.emit('userLeave', user));
+        this.connection.on('setAFK', (data) => this.eventBus.emit('setAFK', data));
         
         // Channel events
         this.connection.on('rank', (rank) => this.handleRankUpdate(rank));
@@ -406,14 +412,12 @@ export class CyTubeBot extends EventEmitter {
     }
     
     setupMemoryMonitorHandlers() {
-        // Track key data structures
-        this.memoryMonitor.trackDataStructure('userlist', this.userlist);
+        // Track key data structures (userlist and userDepartureTimes now in user-management module)
         this.memoryMonitor.trackDataStructure('processedMessages', this.processedMessages);
         this.memoryMonitor.trackDataStructure('lastGreetings', this.lastGreetings);
         this.memoryMonitor.trackDataStructure('recentMentions', this.recentMentions);
         this.memoryMonitor.trackDataStructure('messageHistory', this.messageHistory);
         this.memoryMonitor.trackDataStructure('pendingMentionTimeouts', this.pendingMentionTimeouts);
-        this.memoryMonitor.trackDataStructure('userDepartureTimes', this.userDepartureTimes);
         this.memoryMonitor.trackDataStructure('recentBotMessages', this.recentBotMessages);
         
         // Handle memory warnings
@@ -471,17 +475,7 @@ export class CyTubeBot extends EventEmitter {
             this.logger.info(`Cleared ${clearedGreetings} old greeting records`);
         }
         
-        // Clear old departure times
-        let clearedDepartures = 0;
-        for (const [user, time] of this.userDepartureTimes.entries()) {
-            if (time < oneHourAgo) {
-                this.userDepartureTimes.delete(user);
-                clearedDepartures++;
-            }
-        }
-        if (clearedDepartures > 0) {
-            this.logger.info(`Cleared ${clearedDepartures} old departure records`);
-        }
+        // Departure times now managed by user-management module
         
         // Trim message history if it's too large
         if (this.messageHistory.length > this.maxHistorySize) {
@@ -861,67 +855,11 @@ export class CyTubeBot extends EventEmitter {
         return await this.commandHandler.handleCommand(data);
     }
 
-    handleUserlist(users) {
-        this.userlist.clear();
-        let afkCount = 0;
-        
-        users.forEach(user => {
-            this.userlist.set(user.name.toLowerCase(), user);
-            // Count AFK users on initial load (check both locations)
-            if (user.afk === true || (user.meta && user.meta.afk === true)) {
-                afkCount++;
-            }
-        });
-        
-        this.logger.info(`Loaded ${users.length} users in channel (${afkCount} AFK)`);
-        
-        // Emit event for API to broadcast user count
-        this.emit('userlist:loaded');
-        
-        // Notify video payout manager of userlist update
-        if (this.videoPayoutManager) {
-            this.videoPayoutManager.handleUserlistUpdate().catch(err =>
-                this.logger.error('Failed to handle userlist update for video payout', { error: err.message })
-            );
-        }
-        
-        // Debug: Log complete user data for first few users
-        if (users.length > 0) {
-            this.logger.debug('First user full data:', JSON.stringify(users[0]));
-            this.logger.debug('User object properties:', Object.keys(users[0]));
-            
-            // Check specifically for AFK users
-            users.forEach(user => {
-                if (user.meta && typeof user.meta === 'object') {
-                    this.logger.debug(`User ${user.name} has meta:`, JSON.stringify(user.meta));
-                }
-            });
-        }
-    }
+    // handleUserlist moved to user-management module
 
-    handleUserJoin(user) {
-        // Debug log to track duplicate calls
-        this.logger.debug(`handleUserJoin called for ${user.name} at ${new Date().toISOString()}`);
-        
-        this.userlist.set(user.name.toLowerCase(), user);
-        
-        // Log join event
-        this.db.logUserEvent(user.name, 'join').catch(err => 
-            this.logger.error('Failed to log join event', { error: err.message, user: user.name })
-        );
-        
-        this.logger.userEvent(user.name, 'join');
-        
-        // Emit user join event for API WebSocket
-        if (this.apiServer) {
-            this.emit('user:join', user.name);
-            this.emit('stats:channel:activity', {
-                activeUsers: this.userlist.size,
-                event: 'user_joined',
-                username: user.name
-            });
-        }
-        
+    // handleUserJoin moved to user-management module
+    // Greeting system still handled here due to complex integration
+    handleUserJoinForGreeting(user) {
         // Track join for spam prevention
         this.recentJoins.push(Date.now());
 
@@ -951,64 +889,9 @@ export class CyTubeBot extends EventEmitter {
                 this.logger.debug(`Greeted ${user.name}, next greeting possible in ${Math.round(this.greetingCooldown / 60000)} minutes`);
             }, typingDelay);
         }
-
-        // No need to notify heist manager of joins - it tracks activity through messages
-
-        // Track for video payout
-        if (this.videoPayoutManager) {
-            this.videoPayoutManager.handleUserJoin(user.name).catch(err =>
-                this.logger.error('Failed to track user join for video payout', { error: err.message, user: user.name })
-            );
-        }
-
-        // Emit user join event for tell-system module to handle
-        this.eventBus.emit('user:join', {
-            username: user.name,
-            room: {
-                sendMessage: (message) => this.sendMessage(message),
-                sendPM: (username, message) => this.sendPrivateMessage(username, message)
-            }
-        });
     }
 
-    handleUserLeave(user) {
-        this.userlist.delete(user.name.toLowerCase());
-        
-        // Track departure time for greeting cooldown
-        this.userDepartureTimes.set(user.name.toLowerCase(), Date.now());
-        
-        // Clean up old departure times (older than 1 hour)
-        const oneHourAgo = Date.now() - 3600000;
-        for (const [username, time] of this.userDepartureTimes) {
-            if (time < oneHourAgo) {
-                this.userDepartureTimes.delete(username);
-            }
-        }
-        
-        // Log leave event
-        this.db.logUserEvent(user.name, 'leave').catch(err => 
-            this.logger.error('Failed to log leave event', { error: err.message, user: user.name })
-        );
-        
-        this.logger.userEvent(user.name, 'leave');
-        
-        // Emit user leave event for API WebSocket
-        if (this.apiServer) {
-            this.emit('user:leave', user.name);
-            this.emit('stats:channel:activity', {
-                activeUsers: this.userlist.size,
-                event: 'user_left',
-                username: user.name
-            });
-        }
-        
-        // Track for video payout
-        if (this.videoPayoutManager) {
-            this.videoPayoutManager.handleUserLeave(user.name).catch(err =>
-                this.logger.error('Failed to track user leave for video payout', { error: err.message, user: user.name })
-            );
-        }
-    }
+    // handleUserLeave moved to user-management module
 
     handleRankUpdate(rank) {
         this.logger.info(`Bot rank updated to: ${rank}`);
@@ -1122,43 +1005,11 @@ export class CyTubeBot extends EventEmitter {
     }
     
     getUserlist() {
-        return this.userlist;
+        const userManagementService = this.services.get('userManagement');
+        return userManagementService ? userManagementService.getUserlist() : new Map();
     }
     
-    handleAFKUpdate(data) {
-        // data should contain { name: username, afk: boolean }
-        const user = this.userlist.get(data.name.toLowerCase());
-        if (user) {
-            const wasAFK = user.afk === true || (user.meta && user.meta.afk === true);
-            
-            // Update AFK status in both possible locations
-            user.afk = data.afk;
-            if (!user.meta) {
-                user.meta = {};
-            }
-            user.meta.afk = data.afk;
-            this.logger.debug(`User ${data.name} AFK status: ${data.afk}`);
-            
-            // Emit event for API to broadcast updated user count
-            if (wasAFK !== data.afk) {
-                this.emit('userlist:loaded'); // Reuse the same event to trigger count update
-            }
-            
-            // If user just came back from AFK, emit event for tell-system module
-            if (wasAFK && !data.afk) {
-                this.logger.debug(`${data.name} returned from AFK, emitting user join event`);
-                setTimeout(() => {
-                    this.eventBus.emit('user:join', {
-                        username: data.name,
-                        room: {
-                            sendMessage: (message) => this.sendMessage(message),
-                            sendPM: (username, message) => this.sendPrivateMessage(username, message)
-                        }
-                    });
-                }, 1500); // Small delay to make it feel natural
-            }
-        }
-    }
+    // handleAFKUpdate moved to user-management module
 
     async handleDisconnect() {
         this.logger.connection('disconnected');
@@ -1257,10 +1108,11 @@ export class CyTubeBot extends EventEmitter {
 
     /**
      * Get userlist for a specific room (compatibility method for multi-room support)
-     * Single room bot always returns the main userlist
+     * Now delegates to user-management module
      */
     getUserlistForRoom(roomId) {
-        return this.userlist;
+        const userManagementService = this.services.get('userManagement');
+        return userManagementService ? userManagementService.getUserlistForRoom(roomId) : new Map();
     }
 
     sendMessage(messageOrRoomId, messageOrContext = null, optionalContext = null) {
@@ -1342,22 +1194,13 @@ export class CyTubeBot extends EventEmitter {
     }
     
     isUserAFK(username) {
-        const user = this.userlist.get(username.toLowerCase());
-        if (!user) return false;
-        
-        // Check both direct afk property and meta.afk
-        return user.afk === true || (user.meta && user.meta.afk === true);
+        const userManagementService = this.services.get('userManagement');
+        return userManagementService ? userManagementService.isUserAFK(username) : false;
     }
     
     getAFKUsers() {
-        const afkUsers = [];
-        this.userlist.forEach((user, name) => {
-            // Check both direct afk property and meta.afk
-            if (user.afk === true || (user.meta && user.meta.afk === true)) {
-                afkUsers.push(user.name);
-            }
-        });
-        return afkUsers;
+        const userManagementService = this.services.get('userManagement');
+        return userManagementService ? userManagementService.getAFKUsers() : [];
     }
 
     getUptime() {
@@ -1514,9 +1357,13 @@ export class CyTubeBot extends EventEmitter {
         this.statsInterval = setInterval(() => {
             const memStats = this.memoryMonitor ? this.memoryMonitor.getStats() : null;
             
+            // Get user count from user management service
+            const userManagementService = this.services.get('userManagement');
+            const userCount = userManagementService ? userManagementService.getUserCount() : 0;
+            
             const stats = {
                 uptime: this.getUptime(),
-                usersOnline: this.userlist.size,
+                usersOnline: userCount,
                 memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
             };
             
@@ -1580,17 +1427,11 @@ export class CyTubeBot extends EventEmitter {
         // Don't greet ourselves
         if (username.toLowerCase() === this.config.bot.username.toLowerCase()) return false;
         
-        // Check if user recently left (within 2 minutes)
-        const userLower = username.toLowerCase();
-        const departureTime = this.userDepartureTimes.get(userLower);
-        if (departureTime) {
-            const timeSinceDeparture = Date.now() - departureTime;
-            if (timeSinceDeparture < 120000) { // 2 minutes in milliseconds
-                this.logger.debug(`Not greeting ${username} - only gone for ${Math.round(timeSinceDeparture / 1000)}s`);
-                return false;
-            }
-            // Remove from tracking since they've been gone long enough
-            this.userDepartureTimes.delete(userLower);
+        // Check if user recently left (within 2 minutes) using user management service
+        const userManagementService = this.services.get('userManagement');
+        if (userManagementService && userManagementService.hasRecentlyDeparted(username)) {
+            this.logger.debug(`Not greeting ${username} - recently departed`);
+            return false;
         }
         
         // Check if enough time has passed since last greeting
@@ -2138,17 +1979,15 @@ export class CyTubeBot extends EventEmitter {
                         
                         // Special handling for specific modules
                         if (moduleInfo.name === 'memory-management') {
-                            // Register bot data structures for monitoring
+                            // Register bot data structures for monitoring (userlist now in user-management module)
                             const memoryService = this.services.get('memoryManagement');
                             if (memoryService) {
                                 memoryService.registerDataStructures({
-                                    userlist: this.userlist,
                                     processedMessages: this.processedMessages,
                                     lastGreetings: this.lastGreetings,
                                     recentMentions: this.recentMentions,
                                     messageHistory: this.messageHistory,
                                     pendingMentionTimeouts: this.pendingMentionTimeouts,
-                                    userDepartureTimes: this.userDepartureTimes,
                                     recentBotMessages: this.recentBotMessages
                                 });
                             }

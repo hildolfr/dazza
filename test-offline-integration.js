@@ -37,7 +37,8 @@ async function testOfflineIntegration() {
             'character-personality': { enabled: true },
             'greeting-system': { enabled: true },
             'url-comment': { enabled: true },
-            'permissions': { enabled: true }
+            'permissions': { enabled: true },
+            'user-management': { enabled: true }
         };
         
         // Create logger
@@ -162,6 +163,16 @@ async function testOfflineIntegration() {
             logger.info('✓ Command registry service available');
             const commands = commandService.getCommands();
             logger.info(`✓ Commands loaded: ${commands.size} commands`);
+        }
+        
+        // Test user management
+        const userManagementService = services.get('userManagement');
+        if (userManagementService) {
+            logger.info('✓ User management service available');
+            const status = userManagementService.getStatus();
+            logger.info(`✓ User management status: ${JSON.stringify(status)}`);
+            const userCount = userManagementService.getUserCount();
+            logger.info(`✓ Current user count: ${userCount}`);
         }
         
         // Stop all modules

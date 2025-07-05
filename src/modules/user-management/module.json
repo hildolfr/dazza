@@ -1,0 +1,27 @@
+{
+    "name": "user-management",
+    "version": "1.0.0",
+    "description": "User management system for userlist tracking, joins, leaves, and AFK status",
+    "type": "core",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": ["video-payout", "greeting-system"],
+    "config": {
+        "enableGreetingIntegration": true,
+        "enableVideoPayoutIntegration": true,
+        "enableTellSystemIntegration": true,
+        "userDepartureTimeoutMs": 3600000,
+        "userTrackingEnabled": true
+    },
+    "events": {
+        "subscribes": ["userlist", "addUser", "userLeave", "setAFK"],
+        "publishes": ["user:join", "user:leave", "user:afk", "userlist:loaded", "stats:user:update", "stats:channel:activity"]
+    },
+    "api": {
+        "routes": [
+            "/users",
+            "/users/count", 
+            "/users/afk"
+        ]
+    }
+}
