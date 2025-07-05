@@ -25,6 +25,7 @@ import { ImageHealthChecker } from '../modules/imageHealthChecker.js';
 import BatchScheduler from '../batch/BatchScheduler.js';
 import { registerChatAnalyzers } from '../batch/registerAnalyzers.js';
 import MediaTracker from '../modules/media/MediaTracker.js';
+import { CommandHandler } from './command-handler.js';
 
 export class CyTubeBot extends EventEmitter {
     constructor(config) {
@@ -52,6 +53,9 @@ export class CyTubeBot extends EventEmitter {
         });
         this.commands = null;
         this.heistManager = null; // Initialize after database
+        
+        // Initialize command handler - will be configured after commands are loaded
+        this.commandHandler = new CommandHandler(this);
         
         // Bot state
         this.username = config.bot.username; // Store bot username for commands
@@ -135,6 +139,9 @@ export class CyTubeBot extends EventEmitter {
             
             // Load commands
             this.commands = await loadCommands(this.logger);
+            
+            // Refresh command handler services after commands are loaded
+            this.commandHandler.refreshServices();
             
             // Initialize HeistManager with bot reference
             this.heistManager = new HeistManager(this.db, this);
@@ -822,42 +829,8 @@ export class CyTubeBot extends EventEmitter {
     }
 
     async handleCommand(data) {
-        // Check rate limit first
-        const rateLimit = this.rateLimiter.check(data.username);
-        
-        if (!rateLimit.allowed) {
-            this.sendMessage(`oi ${data.username} fuckin ease up on the commands ya pelican, give it ${rateLimit.resetIn}s`);
-            return;
-        }
-        
-        if (rateLimit.shouldWarn) {
-            this.sendMessage(`${data.username} steady on cobber, you're nearly at the limit ay (${rateLimit.requests}/${rateLimit.limit})`);
-        }
-
-        const parts = data.msg.slice(1).split(' ');
-        const commandName = parts[0].toLowerCase();
-        const args = parts.slice(1);
-
-        const result = await this.commands.execute(commandName, this, {
-            username: data.username,
-            msg: data.msg,
-            time: data.time || Date.now(),
-            roomId: this.connection.roomId || 'fatpizza'
-        }, args);
-        
-        // Log successful command execution
-        if (result.success) {
-            this.logger.command(data.username, commandName, args);
-        }
-
-        if (!result.success && result.error === 'Command not found') {
-            // Don't respond to unknown commands
-            return;
-        }
-
-        if (!result.success && result.error) {
-            this.sendMessage(`${data.username}: ${result.error}`);
-        }
+        // Delegate to the new command handler
+        return await this.commandHandler.handleCommand(data);
     }
 
     handleUserlist(users) {
