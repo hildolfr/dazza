@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dazza's Fuckin' Art Gallery</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇦🇺</text></svg>">
     <style>
 * {
     margin: 0;
@@ -22,7 +21,6 @@ body {
 
 .header {
     text-align: center;
-    margin-top: 60px;
     margin-bottom: 40px;
     animation: glow 2s ease-in-out infinite alternate;
 }
@@ -47,42 +45,6 @@ h1 {
 @keyframes blink {
     0%, 50% { opacity: 1; }
     51%, 100% { opacity: 0; }
-}
-
-.connection-status {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 0.9em;
-    z-index: 1000;
-}
-
-.connection-status.connected {
-    background: rgba(0, 255, 0, 0.2);
-    border: 1px solid #00ff00;
-    color: #00ff00;
-}
-
-.connection-status.disconnected {
-    background: rgba(255, 0, 0, 0.2);
-    border: 1px solid #ff0000;
-    color: #ff0000;
-}
-
-.loading {
-    text-align: center;
-    padding: 50px;
-    font-size: 1.5em;
-    color: #ffff00;
-}
-
-.error-message {
-    text-align: center;
-    padding: 50px;
-    color: #ff0000;
-    font-size: 1.2em;
 }
 
 .user-section {
@@ -115,26 +77,10 @@ h1 {
     height: 250px;
 }
 
-.image-item.shared-image {
-    border-color: #00ffff;
-}
-
 .image-item:hover {
     transform: scale(1.05) rotate(2deg);
     border-color: #ff00ff;
     box-shadow: 0 0 20px #ff00ff;
-}
-
-.sharing-info {
-    background: rgba(0, 255, 255, 0.2);
-    color: #00ffff;
-    padding: 4px 8px;
-    font-size: 0.75em;
-    text-align: center;
-    border-bottom: 1px solid #00ffff;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
 }
 
 .image-item img, .image-item video {
@@ -161,12 +107,7 @@ h1 {
     border-bottom: 1px solid #00ff00;
 }
 
-.control-buttons {
-    display: flex;
-}
-
-.copy-url-btn, .delete-btn {
-    flex: 1;
+.copy-url-btn {
     background: rgba(0, 255, 0, 0.1);
     border: 1px solid #00ff00;
     color: #00ff00;
@@ -178,12 +119,6 @@ h1 {
     text-transform: uppercase;
 }
 
-.delete-btn {
-    background: rgba(255, 0, 0, 0.1);
-    border: 1px solid #ff0000;
-    color: #ff0000;
-}
-
 .copy-url-btn:hover {
     background: rgba(0, 255, 0, 0.3);
     color: #ff00ff;
@@ -191,13 +126,7 @@ h1 {
     text-shadow: 0 0 5px #ff00ff;
 }
 
-.delete-btn:hover {
-    background: rgba(255, 0, 0, 0.3);
-    color: #ffffff;
-    text-shadow: 0 0 5px #ff0000;
-}
-
-.copy-url-btn:active, .delete-btn:active {
+.copy-url-btn:active {
     transform: scale(0.95);
 }
 
@@ -254,6 +183,28 @@ h1 {
     transition: all 0.3s ease;
 }
 
+.pruned-section {
+    margin-top: 100px;
+    padding: 20px;
+    border: 2px solid #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.pruned-section h2 {
+    color: #ff0000;
+    margin-bottom: 20px;
+}
+
+.pruned-list {
+    list-style: none;
+}
+
+.pruned-item {
+    margin-bottom: 10px;
+    color: #ff6666;
+    font-size: 0.9em;
+}
+
 .no-images {
     text-align: center;
     color: #666;
@@ -290,947 +241,245 @@ h1 {
     color: #00ff00;
 }
 
-.deleting {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-/* Pruned Images Modal Styles */
-.pruned-modal {
-    display: none;
-    position: fixed;
-    z-index: 1001;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    overflow-y: auto;
-}
-
-.pruned-modal.active {
-    display: block;
-}
-
-.pruned-modal-content {
-    background: #1a1a1a;
-    margin: 5% auto;
-    padding: 30px;
-    border: 3px solid #ff0000;
-    width: 90%;
-    max-width: 1200px;
-    box-shadow: 0 0 30px #ff0000;
-    position: relative;
-}
-
-.pruned-modal-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.pruned-modal-header h2 {
+.delete-btn {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
     color: #ff0000;
-    font-size: 2.5em;
-    text-shadow: 0 0 15px #ff0000;
-    margin-bottom: 10px;
-}
-
-.pruned-subtitle {
-    color: #ffff00;
-    font-size: 1.1em;
-}
-
-.pruned-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.pruned-item {
-    border: 2px solid #666;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.pruned-item:hover {
-    border-color: #ff00ff;
-    box-shadow: 0 0 10px #ff00ff;
-}
-
-.pruned-item.has-gravestone {
-    border-color: #333;
-    opacity: 0.7;
-}
-
-.gravestone-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 1.5em;
-    filter: grayscale(100%);
-}
-
-.pruned-image-thumb {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border: 1px solid #444;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.pruned-info {
-    font-size: 0.8em;
-    color: #aaa;
-}
-
-.pruned-info div {
-    margin-bottom: 5px;
-}
-
-.pruned-username {
-    color: #ff00ff;
-    font-weight: bold;
-}
-
-.pruned-reason {
-    color: #ff6666;
-}
-
-.pruned-time {
-    color: #00ffff;
-}
-
-.recheck-btn {
-    width: 100%;
-    background: rgba(0, 255, 0, 0.1);
-    border: 1px solid #00ff00;
-    color: #00ff00;
     padding: 8px;
     cursor: pointer;
     font-family: inherit;
     font-size: 0.9em;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    margin-top: 10px;
 }
 
-.recheck-btn:hover {
-    background: rgba(0, 255, 0, 0.3);
-    text-shadow: 0 0 5px #00ff00;
-}
-
-.recheck-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.recheck-btn.checking {
-    background: rgba(255, 255, 0, 0.2);
-    border-color: #ffff00;
-    color: #ffff00;
-}
-
-.recheck-btn.success {
-    background: rgba(0, 255, 0, 0.3);
-    border-color: #00ff00;
-    color: #00ff00;
-}
-
-.recheck-btn.failed {
+.delete-btn:hover {
     background: rgba(255, 0, 0, 0.3);
+    color: #ffffff;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.image-item.marked-for-deletion {
+    opacity: 0.5;
     border-color: #ff0000;
-    color: #ff0000;
 }
 
-.pruned-toggle-btn {
-    position: fixed;
-    bottom: 30px;
-    left: 30px;
-    background: rgba(255, 0, 0, 0.2);
-    border: 2px solid #ff0000;
-    color: #ff0000;
-    padding: 15px 25px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 1.1em;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-    z-index: 999;
-}
-
-.pruned-toggle-btn:hover {
-    background: rgba(255, 0, 0, 0.4);
-    box-shadow: 0 0 30px #ff0000;
-    transform: scale(1.05);
-}
-
-.pruned-loading {
-    text-align: center;
-    padding: 50px;
-    color: #ffff00;
-    font-size: 1.2em;
-}
-
-.pruned-empty {
-    text-align: center;
-    padding: 50px;
-    color: #666;
-    font-size: 1.1em;
-}
-
-.modal-close-btn {
+.image-item.marked-for-deletion::after {
+    content: "MARKED FOR DELETION";
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: #ff0000;
-    font-size: 30px;
-    cursor: pointer;
-    padding: 0;
-    width: 40px;
-    height: 40px;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-shadow: 2px 2px 4px #000;
+    pointer-events: none;
+}
+
+.pending-deletions {
+    margin-top: 50px;
+    padding: 20px;
+    border: 2px solid #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.pending-deletions h2 {
+    color: #ff0000;
+    margin-bottom: 20px;
+}
+
+.pending-list {
+    list-style: none;
+}
+
+.pending-item {
+    margin-bottom: 10px;
+    color: #ff6666;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
 }
 
-.modal-close-btn:hover {
-    color: #ff00ff;
-    transform: rotate(90deg);
-    transition: all 0.3s ease;
+.undo-btn {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.8em;
 }
 
+.undo-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+}
 </style>
 </head>
 <body>
-    <div class="connection-status disconnected" id="connectionStatus">
-        <span id="statusText">Connecting...</span>
-    </div>
-
     <div class="header">
-        <h1>Dazza's Fuckin' Art Gallery</h1>
+        <h1>🍺 Dazza's Fuckin' Art Gallery 🍺</h1>
         <p class="subtitle flash-text">ALL THE SHIT YOU CUNTS POST</p>
-        <p style="color: #ffff00; margin-top: 20px;">Click DELETE on unlocked galleries to remove images instantly</p>
+        <p style="color: #ffff00; margin-top: 20px;">Click DELETE button on images in unlocked galleries to mark for deletion</p>
         <p style="color: #ff00ff; margin-top: 10px;">To lock/unlock your gallery: Use !gallery lock or !gallery unlock in chat</p>
-        <p style="color: #00ffff; margin-top: 10px;">Each user can have up to 25 images - oldest ones get replaced automatically</p>
     </div>
-
-    <div id="loadingMessage" class="loading">
-        Loading gallery data...
+<div class="no-images">No fuckin' images yet, ya lazy cunts!</div>
+    <div id="pendingDeletions" class="pending-deletions" style="display: none;">
+        <h2>⚠️ Pending Deletions ⚠️</h2>
+        <ul class="pending-list"></ul>
     </div>
-
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-
-    <div id="galleryContent" style="display: none;"></div>
 
     <div class="modal" id="imageModal">
         <span class="close">&times;</span>
         <div class="modal-content" id="modalImage"></div>
     </div>
     
-    <!-- Pruned Images Modal -->
-    <div class="pruned-modal" id="prunedModal">
-        <div class="pruned-modal-content">
-            <button class="modal-close-btn" id="closePrunedModal">&times;</button>
-            <div class="pruned-modal-header">
-                <h2>THE GRAVEYARD</h2>
-                <p class="pruned-subtitle">Dead links from the last 6 months - Click RECHECK to resurrect 'em!</p>
-            </div>
-            <div id="prunedLoading" class="pruned-loading">Loading dead images...</div>
-            <div id="prunedEmpty" class="pruned-empty" style="display: none;">No dead images found. Everything's still kickin'!</div>
-            <div id="prunedList" class="pruned-list" style="display: none;"></div>
-        </div>
-    </div>
-    
-    <!-- Toggle Button for Pruned Images -->
-    <button class="pruned-toggle-btn" id="prunedToggle">View Graveyard</button>
-    
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script type="module" src="../shared/chat-widget/index.js"></script>
     <script>
-// Configuration - Both HTTP and HTTPS use port 3001
-const API_BASE = window.location.protocol === 'https:' 
-    ? 'https://seg.tplinkdns.com:3001/api/v1' 
-    : 'http://seg.tplinkdns.com:3001/api/v1';
-const WS_URL = window.location.protocol === 'https:' 
-    ? 'https://seg.tplinkdns.com:3001' 
-    : 'http://seg.tplinkdns.com:3001';
-
-// State
-let socket = null;
-let galleryData = {};
-let prunedData = [];
-let isConnected = false;
-
-// DOM elements
-const connectionStatus = document.getElementById('connectionStatus');
-const statusText = document.getElementById('statusText');
-const loadingMessage = document.getElementById('loadingMessage');
-const errorMessage = document.getElementById('errorMessage');
-const galleryContent = document.getElementById('galleryContent');
-const modal = document.getElementById('imageModal');
-const modalContent = document.getElementById('modalImage');
-const closeBtn = document.querySelector('.close');
-
-// Pruned modal elements
-const prunedModal = document.getElementById('prunedModal');
-const prunedToggle = document.getElementById('prunedToggle');
-const closePrunedModal = document.getElementById('closePrunedModal');
-const prunedLoading = document.getElementById('prunedLoading');
-const prunedEmpty = document.getElementById('prunedEmpty');
-const prunedList = document.getElementById('prunedList');
-
-// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    loadGallery();
-    setupWebSocket();
-    setupModalHandlers();
-    setupPrunedModalHandlers();
-});
-
-// Load gallery data from API
-async function loadGallery() {
-    try {
-        const response = await fetch(`${API_BASE}/gallery/images`, {
-            headers: {
-                'Origin': window.location.origin
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            galleryData = data.data;
-            renderGallery();
-            loadingMessage.style.display = 'none';
-            galleryContent.style.display = 'block';
-        } else {
-            throw new Error(data.message || 'Failed to load gallery');
-        }
-    } catch (error) {
-        console.error('Failed to load gallery:', error);
-        showError('Failed to load gallery: ' + error.message);
-    }
-}
-
-// Load pruned images data
-async function loadPrunedImages() {
-    prunedLoading.style.display = 'block';
-    prunedEmpty.style.display = 'none';
-    prunedList.style.display = 'none';
+    const modal = document.getElementById('imageModal');
+    const modalContent = document.getElementById('modalImage');
+    const closeBtn = document.querySelector('.close');
     
-    try {
-        const response = await fetch(`${API_BASE}/gallery/pruned`, {
-            headers: {
-                'Origin': window.location.origin
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            prunedData = data.data.images;
-            renderPrunedImages();
-        } else {
-            throw new Error(data.message || 'Failed to load pruned images');
-        }
-    } catch (error) {
-        console.error('Failed to load pruned images:', error);
-        prunedLoading.innerHTML = '<span style="color: #ff0000;">Failed to load dead images: ' + error.message + '</span>';
-    }
-}
-
-// Render pruned images
-function renderPrunedImages() {
-    prunedLoading.style.display = 'none';
-    
-    if (prunedData.length === 0) {
-        prunedEmpty.style.display = 'block';
-        prunedList.style.display = 'none';
-        return;
-    }
-    
-    prunedEmpty.style.display = 'none';
-    prunedList.style.display = 'grid';
-    prunedList.innerHTML = '';
-    
-    prunedData.forEach(image => {
-        const item = createPrunedImageElement(image);
-        prunedList.appendChild(item);
-    });
-}
-
-// Create pruned image element
-function createPrunedImageElement(image) {
-    const div = document.createElement('div');
-    div.className = 'pruned-item';
-    if (image.hasGravestone) {
-        div.classList.add('has-gravestone');
-    }
-    
-    const postedDate = new Date(image.timestamp).toLocaleString();
-    const prunedDate = new Date(image.lastCheckAt).toLocaleString();
-    
-    div.innerHTML = `
-        ${image.hasGravestone ? '<span class="gravestone-badge">⚰️</span>' : ''}
-        <img class="pruned-image-thumb" 
-             src="${image.url}" 
-             alt="Dead image"
-             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkRlYWQgSW1hZ2U8L3RleHQ+PC9zdmc+'"
-             data-url="${image.url}">
-        <div class="pruned-info">
-            <div class="pruned-username">User: ${image.username}</div>
-            <div class="pruned-reason">Reason: ${image.prunedReason}</div>
-            <div class="pruned-time">Posted: ${postedDate}</div>
-            <div class="pruned-time">Died: ${prunedDate}</div>
-            <div style="color: #999;">Failed ${image.failureCount} times</div>
-        </div>
-        <button class="recheck-btn" data-id="${image.id}">RECHECK</button>
-    `;
-    
-    // Add event listeners
-    const img = div.querySelector('.pruned-image-thumb');
-    img.addEventListener('click', () => {
-        modalContent.innerHTML = `<img src="${image.url}" alt="Dead image">`;
-        modal.classList.add('active');
-    });
-    
-    const recheckBtn = div.querySelector('.recheck-btn');
-    recheckBtn.addEventListener('click', () => handleRecheck(image.id, recheckBtn));
-    
-    return div;
-}
-
-// Handle recheck
-async function handleRecheck(imageId, button) {
-    button.disabled = true;
-    button.classList.add('checking');
-    button.textContent = 'CHECKING...';
-    
-    try {
-        const response = await fetch(`${API_BASE}/gallery/pruned/${imageId}/recheck`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            if (data.data.accessible) {
-                button.classList.remove('checking');
-                button.classList.add('success');
-                button.textContent = 'RESTORED!';
-                
-                // Remove from list after delay
-                setTimeout(() => {
-                    button.closest('.pruned-item').style.opacity = '0';
-                    setTimeout(() => {
-                        button.closest('.pruned-item').remove();
-                        // Check if list is empty
-                        if (prunedList.children.length === 0) {
-                            prunedEmpty.style.display = 'block';
-                            prunedList.style.display = 'none';
-                        }
-                    }, 500);
-                }, 2000);
-            } else {
-                button.classList.remove('checking');
-                button.classList.add('failed');
-                button.textContent = 'STILL DEAD';
-                
-                setTimeout(() => {
-                    button.classList.remove('failed');
-                    button.textContent = 'RECHECK';
-                    button.disabled = false;
-                }, 3000);
-            }
-        } else {
-            throw new Error(data.message || 'Recheck failed');
-        }
-    } catch (error) {
-        console.error('Recheck failed:', error);
-        button.classList.remove('checking');
-        button.classList.add('failed');
-        button.textContent = 'ERROR';
-        
-        setTimeout(() => {
-            button.classList.remove('failed');
-            button.textContent = 'RECHECK';
-            button.disabled = false;
-        }, 3000);
-    }
-}
-
-// Setup pruned modal handlers
-function setupPrunedModalHandlers() {
-    prunedToggle.addEventListener('click', () => {
-        prunedModal.classList.add('active');
-        loadPrunedImages();
-    });
-    
-    closePrunedModal.addEventListener('click', () => {
-        prunedModal.classList.remove('active');
-    });
-    
-    prunedModal.addEventListener('click', (e) => {
-        if (e.target === prunedModal) {
-            prunedModal.classList.remove('active');
-        }
-    });
-}
-
-// Setup WebSocket connection
-function setupWebSocket() {
-    socket = io(WS_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 5000
-    });
-
-    socket.on('connect', () => {
-        isConnected = true;
-        updateConnectionStatus(true);
-        
-        // Subscribe to gallery events
-        socket.emit('subscribe', ['gallery']);
-    });
-
-    socket.on('disconnect', () => {
-        isConnected = false;
-        updateConnectionStatus(false);
-    });
-
-    socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-        updateConnectionStatus(false);
-    });
-
-    socket.on('welcome', (data) => {
-        // Connection established
-    });
-
-    socket.on('subscribed', (data) => {
-        // Successfully subscribed to topics
-    });
-
-    // Gallery event handlers
-    socket.on('gallery:image:added', (data) => {
-        handleImageAdded(data);
-    });
-
-    socket.on('gallery:image:deleted', (data) => {
-        handleImageDeleted(data);
-    });
-    
-    socket.on('gallery:images:deleted', (data) => {
-        handleBatchImagesDeletion(data);
-    });
-    
-    socket.on('gallery:image:restored', (data) => {
-        handleImageRestored(data);
-    });
-
-    socket.on('gallery:lock:changed', (data) => {
-        if (data.isLocked) {
-            handleGalleryLockChange(data.username, true);
-        } else {
-            handleGalleryLockChange(data.username, false);
-        }
-    });
-
-    socket.on('gallery:updated', (data) => {
-        // Reload specific user gallery if needed
-    });
-}
-
-// Handle image restoration
-function handleImageRestored(data) {
-    // If pruned modal is open, remove the restored image
-    if (prunedModal.classList.contains('active')) {
-        const prunedItem = prunedList.querySelector(`[data-id="${data.id}"]`);
-        if (prunedItem) {
-            prunedItem.closest('.pruned-item').remove();
-            // Update pruned data
-            prunedData = prunedData.filter(img => img.id !== data.id);
-            if (prunedData.length === 0) {
-                prunedEmpty.style.display = 'block';
-                prunedList.style.display = 'none';
-            }
-        }
-    }
-    
-    // Add back to gallery
-    handleImageAdded({
-        username: data.username,
-        url: data.url,
-        timestamp: data.timestamp,
-        originalPoster: data.originalPoster,
-        mostRecentPoster: data.mostRecentPoster,
-        originalTimestamp: data.originalTimestamp
-    });
-}
-
-// Handle real-time image addition
-function handleImageAdded(data) {
-    if (!galleryData.galleries[data.username]) {
-        galleryData.galleries[data.username] = {
-            images: [],
-            isLocked: false
-        };
-    }
-    
-    // Add new image to the beginning
-    galleryData.galleries[data.username].images.unshift({
-        url: data.url,
-        timestamp: data.timestamp,
-        originalPoster: data.originalPoster,
-        mostRecentPoster: data.mostRecentPoster,
-        originalTimestamp: data.originalTimestamp,
-        isSharedFrom: data.originalPoster !== data.username ? data.originalPoster : null
-    });
-    
-    // Re-render just that user's section
-    renderUserSection(data.username);
-}
-
-// Handle real-time image deletion
-function handleImageDeleted(data) {
-    if (galleryData.galleries[data.username]) {
-        galleryData.galleries[data.username].images = 
-            galleryData.galleries[data.username].images.filter(img => img.url !== data.url);
-        
-        // Re-render that user's section
-        renderUserSection(data.username);
-    }
-}
-
-// Handle batch images deletion
-function handleBatchImagesDeletion(data) {
-    if (galleryData.galleries[data.username]) {
-        // Filter out all deleted images at once
-        const deletedUrls = new Set(data.deletedImages.map(img => img.url));
-        galleryData.galleries[data.username].images = 
-            galleryData.galleries[data.username].images.filter(img => !deletedUrls.has(img.url));
-        
-        // Re-render that user's section once
-        renderUserSection(data.username);
-    }
-}
-
-// Handle gallery lock/unlock
-function handleGalleryLockChange(username, isLocked) {
-    if (galleryData.galleries[username]) {
-        galleryData.galleries[username].isLocked = isLocked;
-        renderUserSection(username);
-    }
-}
-
-
-// Render entire gallery
-function renderGallery() {
-    galleryContent.innerHTML = '';
-    
-    // Sort users by most recent image
-    const sortedUsers = Object.entries(galleryData.galleries)
-        .sort((a, b) => {
-            const aLatest = a[1].images[0]?.timestamp || 0;
-            const bLatest = b[1].images[0]?.timestamp || 0;
-            return bLatest - aLatest;
-        });
-    
-    sortedUsers.forEach(([username, data]) => {
-        if (data.images.length > 0) {
-            const section = createUserSection(username, data);
-            galleryContent.appendChild(section);
-        }
-    });
-}
-
-// Render single user section
-function renderUserSection(username) {
-    const existingSection = document.querySelector(`[data-username="${username}"]`);
-    const data = galleryData.galleries[username];
-    
-    if (!data || data.images.length === 0) {
-        if (existingSection) {
-            existingSection.remove();
-        }
-        return;
-    }
-    
-    const newSection = createUserSection(username, data);
-    
-    if (existingSection) {
-        existingSection.replaceWith(newSection);
-    } else {
-        // Find correct position to insert
-        const sections = Array.from(galleryContent.querySelectorAll('.user-section'));
-        const latestTimestamp = data.images[0]?.timestamp || 0;
-        
-        const insertBefore = sections.find(section => {
-            const sectionUsername = section.getAttribute('data-username');
-            const sectionData = galleryData.galleries[sectionUsername];
-            const sectionLatest = sectionData?.images[0]?.timestamp || 0;
-            return latestTimestamp > sectionLatest;
-        });
-        
-        if (insertBefore) {
-            galleryContent.insertBefore(newSection, insertBefore);
-        } else {
-            galleryContent.appendChild(newSection);
-        }
-    }
-}
-
-// Create user section element
-function createUserSection(username, data) {
-    const section = document.createElement('div');
-    section.className = 'user-section';
-    section.setAttribute('data-username', username);
-    
-    const lockStatus = data.isLocked ? 
-        '<span class="lock-status locked">🔒 LOCKED</span>' : 
-        '<span class="lock-status unlocked">🔓 UNLOCKED</span>';
-    
-    section.innerHTML = `
-        <h2>${username}'s Collection (${data.images.length}/25 pics) ${lockStatus}</h2>
-        <div class="gallery-grid">
-            ${data.images.map(img => createImageElement(img, username, data.isLocked)).join('')}
-        </div>
-    `;
-    
-    // Add event listeners
-    setupSectionEventListeners(section);
-    
-    return section;
-}
-
-// Create image element
-function createImageElement(image, username, isLocked) {
-    const date = new Date(image.timestamp);
-    const formattedDate = date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
-    
-    // Format sharing info if this is a shared image
-    let sharingInfo = '';
-    if (image.isSharedFrom) {
-        const originalDate = new Date(image.originalTimestamp);
-        const originalFormatted = originalDate.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
-        sharingInfo = `<div class="sharing-info">Shared from ${image.isSharedFrom} (${originalFormatted})</div>`;
-    }
-    
-    const deleteButton = !isLocked ? 
-        `<button class="delete-btn" data-url="${image.url}" data-username="${username}">DELETE</button>` : '';
-    
-    return `
-        <div class="image-item ${image.isSharedFrom ? 'shared-image' : ''}" data-url="${image.url}">
-            <img src="${image.url}" alt="Posted by ${username}" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIExvYWQgRXJyb3I8L3RleHQ+PC9zdmc+'">
-            <div class="image-controls">
-                ${sharingInfo}
-                <div class="timestamp">${formattedDate}</div>
-                <div class="control-buttons">
-                    <button class="copy-url-btn" data-url="${image.url}">GRAB URL</button>
-                    ${deleteButton}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Setup event listeners for a section
-function setupSectionEventListeners(section) {
-    // Copy URL functionality
-    section.querySelectorAll('.copy-url-btn').forEach(btn => {
-        btn.addEventListener('click', handleCopyUrl);
-    });
-    
-    // Delete functionality
-    section.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', handleDelete);
-    });
-    
-    // Image click for modal
-    section.querySelectorAll('.image-item img').forEach(img => {
-        img.addEventListener('click', handleImageClick);
-    });
-}
-
-// Handle copy URL
-async function handleCopyUrl(e) {
-    e.stopPropagation();
-    const btn = e.target;
-    const url = btn.getAttribute('data-url');
-    
-    try {
-        await navigator.clipboard.writeText(url);
-        
-        const originalText = btn.textContent;
-        btn.textContent = 'COPIED!';
-        btn.classList.add('copied');
-        
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.classList.remove('copied');
-        }, 2000);
-    } catch (err) {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        
-        try {
-            document.execCommand('copy');
-            btn.textContent = 'COPIED!';
-            btn.classList.add('copied');
+    // Open modal when image is clicked (but not on button click)
+    document.querySelectorAll('.image-item img, .image-item video').forEach(media => {
+        media.addEventListener('click', function() {
+            const imgSrc = this.src;
+            const isVideo = this.tagName === 'VIDEO';
             
-            setTimeout(() => {
-                btn.textContent = 'GRAB URL';
-                btn.classList.remove('copied');
-            }, 2000);
-        } catch (err) {
-            btn.textContent = 'COPY FAILED!';
-        }
-        
-        document.body.removeChild(textArea);
-    }
-}
-
-// Handle delete
-async function handleDelete(e) {
-    e.stopPropagation();
-    const btn = e.target;
-    const url = btn.getAttribute('data-url');
-    const username = btn.getAttribute('data-username');
-    const imageItem = btn.closest('.image-item');
-    
-    if (!confirm(`Delete this image from ${username}'s gallery?`)) {
-        return;
-    }
-    
-    // Add loading state
-    imageItem.classList.add('deleting');
-    btn.textContent = 'DELETING...';
-    btn.disabled = true;
-    
-    try {
-        const response = await fetch(`${API_BASE}/gallery/images`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
-            },
-            body: JSON.stringify({ username, url })
+            if (isVideo) {
+                modalContent.innerHTML = '<video src="' + imgSrc + '" controls autoplay></video>';
+            } else {
+                modalContent.innerHTML = '<img src="' + imgSrc + '" alt="Gallery image">';
+            }
+            
+            modal.classList.add('active');
         });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to delete image');
-        }
-        
-        // The WebSocket will handle the UI update
-    } catch (error) {
-        console.error('Failed to delete image:', error);
-        alert('Failed to delete image: ' + error.message);
-        
-        // Restore state
-        imageItem.classList.remove('deleting');
-        btn.textContent = 'DELETE';
-        btn.disabled = false;
-    }
-}
-
-// Handle image click for modal
-function handleImageClick(e) {
-    const imgSrc = e.target.src;
-    modalContent.innerHTML = `<img src="${imgSrc}" alt="Gallery image">`;
-    modal.classList.add('active');
-}
-
-// Setup modal handlers
-function setupModalHandlers() {
-    closeBtn.addEventListener('click', () => {
+    });
+    
+    // Copy URL functionality
+    document.querySelectorAll('.copy-url-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.stopPropagation(); // Prevent modal from opening
+            const url = this.getAttribute('data-url');
+            
+            try {
+                await navigator.clipboard.writeText(url);
+                
+                // Visual feedback
+                const originalText = this.textContent;
+                this.textContent = 'COPIED!';
+                this.classList.add('copied');
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.textContent = 'COPIED!';
+                    this.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        this.textContent = 'GRAB URL';
+                        this.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    this.textContent = 'COPY FAILED!';
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        });
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', function() {
         modal.classList.remove('active');
         modalContent.innerHTML = '';
     });
     
-    modal.addEventListener('click', (e) => {
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             modal.classList.remove('active');
             modalContent.innerHTML = '';
         }
     });
-}
-
-// Update connection status
-function updateConnectionStatus(connected) {
-    if (connected) {
-        connectionStatus.className = 'connection-status connected';
-        statusText.textContent = 'Connected';
-    } else {
-        connectionStatus.className = 'connection-status disconnected';
-        statusText.textContent = 'Disconnected';
+    
+    // Delete functionality
+    function updatePendingDeletions() {
+        const pendingSection = document.getElementById('pendingDeletions');
+        const markedItems = document.querySelectorAll('.image-item.marked-for-deletion');
+        
+        if (markedItems.length === 0) {
+            pendingSection.style.display = 'none';
+            return;
+        }
+        
+        pendingSection.style.display = 'block';
+        const list = pendingSection.querySelector('.pending-list');
+        list.innerHTML = '';
+        
+        markedItems.forEach(item => {
+            const url = item.getAttribute('data-url');
+            const username = item.querySelector('.delete-btn').getAttribute('data-username');
+            
+            const li = document.createElement('li');
+            li.className = 'pending-item';
+            li.innerHTML = `
+                <span><strong>${username}</strong> - ${url}</span>
+                <button class="undo-btn" data-url="${url}">UNDO</button>
+            `;
+            list.appendChild(li);
+        });
     }
-}
-
-// Show error message
-function showError(message) {
-    loadingMessage.style.display = 'none';
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-}
-
-// Add random glitch effect
-setInterval(function() {
-    const elements = document.querySelectorAll('.user-section h2');
-    const randomElement = elements[Math.floor(Math.random() * elements.length)];
-    if (randomElement) {
-        randomElement.style.transform = 'translateX(' + (Math.random() * 4 - 2) + 'px)';
-        setTimeout(() => {
-            randomElement.style.transform = 'translateX(0)';
-        }, 100);
-    }
-}, 3000);
+    
+    // Handle delete button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-btn')) {
+            const url = e.target.getAttribute('data-url');
+            const imageItem = document.querySelector(`.image-item[data-url="${url}"]`);
+            
+            if (imageItem) {
+                imageItem.classList.add('marked-for-deletion');
+                updatePendingDeletions();
+            }
+        }
+        
+        if (e.target.classList.contains('undo-btn')) {
+            const url = e.target.getAttribute('data-url');
+            const imageItem = document.querySelector(`.image-item[data-url="${url}"]`);
+            
+            if (imageItem) {
+                imageItem.classList.remove('marked-for-deletion');
+                updatePendingDeletions();
+            }
+        }
+    });
+    
+    // Add random glitch effect
+    setInterval(function() {
+        const elements = document.querySelectorAll('.user-section h2');
+        const randomElement = elements[Math.floor(Math.random() * elements.length)];
+        if (randomElement) {
+            randomElement.style.transform = 'translateX(' + (Math.random() * 4 - 2) + 'px)';
+            setTimeout(() => {
+                randomElement.style.transform = 'translateX(0)';
+            }, 100);
+        }
+    }, 3000);
+    
+    // Initialize pending deletions on load
+    updatePendingDeletions();
+});
 </script>
-
-<dazza-chat-widget position="bottom-right" theme="vb"></dazza-chat-widget>
 </body>
 </html>
