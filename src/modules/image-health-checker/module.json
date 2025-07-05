@@ -1,0 +1,22 @@
+{
+    "name": "image_health_checker",
+    "version": "1.0.0",
+    "description": "Automated image health monitoring and recovery system",
+    "type": "utility",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": ["gallery-updater", "user-management"],
+    "config": {
+        "checkInterval": 3600000,
+        "recheckInterval": 10800000,
+        "batchSize": 50,
+        "minFailureInterval": 300000,
+        "maxFailures": 3,
+        "maxRecheckHours": 48,
+        "autoStart": true
+    },
+    "events": {
+        "subscribes": ["user.image.added", "gallery.manual.check"],
+        "publishes": ["gallery.health.check", "gallery.image.restored", "gallery.image.pruned"]
+    }
+}

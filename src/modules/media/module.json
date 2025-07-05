@@ -1,0 +1,18 @@
+{
+    "name": "media",
+    "version": "1.0.0",
+    "description": "Media tracking and database management for encountered media",
+    "type": "utility",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": [],
+    "config": {
+        "trackMedia": true,
+        "databasePath": "media_encountered.db",
+        "cleanupInterval": 86400000
+    },
+    "events": {
+        "subscribes": ["media.change", "media.queue"],
+        "publishes": ["media.tracked", "media.updated"]
+    }
+}

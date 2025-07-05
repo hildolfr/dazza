@@ -1,4 +1,4 @@
-import { batchCheckImageHealth } from '../services/imageMetadata.js';
+import { batchCheckImageHealth } from '../../services/imageMetadata.js';
 
 export class ImageHealthChecker {
     constructor(bot) {

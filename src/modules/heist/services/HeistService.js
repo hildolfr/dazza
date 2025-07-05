@@ -21,7 +21,7 @@ class HeistService {
             // Create HeistManager with modular context
             this.heistManager = new HeistManager(
                 this.context.bot || this.context,
-                this.context.services?.database || this.context.db,
+                this.context.services?.database?.db || this.context.db,
                 this.logger
             );
 

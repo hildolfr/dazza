@@ -1,0 +1,20 @@
+{
+    "name": "gallery_updater",
+    "version": "1.0.0",
+    "description": "Gallery generation and image health monitoring system",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": ["user-management"],
+    "config": {
+        "updateInterval": 300000,
+        "minAgeForPruning": 86400000,
+        "useDynamicGallery": false,
+        "httpTimeout": 10000,
+        "autoStart": true
+    },
+    "events": {
+        "subscribes": ["user.image.added", "user.image.removed"],
+        "publishes": ["gallery.updated", "image.pruned", "gallery.error"]
+    }
+}
