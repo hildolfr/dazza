@@ -20,7 +20,7 @@ class VideoPayoutService {
         try {
             // Create VideoPayoutManager with modular context
             this.payoutManager = new VideoPayoutManager(
-                this.context.services?.database || this.context.db,
+                this.context.services?.get('database') || this.context.db,
                 this.context.bot || this.context
             );
 
