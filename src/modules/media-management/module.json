@@ -1,0 +1,35 @@
+{
+  "name": "media-management",
+  "version": "1.0.0",
+  "description": "Media tracking, playlist management, and media-related event handling",
+  "author": "Dazza Bot Team",
+  "dependencies": [
+    "core-database"
+  ],
+  "optionalDependencies": [
+    "core-api"
+  ],
+  "services": [
+    "MediaManagementService"
+  ],
+  "events": {
+    "emits": [
+      "media:tracked",
+      "playlist:updated",
+      "media:stats"
+    ],
+    "listens": [
+      "media:change",
+      "media:update", 
+      "media:playlist",
+      "media:setCurrent",
+      "media:queue",
+      "media:delete",
+      "media:moveVideo",
+      "media:setPlaylistMeta"
+    ]
+  },
+  "extracted_from": "bot.js",
+  "extraction_date": "2025-07-05",
+  "extraction_session": "8"
+}

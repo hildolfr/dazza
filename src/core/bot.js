@@ -9,8 +9,6 @@ import { RateLimiter } from '../utils/rateLimiter.js';
 import { formatDuration, formatTimestamp } from '../utils/formatting.js';
 import { truncateMessage, MAX_MESSAGE_LENGTH } from '../utils/messageValidator.js';
 import { createLogger } from '../utils/logger.js';
-import { detectUrls, extractDomain } from '../utils/urlDetector.js';
-import { fetchUrlTitleAndComment } from '../services/urlTitleFetcher.js';
 import { OllamaService } from '../services/ollama.js';
 import Database from '../services/database.js';
 import { loadCommands } from '../commands/index.js';
@@ -84,9 +82,6 @@ export class CyTubeBot extends EventEmitter {
         
         // Greeting system now handled by greeting-system module
         
-        // URL comment cooldown - random between 2-15 minutes (Dazza's drunk and unreliable)
-        this.lastUrlCommentTime = 0;
-        this.urlCommentCooldown = this.getRandomUrlCooldown();
         
         // Ollama integration
         this.ollama = config.ollama?.enabled ? new OllamaService(config) : null;
@@ -107,14 +102,6 @@ export class CyTubeBot extends EventEmitter {
         this.MESSAGE_CACHE_DURATION = 30000; // 30 seconds
         this.botMessageCleanupInterval = null;
         
-        // Heist economy system
-        this.heistManager = null;
-        
-        // Video payout system
-        this.videoPayoutManager = null;
-        
-        // Cash monitoring system
-        this.cashMonitor = null;
         
         // API server
         this.apiServer = null;
@@ -277,7 +264,11 @@ export class CyTubeBot extends EventEmitter {
                         this.connection.socket.on('playlist', (data) => this.handlePlaylist(data));
                         this.connection.socket.on('queue', (data) => this.handleQueue(data));
                         this.connection.socket.on('delete', (data) => this.handleDelete(data));
-                        this.connection.socket.on('moveVideo', (data) => this.handleMoveVideo(data));
+                        this.connection.socket.on('moveVideo', (data) => {
+                            if (this.services?.get('mediaManagement')) {
+                                this.services.get('mediaManagement').handleMoveVideo(data);
+                            }
+                        });
                         this.connection.socket.on('setPlaylistMeta', (data) => {
                             this.logger.debug('Playlist metadata received', data);
                         });
@@ -348,67 +339,7 @@ export class CyTubeBot extends EventEmitter {
         this.connection.on('setCurrent', (data) => this.handleSetCurrent(data));
     }
     
-    setupHeistHandlers() {
-        // Listen for heist events and send messages
-        this.heistManager.on('announce', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        this.heistManager.on('depart', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        this.heistManager.on('return', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        this.heistManager.on('payout', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        // Handle follow-up comments
-        this.heistManager.on('comment', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        // Acknowledge votes via PM only
-        this.heistManager.on('vote_registered', (data) => {
-            // Send PM acknowledgment for all votes (new and changed)
-            let pmMessage;
-            if (data.changed) {
-                const responses = [
-                    `changed ya mind? ${data.crime} it is then`,
-                    `righto, switched ya to ${data.crime}`,
-                    `no worries, changed to ${data.crime}`
-                ];
-                pmMessage = responses[Math.floor(Math.random() * responses.length)];
-            } else {
-                const responses = [
-                    `got it mate, you're in for ${data.crime}`,
-                    `righto, marked ya down for ${data.crime}`,
-                    `sweet as, ${data.crime} it is`,
-                    `no worries, you're ready for ${data.crime}`
-                ];
-                pmMessage = responses[Math.floor(Math.random() * responses.length)];
-            }
-            
-            this.sendPrivateMessage(data.username, pmMessage);
-        });
-        
-        // Handle heist resume events after bot restart
-        this.heistManager.on('resume_voting', (data) => {
-            this.sendMessage(data.message);
-        });
-        
-        this.heistManager.on('resume_progress', (data) => {
-            this.sendMessage(data.message);
-        });
-    }
     
-    setupVideoPayoutHandlers() {
-        // Nothing to set up here - video payout works silently
-        // All event handling is done through the existing handlers
-    }
     
     setupMemoryMonitorHandlers() {
         // Track key data structures (userlist and userDepartureTimes now in user-management module)
@@ -650,52 +581,12 @@ export class CyTubeBot extends EventEmitter {
                 }
             }
 
-            // Detect and log URLs in the message
-            const urlDetection = detectUrls(data.msg);
-            if (urlDetection.hasUrls) {
-                // Process first URL only (to avoid spam)
-                const urlData = urlDetection.urls[0];
-                
-                // Add domain to the URL data
-                urlData.domain = extractDomain(urlData.url);
-                
-                // Log the URL to database
-                await this.db.logUrl(data.username, urlData, messageId);
-                
-                this.logger.debug('URL detected', {
-                    username: data.username,
-                    url: urlData.url,
-                    type: urlData.type,
-                    domain: urlData.domain
-                });
-                
-                // Check if we should comment on the URL
-                const now = Date.now();
-                const timeSinceLastComment = now - this.lastUrlCommentTime;
-                
-                // Only respond to about 50% of links (Dazza's drunk and misses half)
-                const shouldRespond = Math.random() < 0.5;
-                
-                if (shouldRespond && timeSinceLastComment > this.urlCommentCooldown) {
-                    // Fetch title and make contextual comment
-                    const comment = await fetchUrlTitleAndComment(urlData, data.username);
-                    if (comment) {
-                        this.lastUrlCommentTime = now;
-                        // Set new random cooldown for next time
-                        this.urlCommentCooldown = this.getRandomUrlCooldown();
-                        
-                        // Add a delay (1-5 seconds - drunk typing speed)
-                        const drunkDelay = 1000 + Math.random() * 4000;
-                        setTimeout(() => {
-                            this.sendMessage(comment);
-                        }, drunkDelay);
-                        
-                        this.logger.debug(`Commented on YouTube link, next possible in ${Math.round(this.urlCommentCooldown / 60000)} minutes`);
-                    }
-                } else if (!shouldRespond) {
-                    this.logger.debug('Skipped YouTube link (drunk roll failed)');
-                } else {
-                    this.logger.debug(`Skipped YouTube link (cooldown: ${Math.round((this.urlCommentCooldown - timeSinceLastComment) / 1000)}s remaining)`);
+            // URL comment processing handled by URLCommentService
+            if (this.services && this.services.get('urlComment')) {
+                try {
+                    await this.services.get('urlComment').processMessage(data, this);
+                } catch (error) {
+                    this.logger.error('Error in URL comment processing', { error: error.message });
                 }
             }
 
@@ -733,46 +624,6 @@ export class CyTubeBot extends EventEmitter {
             }
 
             // Check if it's a command
-            // Check for pissing contest responses (yes/no)
-            const lowerMsg = data.msg.toLowerCase().trim();
-            if (this.pissingContestManager) {
-                const roomId = this.connection.roomId || 'fatpizza';
-                const challenge = this.pissingContestManager.findChallengeForUser(data.username, roomId);
-                
-                // Debug logging
-                if (lowerMsg === 'yes' || lowerMsg === 'no') {
-                    this.logger.info('Checking for pissing contest response', {
-                        username: data.username,
-                        message: lowerMsg,
-                        roomId: roomId,
-                        challengeFound: !!challenge,
-                        challenge: challenge
-                    });
-                }
-                
-                if (challenge) {
-                    // Check if it's an accept/decline phrase
-                    const acceptPhrases = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay',
-                        'bring it on', 'you\'re on', 'let\'s go', 'fuck yeah',
-                        'whip it out', 'dicks out', 'let\'s piss',
-                        'prepare to lose', 'easy money', 'bet'];
-                    const declinePhrases = ['no', 'nah', 'nope', 'pass',
-                        'fuck off', 'piss off', 'not now',
-                        'maybe later', 'busy', 'can\'t'];
-                    
-                    if (acceptPhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.acceptChallenge(data.username, roomId);
-                        if (!result.success) {
-                            this.sendMessage(result.message);
-                        }
-                        return;
-                    } else if (declinePhrases.includes(lowerMsg)) {
-                        const result = await this.pissingContestManager.declineChallenge(data.username, roomId);
-                        this.sendMessage(result.message);
-                        return;
-                    }
-                }
-            }
 
             // Check for coin flip responses
             if ((data.msg.toLowerCase() === 'heads' || data.msg.toLowerCase() === 'tails') && this.db) {
@@ -905,13 +756,6 @@ export class CyTubeBot extends EventEmitter {
         }
     }
     
-    handlePlaylist(data) {
-        // Full playlist update
-        this.playlist = data || [];
-        this.logger.info(`Playlist updated: ${this.playlist.length} videos`);
-        
-        // Debug logging removed - playlist structure confirmed
-    }
     
     handleSetCurrent(data) {
         // CyTube sends this to indicate current video position
@@ -1376,10 +1220,6 @@ export class CyTubeBot extends EventEmitter {
 
     // getRandomGreetingCooldown moved to greeting-system module
     
-    getRandomUrlCooldown() {
-        // Random cooldown between 2-15 minutes (Dazza's attention span varies when drunk)
-        return 120000 + Math.random() * 780000; // 2min + 0-13min
-    }
     
     getRandomMentionCooldown() {
         // Random cooldown between 5-15 seconds (reduced from 10-30)
@@ -1919,10 +1759,6 @@ export class CyTubeBot extends EventEmitter {
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
         
-        // Clear URL comment timeout
-        if (this.lastUrlCommentTime) {
-            this.lastUrlCommentTime = null;
-        }
         
         // Stop memory cleanup
         this.memoryManager.stopCleanup();

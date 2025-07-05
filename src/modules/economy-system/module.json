@@ -1,0 +1,37 @@
+{
+  "name": "economy-system",
+  "version": "1.0.0",
+  "description": "Comprehensive economy system coordination and management",
+  "author": "Dazza Bot Team",
+  "dependencies": [
+    "core-database"
+  ],
+  "optionalDependencies": [
+    "media-management"
+  ],
+  "services": [
+    "EconomySystemService"
+  ],
+  "managers": [
+    "HeistManager",
+    "VideoPayoutManager", 
+    "PissingContestManager",
+    "CashMonitor"
+  ],
+  "events": {
+    "emits": [
+      "economy:transaction",
+      "heist:started",
+      "heist:completed",
+      "payout:processed"
+    ],
+    "listens": [
+      "chat:message",
+      "media:change",
+      "connection:disconnect"
+    ]
+  },
+  "extracted_from": "bot.js",
+  "extraction_date": "2025-07-05",
+  "extraction_session": "8"
+}

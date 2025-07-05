@@ -21,7 +21,7 @@ class URLCommentService {
         // Import required utilities
         try {
             // These utilities should be available from the utils directory
-            const { detectUrls, extractDomain } = await import('../../../utils/urlDetection.js');
+            const { detectUrls, extractDomain } = await import('../../../utils/urlDetector.js');
             const { fetchUrlTitleAndComment } = await import('../../../services/urlTitleFetcher.js');
             
             this.detectUrls = detectUrls;
