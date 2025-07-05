@@ -191,4 +191,4 @@ class PermissionChecker {
     }
 }
 
-module.exports = PermissionChecker;
+export default PermissionChecker;

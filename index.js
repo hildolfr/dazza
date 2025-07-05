@@ -1,16 +1,16 @@
 // index.js - Application entry point for modular CyTube bot
-const { 
+import { 
     EventBus,
     ModuleLoader,
     ModuleRegistry,
     UnifiedScheduler,
     PerformanceMonitor,
     ErrorHandler
-} = require('./src/core');
+} from './src/core/index.js';
 
-const ConfigManager = require('./src/core/ConfigManager');
+import ConfigManager from './src/core/ConfigManager.js';
 
-const createLogger = require('./src/utils/createLogger');
+import createLogger from './src/utils/createLogger.js';
 
 async function main() {
     console.log('Starting CyTube Bot - Modular Architecture');

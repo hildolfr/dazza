@@ -512,4 +512,4 @@ class ConnectionHandler {
     }
 }
 
-module.exports = ConnectionHandler;
+export default ConnectionHandler;

@@ -1,6 +1,6 @@
-const MemoryStore = require('./MemoryStore');
-const PersistentStore = require('./PersistentStore');
-const KeyGenerator = require('./KeyGenerator');
+import MemoryStore from './MemoryStore.js';
+import PersistentStore from './PersistentStore.js';
+import KeyGenerator from './KeyGenerator.js';
 
 class CooldownManager {
     constructor(database, logger = null, config = {}) {
@@ -456,4 +456,4 @@ class CooldownManager {
     }
 }
 
-module.exports = CooldownManager;
+export default CooldownManager;

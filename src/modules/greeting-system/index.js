@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const GreetingService = require('./services/GreetingService');
+import BaseModule from '../../core/BaseModule.js';
+import GreetingService from './services/GreetingService.js';
 
 /**
  * Greeting System Module
@@ -158,4 +158,4 @@ class GreetingSystemModule extends BaseModule {
     }
 }
 
-module.exports = GreetingSystemModule;
+export default GreetingSystemModule;

@@ -255,4 +255,4 @@ class MessageService {
     }
 }
 
-module.exports = MessageService;
+export default MessageService;

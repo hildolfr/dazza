@@ -223,4 +223,4 @@ class RoleManager {
     }
 }
 
-module.exports = RoleManager;
+export default RoleManager;

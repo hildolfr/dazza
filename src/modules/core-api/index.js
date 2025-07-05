@@ -1,13 +1,13 @@
-const BaseModule = require('../../core/BaseModule');
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-const path = require('path');
-const fs = require('fs').promises;
-const RouteManager = require('./services/RouteManager');
+import BaseModule from '../../core/BaseModule.js';
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import path from 'path';
+import fs from 'fs';
+import RouteManager from './services/RouteManager.js';
 
 class CoreApiModule extends BaseModule {
     constructor(context) {
@@ -272,7 +272,7 @@ class CoreApiModule extends BaseModule {
     registerModuleStatic(moduleId, assets) {
         for (const [route, fsPath] of Object.entries(assets)) {
             // Determine if path is directory or file
-            fs.stat(fsPath).then(stats => {
+            fs.promises.stat(fsPath).then(stats => {
                 if (stats.isDirectory()) {
                     this.app.use(
                         `/static/${moduleId}${route}`,
@@ -400,4 +400,4 @@ class CoreApiModule extends BaseModule {
     }
 }
 
-module.exports = CoreApiModule;
+export default CoreApiModule;

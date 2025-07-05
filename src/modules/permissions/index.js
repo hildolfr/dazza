@@ -1,7 +1,7 @@
-const BaseModule = require('../../core/BaseModule');
-const PermissionChecker = require('./services/PermissionChecker');
-const RoleManager = require('./services/RoleManager');
-const AuditLogger = require('./services/AuditLogger');
+import BaseModule from '../../core/BaseModule.js';
+import PermissionChecker from './services/PermissionChecker.js';
+import RoleManager from './services/RoleManager.js';
+import AuditLogger from './services/AuditLogger.js';
 
 class PermissionsModule extends BaseModule {
     constructor(context) {
@@ -418,4 +418,4 @@ class PermissionsModule extends BaseModule {
     }
 }
 
-module.exports = PermissionsModule;
+export default PermissionsModule;

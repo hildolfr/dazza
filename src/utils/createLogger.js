@@ -1,6 +1,6 @@
-const winston = require('winston');
-const path = require('path');
-const fs = require('fs').promises;
+import winston from 'winston';
+import path from 'path';
+import { promises as fs } from 'fs';
 
 async function createLogger(config = {}) {
     // Default configuration
@@ -92,4 +92,4 @@ async function createLogger(config = {}) {
     return logger;
 }
 
-module.exports = createLogger;
+export default createLogger;

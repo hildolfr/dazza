@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const TellService = require('./services/TellService');
+import BaseModule from '../../core/BaseModule.js';
+import TellService from './services/TellService.js';
 
 /**
  * Tell System Module
@@ -108,4 +108,4 @@ class TellSystemModule extends BaseModule {
     }
 }
 
-module.exports = TellSystemModule;
+export default TellSystemModule;

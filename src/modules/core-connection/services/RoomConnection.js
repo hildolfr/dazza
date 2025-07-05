@@ -1,5 +1,5 @@
-const EventEmitter = require('events');
-const io = require('socket.io-client');
+import { EventEmitter } from 'events';
+import io from 'socket.io-client';
 
 class RoomConnection extends EventEmitter {
     constructor(options) {
@@ -299,4 +299,4 @@ class RoomConnection extends EventEmitter {
     }
 }
 
-module.exports = RoomConnection;
+export default RoomConnection;

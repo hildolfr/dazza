@@ -1,6 +1,6 @@
-const EventEmitter = require('events');
-const path = require('path');
-const fs = require('fs').promises;
+import { EventEmitter } from 'events';
+import path from 'path';
+import { promises as fs } from 'fs';
 
 class BaseModule extends EventEmitter {
     constructor(context) {

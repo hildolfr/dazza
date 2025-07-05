@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const MessageProcessor = require('./services/MessageProcessor');
+import BaseModule from '../../core/BaseModule.js';
+import MessageProcessor from './services/MessageProcessor.js';
 
 /**
  * Message Processing Module
@@ -65,4 +65,4 @@ class MessageProcessingModule extends BaseModule {
     }
 }
 
-module.exports = MessageProcessingModule;
+export default MessageProcessingModule;

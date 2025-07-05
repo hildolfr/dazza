@@ -293,4 +293,4 @@ class AuditLogger {
     }
 }
 
-module.exports = AuditLogger;
+export default AuditLogger;

@@ -465,4 +465,4 @@ class PersistentStore {
     }
 }
 
-module.exports = PersistentStore;
+export default PersistentStore;

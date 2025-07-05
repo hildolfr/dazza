@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const ConnectionHandler = require('./services/ConnectionHandler');
+import BaseModule from '../../core/BaseModule.js';
+import ConnectionHandler from './services/ConnectionHandler.js';
 
 /**
  * Connection Handler Module
@@ -65,4 +65,4 @@ class ConnectionHandlerModule extends BaseModule {
     }
 }
 
-module.exports = ConnectionHandlerModule;
+export default ConnectionHandlerModule;

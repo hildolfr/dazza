@@ -225,4 +225,4 @@ class KeyGenerator {
     }
 }
 
-module.exports = KeyGenerator;
+export default KeyGenerator;

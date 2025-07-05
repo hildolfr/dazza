@@ -1,7 +1,7 @@
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
-const { EventEmitter } = require('events');
+import { promises as fs } from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+import { EventEmitter } from 'events';
 
 class ConfigManager extends EventEmitter {
     constructor() {
@@ -231,7 +231,7 @@ class ConfigManager extends EventEmitter {
             return;
         }
         
-        const chokidar = require('chokidar');
+        const chokidar = (await import('chokidar')).default;
         
         // Watch main config file
         if (await this.fileExists(this.userConfigPath)) {
@@ -465,4 +465,4 @@ class ConfigManager extends EventEmitter {
 }
 
 // Export singleton instance
-module.exports = new ConfigManager();
+export default new ConfigManager();

@@ -265,4 +265,4 @@ class MediaService {
     }
 }
 
-module.exports = MediaService;
+export default MediaService;

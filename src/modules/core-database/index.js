@@ -1,14 +1,17 @@
-const BaseModule = require('../../core/BaseModule');
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
-const path = require('path');
-const fs = require('fs').promises;
+import BaseModule from '../../core/BaseModule.js';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Import services
-const MessageService = require('./services/MessageService');
-const UserService = require('./services/UserService');
-const EconomyService = require('./services/EconomyService');
-const MediaService = require('./services/MediaService');
+import MessageService from './services/MessageService.js';
+import UserService from './services/UserService.js';
+import EconomyService from './services/EconomyService.js';
+import MediaService from './services/MediaService.js';
 
 class CoreDatabaseModule extends BaseModule {
     constructor(context) {
@@ -78,7 +81,7 @@ class CoreDatabaseModule extends BaseModule {
             const dir = path.dirname(absolutePath);
             
             // Ensure directory exists
-            await fs.mkdir(dir, { recursive: true });
+            await fs.promises.mkdir(dir, { recursive: true });
             
             const db = await open({
                 filename: absolutePath,
@@ -129,7 +132,7 @@ class CoreDatabaseModule extends BaseModule {
             const appliedSet = new Set(appliedMigrations.map(m => m.filename));
             
             // Read migration files
-            const files = await fs.readdir(migrationsDir);
+            const files = await fs.promises.readdir(migrationsDir);
             const migrationFiles = files
                 .filter(f => f.endsWith('.sql'))
                 .sort();
@@ -153,7 +156,7 @@ class CoreDatabaseModule extends BaseModule {
         const migrationPath = path.join(__dirname, 'migrations', filename);
         
         try {
-            const sql = await fs.readFile(migrationPath, 'utf8');
+            const sql = await fs.promises.readFile(migrationPath, 'utf8');
             
             await this.mainDb.exec('BEGIN TRANSACTION');
             
@@ -378,8 +381,8 @@ class CoreDatabaseModule extends BaseModule {
         
         // Database file sizes
         try {
-            const mainStats = await fs.stat(path.resolve(this.config.mainDatabase.path));
-            const mediaStats = await fs.stat(path.resolve(this.config.mediaDatabase.path));
+            const mainStats = await fs.promises.stat(path.resolve(this.config.mainDatabase.path));
+            const mediaStats = await fs.promises.stat(path.resolve(this.config.mediaDatabase.path));
             
             stats.fileSizes = {
                 main: mainStats.size,
@@ -411,4 +414,4 @@ class CoreDatabaseModule extends BaseModule {
     }
 }
 
-module.exports = CoreDatabaseModule;
+export default CoreDatabaseModule;

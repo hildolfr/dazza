@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const CooldownManager = require('./services/CooldownManager');
+import BaseModule from '../../core/BaseModule.js';
+import CooldownManager from './services/CooldownManager.js';
 
 class CooldownModule extends BaseModule {
     constructor(context) {
@@ -400,4 +400,4 @@ class CooldownModule extends BaseModule {
     }
 }
 
-module.exports = CooldownModule;
+export default CooldownModule;

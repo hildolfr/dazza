@@ -21,9 +21,12 @@ class URLCommentService {
         // Import required utilities
         try {
             // These utilities should be available from the utils directory
-            this.detectUrls = require('../../../utils/urlDetection').detectUrls;
-            this.extractDomain = require('../../../utils/urlDetection').extractDomain;
-            this.fetchUrlTitleAndComment = require('../../../services/urlTitleFetcher').fetchUrlTitleAndComment;
+            const { detectUrls, extractDomain } = await import('../../../utils/urlDetection.js');
+            const { fetchUrlTitleAndComment } = await import('../../../services/urlTitleFetcher.js');
+            
+            this.detectUrls = detectUrls;
+            this.extractDomain = extractDomain;
+            this.fetchUrlTitleAndComment = fetchUrlTitleAndComment;
         } catch (error) {
             this.logger.error('Failed to load URL utilities', { error: error.message });
             throw error;
@@ -207,4 +210,4 @@ class URLCommentService {
     }
 }
 
-module.exports = URLCommentService;
+export default URLCommentService;

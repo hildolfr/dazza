@@ -328,4 +328,4 @@ class GreetingService {
     }
 }
 
-module.exports = GreetingService;
+export default GreetingService;

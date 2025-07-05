@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const URLCommentService = require('./services/URLCommentService');
+import BaseModule from '../../core/BaseModule.js';
+import URLCommentService from './services/URLCommentService.js';
 
 /**
  * URL Comment Module
@@ -113,4 +113,4 @@ class URLCommentModule extends BaseModule {
     }
 }
 
-module.exports = URLCommentModule;
+export default URLCommentModule;

@@ -421,4 +421,4 @@ class EconomyService {
     }
 }
 
-module.exports = EconomyService;
+export default EconomyService;

@@ -189,4 +189,4 @@ class TellService {
     }
 }
 
-module.exports = TellService;
+export default TellService;

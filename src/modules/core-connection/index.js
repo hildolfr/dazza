@@ -1,7 +1,7 @@
-const BaseModule = require('../../core/BaseModule');
-const io = require('socket.io-client');
-const RoomConnection = require('./services/RoomConnection');
-const ConnectionManager = require('./services/ConnectionManager');
+import BaseModule from '../../core/BaseModule.js';
+import io from 'socket.io-client';
+import RoomConnection from './services/RoomConnection.js';
+import ConnectionManager from './services/ConnectionManager.js';
 
 class CoreConnectionModule extends BaseModule {
     constructor(context) {
@@ -247,4 +247,4 @@ class CoreConnectionModule extends BaseModule {
     }
 }
 
-module.exports = CoreConnectionModule;
+export default CoreConnectionModule;

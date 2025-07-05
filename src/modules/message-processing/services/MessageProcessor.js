@@ -1,6 +1,7 @@
-const { normalizeUsernameForDb } = require('../../../utils/userHelper');
-const { detectUrls, extractDomain } = require('../../../utils/urlDetection');
-const { extractImageUrls } = require('../../../utils/imageExtraction');
+import { normalizeUsernameForDb } from '../../../utils/userHelper.js';
+import { detectUrls, extractDomain } from '../../../utils/urlDetection.js';
+import { extractImageUrls } from '../../../utils/imageExtraction.js';
+import crypto from 'crypto';
 
 /**
  * Core message processing service
@@ -263,7 +264,7 @@ class MessageProcessor {
      * Hash message for echo detection
      */
     hashMessage(message) {
-        return require('crypto').createHash('sha256').update(message).digest('hex').substring(0, 16);
+        return crypto.createHash('sha256').update(message).digest('hex').substring(0, 16);
     }
     
     /**
@@ -388,7 +389,7 @@ class MessageProcessor {
         
         if (shouldRespond && timeSinceLastComment > this.urlCommentCooldown) {
             // Fetch title and make contextual comment
-            const { fetchUrlTitleAndComment } = require('../../../utils/urlTitleFetcher');
+            const { fetchUrlTitleAndComment } = await import('../../../utils/urlTitleFetcher.js');
             const comment = await fetchUrlTitleAndComment(urlData, username);
             
             if (comment && botContext.sendMessage) {
@@ -552,4 +553,4 @@ class MessageProcessor {
     }
 }
 
-module.exports = MessageProcessor;
+export default MessageProcessor;

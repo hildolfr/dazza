@@ -1,4 +1,4 @@
-const EventEmitter = require('events');
+import { EventEmitter } from 'events';
 
 class RouteManager extends EventEmitter {
     constructor(apiModule) {
@@ -128,7 +128,7 @@ class RouteManager extends EventEmitter {
     }
     
     _getRateLimitMiddleware(config) {
-        const rateLimit = require('express-rate-limit');
+        const { default: rateLimit } = await import('express-rate-limit');
         
         return rateLimit({
             windowMs: config.windowMs || 60000,
@@ -211,4 +211,4 @@ class RouteManager extends EventEmitter {
     }
 }
 
-module.exports = RouteManager;
+export default RouteManager;

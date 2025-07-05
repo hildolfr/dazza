@@ -1,14 +1,14 @@
 // Core components for the modular architecture
 
-const BaseModule = require('./BaseModule');
-const EventBus = require('./EventBus');
-const ModuleLoader = require('./ModuleLoader');
-const ModuleRegistry = require('./ModuleRegistry');
-const UnifiedScheduler = require('./UnifiedScheduler');
-const PerformanceMonitor = require('./PerformanceMonitor');
-const ErrorHandler = require('./ErrorHandler');
+import BaseModule from './BaseModule.js';
+import EventBus from './EventBus.js';
+import ModuleLoader from './ModuleLoader.js';
+import ModuleRegistry from './ModuleRegistry.js';
+import UnifiedScheduler from './UnifiedScheduler.js';
+import PerformanceMonitor from './PerformanceMonitor.js';
+import ErrorHandler from './ErrorHandler.js';
 
-module.exports = {
+export {
     BaseModule,
     EventBus,
     ModuleLoader,

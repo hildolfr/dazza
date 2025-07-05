@@ -1,8 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { EventEmitter } from 'events';
 
 const { promises: fsPromises } = fs;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class ModuleLoader extends EventEmitter {
     constructor(context) {

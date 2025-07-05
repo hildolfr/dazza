@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const MessageTracker = require('./services/MessageTracker');
+import BaseModule from '../../core/BaseModule.js';
+import MessageTracker from './services/MessageTracker.js';
 
 /**
  * Bot Message Tracking Module
@@ -131,4 +131,4 @@ class BotMessageTrackingModule extends BaseModule {
     }
 }
 
-module.exports = BotMessageTrackingModule;
+export default BotMessageTrackingModule;

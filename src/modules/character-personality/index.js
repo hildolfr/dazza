@@ -1,5 +1,5 @@
-const BaseModule = require('../../core/BaseModule');
-const CharacterService = require('./services/CharacterService');
+import BaseModule from '../../core/BaseModule.js';
+import CharacterService from './services/CharacterService.js';
 
 /**
  * Character Personality Module
@@ -65,4 +65,4 @@ class CharacterPersonalityModule extends BaseModule {
     }
 }
 
-module.exports = CharacterPersonalityModule;
+export default CharacterPersonalityModule;
