@@ -1,5 +1,5 @@
-const { EventEmitter } = require('events');
-const cron = require('node-cron');
+import { EventEmitter } from 'events';
+import cron from 'node-cron';
 
 class UnifiedScheduler extends EventEmitter {
     constructor(config = {}) {
@@ -454,4 +454,4 @@ class UnifiedScheduler extends EventEmitter {
     }
 }
 
-module.exports = UnifiedScheduler;
+export default UnifiedScheduler;

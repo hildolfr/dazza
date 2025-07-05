@@ -1,4 +1,4 @@
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 class ModuleRegistry extends EventEmitter {
     constructor() {
@@ -296,4 +296,4 @@ class ModuleRegistry extends EventEmitter {
     }
 }
 
-module.exports = ModuleRegistry;
+export default ModuleRegistry;

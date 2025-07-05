@@ -1,4 +1,4 @@
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 class ErrorHandler extends EventEmitter {
     constructor(config = {}) {
@@ -358,4 +358,4 @@ class ErrorHandler extends EventEmitter {
     }
 }
 
-module.exports = ErrorHandler;
+export default ErrorHandler;

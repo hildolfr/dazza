@@ -1,6 +1,8 @@
-const fs = require('fs').promises;
-const path = require('path');
-const { EventEmitter } = require('events');
+import fs from 'fs';
+import path from 'path';
+import { EventEmitter } from 'events';
+
+const { promises: fsPromises } = fs;
 
 class ModuleLoader extends EventEmitter {
     constructor(context) {
@@ -16,7 +18,7 @@ class ModuleLoader extends EventEmitter {
         const discovered = [];
         
         try {
-            const entries = await fs.readdir(this.modulesPath, { withFileTypes: true });
+            const entries = await fsPromises.readdir(this.modulesPath, { withFileTypes: true });
             
             for (const entry of entries) {
                 if (entry.isDirectory() && !entry.name.startsWith('_')) {
@@ -61,7 +63,7 @@ class ModuleLoader extends EventEmitter {
         }
         
         // Load and validate manifest
-        const manifestContent = await fs.readFile(manifestPath, 'utf8');
+        const manifestContent = await fsPromises.readFile(manifestPath, 'utf8');
         const manifest = JSON.parse(manifestContent);
         
         // Validate manifest
@@ -139,11 +141,11 @@ class ModuleLoader extends EventEmitter {
         this.emit('module:loading', { name: moduleInfo.name });
         
         try {
-            // Clear require cache for hot reloading
-            delete require.cache[require.resolve(moduleInfo.indexPath)];
+            // Note: ES modules don't have require.cache, dynamic imports are used for hot reloading
             
             // Load module class
-            const ModuleClass = require(moduleInfo.indexPath);
+            const moduleModule = await import(moduleInfo.indexPath);
+            const ModuleClass = moduleModule.default;
             
             // Create module context
             const moduleContext = this.createModuleContext(moduleInfo);
@@ -268,7 +270,7 @@ class ModuleLoader extends EventEmitter {
     
     async fileExists(filePath) {
         try {
-            await fs.access(filePath);
+            await fsPromises.access(filePath);
             return true;
         } catch {
             return false;
@@ -276,4 +278,4 @@ class ModuleLoader extends EventEmitter {
     }
 }
 
-module.exports = ModuleLoader;
+export default ModuleLoader;

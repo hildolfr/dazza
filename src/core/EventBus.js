@@ -1,4 +1,4 @@
-const EventEmitter = require('events');
+import { EventEmitter } from 'events';
 
 class EventBus extends EventEmitter {
     constructor(config = {}) {
@@ -315,4 +315,4 @@ class EventBus extends EventEmitter {
     }
 }
 
-module.exports = EventBus;
+export default EventBus;

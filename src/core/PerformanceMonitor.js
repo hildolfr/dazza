@@ -1,4 +1,4 @@
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 class PerformanceMonitor extends EventEmitter {
     constructor(config = {}) {
@@ -374,4 +374,4 @@ class PerformanceMonitor extends EventEmitter {
     }
 }
 
-module.exports = PerformanceMonitor;
+export default PerformanceMonitor;
