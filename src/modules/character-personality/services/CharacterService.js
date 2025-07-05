@@ -1,6 +1,8 @@
+import { OllamaService } from '../../../services/ollama.js';
+
 /**
  * Character Service
- * Combines Dazza personality traits, mention detection, and response generation
+ * Combines Dazza personality traits, mention detection, response generation, and Ollama integration
  * Extracted from bot.js (lines 1806-1844) and character.js for modular architecture
  */
 class CharacterService {
@@ -19,14 +21,22 @@ class CharacterService {
         // Initialize personality data
         this.initializePersonalityData();
         
+        // Initialize Ollama service
+        this.ollamaService = new OllamaService(config);
+        
         this.ready = false;
     }
     
     async initialize() {
         this.eventBus = this.services.get('eventBus');
         
+        // Subscribe to mention detection events
+        if (this.eventBus) {
+            this.eventBus.on('chat:message', this.handleMentionCheck.bind(this));
+        }
+        
         this.ready = true;
-        this.logger.info('CharacterService initialized');
+        this.logger.info('CharacterService initialized with Ollama integration');
     }
     
     /**
@@ -385,6 +395,73 @@ class CharacterService {
         }
         
         this.logger.debug('Added custom content', { type, count: itemArray.length, responseType });
+    }
+    
+    /**
+     * Handle mention detection and generate Ollama responses
+     * @param {Object} data - Message data from chat:message event
+     */
+    async handleMentionCheck(data) {
+        try {
+            if (!data || !data.message || !data.username) {
+                return;
+            }
+            
+            // Check if this message mentions Dazza
+            if (this.hasMention(data.message)) {
+                this.logger.info('Dazza mention detected, generating Ollama response', {
+                    username: data.username,
+                    message: data.message.substring(0, 50)
+                });
+                
+                await this.generateOllamaResponse(data);
+            }
+        } catch (error) {
+            this.logger.error('Error in mention handling:', error);
+        }
+    }
+    
+    /**
+     * Generate and send Ollama response for Dazza mentions
+     * @param {Object} messageData - Message data containing username, message, etc.
+     */
+    async generateOllamaResponse(messageData) {
+        try {
+            // Check if Ollama is available
+            if (!await this.ollamaService.isAvailable()) {
+                this.logger.warn('Ollama service not available, skipping response generation');
+                return;
+            }
+            
+            const response = await this.ollamaService.generateResponse(messageData.message, {
+                username: messageData.username,
+                context: 'chat_mention'
+            });
+            
+            if (response) {
+                // Get connection service to send the response
+                const connectionService = this.services.get('connection');
+                if (connectionService && connectionService.sendMessage) {
+                    await connectionService.sendMessage(response);
+                    this.logger.info('Ollama response sent', {
+                        username: messageData.username,
+                        responseLength: response.length
+                    });
+                } else {
+                    this.logger.warn('Connection service not available, cannot send Ollama response');
+                }
+            }
+        } catch (error) {
+            this.logger.error('Error generating Ollama response:', error);
+            
+            // Send a fallback response using personality data
+            const fallbackResponse = this.getResponse('confused');
+            const connectionService = this.services.get('connection');
+            if (connectionService && connectionService.sendMessage) {
+                await connectionService.sendMessage(fallbackResponse);
+                this.logger.info('Sent fallback response due to Ollama error');
+            }
+        }
     }
 }
 
