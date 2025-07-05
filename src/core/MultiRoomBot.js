@@ -32,6 +32,7 @@ import RoomContext from '../RoomContext.js';
 import { applyRoomEventHandlers } from './roomEventHandlers.js';
 import { setupHeistHandlers } from './heistEventHandlers.js';
 import MediaTracker from '../modules/media/MediaTracker.js';
+import StackMonitor from './StackMonitor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,6 +88,13 @@ export class MultiRoomBot extends EventEmitter {
         // API server
         this.apiServer = null;
         
+        // Stack monitoring
+        this.stackMonitor = new StackMonitor({
+            ...config.stackMonitor,
+            enableDebugLogging: config.logging?.level === 'debug',
+            enableEmergencyShutdown: true
+        });
+        
         // Batch processing
         this.batchScheduler = null;
         
@@ -134,6 +142,9 @@ export class MultiRoomBot extends EventEmitter {
             });
             this.memoryMonitor.start();
             
+            // Initialize stack monitoring
+            this.setupStackMonitoring();
+            
             // Initialize batch scheduler
             if (this.config.batch?.enabled !== false) {
                 this.batchScheduler = new BatchScheduler(this.db, this.logger);
@@ -167,6 +178,301 @@ export class MultiRoomBot extends EventEmitter {
         } catch (error) {
             this.logger.error('Failed to initialize bot:', error);
             throw error;
+        }
+    }
+    
+    setupStackMonitoring() {
+        // Start stack monitoring
+        this.stackMonitor.start();
+        
+        // Register emergency shutdown components
+        this.stackMonitor.emergencyShutdown.registerComponent(
+            'MultiRoomBot',
+            this.handleEmergencyShutdown.bind(this),
+            0 // Highest priority
+        );
+        
+        // Register database for emergency shutdown
+        this.stackMonitor.emergencyShutdown.registerComponent(
+            'Database',
+            async () => {
+                await this.db.close();
+            },
+            2
+        );
+        
+        // Register connections for emergency shutdown
+        this.stackMonitor.emergencyShutdown.registerComponent(
+            'Connections',
+            async () => {
+                for (const [roomId, connection] of this.connections) {
+                    try {
+                        connection.disconnect();
+                    } catch (error) {
+                        this.logger.error(`Failed to disconnect from ${roomId}:`, error);
+                    }
+                }
+            },
+            3
+        );
+        
+        // Register API server for emergency shutdown
+        if (this.apiServer) {
+            this.stackMonitor.emergencyShutdown.registerComponent(
+                'ApiServer',
+                async () => {
+                    await this.apiServer.close();
+                },
+                4
+            );
+        }
+        
+        // Listen for stack monitoring events
+        this.stackMonitor.on('stack:warning', (data) => {
+            this.logger.warn(`Stack depth warning: ${data.depth}/${data.threshold}`);
+            this.handleStackWarning(data);
+        });
+        
+        this.stackMonitor.on('stack:critical', (data) => {
+            this.logger.error(`Stack depth critical: ${data.depth}/${data.threshold}`);
+            this.handleStackCritical(data);
+        });
+        
+        this.stackMonitor.on('stack:emergency', (data) => {
+            this.logger.error(`Stack emergency: ${data.depth}/${data.threshold}`);
+            this.handleStackEmergency(data);
+        });
+        
+        this.stackMonitor.on('stack:shutdown', (data) => {
+            this.logger.error(`Stack shutdown initiated: ${data.reason}`);
+            this.handleStackShutdown(data);
+        });
+        
+        this.stackMonitor.on('recursion:detected', (data) => {
+            this.logger.warn(`Recursion detected: ${data.pattern}`);
+            this.handleRecursionDetected(data);
+        });
+        
+        // Register recovery strategies
+        this.stackMonitor.emergencyShutdown.registerRecoveryStrategy(
+            'restart_connections',
+            async () => {
+                await this.restartConnections();
+            }
+        );
+        
+        this.stackMonitor.emergencyShutdown.registerRecoveryStrategy(
+            'clear_global_state',
+            async () => {
+                await this.clearGlobalState();
+            }
+        );
+        
+        this.logger.info('Stack monitoring setup completed');
+    }
+    
+    handleStackWarning(data) {
+        // Temporarily reduce message frequency
+        for (const [roomId, context] of this.rooms) {
+            if (context.rateLimiter) {
+                context.rateLimiter.setTempLimit(0.5); // Reduce to 50%
+            }
+        }
+        
+        // Set timeout to restore normal rates
+        setTimeout(() => {
+            for (const [roomId, context] of this.rooms) {
+                if (context.rateLimiter) {
+                    context.rateLimiter.clearTempLimit();
+                }
+            }
+        }, 30000);
+        
+        // Emit warning to all rooms
+        this.emit('stack:warning', data);
+    }
+    
+    handleStackCritical(data) {
+        // Pause non-essential operations
+        if (this.batchScheduler) {
+            this.batchScheduler.pause();
+        }
+        
+        // Reduce connection activity
+        for (const [roomId, connection] of this.connections) {
+            if (connection.socket) {
+                connection.socket.setMaxListeners(5); // Reduce listeners
+            }
+        }
+        
+        // Set timeout to resume operations
+        setTimeout(() => {
+            if (this.batchScheduler) {
+                this.batchScheduler.resume();
+            }
+        }, 60000);
+        
+        // Emit critical to all rooms
+        this.emit('stack:critical', data);
+    }
+    
+    handleStackEmergency(data) {
+        // Emergency pause all non-critical operations
+        if (this.batchScheduler) {
+            this.batchScheduler.stop();
+        }
+        
+        if (this.memoryMonitor) {
+            this.memoryMonitor.stop();
+        }
+        
+        if (this.imageHealthChecker) {
+            this.imageHealthChecker.stop();
+        }
+        
+        // Clear global intervals
+        if (this.reminderInterval) {
+            clearInterval(this.reminderInterval);
+            this.reminderInterval = null;
+        }
+        
+        if (this.statsInterval) {
+            clearInterval(this.statsInterval);
+            this.statsInterval = null;
+        }
+        
+        // Emit emergency to all rooms
+        this.emit('stack:emergency', data);
+    }
+    
+    handleStackShutdown(data) {
+        this.logger.error('Stack overflow shutdown initiated');
+        
+        // Immediately shutdown everything
+        this.handleEmergencyShutdown();
+    }
+    
+    handleRecursionDetected(data) {
+        this.logger.warn('Recursion pattern detected, clearing related state');
+        
+        // Clear cooldowns that might be causing recursion
+        this.cooldowns.clear();
+        
+        // Reset rate limiters
+        this.rateLimiter.reset();
+        
+        // Emit recursion event
+        this.emit('recursion:detected', data);
+    }
+    
+    async handleEmergencyShutdown() {
+        this.logger.error('Emergency shutdown initiated');
+        
+        try {
+            // Set ready flag to false
+            this.ready = false;
+            
+            // Stop all managers
+            if (this.heistManager) {
+                await this.heistManager.stop();
+            }
+            
+            if (this.videoPayoutManager) {
+                await this.videoPayoutManager.stop();
+            }
+            
+            if (this.batchScheduler) {
+                this.batchScheduler.stop();
+            }
+            
+            if (this.memoryMonitor) {
+                this.memoryMonitor.stop();
+            }
+            
+            if (this.imageHealthChecker) {
+                this.imageHealthChecker.stop();
+            }
+            
+            // Clear all intervals
+            if (this.reminderInterval) {
+                clearInterval(this.reminderInterval);
+            }
+            
+            if (this.statsInterval) {
+                clearInterval(this.statsInterval);
+            }
+            
+            // Disconnect all rooms
+            for (const [roomId, connection] of this.connections) {
+                try {
+                    connection.disconnect();
+                } catch (error) {
+                    this.logger.error(`Error disconnecting from ${roomId}:`, error);
+                }
+            }
+            
+            // Close API server
+            if (this.apiServer) {
+                await this.apiServer.close();
+            }
+            
+            // Close database
+            await this.db.close();
+            
+            this.logger.info('Emergency shutdown completed');
+            
+        } catch (error) {
+            this.logger.error('Error during emergency shutdown:', error);
+        }
+    }
+    
+    async restartConnections() {
+        this.logger.info('Restarting connections for stack recovery');
+        
+        const roomIds = Array.from(this.rooms.keys());
+        
+        // Disconnect all
+        for (const [roomId, connection] of this.connections) {
+            try {
+                connection.disconnect();
+            } catch (error) {
+                this.logger.error(`Error disconnecting ${roomId}:`, error);
+            }
+        }
+        
+        // Clear connections
+        this.connections.clear();
+        
+        // Wait before reconnecting
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Reconnect to rooms
+        for (const roomId of roomIds) {
+            try {
+                await this.connectToRoom(roomId);
+            } catch (error) {
+                this.logger.error(`Failed to reconnect to ${roomId}:`, error);
+            }
+        }
+    }
+    
+    async clearGlobalState() {
+        this.logger.info('Clearing global state for stack recovery');
+        
+        // Clear cooldowns
+        this.cooldowns.clear();
+        
+        // Reset rate limiter
+        this.rateLimiter.reset();
+        
+        // Clear memory manager state
+        if (this.memoryManager) {
+            this.memoryManager.reset();
+        }
+        
+        // Force garbage collection if available
+        if (global.gc) {
+            global.gc();
         }
     }
     
@@ -757,6 +1063,7 @@ export default {
         if (this.mediaTracker) this.mediaTracker.destroy();
         if (this.cashMonitor) this.cashMonitor.stop();
         if (this.batchScheduler) this.batchScheduler.stop();
+        if (this.stackMonitor) await this.stackMonitor.shutdown();
         if (this.apiServer) await this.apiServer.stop();
         
         // Leave all rooms

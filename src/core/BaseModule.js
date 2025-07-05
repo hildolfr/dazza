@@ -73,10 +73,313 @@ class BaseModule extends EventEmitter {
         this._operationLimits = new Map(); // Track operation frequency
         this._emergencyMode = false;
         
+        // Stack monitoring integration
+        this._stackMonitor = context.stackMonitor;
+        this._setupStackMonitoring();
+        
         // Bind cleanup for emergency shutdown
         this._boundCleanup = this._emergencyCleanup.bind(this);
         process.on('SIGINT', this._boundCleanup);
         process.on('SIGTERM', this._boundCleanup);
+    }
+    
+    // ===== Stack Monitoring Integration =====
+    
+    _setupStackMonitoring() {
+        if (!this._stackMonitor) return;
+        
+        // Register this module for emergency shutdown
+        this._stackMonitor.emergencyShutdown.registerComponent(
+            this.id,
+            this._handleEmergencyShutdown.bind(this),
+            5 // Module priority
+        );
+        
+        // Listen for stack monitoring events
+        this._stackMonitor.on('stack:warning', (data) => {
+            this._handleStackWarning(data);
+        });
+        
+        this._stackMonitor.on('stack:critical', (data) => {
+            this._handleStackCritical(data);
+        });
+        
+        this._stackMonitor.on('stack:emergency', (data) => {
+            this._handleStackEmergency(data);
+        });
+        
+        this._stackMonitor.on('recursion:detected', (data) => {
+            this._handleRecursionDetected(data);
+        });
+        
+        // Register recovery strategies
+        this._stackMonitor.emergencyShutdown.registerComponentRecovery(
+            this.id,
+            this._handleStackRecovery.bind(this)
+        );
+    }
+    
+    _handleStackWarning(data) {
+        this.logger.warn(`Stack depth warning: ${data.depth}/${data.threshold}`, {
+            module: this.id,
+            stackDepth: data.depth,
+            threshold: data.threshold
+        });
+        
+        // Reduce operation frequency temporarily
+        this._reduceOperationFrequency();
+        
+        // Emit module-level warning
+        this.emit('stack:warning', {
+            module: this.id,
+            ...data
+        });
+    }
+    
+    _handleStackCritical(data) {
+        this.logger.error(`Stack depth critical: ${data.depth}/${data.threshold}`, {
+            module: this.id,
+            stackDepth: data.depth,
+            threshold: data.threshold
+        });
+        
+        // Open circuit breaker to prevent further errors
+        this._openCircuitBreaker();
+        
+        // Clear any pending operations
+        this._clearPendingOperations();
+        
+        // Emit module-level critical
+        this.emit('stack:critical', {
+            module: this.id,
+            ...data
+        });
+    }
+    
+    _handleStackEmergency(data) {
+        this.logger.error(`Stack emergency detected: ${data.depth}/${data.threshold}`, {
+            module: this.id,
+            stackDepth: data.depth,
+            threshold: data.threshold
+        });
+        
+        // Enter emergency mode
+        this._emergencyMode = true;
+        
+        // Stop all scheduled tasks
+        this.scheduler.removeModuleTasks(this.id);
+        
+        // Clear all timers
+        this._cleanupTimers();
+        
+        // Emit emergency event
+        this.emit('stack:emergency', {
+            module: this.id,
+            ...data
+        });
+    }
+    
+    _handleRecursionDetected(data) {
+        this.logger.warn(`Recursion detected in module ${this.id}`, {
+            pattern: data.pattern,
+            functions: data.pattern.functions
+        });
+        
+        // Clear retry counts for potentially recursive operations
+        this._retryCount.clear();
+        
+        // Reset circuit breaker if recursion was the cause
+        if (this._circuitBreaker.isOpen) {
+            this._resetCircuitBreaker();
+        }
+        
+        // Emit recursion event
+        this.emit('recursion:detected', {
+            module: this.id,
+            ...data
+        });
+    }
+    
+    async _handleEmergencyShutdown() {
+        this.logger.error(`Emergency shutdown initiated for module ${this.id}`);
+        
+        try {
+            // Set emergency mode
+            this._emergencyMode = true;
+            
+            // Stop all operations immediately
+            await this.stop();
+            
+            // Force cleanup
+            this._cleanupTimers();
+            
+            // Clear all state
+            this.state.clear();
+            
+            this.logger.info(`Emergency shutdown completed for module ${this.id}`);
+            
+        } catch (error) {
+            this.logger.error(`Error during emergency shutdown: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    async _handleStackRecovery() {
+        this.logger.info(`Stack recovery initiated for module ${this.id}`);
+        
+        try {
+            // Exit emergency mode
+            this._emergencyMode = false;
+            
+            // Reset circuit breaker
+            this._resetCircuitBreaker();
+            
+            // Clear operation limits
+            this._operationLimits.clear();
+            
+            // Restart if module was running
+            if (this._started) {
+                await this.start();
+            }
+            
+            this.logger.info(`Stack recovery completed for module ${this.id}`);
+            return true;
+            
+        } catch (error) {
+            this.logger.error(`Stack recovery failed: ${error.message}`);
+            return false;
+        }
+    }
+    
+    _reduceOperationFrequency() {
+        // Temporarily increase retry delays
+        this._retryDelay = Math.min(this._retryDelay * 2, this._maxRetryDelay);
+        
+        // Set timeout to restore normal operation frequency
+        this.createTimeout(() => {
+            this._retryDelay = 1000; // Reset to base delay
+        }, 30000, 'restore-operation-frequency');
+    }
+    
+    _clearPendingOperations() {
+        // Clear all pending timers and intervals
+        this._cleanupTimers();
+        
+        // Clear retry tracking
+        this._retryCount.clear();
+        
+        // Clear operation limits
+        this._operationLimits.clear();
+    }
+    
+    // ===== Enhanced Error Handling with Stack Monitoring =====
+    
+    async _handleError(error, context, data = {}) {
+        this._metrics.errorCount++;
+        
+        // Check if we're in emergency mode
+        if (this._emergencyMode) {
+            this.logger.warn('Module in emergency mode, suppressing error handling');
+            return;
+        }
+        
+        // Capture stack trace for analysis
+        const stackTrace = error.stack || new Error().stack;
+        
+        // Analyze stack if stack monitor available
+        if (this._stackMonitor) {
+            const stackAnalysis = this._stackMonitor.stackAnalyzer.analyzePattern(stackTrace);
+            
+            if (stackAnalysis.isRecursive) {
+                this.logger.warn(`Recursive error pattern detected in ${context}`, {
+                    pattern: stackAnalysis.patterns,
+                    recursionDepth: stackAnalysis.recursionDepth
+                });
+                
+                // Handle recursion-related errors differently
+                this._handleRecursiveError(error, context, stackAnalysis);
+                return;
+            }
+        }
+        
+        // Update circuit breaker
+        this._updateCircuitBreaker(error);
+        
+        const errorInfo = {
+            module: this.id,
+            context,
+            error: error.message,
+            stack: error.stack,
+            data,
+            circuitBreakerOpen: this._circuitBreaker.isOpen,
+            stackTrace: this._stackMonitor ? stackTrace : null
+        };
+        
+        this.logger.error('Module error:', errorInfo);
+        
+        // Don't emit error events if circuit breaker is open to prevent cascade
+        if (!this._circuitBreaker.isOpen) {
+            try {
+                this.emit('module:error', errorInfo);
+            } catch (emitError) {
+                this.logger.error('Failed to emit module error event:', emitError);
+                this._openCircuitBreaker();
+            }
+        }
+        
+        // Retry logic for recoverable errors (if circuit breaker allows)
+        if (this._isRecoverableError(error) && !this._circuitBreaker.isOpen) {
+            await this._attemptRetry(error, context, data);
+        } else if (this._circuitBreaker.isOpen) {
+            this.logger.error('Circuit breaker open, skipping retry attempt');
+        }
+    }
+    
+    _handleRecursiveError(error, context, stackAnalysis) {
+        this.logger.error(`Recursive error in ${context}:`, {
+            error: error.message,
+            recursionDepth: stackAnalysis.recursionDepth,
+            pattern: stackAnalysis.patterns
+        });
+        
+        // Clear recursion-related retry attempts
+        for (const [key, retryInfo] of this._retryCount.entries()) {
+            if (key.includes(context)) {
+                this._retryCount.delete(key);
+            }
+        }
+        
+        // Force circuit breaker open for recursive errors
+        this._openCircuitBreaker();
+        
+        // Emit recursion error event
+        this.emit('module:recursion_error', {
+            module: this.id,
+            context,
+            error: error.message,
+            stackAnalysis
+        });
+    }
+    
+    // ===== Stack Monitoring Utilities =====
+    
+    getStackMonitoringStatus() {
+        if (!this._stackMonitor) {
+            return { available: false };
+        }
+        
+        return {
+            available: true,
+            status: this._stackMonitor.getStatus(),
+            emergencyMode: this._emergencyMode,
+            circuitBreakerOpen: this._circuitBreaker.isOpen
+        };
+    }
+    
+    forceStackEmergencyShutdown() {
+        if (this._stackMonitor) {
+            this._stackMonitor.forceEmergencyShutdown(`Manual shutdown by module ${this.id}`);
+        }
     }
     
     // ===== Lifecycle Methods =====
@@ -575,7 +878,7 @@ class BaseModule extends EventEmitter {
     // ===== Metrics =====
     
     getMetrics() {
-        return {
+        const metrics = {
             ...this._metrics,
             uptime: this._started ? Date.now() - this._metrics.startTime : 0,
             memory: process.memoryUsage.rss ? process.memoryUsage() : null,
@@ -588,6 +891,13 @@ class BaseModule extends EventEmitter {
             activeRetries: this._retryCount.size,
             operationLimits: this._operationLimits.size
         };
+        
+        // Add stack monitoring metrics if available
+        if (this._stackMonitor) {
+            metrics.stackMonitoring = this.getStackMonitoringStatus();
+        }
+        
+        return metrics;
     }
     
     // Get circuit breaker status

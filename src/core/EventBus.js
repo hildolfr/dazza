@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import StackMonitor from './StackMonitor.js';
 
 class EventBus extends EventEmitter {
     constructor(config = {}) {
@@ -69,8 +70,263 @@ class EventBus extends EventEmitter {
             lastCleanup: Date.now()
         };
         
+        // Initialize stack monitoring
+        this.stackMonitor = new StackMonitor({
+            ...config.stackMonitor,
+            enableDebugLogging: this.config.debugMode,
+            enableEmergencyShutdown: true
+        });
+        
         // Initialize cleanup interval
         this.initializeCleanup();
+        
+        // Setup stack monitoring integration
+        this.setupStackMonitoring();
+    }
+    
+    // ===== Stack Monitoring Integration =====
+    
+    setupStackMonitoring() {
+        // Start stack monitoring
+        this.stackMonitor.start();
+        
+        // Listen for stack monitoring events
+        this.stackMonitor.on('stack:warning', (data) => {
+            this.handleStackWarning(data);
+        });
+        
+        this.stackMonitor.on('stack:critical', (data) => {
+            this.handleStackCritical(data);
+        });
+        
+        this.stackMonitor.on('stack:emergency', (data) => {
+            this.handleStackEmergency(data);
+        });
+        
+        this.stackMonitor.on('stack:shutdown', (data) => {
+            this.handleStackShutdown(data);
+        });
+        
+        this.stackMonitor.on('recursion:detected', (data) => {
+            this.handleRecursionDetected(data);
+        });
+        
+        this.stackMonitor.on('recovery:attempt', (data) => {
+            this.handleStackRecovery(data);
+        });
+        
+        // Register EventBus for emergency shutdown
+        this.stackMonitor.emergencyShutdown.registerComponent(
+            'EventBus',
+            this.emergencyShutdownHandler.bind(this),
+            1 // High priority
+        );
+        
+        this.debugLog('Stack monitoring integration setup completed');
+    }
+    
+    handleStackWarning(data) {
+        this.debugLog(`STACK WARNING: Depth ${data.depth} reached threshold ${data.threshold}`);
+        
+        // Emit warning to modules
+        try {
+            super.emit('eventbus:stack_warning', {
+                ...data,
+                timestamp: Date.now(),
+                eventBusStats: this.getBasicStats()
+            });
+        } catch (error) {
+            this.debugLog(`Failed to emit stack warning: ${error.message}`);
+        }
+    }
+    
+    handleStackCritical(data) {
+        this.debugLog(`STACK CRITICAL: Depth ${data.depth} reached threshold ${data.threshold}`);
+        
+        // Temporarily reduce maxStackDepth to be more aggressive
+        const originalMaxDepth = this.config.maxStackDepth;
+        this.config.maxStackDepth = Math.max(5, originalMaxDepth - 2);
+        
+        // Emit critical alert
+        try {
+            super.emit('eventbus:stack_critical', {
+                ...data,
+                timestamp: Date.now(),
+                eventBusStats: this.getBasicStats(),
+                actionTaken: 'reduced_stack_depth'
+            });
+        } catch (error) {
+            this.debugLog(`Failed to emit stack critical: ${error.message}`);
+        }
+        
+        // Restore original max depth after delay
+        setTimeout(() => {
+            this.config.maxStackDepth = originalMaxDepth;
+            this.debugLog('Stack depth limit restored');
+        }, 10000);
+    }
+    
+    handleStackEmergency(data) {
+        this.debugLog(`STACK EMERGENCY: Depth ${data.depth} reached threshold ${data.threshold}`);
+        
+        // Open circuit breaker immediately
+        this.triggerCircuitBreaker(new Error('Stack emergency detected'));
+        
+        // Clear event emission stack
+        this.recursionProtection.emissionStack.clear();
+        this.recursionProtection.activeChains.clear();
+        this.recursionProtection.currentStackDepth = 0;
+        
+        // Emit emergency alert (using super to bypass recursion protection)
+        try {
+            super.emit('eventbus:stack_emergency', {
+                ...data,
+                timestamp: Date.now(),
+                actionTaken: 'circuit_breaker_opened'
+            });
+        } catch (error) {
+            console.error('[EventBus] Failed to emit stack emergency:', error);
+        }
+    }
+    
+    handleStackShutdown(data) {
+        this.debugLog(`STACK SHUTDOWN: ${data.reason}`);
+        
+        // Immediately stop processing events
+        this.recursionProtection.circuitBreaker.isOpen = true;
+        
+        // Emit final shutdown event
+        try {
+            super.emit('eventbus:emergency_shutdown', {
+                ...data,
+                timestamp: Date.now(),
+                source: 'stack_monitor'
+            });
+        } catch (error) {
+            console.error('[EventBus] Failed to emit emergency shutdown:', error);
+        }
+        
+        // Begin graceful shutdown
+        this.emergencyShutdownHandler();
+    }
+    
+    handleRecursionDetected(data) {
+        this.debugLog(`RECURSION DETECTED: ${data.pattern.pattern || data.pattern}`);
+        
+        // Track recursion detection
+        const protection = this.recursionProtection;
+        
+        // Clear related patterns from active chains
+        if (data.pattern.functions) {
+            for (const func of data.pattern.functions) {
+                for (const [eventId, chainInfo] of protection.eventChains.entries()) {
+                    if (chainInfo.event && chainInfo.event.includes(func)) {
+                        protection.eventChains.delete(eventId);
+                        protection.activeChains.delete(eventId);
+                    }
+                }
+            }
+        }
+        
+        // Emit recursion detection event
+        try {
+            super.emit('eventbus:recursion_detected', {
+                ...data,
+                timestamp: Date.now(),
+                actionTaken: 'cleared_related_chains'
+            });
+        } catch (error) {
+            this.debugLog(`Failed to emit recursion detection: ${error.message}`);
+        }
+    }
+    
+    handleStackRecovery(data) {
+        this.debugLog(`STACK RECOVERY: Attempt ${data.attempt} for ${data.type}`);
+        
+        // Reset circuit breaker if it was opened due to stack issues
+        if (this.recursionProtection.circuitBreaker.isOpen && data.type === 'critical_depth') {
+            this.resetCircuitBreaker();
+        }
+        
+        // Emit recovery event
+        try {
+            super.emit('eventbus:stack_recovery', {
+                ...data,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            this.debugLog(`Failed to emit stack recovery: ${error.message}`);
+        }
+    }
+    
+    emergencyShutdownHandler() {
+        this.debugLog('EventBus emergency shutdown initiated');
+        
+        try {
+            // Stop stack monitoring
+            this.stackMonitor.stop();
+            
+            // Clear all recursion protection state
+            this.recursionProtection.emissionStack.clear();
+            this.recursionProtection.activeChains.clear();
+            this.recursionProtection.eventChains.clear();
+            this.recursionProtection.eventSources.clear();
+            this.recursionProtection.recentEvents.clear();
+            this.recursionProtection.eventRates.clear();
+            this.recursionProtection.currentStackDepth = 0;
+            
+            // Clear cleanup interval
+            if (this.recursionProtection.cleanupInterval) {
+                clearInterval(this.recursionProtection.cleanupInterval);
+                this.recursionProtection.cleanupInterval = null;
+            }
+            
+            // Remove all listeners to prevent further event processing
+            this.removeAllListeners();
+            
+            this.debugLog('EventBus emergency shutdown completed');
+            
+        } catch (error) {
+            console.error('[EventBus] Error during emergency shutdown:', error);
+        }
+    }
+    
+    // ===== Enhanced Emit with Stack Monitoring =====
+    
+    emitWithStackMonitoring(event, data = {}) {
+        // Provide stack trace to stack monitor
+        const stackTrace = new Error().stack;
+        
+        // Analyze stack before emission
+        const stackAnalysis = this.stackMonitor.stackAnalyzer.analyzePattern(stackTrace);
+        
+        if (stackAnalysis.isRecursive) {
+            this.debugLog(`Blocking recursive event emission: ${event}`);
+            
+            // Emit recursion blocking event
+            super.emit('eventbus:recursion_blocked', {
+                event,
+                analysis: stackAnalysis,
+                timestamp: Date.now()
+            });
+            
+            return false;
+        }
+        
+        // Proceed with normal emission
+        return this.emit(event, {
+            ...data,
+            _stackAnalysis: stackAnalysis
+        });
+    }
+    
+    getBasicStats() {
+        return {
+            totalEvents: this.stats.totalEvents,
+            activeSubscriptions: this.eventHandlers.size,
+            currentStackDepth: this.recursionProtection.currentStackDepth,
+            circuitBreakerOpen: this.recursionProtection.circuitBreaker.isOpen
+        };
     }
     
     // ===== Recursion Protection Methods =====
@@ -569,7 +825,7 @@ class EventBus extends EventEmitter {
     getStats() {
         const protection = this.recursionProtection;
         
-        return {
+        const stats = {
             totalEvents: this.stats.totalEvents,
             eventCounts: Object.fromEntries(this.stats.eventCounts),
             errorCounts: Object.fromEntries(this.stats.errorCounts),
@@ -589,6 +845,13 @@ class EventBus extends EventEmitter {
                 emissionStackSize: protection.emissionStack.size
             }
         };
+        
+        // Add stack monitoring stats if available
+        if (this.stackMonitor) {
+            stats.stackMonitoring = this.stackMonitor.getStatistics();
+        }
+        
+        return stats;
     }
     
     removeModuleListeners(moduleId) {
@@ -720,11 +983,16 @@ class EventBus extends EventEmitter {
     
     // ===== Cleanup and Shutdown =====
     
-    shutdown() {
+    async shutdown() {
         // Clear cleanup interval
         if (this.recursionProtection.cleanupInterval) {
             clearInterval(this.recursionProtection.cleanupInterval);
             this.recursionProtection.cleanupInterval = null;
+        }
+        
+        // Shutdown stack monitoring
+        if (this.stackMonitor) {
+            await this.stackMonitor.shutdown();
         }
         
         // Remove all listeners
