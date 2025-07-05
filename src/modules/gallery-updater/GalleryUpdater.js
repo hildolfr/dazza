@@ -169,11 +169,11 @@ class GalleryUpdater {
             }
             this.logger.info(`Gallery HTML generated at ${galleryPath}`);
 
-            // Commit and push changes
+            // Commit and push changes to current branch
             const gitResult = await gitService.commitAndPush(
                 'docs/gallery/',
                 `Update gallery - ${new Date().toLocaleString('en-AU')}`,
-                'main'
+                'dazza-cleanup'
             );
 
             if (gitResult.success) {
