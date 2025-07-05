@@ -1,0 +1,20 @@
+{
+    "name": "url-comment",
+    "version": "1.0.0",
+    "description": "Automatic URL commenting system with drunk personality",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": ["message-processing"],
+    "config": {
+        "responseChance": 0.5,
+        "minCooldown": 120000,
+        "maxCooldown": 900000,
+        "minDrunkDelay": 1000,
+        "maxDrunkDelay": 5000
+    },
+    "events": {
+        "subscribes": ["chat.message"],
+        "publishes": ["url.commented", "url.detected"]
+    }
+}

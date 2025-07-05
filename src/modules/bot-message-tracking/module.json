@@ -1,0 +1,19 @@
+{
+    "name": "bot-message-tracking",
+    "version": "1.0.0",
+    "description": "Bot message tracking and echo prevention system",
+    "type": "utility",
+    "enabled": true,
+    "requires": [],
+    "optional": [],
+    "config": {
+        "messageCacheDuration": 30000,
+        "maxProcessedSize": 1000,
+        "staleMessageThreshold": 30000,
+        "cleanupInterval": 60000
+    },
+    "events": {
+        "subscribes": ["chat.message"],
+        "publishes": ["message.tracked", "message.duplicate"]
+    }
+}

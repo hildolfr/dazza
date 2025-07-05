@@ -1,0 +1,25 @@
+{
+    "name": "greeting-system",
+    "version": "1.0.0",
+    "description": "User greeting system with spam prevention and first-time detection",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": [],
+    "config": {
+        "enabled": true,
+        "minCooldown": 300000,
+        "maxCooldown": 900000,
+        "minTypingDelay": 1000,
+        "maxTypingDelay": 3000,
+        "greetingChance": 0.7,
+        "recentJoinThreshold": 2,
+        "recentJoinWindow": 30000,
+        "departureTrackingDuration": 120000,
+        "departureCleanupAge": 3600000
+    },
+    "events": {
+        "subscribes": ["user.join", "user.leave"],
+        "publishes": ["user.greeted", "user.departure"]
+    }
+}

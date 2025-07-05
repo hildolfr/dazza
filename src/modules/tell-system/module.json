@@ -1,0 +1,17 @@
+{
+    "name": "tell-system",
+    "version": "1.0.0",
+    "description": "Tell system for offline message delivery",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": [],
+    "config": {
+        "deliveryDelay": 1500,
+        "messageInterval": 2000
+    },
+    "events": {
+        "subscribes": ["user.join"],
+        "publishes": ["tell.delivered", "tell.failed"]
+    }
+}
