@@ -1,0 +1,22 @@
+{
+  "name": "message-processing",
+  "version": "1.0.0",
+  "description": "Core message processing, filtering, and routing functionality extracted from bot.js",
+  "type": "core",
+  "dependencies": [
+    "core-database",
+    "permissions",
+    "cooldown"
+  ],
+  "services": [
+    "MessageProcessor",
+    "MessageFilter", 
+    "MessageHistory",
+    "UrlCommentHandler",
+    "GameResponseHandler",
+    "EventEmitter"
+  ],
+  "loadOrder": 30,
+  "author": "Dazza Bot Team",
+  "tags": ["core", "messaging", "filtering", "routing"]
+}

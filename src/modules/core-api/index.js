@@ -204,26 +204,25 @@ class CoreApiModule extends BaseModule {
         });
         
         // Configuration
-        this.app.get('/api/config/:moduleId?', (req, res) => {
+        this.app.get('/api/config', (req, res) => {
+            // Return global config (sanitized)
+            const safeConfig = this._sanitizeConfig(this.modules.config);
+            res.json(safeConfig);
+        });
+        
+        this.app.get('/api/config/:moduleId', (req, res) => {
             const { moduleId } = req.params;
-            
-            if (moduleId) {
-                const module = this.modules.moduleRegistry.get(moduleId);
-                if (!module) {
-                    return res.status(404).json({
-                        error: 'Module not found'
-                    });
-                }
-                
-                res.json({
-                    module: moduleId,
-                    config: module.config
+            const module = this.modules.moduleRegistry.get(moduleId);
+            if (!module) {
+                return res.status(404).json({
+                    error: 'Module not found'
                 });
-            } else {
-                // Return global config (sanitized)
-                const safeConfig = this._sanitizeConfig(this.modules.config);
-                res.json(safeConfig);
             }
+            
+            res.json({
+                module: moduleId,
+                config: module.config
+            });
         });
         
         // Scheduled tasks
@@ -383,7 +382,8 @@ class CoreApiModule extends BaseModule {
                 'GET /api/modules',
                 'POST /api/modules/:moduleId/:action',
                 'GET /api/metrics',
-                'GET /api/config/:moduleId?',
+                'GET /api/config',
+                'GET /api/config/:moduleId',
                 'GET /api/tasks'
             ]
         });

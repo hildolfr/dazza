@@ -69,11 +69,30 @@ class CooldownModule extends BaseModule {
     async start() {
         await super.start();
         
-        // Provide cooldown services to other modules
-        this.context.eventBus.on('cooldown.check', this.checkCooldown.bind(this));
-        this.context.eventBus.on('cooldown.set', this.setCooldown.bind(this));
-        this.context.eventBus.on('cooldown.reset', this.resetCooldown.bind(this));
-        this.context.eventBus.on('cooldown.cleanup', this.cleanupCooldowns.bind(this));
+        // Register cooldown service for other modules to use
+        this.eventBus.emit('service:register', { 
+            name: 'cooldown', 
+            service: {
+                check: this.checkCooldown.bind(this),
+                set: this.setCooldown.bind(this),
+                reset: this.resetCooldown.bind(this),
+                getRemaining: this.getRemaining.bind(this),
+                getUserCooldowns: this.getUserCooldowns.bind(this),
+                getCommandCooldowns: this.getCommandCooldowns.bind(this),
+                cleanup: this.cleanupCooldowns.bind(this),
+                getStats: this.getStats.bind(this),
+                checkLegacy: this.checkLegacy.bind(this),
+                getLegacyInterface: this.getLegacyInterface.bind(this),
+                getBotInterface: this.getBotInterface.bind(this),
+                migrateFromLegacy: this.migrateFromLegacy.bind(this)
+            }
+        });
+        
+        // Provide cooldown services via events (legacy)
+        this.eventBus.on('cooldown.check', this.checkCooldown.bind(this));
+        this.eventBus.on('cooldown.set', this.setCooldown.bind(this));
+        this.eventBus.on('cooldown.reset', this.resetCooldown.bind(this));
+        this.eventBus.on('cooldown.cleanup', this.cleanupCooldowns.bind(this));
         
         // Subscribe to bot cleanup events
         this.subscribe('bot.cleanup', this.handleCleanup.bind(this));

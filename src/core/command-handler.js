@@ -1,12 +1,16 @@
-import path from 'path';
-import fs from 'fs';
+const path = require('path');
+const fs = require('fs');
 
 /**
  * CommandHandler - Centralized command execution system for bot.js
- * Integrates with the new modular architecture while maintaining compatibility
- * with the existing bot.js structure.
+ * 
+ * ⚠️  DEPRECATED: This is legacy code from the bot.js monolithic architecture.
+ * The active command handling is now done via the modular command-handler module.
+ * This class remains for transition compatibility only.
+ * 
+ * For new development, use the modular command-handler module instead.
  */
-export class CommandHandler {
+class CommandHandler {
     constructor(bot) {
         this.bot = bot;
         this.logger = bot.logger;
@@ -33,27 +37,67 @@ export class CommandHandler {
     
     /**
      * Initialize modular services if available
+     * 
+     * ⚠️  DEPRECATED: This legacy service injection is not actively used.
+     * The modular system uses its own service registration mechanism.
      */
     initializeServices() {
         try {
-            // Try to get services from bot context or module registry
+            // Warn about deprecated usage
+            this.logger.warn('⚠️  DEPRECATED: Legacy CommandHandler is being used. Please migrate to the modular command-handler system.');
+            
+            // Try to get services from bot context, module registry, or global services
+            let servicesFound = false;
+            
+            // Attempt 1: Bot context services (if available)
             if (this.bot.context && this.bot.context.services) {
                 this.permissionService = this.bot.context.services.get('permissions');
                 this.cooldownService = this.bot.context.services.get('cooldown');
+                servicesFound = true;
+            }
+            
+            // Attempt 2: Module registry (if available)
+            if (!servicesFound && this.bot.moduleRegistry) {
+                try {
+                    this.permissionService = this.bot.moduleRegistry.getService('permissions');
+                    this.cooldownService = this.bot.moduleRegistry.getService('cooldown');
+                    servicesFound = true;
+                } catch (error) {
+                    // Module registry doesn't have getService method or services not found
+                }
+            }
+            
+            // Attempt 3: Global service registry (if running in modular system)
+            if (!servicesFound && global.dazzaServices) {
+                this.permissionService = global.dazzaServices.get('permissions');
+                this.cooldownService = global.dazzaServices.get('cooldown');
+                servicesFound = true;
             }
             
             // Use bot's rate limiter if available
             this.rateLimiter = this.bot.rateLimiter;
             
-            this.logger.info('CommandHandler initialized with services', {
+            this.logger.info('Legacy CommandHandler initialized', {
                 permissions: !!this.permissionService,
                 cooldowns: !!this.cooldownService,
-                rateLimiter: !!this.rateLimiter
+                rateLimiter: !!this.rateLimiter,
+                servicesFound: servicesFound,
+                note: 'Consider migrating to modular command-handler system'
             });
+            
+            // If no services found, warn but continue
+            if (!servicesFound) {
+                this.logger.warn('No modular services found - legacy command handler will use fallback systems only');
+            }
+            
         } catch (error) {
-            this.logger.warn('Some services not available during CommandHandler initialization', {
+            this.logger.warn('Legacy CommandHandler service initialization failed - using fallback systems', {
                 error: error.message
             });
+            
+            // Ensure services are null for safe fallback behavior
+            this.permissionService = null;
+            this.cooldownService = null;
         }
     }
     
@@ -158,8 +202,12 @@ export class CommandHandler {
     
     /**
      * Check permissions using the new permissions service or legacy system
+     * 
+     * ⚠️  DEPRECATED: This legacy permission checking is not actively used.
+     * The modular system handles permissions through the permissions module.
      */
     async checkPermissions(commandName, username) {
+        // Attempt to use modular permissions service if available
         if (this.permissionService) {
             try {
                 // Use new permissions service
@@ -169,17 +217,28 @@ export class CommandHandler {
                     { command: commandName }
                 );
                 
+                this.logger.debug('Permission check via modular service', {
+                    username,
+                    command: commandName,
+                    result: hasPermission
+                });
+                
                 return {
                     allowed: hasPermission,
                     reason: hasPermission ? 'allowed' : 'insufficient_permissions'
                 };
             } catch (error) {
-                this.logger.warn('Permission check failed, falling back to legacy', {
+                this.logger.warn('Modular permission check failed, falling back to legacy', {
                     error: error.message,
                     username,
                     command: commandName
                 });
             }
+        } else {
+            this.logger.debug('No modular permission service available, using legacy fallback', {
+                username,
+                command: commandName
+            });
         }
         
         // Fallback to legacy admin check
@@ -357,4 +416,4 @@ export class CommandHandler {
     }
 }
 
-export default CommandHandler;
+module.exports = CommandHandler;

@@ -5,7 +5,7 @@
   "type": "core",
   "author": "Dazza Bot",
   "required": true,
-  "dependencies": [],
+  "requires": [],
   "config": {
     "commandPrefix": "!",
     "rateLimitWindow": 2000,

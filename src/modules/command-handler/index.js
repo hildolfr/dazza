@@ -43,9 +43,9 @@ class CommandHandlerModule extends BaseModule {
         await super.start();
         
         // Provide command handling capabilities to other modules
-        this.context.eventBus.on('command.register', this.registerCommand.bind(this));
-        this.context.eventBus.on('command.unregister', this.unregisterCommand.bind(this));
-        this.context.eventBus.on('command.reload', this.reloadCommand.bind(this));
+        this.eventBus.on('command.register', this.registerCommand.bind(this));
+        this.eventBus.on('command.unregister', this.unregisterCommand.bind(this));
+        this.eventBus.on('command.reload', this.reloadCommand.bind(this));
         
         this.logger.info('Command handler module started');
     }

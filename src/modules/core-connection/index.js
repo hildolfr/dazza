@@ -4,12 +4,18 @@ const RoomConnection = require('./services/RoomConnection');
 const ConnectionManager = require('./services/ConnectionManager');
 
 class CoreConnectionModule extends BaseModule {
-    async init() {
+    constructor(context) {
+        super(context);
         this.connections = new Map();
+        this.connectionManager = null;
+    }
+
+    async init() {
+        await super.init();
         this.connectionManager = new ConnectionManager(this);
         
         // Initialize room connections from config
-        const rooms = this.context.config.rooms || [];
+        const rooms = this._context.config.rooms || [];
         for (const roomConfig of rooms) {
             await this.createConnection(roomConfig);
         }
@@ -56,7 +62,7 @@ class CoreConnectionModule extends BaseModule {
             username,
             password,
             socketOptions: this.config.socketOptions,
-            eventBus: this.context.eventBus,
+            eventBus: this.eventBus,
             logger: this.logger
         });
         

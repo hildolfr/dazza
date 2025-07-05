@@ -1,0 +1,22 @@
+{
+  "name": "character-personality",
+  "version": "1.0.0",
+  "description": "Dazza character personality and mention detection",
+  "type": "feature",
+  "requires": [],
+  "provides": ["character"],
+  "subscribes": [],
+  "emits": [
+    "character:mention:detected",
+    "character:response:generated",
+    "character:greeting:generated", 
+    "character:farewell:generated"
+  ],
+  "config": {
+    "enablePersonality": true,
+    "enableMentionDetection": true,
+    "enableMessageProcessing": true,
+    "greetingCooldown": 43200000,
+    "testModePattern": "!!$"
+  }
+}

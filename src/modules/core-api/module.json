@@ -4,7 +4,7 @@
   "description": "HTTP/WebSocket server for external access",
   "type": "core",
   "required": true,
-  "dependencies": [],
+  "requires": [],
   "config": {
     "port": 3001,
     "host": "0.0.0.0",

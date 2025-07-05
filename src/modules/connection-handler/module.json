@@ -1,0 +1,37 @@
+{
+  "name": "connection-handler",
+  "version": "1.0.0",
+  "description": "Connection and chat event handling module",
+  "type": "core",
+  "requires": ["core-database", "core-connection"],
+  "optionalRequires": ["message-processing"],
+  "provides": ["connectionHandler"],
+  "subscribes": [
+    "connection:disconnected",
+    "connection:reconnecting", 
+    "connection:reconnectFailed",
+    "connection:stateChange",
+    "chat:message",
+    "chat:pm",
+    "user:list",
+    "user:join",
+    "user:leave",
+    "user:afk",
+    "channel:rank",
+    "media:change",
+    "media:update",
+    "media:setCurrent"
+  ],
+  "emits": [
+    "connection:connected",
+    "connection:disconnected",
+    "connection:reconnected",
+    "connection:cleanup",
+    "connection:throttled"
+  ],
+  "config": {
+    "reconnectDelay": 30000,
+    "maxReconnectAttempts": 10,
+    "enableThrottling": true
+  }
+}

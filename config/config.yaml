@@ -14,15 +14,15 @@ modules:
     enabled: true
   
   core-api:
-    enabled: false  # Temporarily disabled due to route parsing error
+    enabled: true  # Re-enabled for modular architecture
     port: 3001
   
   core-connection:
-    enabled: false  # Temporarily disabled for Phase 2 testing
+    enabled: true  # Re-enabled for modular architecture
   
   # Feature modules can be toggled
   command-handler:
-    enabled: false  # Disable until converted
+    enabled: true  # Re-enabled for modular architecture
   
   economy:
     enabled: false  # Disable until converted

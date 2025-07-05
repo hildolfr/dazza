@@ -186,6 +186,7 @@ class ModuleLoader extends EventEmitter {
         const context = {
             manifest: moduleInfo.manifest,
             userConfig: moduleConfig,
+            config: this.context.config, // Add global config access
             eventBus: this.context.eventBus,
             logger: this.context.logger,
             scheduler: this.context.scheduler,

@@ -70,12 +70,34 @@ class PermissionsModule extends BaseModule {
     async start() {
         await super.start();
         
-        // Provide permission checking capabilities
-        this.context.eventBus.on('permissions.check', this.checkPermission.bind(this));
-        this.context.eventBus.on('permissions.grant', this.grantPermission.bind(this));
-        this.context.eventBus.on('permissions.revoke', this.revokePermission.bind(this));
-        this.context.eventBus.on('permissions.setRole', this.setUserRole.bind(this));
-        this.context.eventBus.on('permissions.isAdmin', this.isAdmin.bind(this));
+        // Register permissions service for other modules to use
+        this.eventBus.emit('service:register', { 
+            name: 'permissions', 
+            service: {
+                isAdmin: this.isAdmin.bind(this),
+                checkPermission: this.checkPermission.bind(this),
+                setUserRole: this.setUserRole.bind(this),
+                removeUserRole: this.removeUserRole.bind(this),
+                getUserRole: this.getUserRole.bind(this),
+                getUserLevel: this.getUserLevel.bind(this),
+                getUserPermissions: this.getUserPermissions.bind(this),
+                hasRole: this.hasRole.bind(this),
+                getUsersWithRole: this.getUsersWithRole.bind(this),
+                getRoleDefinitions: this.getRoleDefinitions.bind(this),
+                getRoleHierarchy: this.getRoleHierarchy.bind(this),
+                canGrantRole: this.canGrantRole.bind(this),
+                getUserAuditLog: this.getUserAuditLog.bind(this),
+                getRecentAuditLog: this.getRecentAuditLog.bind(this),
+                getAuditStats: this.getAuditStats.bind(this)
+            }
+        });
+        
+        // Provide permission checking capabilities via events (legacy)
+        this.eventBus.on('permissions.check', this.checkPermission.bind(this));
+        this.eventBus.on('permissions.grant', this.grantPermission.bind(this));
+        this.eventBus.on('permissions.revoke', this.revokePermission.bind(this));
+        this.eventBus.on('permissions.setRole', this.setUserRole.bind(this));
+        this.eventBus.on('permissions.isAdmin', this.isAdmin.bind(this));
         
         // Subscribe to user events for audit logging
         this.subscribe('user.join', this.handleUserJoin.bind(this));
@@ -372,6 +394,27 @@ class PermissionsModule extends BaseModule {
      */
     async getAdmins() {
         return await this.getUsersWithRole('admin');
+    }
+
+    /**
+     * Grant permission (alias for setUserRole)
+     * @param {string} username - The username
+     * @param {string} role - The role to grant
+     * @param {string} grantedBy - Who granted the role
+     * @returns {boolean} - True if successful
+     */
+    async grantPermission(username, role, grantedBy = 'system') {
+        return await this.setUserRole(username, role, grantedBy);
+    }
+
+    /**
+     * Revoke permission (alias for removeUserRole)
+     * @param {string} username - The username
+     * @param {string} removedBy - Who removed the role
+     * @returns {boolean} - True if successful
+     */
+    async revokePermission(username, removedBy = 'system') {
+        return await this.removeUserRole(username, removedBy);
     }
 }
 

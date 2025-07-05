@@ -4,7 +4,7 @@
   "description": "CyTube websocket connection manager",
   "type": "core",
   "author": "Dazza Bot",
-  "dependencies": [],
+  "requires": [],
   "config": {
     "reconnectDelay": 5000,
     "maxReconnectAttempts": 10,
