@@ -1,7 +1,13 @@
-const BaseModule = require('../../core/BaseModule');
-const CommandLoader = require('./services/CommandLoader');
-const CommandRegistry = require('./services/CommandRegistry');
-const Command = require('./services/Command');
+import BaseModule from '../../core/BaseModule.js';
+import CommandLoader from './services/CommandLoader.js';
+import CommandRegistry from './services/CommandRegistry.js';
+import { Command } from './services/Command.js';
+
+// Legacy adapters for backward compatibility
+import LegacyDatabaseAdapter from './adapters/LegacyDatabaseAdapter.js';
+import LegacyHeistManagerAdapter from './adapters/LegacyHeistManagerAdapter.js';
+import LegacyPersonalityAdapter from './adapters/LegacyPersonalityAdapter.js';
+import LegacyVideoPayoutAdapter from './adapters/LegacyVideoPayoutAdapter.js';
 
 class CommandHandlerModule extends BaseModule {
     constructor(context) {
@@ -9,6 +15,13 @@ class CommandHandlerModule extends BaseModule {
         this.commandLoader = null;
         this.commandRegistry = null;
         this.rateLimiter = null;
+        
+        // Legacy adapters for backward compatibility
+        this.legacyDb = null;
+        this.legacyHeistManager = null;
+        this.legacyPersonality = null;
+        this.legacyVideoPayoutManager = null;
+        
         this.config = {
             commandPrefix: '!',
             rateLimitWindow: 2000,
@@ -32,9 +45,12 @@ class CommandHandlerModule extends BaseModule {
         // Initialize rate limiter
         this.rateLimiter = new Map();
         
+        // Initialize legacy adapters
+        this.initializeLegacyAdapters();
+        
         // Subscribe to chat events
-        this.subscribe('chat.message', this.handleChatMessage.bind(this));
-        this.subscribe('chat.pm', this.handlePrivateMessage.bind(this));
+        this.subscribe('chat:message', this.handleChatMessage.bind(this));
+        this.subscribe('chat:pm', this.handlePrivateMessage.bind(this));
         
         this.logger.info('Command handler module initialized');
     }
@@ -204,7 +220,10 @@ class CommandHandlerModule extends BaseModule {
         // This provides access to necessary bot functionality without tight coupling
         return {
             logger: this.logger,
-            db: this.context.db,
+            db: this.legacyDb,
+            heistManager: this.legacyHeistManager,
+            personality: this.legacyPersonality,
+            videoPayoutManager: this.legacyVideoPayoutManager,
             room: room,
             cooldowns: this.context.cooldowns || { check: () => ({ allowed: true }) },
             isAdmin: (username) => {
@@ -284,6 +303,52 @@ class CommandHandlerModule extends BaseModule {
         }
         return [];
     }
+
+    // ===== Legacy Adapter Initialization =====
+    
+    initializeLegacyAdapters() {
+        try {
+            // Initialize database adapter
+            this.legacyDb = new LegacyDatabaseAdapter(this.context.services);
+            this.legacyDb.setLogger(this.logger);
+            
+            // Initialize heist manager adapter
+            this.legacyHeistManager = new LegacyHeistManagerAdapter(this.context.services);
+            this.legacyHeistManager.setLogger(this.logger);
+            
+            // Initialize personality adapter
+            this.legacyPersonality = new LegacyPersonalityAdapter(this.context.services);
+            this.legacyPersonality.setLogger(this.logger);
+            
+            // Initialize video payout adapter
+            this.legacyVideoPayoutManager = new LegacyVideoPayoutAdapter(this.context.services);
+            this.legacyVideoPayoutManager.setLogger(this.logger);
+            
+            this.logger.info('Legacy adapters initialized', {
+                database: this.legacyDb.isReady(),
+                heistManager: this.legacyHeistManager.isReady(),
+                personality: this.legacyPersonality.isReady(),
+                videoPayoutManager: this.legacyVideoPayoutManager.isReady()
+            });
+            
+        } catch (error) {
+            this.logger.error('Failed to initialize legacy adapters:', error);
+            
+            // Provide fallback null adapters
+            this.legacyDb = null;
+            this.legacyHeistManager = null;
+            this.legacyPersonality = null;
+            this.legacyVideoPayoutManager = null;
+        }
+    }
+    
+    // ===== Service Refresh =====
+    
+    refreshServices() {
+        // Reinitialize adapters when services change
+        this.initializeLegacyAdapters();
+        this.logger.info('Services refreshed for command handler');
+    }
 }
 
-module.exports = CommandHandlerModule;
+export default CommandHandlerModule;

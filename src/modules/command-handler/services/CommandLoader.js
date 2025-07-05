@@ -1,6 +1,10 @@
-const fs = require('fs').promises;
-const path = require('path');
-const CommandRegistry = require('./CommandRegistry');
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import CommandRegistry from './CommandRegistry.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class CommandLoader {
     constructor(logger = null) {
@@ -25,10 +29,8 @@ class CommandLoader {
                     try {
                         const commandPath = path.join(categoryPath, file);
                         
-                        // Clear module cache to allow hot reloading
-                        delete require.cache[require.resolve(commandPath)];
-                        
-                        const commandModule = require(commandPath);
+                        // Use dynamic import for ES6 modules
+                        const commandModule = await import(`file://${commandPath}`);
                         let command = commandModule.default || commandModule;
                         
                         // Handle ES6 modules that were imported as CommonJS
@@ -63,14 +65,11 @@ class CommandLoader {
         const commandPath = path.join(__dirname, '../../../commands', category, `${commandName}.js`);
         
         try {
-            // Clear module cache
-            delete require.cache[require.resolve(commandPath)];
-            
             // Unregister old command
             this.registry.unregister(commandName);
             
-            // Load new command
-            const commandModule = require(commandPath);
+            // Load new command using dynamic import with cache busting
+            const commandModule = await import(`${commandPath}?t=${Date.now()}`);
             let newCommand = commandModule.default || commandModule;
             
             // Handle ES6 modules that were imported as CommonJS
@@ -105,4 +104,4 @@ class CommandLoader {
     }
 }
 
-module.exports = CommandLoader;
+export default CommandLoader;

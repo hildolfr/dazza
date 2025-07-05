@@ -1,4 +1,4 @@
-const Command = require('./Command');
+import { Command } from './Command.js';
 
 class CommandRegistry {
     constructor(logger = null) {
@@ -170,4 +170,4 @@ class CommandRegistry {
     }
 }
 
-module.exports = CommandRegistry;
+export default CommandRegistry;

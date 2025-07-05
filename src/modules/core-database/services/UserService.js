@@ -49,12 +49,270 @@ class UserService {
         }
     }
     
+    async getUserStats(username, roomId = null) {
+        try {
+            const user = await this.db.get(
+                'SELECT * FROM user_stats WHERE username = ?',
+                [username]
+            );
+            
+            return user;
+        } catch (error) {
+            this.logger.error('Failed to get user stats:', error);
+            throw error;
+        }
+    }
+    
+    // ===== Bong Tracking =====
+    
+    async getUserBongCount(username, roomId = null) {
+        try {
+            const result = await this.db.get(
+                'SELECT COUNT(*) as count FROM user_bongs WHERE username = ?',
+                [username]
+            );
+            
+            return result ? result.count : 0;
+        } catch (error) {
+            this.logger.error('Failed to get user bong count:', error);
+            throw error;
+        }
+    }
+    
+    async logUserBong(username, roomId = null) {
+        try {
+            const now = Date.now();
+            
+            await this.db.run(
+                'INSERT INTO user_bongs (username, timestamp) VALUES (?, ?)',
+                [username, now]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to log user bong:', error);
+            throw error;
+        }
+    }
+    
+    async incrementBongCount(date, roomId = null) {
+        try {
+            // Get current count
+            const current = await this.db.get(
+                'SELECT count FROM bong_counter WHERE date = ?',
+                [date]
+            );
+            
+            if (current) {
+                // Increment existing count
+                await this.db.run(
+                    'UPDATE bong_counter SET count = count + 1, updated_at = CURRENT_TIMESTAMP WHERE date = ?',
+                    [date]
+                );
+                
+                return current.count + 1;
+            } else {
+                // Create new entry
+                await this.db.run(
+                    'INSERT INTO bong_counter (date, count) VALUES (?, 1)',
+                    [date]
+                );
+                
+                return 1;
+            }
+        } catch (error) {
+            this.logger.error('Failed to increment bong count:', error);
+            throw error;
+        }
+    }
+    
+    // ===== Drink Tracking =====
+    
+    async getUserDrinkCount(username, roomId = null) {
+        try {
+            const result = await this.db.get(
+                'SELECT COUNT(*) as count FROM user_drinks WHERE username = ?',
+                [username]
+            );
+            
+            return result ? result.count : 0;
+        } catch (error) {
+            this.logger.error('Failed to get user drink count:', error);
+            throw error;
+        }
+    }
+    
+    async logUserDrink(username, roomId = null) {
+        try {
+            const now = Date.now();
+            
+            await this.db.run(
+                'INSERT INTO user_drinks (username, timestamp) VALUES (?, ?)',
+                [username, now]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to log user drink:', error);
+            throw error;
+        }
+    }
+    
+    async incrementDrinkCount(date, roomId = null) {
+        try {
+            // Get current count
+            const current = await this.db.get(
+                'SELECT count FROM drink_counter WHERE date = ?',
+                [date]
+            );
+            
+            if (current) {
+                // Increment existing count
+                await this.db.run(
+                    'UPDATE drink_counter SET count = count + 1, updated_at = CURRENT_TIMESTAMP WHERE date = ?',
+                    [date]
+                );
+                
+                return current.count + 1;
+            } else {
+                // Create new entry
+                await this.db.run(
+                    'INSERT INTO drink_counter (date, count) VALUES (?, 1)',
+                    [date]
+                );
+                
+                return 1;
+            }
+        } catch (error) {
+            this.logger.error('Failed to increment drink count:', error);
+            throw error;
+        }
+    }
+    
+    // ===== Image/Gallery Methods =====
+    
+    async saveUserImage(username, url, timestamp = Date.now()) {
+        try {
+            await this.db.run(
+                `INSERT OR REPLACE INTO user_images (username, url, timestamp, is_active)
+                 VALUES (?, ?, ?, 1)`,
+                [username, url, timestamp]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to save user image:', error);
+            throw error;
+        }
+    }
+    
+    async getUserImages(username, options = {}) {
+        try {
+            const { limit = 50, offset = 0, activeOnly = true } = options;
+            
+            let query = 'SELECT * FROM user_images WHERE username = ?';
+            let params = [username];
+            
+            if (activeOnly) {
+                query += ' AND is_active = 1';
+            }
+            
+            query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
+            params.push(limit, offset);
+            
+            const images = await this.db.all(query, params);
+            return images;
+        } catch (error) {
+            this.logger.error('Failed to get user images:', error);
+            throw error;
+        }
+    }
+    
+    async deleteUserImage(username, url) {
+        try {
+            const result = await this.db.run(
+                'UPDATE user_images SET is_active = 0, pruned_reason = ? WHERE username = ? AND url = ?',
+                ['deleted', username, url]
+            );
+            
+            return result.changes > 0;
+        } catch (error) {
+            this.logger.error('Failed to delete user image:', error);
+            throw error;
+        }
+    }
+    
+    async getUserImageCount(username) {
+        try {
+            const result = await this.db.get(
+                'SELECT COUNT(*) as count FROM user_images WHERE username = ? AND is_active = 1',
+                [username]
+            );
+            
+            return result ? result.count : 0;
+        } catch (error) {
+            this.logger.error('Failed to get user image count:', error);
+            throw error;
+        }
+    }
+    
+    async isGalleryLocked(username) {
+        try {
+            const result = await this.db.get(
+                'SELECT is_locked FROM user_gallery_locks WHERE username = ?',
+                [username]
+            );
+            
+            return result ? result.is_locked === 1 : false;
+        } catch (error) {
+            this.logger.error('Failed to check gallery lock:', error);
+            throw error;
+        }
+    }
+    
+    async lockGallery(username) {
+        try {
+            await this.db.run(
+                `INSERT OR REPLACE INTO user_gallery_locks (username, is_locked, locked_at)
+                 VALUES (?, 1, ?)`,
+                [username, Date.now()]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to lock gallery:', error);
+            throw error;
+        }
+    }
+    
+    async unlockGallery(username) {
+        try {
+            await this.db.run(
+                'UPDATE user_gallery_locks SET is_locked = 0 WHERE username = ?',
+                [username]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to unlock gallery:', error);
+            throw error;
+        }
+    }
+    
+    // ===== Event Tracking =====
+    
     async recordUserEvent(username, eventType, timestamp = Date.now()) {
-        await this.db.run(
-            `INSERT INTO user_events (username, event_type, timestamp)
-             VALUES (?, ?, ?)`,
-            [username, eventType, timestamp]
-        );
+        try {
+            await this.db.run(
+                'INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)',
+                [username, eventType, timestamp]
+            );
+            
+            return true;
+        } catch (error) {
+            this.logger.error('Failed to record user event:', error);
+            throw error;
+        }
     }
     
     // ===== User Retrieval =====

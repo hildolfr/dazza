@@ -46,13 +46,147 @@ class EconomyService {
     
     async setBalance(username, amount) {
         await this.db.run(
-            `INSERT INTO balances (username, balance)
-             VALUES (?, ?)
+            `INSERT INTO balances (username, balance, created_at, updated_at)
+             VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
              ON CONFLICT(username) DO UPDATE SET
              balance = ?,
              updated_at = CURRENT_TIMESTAMP`,
             [username, amount, amount]
         );
+    }
+    
+    async updateUserBalance(username, amount) {
+        // Ensure user exists first
+        await this.getBalance(username);
+        
+        const result = await this.db.run(
+            `UPDATE balances SET 
+             balance = balance + ?,
+             updated_at = CURRENT_TIMESTAMP
+             WHERE username = ?`,
+            [amount, username]
+        );
+        
+        // Get the new balance
+        const newBalance = await this.getBalance(username);
+        return newBalance;
+    }
+    
+    async transferBalance(fromUser, toUser, amount) {
+        const fromBalance = await this.getBalance(fromUser);
+        
+        if (fromBalance < amount) {
+            throw new Error('Insufficient funds');
+        }
+        
+        // Use transaction for safety
+        await this.module.transaction(async () => {
+            await this.updateUserBalance(fromUser, -amount);
+            await this.updateUserBalance(toUser, amount);
+        });
+        
+        return true;
+    }
+    
+    // ===== Trust System =====
+    
+    async getUserTrust(username) {
+        const result = await this.db.get(
+            'SELECT trust FROM user_trust WHERE username = ?',
+            [username]
+        );
+        
+        if (!result) {
+            // Create new trust entry
+            await this.createUserTrust(username);
+            return 0;
+        }
+        
+        return result.trust;
+    }
+    
+    async createUserTrust(username) {
+        try {
+            await this.db.run(
+                `INSERT INTO user_trust (username, trust, created_at, updated_at)
+                 VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                [username]
+            );
+        } catch (error) {
+            // Handle race condition
+            if (error.code !== 'SQLITE_CONSTRAINT') {
+                throw error;
+            }
+        }
+    }
+    
+    async updateUserTrust(username, amount) {
+        // Ensure user exists first
+        await this.getUserTrust(username);
+        
+        await this.db.run(
+            `UPDATE user_trust SET 
+             trust = trust + ?,
+             updated_at = CURRENT_TIMESTAMP
+             WHERE username = ?`,
+            [amount, username]
+        );
+        
+        return await this.getUserTrust(username);
+    }
+    
+    // ===== Legacy Compatibility Methods =====
+    
+    async getUserBalance(username) {
+        const balance = await this.getBalance(username);
+        const trust = await this.getUserTrust(username);
+        
+        // Return in legacy format
+        return {
+            balance: balance,
+            trust: trust,
+            trustLevel: this.getTrustLevel(trust)
+        };
+    }
+    
+    getTrustLevel(trust) {
+        // Simple trust level system
+        if (trust < 0) {
+            return { title: 'Untrusted', level: 0 };
+        } else if (trust < 10) {
+            return { title: 'Rookie', level: 1 };
+        } else if (trust < 50) {
+            return { title: 'Trusted', level: 2 };
+        } else if (trust < 100) {
+            return { title: 'Veteran', level: 3 };
+        } else {
+            return { title: 'Legend', level: 4 };
+        }
+    }
+    
+    // ===== Statistics =====
+    
+    async getTopBalances(limit = 10) {
+        return await this.db.all(
+            `SELECT username, balance FROM balances 
+             ORDER BY balance DESC 
+             LIMIT ?`,
+            [limit]
+        );
+    }
+    
+    async getEconomyStats() {
+        const result = await this.db.get(
+            `SELECT 
+                COUNT(*) as total_users,
+                SUM(balance) as total_money,
+                AVG(balance) as avg_balance,
+                MAX(balance) as max_balance,
+                MIN(balance) as min_balance
+             FROM balances`
+        );
+        
+        return result;
     }
     
     async addBalance(username, amount) {
@@ -232,9 +366,9 @@ class EconomyService {
         );
     }
     
-    // ===== Statistics =====
+    // ===== Detailed Statistics =====
     
-    async getEconomyStats() {
+    async getDetailedEconomyStats() {
         const [totalUsers, totalBalance, avgBalance, transactions] = await Promise.all([
             this.db.get('SELECT COUNT(*) as count FROM balances'),
             this.db.get('SELECT SUM(balance) as total FROM balances'),

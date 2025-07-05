@@ -1,4 +1,4 @@
-class Command {
+export class Command {
     constructor(options) {
         this.name = options.name;
         this.aliases = options.aliases || [];
@@ -67,4 +67,4 @@ class Command {
     }
 }
 
-module.exports = Command;
+export default Command;

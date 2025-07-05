@@ -22,10 +22,15 @@ class ConfigManager extends EventEmitter {
      * 1. Default config
      * 2. User config
      * 3. Module-specific configs
-     * 4. Environment variables
+     * 4. Login credentials (login.txt)
+     * 5. Environment variables
+     * 6. Variable substitution
      */
     async load() {
         try {
+            // Load login credentials first
+            await this.loadLoginCredentials();
+            
             // Load default configuration
             const defaultConfig = await this.loadYamlFile(this.defaultConfigPath);
             
@@ -43,6 +48,9 @@ class ConfigManager extends EventEmitter {
             
             // Apply environment variables
             this.applyEnvironmentVariables();
+            
+            // Substitute environment variables in config
+            this.config = this.substituteEnvironmentVariables(this.config);
             
             // Validate configuration
             await this.validate();
@@ -385,6 +393,59 @@ class ConfigManager extends EventEmitter {
         current[lastKey] = value;
     }
     
+    /**
+     * Load login credentials from login.txt and set as environment variables
+     */
+    async loadLoginCredentials() {
+        const loginPath = path.join(process.cwd(), 'login.txt');
+        
+        try {
+            if (await this.fileExists(loginPath)) {
+                const content = await fs.readFile(loginPath, 'utf8');
+                const lines = content.trim().split('\n');
+                
+                for (const line of lines) {
+                    const [key, value] = line.split('=');
+                    if (key && value) {
+                        if (key.trim() === 'username') {
+                            process.env.BOT_USERNAME = value.trim();
+                        } else if (key.trim() === 'password') {
+                            process.env.BOT_PASSWORD = value.trim();
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            // Log warning but don't fail - credentials might be set via environment variables
+            console.warn('Could not load login.txt:', error.message);
+        }
+    }
+    
+    /**
+     * Substitute environment variables in configuration
+     * Replaces ${VARIABLE_NAME} patterns with actual environment variable values
+     */
+    substituteEnvironmentVariables(config) {
+        const envVarRegex = /\$\{([^}]+)\}/g;
+        const configStr = JSON.stringify(config);
+        
+        const substituted = configStr.replace(envVarRegex, (match, varName) => {
+            const value = process.env[varName];
+            if (value !== undefined) {
+                return JSON.stringify(value).slice(1, -1); // Remove quotes from JSON.stringify
+            }
+            console.warn(`Environment variable ${varName} not found, keeping placeholder ${match}`);
+            return match;
+        });
+        
+        try {
+            return JSON.parse(substituted);
+        } catch (error) {
+            console.error('Failed to parse config after environment variable substitution:', error);
+            return config; // Return original config if parsing fails
+        }
+    }
+
     /**
      * Parse environment variable value
      */

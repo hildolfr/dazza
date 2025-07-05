@@ -48,7 +48,7 @@ class MessageService {
             offset = 0,
             startTime,
             endTime,
-            search
+            roomId
         } = options;
         
         let query = 'SELECT * FROM messages WHERE 1=1';
@@ -57,6 +57,11 @@ class MessageService {
         if (username) {
             query += ' AND username = ?';
             params.push(username);
+        }
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
         }
         
         if (startTime) {
@@ -69,15 +74,78 @@ class MessageService {
             params.push(endTime);
         }
         
-        if (search) {
-            query += ' AND message LIKE ?';
-            params.push(`%${search}%`);
-        }
-        
         query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
         params.push(limit, offset);
         
-        return await this.db.all(query, params);
+        try {
+            return await this.db.all(query, params);
+        } catch (error) {
+            this.logger.error('Failed to get messages:', error);
+            throw error;
+        }
+    }
+    
+    async getLastUserMessage(username, roomId = null) {
+        try {
+            let query = 'SELECT * FROM messages WHERE username = ?';
+            const params = [username];
+            
+            if (roomId) {
+                query += ' AND room_id = ?';
+                params.push(roomId);
+            }
+            
+            query += ' ORDER BY timestamp DESC LIMIT 1';
+            
+            return await this.db.get(query, params);
+        } catch (error) {
+            this.logger.error('Failed to get last user message:', error);
+            throw error;
+        }
+    }
+    
+    async searchMessages(searchTerm, options = {}) {
+        const {
+            username,
+            limit = 50,
+            offset = 0,
+            roomId,
+            startTime,
+            endTime
+        } = options;
+        
+        try {
+            let query = 'SELECT * FROM messages WHERE message LIKE ?';
+            const params = [`%${searchTerm}%`];
+            
+            if (username) {
+                query += ' AND username = ?';
+                params.push(username);
+            }
+            
+            if (roomId) {
+                query += ' AND room_id = ?';
+                params.push(roomId);
+            }
+            
+            if (startTime) {
+                query += ' AND timestamp >= ?';
+                params.push(startTime);
+            }
+            
+            if (endTime) {
+                query += ' AND timestamp <= ?';
+                params.push(endTime);
+            }
+            
+            query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
+            params.push(limit, offset);
+            
+            return await this.db.all(query, params);
+        } catch (error) {
+            this.logger.error('Failed to search messages:', error);
+            throw error;
+        }
     }
     
     async getMessageCount(username = null) {

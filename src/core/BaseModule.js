@@ -433,4 +433,4 @@ class BaseModule extends EventEmitter {
     }
 }
 
-module.exports = BaseModule;
+export default BaseModule;
