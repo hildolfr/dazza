@@ -130,10 +130,7 @@ class MessageProcessor {
             await botContext.checkAndDeliverTells(messageData.username);
         }
         
-        // Notify heist manager
-        if (botContext.heistManager) {
-            await botContext.heistManager.handleMessage(messageData.username, messageData.msg);
-        }
+        // Heist manager notification now handled by heist module via event system
         
         // Handle mentions
         if (this.hasMention(messageData.msg) && botContext.handleMention) {

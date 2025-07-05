@@ -95,32 +95,55 @@ class HeistService {
         }
 
         try {
-            // Handle different data structures that might be passed
+            // Validate input data structure
+            if (!data || typeof data !== 'object') {
+                this.logger.warn('Invalid heist message data - not an object', { data });
+                return;
+            }
+
+            // Extract data from chat:message event structure
+            // Expected structure: { username: string, message: string, timestamp: number, isPM: boolean }
             let username, message, roomId;
             
             if (data.message && typeof data.message === 'object') {
-                // Structure: { message: { username, msg, ... }, roomId, ... }
+                // Legacy structure: { message: { username, msg, ... }, roomId, ... }
                 username = data.message.username;
                 message = data.message.msg;
                 roomId = data.roomId || 'fatpizza';
             } else {
-                // Structure: { username, message/msg, roomId, ... }
+                // Standard chat:message event structure: { username, message, ... }
                 username = data.username;
                 message = data.message || data.msg;
                 roomId = data.roomId || 'fatpizza';
             }
             
-            // Validate we have required data
-            if (!username || !message) {
-                this.logger.warn('Invalid heist message data', {
-                    hasUsername: !!username,
+            // Strict parameter validation
+            if (typeof username !== 'string' || username.trim() === '') {
+                this.logger.warn('Invalid heist message data - username not a valid string', {
+                    username,
+                    usernameType: typeof username,
                     hasMessage: !!message,
-                    dataStructure: Object.keys(data)
+                    dataKeys: Object.keys(data)
                 });
                 return;
             }
             
-            // Forward message to heist manager with correct parameters
+            if (typeof message !== 'string' || message.trim() === '') {
+                this.logger.warn('Invalid heist message data - message not a valid string', {
+                    username,
+                    message,
+                    messageType: typeof message,
+                    dataKeys: Object.keys(data)
+                });
+                return;
+            }
+            
+            // Ensure roomId is a string
+            if (typeof roomId !== 'string') {
+                roomId = 'fatpizza'; // Default fallback
+            }
+            
+            // Forward message to heist manager with validated parameters
             if (typeof this.heistManager.handleMessage === 'function') {
                 await this.heistManager.handleMessage(username, message, roomId);
             }
@@ -129,8 +152,9 @@ class HeistService {
             this.logger.error('Error handling heist message', {
                 error: error.message,
                 stack: error.stack,
-                dataStructure: Object.keys(data),
-                data: JSON.stringify(data).substring(0, 200)
+                username: data?.username || 'unknown',
+                message: data?.message?.substring(0, 100) || 'unknown',
+                dataStructure: data ? Object.keys(data) : 'null'
             });
         }
     }

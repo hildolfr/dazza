@@ -593,10 +593,7 @@ export class CyTubeBot extends EventEmitter {
             // Check for tells via module
             this.checkAndDeliverTells(data.username);
             
-            // Notify heist manager of message activity
-            if (this.heistManager) {
-                await this.heistManager.handleMessage(data.username, data.msg);
-            }
+            // Heist manager notification now handled by heist module via event system
             
             // Check for mentions of Dazza (but not from the bot itself or server messages)
             if (this.ollama && this.hasMention(data.msg)) {

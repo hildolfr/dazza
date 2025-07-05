@@ -76,7 +76,7 @@ class HeistModule extends BaseModule {
      * @param {Object} data - Chat message event data
      */
     async handleChatMessage(data) {
-        if (!data || !data.message) {
+        if (!data || !data.username || !data.message) {
             return;
         }
         
@@ -86,8 +86,8 @@ class HeistModule extends BaseModule {
         } catch (error) {
             this.logger.error('Error processing heist message', {
                 error: error.message,
-                messageId: data.message.id,
-                username: data.message.username
+                username: data.username,
+                message: data.message?.substring(0, 50)
             });
         }
     }
