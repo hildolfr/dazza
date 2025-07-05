@@ -1,0 +1,16 @@
+{
+    "name": "reminder-system",
+    "version": "1.0.0",
+    "description": "Automated reminder delivery system extracted from bot.js",
+    "type": "core",
+    "enabled": true,
+    "requires": ["core-database"],
+    "optional": [],
+    "config": {
+        "checkInterval": 60000
+    },
+    "events": {
+        "subscribes": ["user.join", "user.leave"],
+        "publishes": ["reminder.delivered", "reminder.failed"]
+    }
+}
