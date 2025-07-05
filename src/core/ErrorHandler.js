@@ -22,6 +22,14 @@ class ErrorHandler extends EventEmitter {
         this.globalErrors = [];
         this.maxGlobalErrors = 100;
         
+        // Death spiral prevention
+        this.moduleRestartHistory = new Map(); // moduleId -> array of restart timestamps
+        this.maxRestartsPerHour = config.maxRestartsPerHour || 3;
+        this.maxRestartsPerDay = config.maxRestartsPerDay || 10;
+        this.disabledModules = new Set(); // Modules disabled due to excessive failures
+        this.moduleRecoveryQueue = new Map(); // moduleId -> recovery timeout
+        this.emergencyMode = false;
+        
         // Shutdown state
         this.isShuttingDown = false;
         this.shutdownPromise = null;
@@ -78,7 +86,13 @@ class ErrorHandler extends EventEmitter {
     // ===== Module Error Handling =====
     
     async handleModuleError(moduleId, error) {
-        if (this.isShuttingDown) return;
+        if (this.isShuttingDown || this.emergencyMode) return;
+        
+        // Check if module is already disabled
+        if (this.disabledModules.has(moduleId)) {
+            this.logger.warn(`Ignoring error from disabled module: ${moduleId}`);
+            return;
+        }
         
         // Ensure error is an Error object
         if (!(error instanceof Error)) {
@@ -89,35 +103,123 @@ class ErrorHandler extends EventEmitter {
         const count = (this.errorCounts.get(moduleId) || 0) + 1;
         this.errorCounts.set(moduleId, count);
         
+        // Check for death spiral conditions
+        if (this._checkDeathSpiral(moduleId, count)) {
+            this.logger.error(`Death spiral detected for module ${moduleId}, entering emergency mode`);
+            this.emergencyMode = true;
+            await this._handleDeathSpiral(moduleId);
+            return;
+        }
+        
         // Log error with context
         this.logger.error(`Module ${moduleId} error (${count}):`, {
             message: error.message,
             stack: error.stack,
             code: error.code,
-            moduleId
+            moduleId,
+            emergencyMode: this.emergencyMode
         });
         
-        // Emit error event
-        this.emit('module:error', {
-            moduleId,
-            error,
-            count,
-            timestamp: Date.now()
-        });
+        // Emit error event (if not in emergency mode)
+        if (!this.emergencyMode) {
+            try {
+                this.emit('module:error', {
+                    moduleId,
+                    error,
+                    count,
+                    timestamp: Date.now()
+                });
+            } catch (emitError) {
+                this.logger.error('Failed to emit module error event:', emitError);
+                this.emergencyMode = true;
+            }
+        }
         
         // Determine action based on error type and count
-        if (this.isRecoverable(error) && count < this.config.maxRetries) {
+        if (this.isRecoverable(error) && count < this.config.maxRetries && !this._isRestartLimited(moduleId)) {
             await this.recoverModule(moduleId);
-        } else if (count >= this.config.maxRetries) {
+        } else if (count >= this.config.maxRetries || this._isRestartLimited(moduleId)) {
             await this.disableModule(moduleId);
         }
     }
     
+    _checkDeathSpiral(moduleId, errorCount) {
+        // Check if we have too many errors in a short time
+        if (errorCount > 10) {
+            return true;
+        }
+        
+        // Check restart frequency
+        const restartHistory = this.moduleRestartHistory.get(moduleId) || [];
+        const now = Date.now();
+        const recentRestarts = restartHistory.filter(timestamp => now - timestamp < 300000); // 5 minutes
+        
+        if (recentRestarts.length > 5) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    async _handleDeathSpiral(moduleId) {
+        // Disable the problematic module
+        await this.disableModule(moduleId);
+        
+        // Schedule emergency mode reset
+        setTimeout(() => {
+            this.emergencyMode = false;
+            this.logger.info('Emergency mode cleared');
+        }, 300000); // 5 minutes
+        
+        // Emit emergency event
+        this.emit('emergency:death-spiral', {
+            moduleId,
+            timestamp: Date.now()
+        });
+    }
+    
+    _isRestartLimited(moduleId) {
+        const restartHistory = this.moduleRestartHistory.get(moduleId) || [];
+        const now = Date.now();
+        
+        // Check hourly limit
+        const hourlyRestarts = restartHistory.filter(timestamp => now - timestamp < 3600000);
+        if (hourlyRestarts.length >= this.maxRestartsPerHour) {
+            return true;
+        }
+        
+        // Check daily limit
+        const dailyRestarts = restartHistory.filter(timestamp => now - timestamp < 86400000);
+        if (dailyRestarts.length >= this.maxRestartsPerDay) {
+            return true;
+        }
+        
+        return false;
+    }
+    
     async recoverModule(moduleId) {
-        if (this.isShuttingDown) return;
+        if (this.isShuttingDown || this.emergencyMode || this.disabledModules.has(moduleId)) return;
+        
+        // Check if already in recovery queue
+        if (this.moduleRecoveryQueue.has(moduleId)) {
+            this.logger.warn(`Module ${moduleId} already in recovery queue`);
+            return;
+        }
+        
+        // Check restart limits before attempting recovery
+        if (this._isRestartLimited(moduleId)) {
+            this.logger.error(`Module ${moduleId} restart limited, disabling module`);
+            await this.disableModule(moduleId);
+            return;
+        }
         
         const attempts = (this.restartAttempts.get(moduleId) || 0) + 1;
         this.restartAttempts.set(moduleId, attempts);
+        
+        // Track restart in history
+        const restartHistory = this.moduleRestartHistory.get(moduleId) || [];
+        restartHistory.push(Date.now());
+        this.moduleRestartHistory.set(moduleId, restartHistory);
         
         // Calculate delay with exponential backoff
         const delay = Math.min(
@@ -127,8 +229,11 @@ class ErrorHandler extends EventEmitter {
         
         this.logger.info(`Attempting to recover module ${moduleId} in ${delay}ms (attempt ${attempts})`);
         
-        setTimeout(async () => {
-            if (this.isShuttingDown) return;
+        // Add to recovery queue
+        const recoveryTimeout = setTimeout(async () => {
+            this.moduleRecoveryQueue.delete(moduleId);
+            
+            if (this.isShuttingDown || this.emergencyMode || this.disabledModules.has(moduleId)) return;
             
             try {
                 // Stop module if running
@@ -155,16 +260,29 @@ class ErrorHandler extends EventEmitter {
                 
             } catch (error) {
                 this.logger.error(`Failed to recover module ${moduleId}:`, error);
-                // Recovery failed, handle as new error
-                await this.handleModuleError(moduleId, error);
+                // Recovery failed, handle as new error (with recursion protection)
+                if (!this.emergencyMode && !this.disabledModules.has(moduleId)) {
+                    await this.handleModuleError(moduleId, error);
+                }
             }
         }, delay);
+        
+        this.moduleRecoveryQueue.set(moduleId, recoveryTimeout);
     }
     
     async disableModule(moduleId) {
         if (this.isShuttingDown) return;
         
         try {
+            // Add to disabled modules set
+            this.disabledModules.add(moduleId);
+            
+            // Cancel any pending recovery
+            if (this.moduleRecoveryQueue.has(moduleId)) {
+                clearTimeout(this.moduleRecoveryQueue.get(moduleId));
+                this.moduleRecoveryQueue.delete(moduleId);
+            }
+            
             const status = this.moduleRegistry.getStatus(moduleId);
             
             if (status === 'started') {
@@ -177,6 +295,7 @@ class ErrorHandler extends EventEmitter {
                 moduleId,
                 reason: 'too_many_errors',
                 errorCount: this.errorCounts.get(moduleId),
+                restartAttempts: this.restartAttempts.get(moduleId),
                 timestamp: Date.now()
             });
             
@@ -184,9 +303,31 @@ class ErrorHandler extends EventEmitter {
             this.errorCounts.delete(moduleId);
             this.restartAttempts.delete(moduleId);
             
+            // Schedule re-enablement attempt after a cooldown period
+            setTimeout(() => {
+                this._scheduleModuleReenablement(moduleId);
+            }, 3600000); // 1 hour cooldown
+            
         } catch (error) {
             this.logger.error(`Failed to disable module ${moduleId}:`, error);
         }
+    }
+    
+    _scheduleModuleReenablement(moduleId) {
+        if (this.isShuttingDown || !this.disabledModules.has(moduleId)) return;
+        
+        this.logger.info(`Attempting to re-enable module ${moduleId} after cooldown`);
+        
+        // Remove from disabled set
+        this.disabledModules.delete(moduleId);
+        
+        // Clean up restart history (give it a fresh start)
+        this.moduleRestartHistory.delete(moduleId);
+        
+        this.emit('module:reenabled', {
+            moduleId,
+            timestamp: Date.now()
+        });
     }
     
     // ===== Global Error Handling =====
@@ -266,6 +407,29 @@ class ErrorHandler extends EventEmitter {
         
         // Wait for all shutdown steps
         await Promise.all(shutdownSteps);
+        
+        // Clean up error handler state
+        this._cleanup();
+    }
+    
+    _cleanup() {
+        // Clear all recovery timeouts
+        this.moduleRecoveryQueue.forEach((timeout, moduleId) => {
+            clearTimeout(timeout);
+            this.logger.debug(`Cleared recovery timeout for module: ${moduleId}`);
+        });
+        this.moduleRecoveryQueue.clear();
+        
+        // Clear tracking maps
+        this.errorCounts.clear();
+        this.restartAttempts.clear();
+        this.moduleRestartHistory.clear();
+        this.disabledModules.clear();
+        this.globalErrors.length = 0;
+        
+        this.emergencyMode = false;
+        
+        this.logger.info('ErrorHandler cleanup complete');
     }
     
     // ===== Error Analysis =====
@@ -303,10 +467,23 @@ class ErrorHandler extends EventEmitter {
     getStatus() {
         return {
             isShuttingDown: this.isShuttingDown,
+            emergencyMode: this.emergencyMode,
             moduleErrors: Object.fromEntries(this.errorCounts),
             restartAttempts: Object.fromEntries(this.restartAttempts),
+            disabledModules: Array.from(this.disabledModules),
+            pendingRecovery: Array.from(this.moduleRecoveryQueue.keys()),
             globalErrors: this.globalErrors.slice(-10), // Last 10 global errors
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            restartHistory: Object.fromEntries(
+                Array.from(this.moduleRestartHistory.entries()).map(([moduleId, history]) => [
+                    moduleId,
+                    {
+                        total: history.length,
+                        lastHour: history.filter(ts => Date.now() - ts < 3600000).length,
+                        lastDay: history.filter(ts => Date.now() - ts < 86400000).length
+                    }
+                ])
+            )
         };
     }
     

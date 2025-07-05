@@ -33,6 +33,12 @@ class CooldownManager {
         this.persistentStore = null;
         this.initialized = false;
         this.cleanupTimers = new Map();
+        this.isShuttingDown = false;
+        
+        // Bind cleanup for emergency shutdown
+        this.boundCleanup = this.cleanup.bind(this);
+        process.on('SIGINT', this.boundCleanup);
+        process.on('SIGTERM', this.boundCleanup);
         
         // Default cooldown messages (keeping the Australian flavor)
         this.defaultMessages = [
@@ -409,16 +415,26 @@ class CooldownManager {
      * Start cleanup timers
      */
     startCleanupTimers() {
+        if (this.isShuttingDown) return;
+        
         // Memory cleanup timer
         const memoryTimer = setInterval(() => {
-            this.memoryStore.cleanup();
+            if (!this.isShuttingDown && this.memoryStore) {
+                this.memoryStore.cleanup();
+            }
         }, this.config.cleanup.memoryInterval);
         
         this.cleanupTimers.set('memory', memoryTimer);
 
         // Persistent cleanup timer
         const persistentTimer = setInterval(async () => {
-            await this.persistentStore.cleanup();
+            if (!this.isShuttingDown && this.persistentStore) {
+                try {
+                    await this.persistentStore.cleanup();
+                } catch (error) {
+                    this.logger.error('Error in persistent cleanup timer:', error);
+                }
+            }
         }, this.config.cleanup.persistentInterval);
         
         this.cleanupTimers.set('persistent', persistentTimer);
@@ -441,6 +457,11 @@ class CooldownManager {
      * Shutdown the cooldown manager
      */
     async shutdown() {
+        if (this.isShuttingDown) return; // Prevent duplicate shutdown
+        
+        this.isShuttingDown = true;
+        this.logger.info('CooldownManager shutdown initiated');
+        
         this.stopCleanupTimers();
 
         if (this.memoryStore) {
@@ -452,7 +473,78 @@ class CooldownManager {
         }
 
         this.initialized = false;
+        
+        // Remove process listeners
+        process.removeListener('SIGINT', this.boundCleanup);
+        process.removeListener('SIGTERM', this.boundCleanup);
+        
         this.logger.info('CooldownManager shutdown complete');
+    }
+    
+    /**
+     * Emergency cleanup method
+     */
+    async cleanup() {
+        if (this.isShuttingDown) return;
+        
+        this.logger.info('CooldownManager: Emergency cleanup initiated');
+        
+        await this.shutdown();
+        
+        this.logger.info('CooldownManager: Emergency cleanup completed');
+    }
+    
+    /**
+     * Get current timer statistics for monitoring
+     */
+    getTimerStats() {
+        return {
+            activeCleanupTimers: this.cleanupTimers.size,
+            cleanupTimerNames: Array.from(this.cleanupTimers.keys()),
+            initialized: this.initialized,
+            isShuttingDown: this.isShuttingDown,
+            memoryStoreActive: !!this.memoryStore,
+            persistentStoreActive: !!this.persistentStore,
+            config: {
+                memoryInterval: this.config.cleanup.memoryInterval,
+                persistentInterval: this.config.cleanup.persistentInterval,
+                maxAge: this.config.cleanup.maxAge
+            }
+        };
+    }
+    
+    /**
+     * Check for timer leaks
+     */
+    detectTimerLeaks() {
+        const leaks = [];
+        
+        // Check for timers without proper tracking
+        if (this.cleanupTimers.size > 2) {
+            leaks.push({
+                type: 'excessive_cleanup_timers',
+                count: this.cleanupTimers.size,
+                expected: 2
+            });
+        }
+        
+        // Check for timers running when not initialized
+        if (!this.initialized && this.cleanupTimers.size > 0) {
+            leaks.push({
+                type: 'timers_without_initialization',
+                count: this.cleanupTimers.size
+            });
+        }
+        
+        // Check for shutdown state inconsistency
+        if (this.isShuttingDown && this.cleanupTimers.size > 0) {
+            leaks.push({
+                type: 'timers_during_shutdown',
+                count: this.cleanupTimers.size
+            });
+        }
+        
+        return leaks;
     }
 }
 

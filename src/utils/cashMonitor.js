@@ -12,6 +12,13 @@ export class CashMonitor {
         this.isRunning = false;
         this.intervalId = null;
         this.debugMode = false; // Set to true for verbose logging
+        this.isShuttingDown = false;
+        
+        // Bind cleanup for emergency shutdown
+        this.boundCleanup = this.cleanup.bind(this);
+        process.on('SIGINT', this.boundCleanup);
+        process.on('SIGTERM', this.boundCleanup);
+        process.on('exit', this.boundCleanup);
     }
 
     async start() {
@@ -30,7 +37,13 @@ export class CashMonitor {
 
         // Start polling
         this.intervalId = setInterval(async () => {
-            await this.checkForChanges();
+            if (!this.isShuttingDown) {
+                try {
+                    await this.checkForChanges();
+                } catch (error) {
+                    this.logger.error('Error in cash monitor polling:', error);
+                }
+            }
         }, this.interval);
     }
 
@@ -41,11 +54,15 @@ export class CashMonitor {
 
         this.logger.info('Stopping cash monitor...');
         this.isRunning = false;
+        this.isShuttingDown = true;
 
         if (this.intervalId) {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
+        
+        // Clean up process listeners
+        this.cleanup();
     }
 
     async updateBalances() {
@@ -160,5 +177,79 @@ export class CashMonitor {
     setDebugMode(enabled) {
         this.debugMode = enabled;
         this.logger.info(`Cash monitor debug mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    }
+    
+    /**
+     * Emergency cleanup method for timers
+     */
+    cleanup() {
+        if (this.isShuttingDown) return; // Prevent duplicate cleanup
+        
+        this.logger.info('CashMonitor: Emergency cleanup initiated');
+        this.isShuttingDown = true;
+        
+        // Clear interval if still running
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        
+        // Stop monitoring
+        this.isRunning = false;
+        
+        // Remove process listeners
+        process.removeListener('SIGINT', this.boundCleanup);
+        process.removeListener('SIGTERM', this.boundCleanup);
+        process.removeListener('exit', this.boundCleanup);
+        
+        this.logger.info('CashMonitor: Emergency cleanup completed');
+    }
+    
+    /**
+     * Get current timer statistics for monitoring
+     */
+    getTimerStats() {
+        return {
+            isRunning: this.isRunning,
+            hasActiveInterval: !!this.intervalId,
+            usersTracked: this.previousBalances.size,
+            totalBalance: Array.from(this.previousBalances.values()).reduce((sum, bal) => sum + bal, 0),
+            interval: this.interval,
+            debugMode: this.debugMode,
+            isShuttingDown: this.isShuttingDown
+        };
+    }
+    
+    /**
+     * Check for timer leaks
+     */
+    detectTimerLeaks() {
+        const leaks = [];
+        
+        // Check for interval running when not in running state
+        if (this.intervalId && !this.isRunning) {
+            leaks.push({
+                type: 'interval_without_running_state',
+                intervalId: this.intervalId
+            });
+        }
+        
+        // Check for running state without interval
+        if (this.isRunning && !this.intervalId) {
+            leaks.push({
+                type: 'running_state_without_interval'
+            });
+        }
+        
+        // Check for state during shutdown
+        if (this.isShuttingDown && (this.intervalId || this.isRunning)) {
+            leaks.push({
+                type: 'active_state_during_shutdown',
+                hasInterval: !!this.intervalId,
+                isRunning: this.isRunning
+            });
+        }
+        
+        return leaks;
     }
 }

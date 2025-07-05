@@ -9,7 +9,7 @@ import crypto from 'crypto';
  */
 class MessageProcessor {
     constructor(services, config, logger) {
-        this.services = services;
+        this.services = services;  // Direct services reference
         this.config = config;
         this.logger = logger;
         
@@ -34,16 +34,26 @@ class MessageProcessor {
     }
     
     async initialize() {
-        this.database = this.services.get('database');
-        this.eventBus = this.services.get('eventBus');
-        this.cooldown = this.services.get('cooldown');
-        
-        if (!this.database) {
+        // Check that required services are available
+        if (!this.services?.get('database')) {
             throw new Error('Database service required for message processing');
         }
         
         this.ready = true;
         this.logger.info('MessageProcessor service initialized');
+    }
+    
+    // Dynamic getters for services
+    get database() {
+        return this.services?.get('database');
+    }
+    
+    get eventBus() {
+        return this.services?.get('eventBus');
+    }
+    
+    get cooldown() {
+        return this.services?.get('cooldown');
     }
     
     /**
@@ -53,6 +63,21 @@ class MessageProcessor {
      */
     async processMessage(messageData, botContext = {}) {
         try {
+            this.logger.debug('[MessageProcessor] Starting processMessage', {
+                messageData: {
+                    username: messageData?.username,
+                    msg: messageData?.msg?.substring(0, 50),
+                    time: messageData?.time,
+                    hasMsg: !!messageData?.msg
+                },
+                botContext: {
+                    hasUsername: !!botContext?.username,
+                    hasDb: !!botContext?.db,
+                    hasLogger: !!botContext?.logger,
+                    dbMethods: botContext?.db ? Object.getOwnPropertyNames(botContext.db).filter(name => typeof botContext.db[name] === 'function') : []
+                }
+            });
+            
             // Generate unique message ID for deduplication
             const messageId = this.generateMessageId(messageData);
             
@@ -110,10 +135,30 @@ class MessageProcessor {
      * Handle a validated message
      */
     async handleValidMessage(messageData, botContext) {
+        this.logger.debug('[MessageProcessor] handleValidMessage called', {
+            messageData: {
+                username: messageData?.username,
+                msg: messageData?.msg?.substring(0, 50)
+            },
+            botContext: {
+                hasDb: !!botContext?.db,
+                hasLogger: !!botContext?.logger,
+                username: botContext?.username,
+                dbType: typeof botContext?.db,
+                dbConstructor: botContext?.db?.constructor?.name
+            }
+        });
+        
+        this.logger.debug('[MessageProcessor] About to call normalizeUsernameForDb', {
+            botContextDb: !!botContext?.db,
+            messageUsername: messageData?.username
+        });
+        
         const canonicalUsername = await normalizeUsernameForDb(botContext, messageData.username);
         
         // Log message to database
-        const logResult = await this.database.logMessage(canonicalUsername, messageData.msg);
+        const database = this.services.get('database');
+        const logResult = await database.logMessage(canonicalUsername, messageData.msg);
         const messageId = logResult.messageId || logResult;
         
         // Handle image restorations
@@ -208,8 +253,13 @@ class MessageProcessor {
      * Check if message is from the bot
      */
     isBotMessage(messageData, botContext) {
+        if (!messageData?.username) {
+            this.logger.warn('isBotMessage called with invalid messageData', { messageData });
+            return false;
+        }
+        
         const messageUsername = messageData.username.toLowerCase();
-        const botUsername = this.config.bot.username.toLowerCase();
+        const botUsername = this.config?.bot?.username?.toLowerCase() || 'dazza';
         const storedUsername = botContext.username?.toLowerCase();
         
         if (messageUsername === botUsername || messageUsername === storedUsername) {

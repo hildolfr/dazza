@@ -1,24 +1,38 @@
 export async function up(db) {
-    // Add columns for tracking re-check attempts
-    await db.run(`
-        ALTER TABLE user_images ADD COLUMN failure_count INTEGER DEFAULT 0;
-    `);
+    // Check which columns already exist
+    const tableInfo = await db.all("PRAGMA table_info(user_images)");
+    const existingColumns = tableInfo.map(col => col.name);
     
-    await db.run(`
-        ALTER TABLE user_images ADD COLUMN first_failure_at INTEGER;
-    `);
+    // Add columns for tracking re-check attempts only if they don't exist
+    if (!existingColumns.includes('failure_count')) {
+        await db.run(`
+            ALTER TABLE user_images ADD COLUMN failure_count INTEGER DEFAULT 0;
+        `);
+    }
     
-    await db.run(`
-        ALTER TABLE user_images ADD COLUMN last_check_at INTEGER;
-    `);
+    if (!existingColumns.includes('first_failure_at')) {
+        await db.run(`
+            ALTER TABLE user_images ADD COLUMN first_failure_at INTEGER;
+        `);
+    }
     
-    await db.run(`
-        ALTER TABLE user_images ADD COLUMN next_check_at INTEGER;
-    `);
+    if (!existingColumns.includes('last_check_at')) {
+        await db.run(`
+            ALTER TABLE user_images ADD COLUMN last_check_at INTEGER;
+        `);
+    }
     
-    await db.run(`
-        ALTER TABLE user_images ADD COLUMN recheck_count INTEGER DEFAULT 0;
-    `);
+    if (!existingColumns.includes('next_check_at')) {
+        await db.run(`
+            ALTER TABLE user_images ADD COLUMN next_check_at INTEGER;
+        `);
+    }
+    
+    if (!existingColumns.includes('recheck_count')) {
+        await db.run(`
+            ALTER TABLE user_images ADD COLUMN recheck_count INTEGER DEFAULT 0;
+        `);
+    }
     
     // Create index for efficient querying of images due for re-check
     await db.run(`

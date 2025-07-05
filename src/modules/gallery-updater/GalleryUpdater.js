@@ -28,7 +28,7 @@ class GalleryUpdater {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; DazzaBot/1.0)'
+                    'User-Agent': 'Mozilla/5.0 (compatible; Dazza/1.0)'
                 },
                 timeout: 10000, // Increase timeout to 10 seconds
                 redirect: 'follow'
@@ -184,9 +184,9 @@ class GalleryUpdater {
                 }
                 this.lastUpdateHash = currentHash;
             } else {
-                // Log only the error message, not the full error object
-                const errorMsg = typeof gitResult.error === 'string' ? gitResult.error : 'Unknown error';
-                this.logger.error('Failed to push gallery update:', errorMsg.split('\n')[0]); // Only first line
+                // Log the error message properly
+                const errorMsg = typeof gitResult.error === 'string' ? gitResult.error : JSON.stringify(gitResult.error);
+                this.logger.error(`Failed to push gallery update: ${errorMsg}`);
             }
 
         } catch (error) {

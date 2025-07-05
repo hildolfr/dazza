@@ -9,8 +9,15 @@ class BatchScheduler extends EventEmitter {
         this.logger = logger;
         this.jobs = new Map();
         this.intervals = new Map();
+        this.timeouts = new Map(); // Track timeouts for cleanup
         this.isRunning = false;
+        this.isShuttingDown = false;
         this.stateFile = path.join(process.cwd(), 'data', 'batch_state.json');
+        
+        // Bind cleanup for emergency shutdown
+        this.boundCleanup = this.cleanup.bind(this);
+        process.on('SIGINT', this.boundCleanup);
+        process.on('SIGTERM', this.boundCleanup);
     }
 
     async init() {
@@ -74,6 +81,7 @@ class BatchScheduler extends EventEmitter {
 
     async stop() {
         this.isRunning = false;
+        this.isShuttingDown = true;
         
         // Clear all intervals
         for (const [name, intervalId] of this.intervals) {
@@ -81,6 +89,13 @@ class BatchScheduler extends EventEmitter {
             this.logger.info(`Stopped job: ${name}`);
         }
         this.intervals.clear();
+        
+        // Clear all timeouts
+        for (const [name, timeoutId] of this.timeouts) {
+            clearTimeout(timeoutId);
+            this.logger.info(`Cleared timeout for job: ${name}`);
+        }
+        this.timeouts.clear();
         
         // Wait for running jobs to complete
         const runningJobs = Array.from(this.jobs.values()).filter(j => j.isRunning);
@@ -91,6 +106,10 @@ class BatchScheduler extends EventEmitter {
         
         await this.saveState();
         this.logger.info('Batch scheduler stopped');
+        
+        // Clean up process listeners
+        process.removeListener('SIGINT', this.boundCleanup);
+        process.removeListener('SIGTERM', this.boundCleanup);
     }
 
     async scheduleJob(name) {
@@ -119,7 +138,13 @@ class BatchScheduler extends EventEmitter {
             // Job has a scheduled time in the future
             nextRun = jobState.next_run;
             const delay = nextRun - now;
-            setTimeout(() => this.runJob(name), delay);
+            const timeoutId = setTimeout(() => {
+                this.timeouts.delete(name);
+                if (!this.isShuttingDown) {
+                    this.runJob(name);
+                }
+            }, delay);
+            this.timeouts.set(name, timeoutId);
             this.logger.info(`Job ${name} scheduled to run in ${Math.round(delay / 1000 / 60)} minutes`);
         } else {
             // Job should run now
@@ -129,7 +154,7 @@ class BatchScheduler extends EventEmitter {
 
         // Set up recurring interval
         const intervalId = setInterval(() => {
-            if (this.isRunning) {
+            if (this.isRunning && !this.isShuttingDown) {
                 this.runJob(name);
             }
         }, job.intervalMs);
@@ -279,6 +304,65 @@ class BatchScheduler extends EventEmitter {
             throw new Error(`Job ${name} not found`);
         }
         await this.runJob(name);
+    }
+    
+    /**
+     * Emergency cleanup method for timers and intervals
+     */
+    async cleanup() {
+        if (this.isShuttingDown) return; // Prevent duplicate cleanup
+        
+        this.logger.info('BatchScheduler: Emergency cleanup initiated');
+        
+        // Stop the scheduler
+        await this.stop();
+        
+        this.logger.info('BatchScheduler: Emergency cleanup completed');
+    }
+    
+    /**
+     * Get current timer statistics for monitoring
+     */
+    getTimerStats() {
+        return {
+            activeIntervals: this.intervals.size,
+            activeTimeouts: this.timeouts.size,
+            runningJobs: Array.from(this.jobs.values()).filter(j => j.isRunning).length,
+            totalJobs: this.jobs.size,
+            isRunning: this.isRunning,
+            isShuttingDown: this.isShuttingDown
+        };
+    }
+    
+    /**
+     * Check for timer leaks - returns jobs with suspicious timer counts
+     */
+    detectTimerLeaks() {
+        const leaks = [];
+        
+        // Check for orphaned timeouts
+        for (const [jobName, timeoutId] of this.timeouts) {
+            if (!this.jobs.has(jobName)) {
+                leaks.push({
+                    type: 'orphaned_timeout',
+                    jobName,
+                    timeoutId
+                });
+            }
+        }
+        
+        // Check for orphaned intervals
+        for (const [jobName, intervalId] of this.intervals) {
+            if (!this.jobs.has(jobName)) {
+                leaks.push({
+                    type: 'orphaned_interval',
+                    jobName,
+                    intervalId
+                });
+            }
+        }
+        
+        return leaks;
     }
 }
 

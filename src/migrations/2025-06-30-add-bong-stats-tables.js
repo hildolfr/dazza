@@ -1,8 +1,13 @@
 export async function up(db) {
-    // Add hour column to user_bongs
-    await db.run(`
-        ALTER TABLE user_bongs ADD COLUMN hour INTEGER
-    `);
+    // Add hour column to user_bongs (check if it exists first)
+    const tableInfo = await db.all("PRAGMA table_info(user_bongs)");
+    const hasHourColumn = tableInfo.some(column => column.name === 'hour');
+    
+    if (!hasHourColumn) {
+        await db.run(`
+            ALTER TABLE user_bongs ADD COLUMN hour INTEGER
+        `);
+    }
     
     // Create bong_sessions table
     await db.run(`
@@ -18,8 +23,9 @@ export async function up(db) {
         )
     `);
     
-    await db.run(`CREATE INDEX idx_bong_sessions_username ON bong_sessions(username)`);
-    await db.run(`CREATE INDEX idx_bong_sessions_start ON bong_sessions(session_start)`);
+    // Create indexes only if they don't exist
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_bong_sessions_username ON bong_sessions(username)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_bong_sessions_start ON bong_sessions(session_start)`);
     
     // Create user_bong_streaks table
     await db.run(`

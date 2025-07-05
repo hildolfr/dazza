@@ -4,6 +4,20 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Helper function to handle circular references in JSON.stringify
+function getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return "[Circular]";
+            }
+            seen.add(value);
+        }
+        return value;
+    };
+}
+
 class Logger {
     constructor(options = {}) {
         this.logDir = options.logDir || path.join(__dirname, '../../logs');
@@ -86,7 +100,16 @@ class Logger {
                 ...context // Include any other enumerable properties
             })}`;
         } else if (Object.keys(context).length > 0) {
-            contextStr = ` ${JSON.stringify(context)}`;
+            try {
+                contextStr = ` ${JSON.stringify(context)}`;
+            } catch (err) {
+                // Handle circular references or other stringify errors
+                if (typeof context === 'string') {
+                    contextStr = ` "${context}"`;
+                } else {
+                    contextStr = ` [Complex Object - Cannot Stringify]`;
+                }
+            }
         }
         
         return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;

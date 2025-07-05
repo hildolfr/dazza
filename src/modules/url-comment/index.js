@@ -75,15 +75,20 @@ class URLCommentModule extends BaseModule {
      * @param {Object} data - Chat message event data
      */
     async handleChatMessage(data) {
-        const { message, room } = data;
+        const { message, room, username } = data;
         
-        if (!message || !message.msg || !room) {
+        if (!message || typeof message !== 'string' || !room) {
             return;
         }
         
         try {
+            // Convert to expected format for urlCommentService
+            const messageObj = {
+                msg: message,
+                username: username
+            };
             // Process the message for URLs
-            await this.urlCommentService.processMessage(message, room);
+            await this.urlCommentService.processMessage(messageObj, room);
             
         } catch (error) {
             this.logger.error('Error processing message for URL comments', {

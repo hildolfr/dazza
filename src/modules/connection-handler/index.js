@@ -34,6 +34,15 @@ class ConnectionHandlerModule extends BaseModule {
         // Initialize the connection handler
         await this.connectionHandler.initialize();
         
+        // ConnectionHandler doesn't need to handle chat messages - MessageProcessor does that directly
+        this.subscribe('chat:pm', this.connectionHandler.handlePrivateMessage.bind(this.connectionHandler));
+        this.subscribe('user:join', this.connectionHandler.handleUserJoin.bind(this.connectionHandler));
+        this.subscribe('user:leave', this.connectionHandler.handleUserLeave.bind(this.connectionHandler));
+        this.subscribe('user:list', this.connectionHandler.handleUserlist.bind(this.connectionHandler));
+        this.subscribe('user:afk', this.connectionHandler.handleAFKUpdate.bind(this.connectionHandler));
+        this.subscribe('user:rank', this.connectionHandler.handleRankUpdate.bind(this.connectionHandler));
+        this.subscribe('media:change', this.connectionHandler.handleMediaChange.bind(this.connectionHandler));
+        
         // Register service
         this.eventBus.emit('service:register', { 
             name: 'connectionHandler', 

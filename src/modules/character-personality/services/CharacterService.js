@@ -442,9 +442,11 @@ class CharacterService {
                 // Get connection service to send the response
                 const connectionService = this.services.get('connection');
                 if (connectionService && connectionService.sendMessage) {
-                    await connectionService.sendMessage(response);
+                    const roomId = messageData.room || 'fatpizza'; // Use provided room or default
+                    await connectionService.sendMessage(roomId, response);
                     this.logger.info('Ollama response sent', {
                         username: messageData.username,
+                        room: roomId,
                         responseLength: response.length
                     });
                 } else {
@@ -458,8 +460,9 @@ class CharacterService {
             const fallbackResponse = this.getResponse('confused');
             const connectionService = this.services.get('connection');
             if (connectionService && connectionService.sendMessage) {
-                await connectionService.sendMessage(fallbackResponse);
-                this.logger.info('Sent fallback response due to Ollama error');
+                const roomId = messageData.room || 'fatpizza'; // Use provided room or default
+                await connectionService.sendMessage(roomId, fallbackResponse);
+                this.logger.info('Sent fallback response due to Ollama error', { room: roomId });
             }
         }
     }

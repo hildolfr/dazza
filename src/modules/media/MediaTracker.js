@@ -89,7 +89,7 @@ export default class MediaTracker {
                 type = media.media.type;
                 queueby = media.queueby || 'Unknown';
             } else {
-                this.logger.warn('Unknown media structure:', media);
+                this.logger.warn('Unknown media structure - unable to extract ID and title');
                 return;
             }
             const now = Date.now();

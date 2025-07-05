@@ -74,15 +74,15 @@ class CommandHandlerModule extends BaseModule {
     }
 
     async handleChatMessage(data) {
-        const { message, room } = data;
+        const { message, room, username } = data;
         
         // Check if message starts with command prefix
-        if (!message.msg || !message.msg.startsWith(this.config.commandPrefix)) {
+        if (!message || !message.startsWith(this.config.commandPrefix)) {
             return;
         }
 
         // Parse command and arguments
-        const parts = message.msg.slice(1).split(' ');
+        const parts = message.slice(1).split(' ');
         const commandName = parts[0].toLowerCase();
         const args = parts.slice(1);
 
@@ -97,25 +97,25 @@ class CommandHandlerModule extends BaseModule {
         }
 
         // Check rate limiting
-        if (!this.checkRateLimit(message.username)) {
-            this.emit('command.ratelimited', { username: message.username, command: commandName });
+        if (!this.checkRateLimit(username)) {
+            this.emit('command.ratelimited', { username: username, command: commandName });
             return;
         }
 
         // Execute command
-        await this.executeCommand(commandName, message, args, room);
+        await this.executeCommand(commandName, { message, username, room }, args, room);
     }
 
     async handlePrivateMessage(data) {
-        const { message, room } = data;
+        const { message, room, username } = data;
         
         // Check if message starts with command prefix
-        if (!message.msg || !message.msg.startsWith(this.config.commandPrefix)) {
+        if (!message || !message.startsWith(this.config.commandPrefix)) {
             return;
         }
 
         // Parse command and arguments
-        const parts = message.msg.slice(1).split(' ');
+        const parts = message.slice(1).split(' ');
         const commandName = parts[0].toLowerCase();
         const args = parts.slice(1);
 
@@ -126,21 +126,21 @@ class CommandHandlerModule extends BaseModule {
         }
 
         // Check rate limiting
-        if (!this.checkRateLimit(message.username)) {
-            this.emit('command.ratelimited', { username: message.username, command: commandName });
+        if (!this.checkRateLimit(username)) {
+            this.emit('command.ratelimited', { username: username, command: commandName });
             return;
         }
 
         // Execute command
-        await this.executeCommand(commandName, message, args, room, true);
+        await this.executeCommand(commandName, { message, username, room }, args, room, true);
     }
 
-    async executeCommand(commandName, message, args, room, isPrivate = false) {
+    async executeCommand(commandName, messageData, args, room, isPrivate = false) {
         const command = this.commandRegistry.get(commandName);
         
         if (!command) {
             this.emit('command.failed', { 
-                username: message.username, 
+                username: messageData.username, 
                 command: commandName, 
                 error: 'Command not found' 
             });
@@ -152,11 +152,11 @@ class CommandHandlerModule extends BaseModule {
             const botContext = this.createBotContext(room);
             
             // Execute command
-            const result = await this.commandRegistry.execute(commandName, botContext, message, args);
+            const result = await this.commandRegistry.execute(commandName, botContext, messageData, args);
             
             if (result.success) {
                 this.emit('command.executed', { 
-                    username: message.username, 
+                    username: messageData.username, 
                     command: commandName, 
                     args: args,
                     result: result
@@ -164,30 +164,30 @@ class CommandHandlerModule extends BaseModule {
                 
                 // Send response if provided
                 if (result.response) {
-                    await this.sendResponse(result.response, message, room, isPrivate, command);
+                    await this.sendResponse(result.response, messageData, room, isPrivate, command);
                 }
             } else {
                 this.emit('command.failed', { 
-                    username: message.username, 
+                    username: messageData.username, 
                     command: commandName, 
                     error: result.error || 'Unknown error' 
                 });
                 
                 // Send error response
                 if (result.error) {
-                    await this.sendResponse(result.error, message, room, isPrivate, command);
+                    await this.sendResponse(result.error, messageData, room, isPrivate, command);
                 }
             }
         } catch (error) {
             this.logger.error(`Command execution error: ${commandName}`, {
                 error: error.message,
                 stack: error.stack,
-                user: message.username,
+                user: messageData.username,
                 args: args
             });
             
             this.emit('command.failed', { 
-                username: message.username, 
+                username: messageData.username, 
                 command: commandName, 
                 error: error.message 
             });
@@ -201,7 +201,7 @@ class CommandHandlerModule extends BaseModule {
             
             if (sendToPM) {
                 // Send private message
-                await room.sendPM(message.username, response);
+                await room.sendPM(messageData.username, response);
             } else {
                 // Send to chat
                 await room.sendMessage(response);
@@ -221,11 +221,12 @@ class CommandHandlerModule extends BaseModule {
             personality: this.legacyPersonality,
             videoPayoutManager: this.legacyVideoPayoutManager,
             room: room,
-            cooldowns: this.context.cooldowns || { check: () => ({ allowed: true }) },
+            cooldowns: this._context.services.get('cooldown') || { check: () => ({ allowed: true }) },
             isAdmin: (username) => {
                 // This will need to be provided by a permission module
                 // For now, provide a basic implementation
-                return this.context.admins?.has(username.toLowerCase()) || false;
+                const permissions = this._context.services.get('permissions');
+                return permissions?.isAdmin?.(username) || false;
             },
             sendMessage: (msg) => room.sendMessage(msg),
             sendPM: (username, msg) => room.sendPM(username, msg)
@@ -233,6 +234,11 @@ class CommandHandlerModule extends BaseModule {
     }
 
     checkRateLimit(username) {
+        if (!username) {
+            this.logger.warn('checkRateLimit called with undefined username');
+            return false;
+        }
+        
         const now = Date.now();
         const userKey = username.toLowerCase();
         

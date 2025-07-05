@@ -12,38 +12,64 @@ export class ImageHealthChecker {
         this.minFailureInterval = 5 * 60 * 1000; // 5 minutes between failures
         this.maxFailures = 3; // Number of failures before pruning
         this.maxRecheckHours = 48; // When to show gravestone badge
+        
+        // Timer tracking for cleanup
+        this.timeouts = new Set();
+        this.intervals = new Set();
+        this.isShuttingDown = false;
+        
+        // Bind cleanup on process shutdown
+        this.boundCleanup = this.cleanup.bind(this);
+        process.on('SIGINT', this.boundCleanup);
+        process.on('SIGTERM', this.boundCleanup);
     }
 
     start() {
-        if (this.intervalId) return;
+        if (this.intervalId || this.isShuttingDown) return;
         
         this.bot.logger.info('[ImageHealthChecker] Starting periodic health checks');
         
-        // Run initial check after 5 minutes
-        setTimeout(() => this.runHealthCheck(), 5 * 60 * 1000);
-        
-        // Then run every hour
-        this.intervalId = setInterval(() => {
+        // Run initial check after 5 minutes - track timeout
+        const initialTimeout = setTimeout(() => {
+            this.timeouts.delete(initialTimeout);
             this.runHealthCheck();
-        }, this.checkInterval);
+        }, 5 * 60 * 1000);
+        this.timeouts.add(initialTimeout);
         
-        // Start recheck timer for pruned images
+        // Then run every hour - track interval
+        this.intervalId = setInterval(() => {
+            if (!this.isShuttingDown) {
+                this.runHealthCheck();
+            }
+        }, this.checkInterval);
+        this.intervals.add(this.intervalId);
+        
+        // Start recheck timer for pruned images - track interval
         this.recheckIntervalId = setInterval(() => {
-            this.runRecheckPrunedImages();
+            if (!this.isShuttingDown) {
+                this.runRecheckPrunedImages();
+            }
         }, 30 * 60 * 1000); // Check every 30 minutes for images due for recheck
+        this.intervals.add(this.recheckIntervalId);
     }
 
     stop() {
+        this.isShuttingDown = true;
+        
         if (this.intervalId) {
             clearInterval(this.intervalId);
+            this.intervals.delete(this.intervalId);
             this.intervalId = null;
             this.bot.logger.info('[ImageHealthChecker] Stopped periodic health checks');
         }
         
         if (this.recheckIntervalId) {
             clearInterval(this.recheckIntervalId);
+            this.intervals.delete(this.recheckIntervalId);
             this.recheckIntervalId = null;
         }
+        
+        this.cleanup();
     }
 
     isConnected() {
@@ -497,5 +523,52 @@ export class ImageHealthChecker {
             this.bot.logger.error(`[ImageHealthChecker] Failed to recheck image ${imageId}:`, { error: error.message, stack: error.stack });
             throw error;
         }
+    }
+    
+    /**
+     * Comprehensive cleanup of all timers and intervals
+     */
+    cleanup() {
+        if (this.isShuttingDown) return; // Prevent duplicate cleanup
+        
+        this.bot.logger.info('[ImageHealthChecker] Cleaning up timers and intervals');
+        
+        // Clear all tracked timeouts
+        this.timeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.timeouts.clear();
+        
+        // Clear all tracked intervals
+        this.intervals.forEach(intervalId => {
+            clearInterval(intervalId);
+        });
+        this.intervals.clear();
+        
+        // Reset state
+        this.intervalId = null;
+        this.recheckIntervalId = null;
+        this.isRunning = false;
+        this.isShuttingDown = true;
+        
+        // Remove process listeners
+        process.removeListener('SIGINT', this.boundCleanup);
+        process.removeListener('SIGTERM', this.boundCleanup);
+        
+        this.bot.logger.info('[ImageHealthChecker] Cleanup completed');
+    }
+    
+    /**
+     * Get current timer statistics for monitoring
+     */
+    getTimerStats() {
+        return {
+            activeTimeouts: this.timeouts.size,
+            activeIntervals: this.intervals.size,
+            isRunning: this.isRunning,
+            isShuttingDown: this.isShuttingDown,
+            mainInterval: !!this.intervalId,
+            recheckInterval: !!this.recheckIntervalId
+        };
     }
 }

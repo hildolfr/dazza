@@ -17,13 +17,36 @@ class ConnectionHandler {
         this.processedMessages = new Set();
         this.recentMentions = new Set();
         
+        // Timer tracking for cleanup
+        this.timeouts = new Map(); // Map of timeout IDs to descriptions
+        this.intervals = new Map(); // Map of interval IDs to descriptions
+        this.isShuttingDown = false;
+        
         // Connection state
         this.isConnected = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = config.maxReconnectAttempts || 10;
         this.reconnectDelay = config.reconnectDelay || 30000;
         
+        // Connection storm prevention
+        this.maxConcurrentAttempts = config.maxConcurrentAttempts || 5;
+        this.currentAttempts = 0;
+        this.connectionHistory = []; // Track connection attempts
+        this.maxConnectionsPerHour = config.maxConnectionsPerHour || 60;
+        this.connectionBackoff = {
+            base: 30000, // 30 seconds
+            max: 600000, // 10 minutes
+            multiplier: 2,
+            current: 30000
+        };
+        this.emergencyMode = false;
+        
         this.ready = false;
+        
+        // Bind cleanup for emergency shutdown
+        this.boundCleanup = this.cleanup.bind(this);
+        process.on('SIGINT', this.boundCleanup);
+        process.on('SIGTERM', this.boundCleanup);
     }
     
     async initialize() {
@@ -31,15 +54,15 @@ class ConnectionHandler {
         this.database = this.services.get('database');
         this.connection = this.services.get('connection');
         
-        // Optional services
-        this.messageProcessor = this.services.get('messageProcessor');
+        // Optional services - will be looked up when needed
+        // this.messageProcessor = this.services.get('messageProcessor');
         
         // Debug logging to see what services are available
         this.logger.info('Checking services availability', {
             database: !!this.database,
             eventBus: !!this.eventBus,
             connection: !!this.connection,
-            messageProcessor: !!this.messageProcessor,
+            messageProcessor: !!this.services.get('messageProcessor'),
             allServices: Array.from(this.services.keys ? this.services.keys() : [])
         });
         
@@ -88,23 +111,11 @@ class ConnectionHandler {
             }
         });
         
-        // Chat events - route to message processor if available
-        this.connection.on('chatMsg', (data) => this.handleChatMessage(data));
-        this.connection.on('pm', (data) => this.handlePrivateMessage(data));
+        // Event handlers will be set up via event bus subscriptions in the module
+        // No direct socket event listeners needed in modular architecture
         
-        // User events
-        this.connection.on('userlist', (users) => this.handleUserlist(users));
-        this.connection.on('addUser', (user) => this.handleUserJoin(user));
-        this.connection.on('userLeave', (user) => this.handleUserLeave(user));
-        this.connection.on('setAFK', (data) => this.handleAFKUpdate(data));
-        
-        // Channel events
-        this.connection.on('rank', (rank) => this.handleRankUpdate(rank));
-        
-        // Media events
-        this.connection.on('changeMedia', (data) => this.handleMediaChange(data));
-        this.connection.on('mediaUpdate', (data) => this.handleMediaUpdate(data));
-        this.connection.on('setCurrent', (data) => this.handleSetCurrent(data));
+        // All events handled via event bus subscriptions
+        // Media events are handled by core-connection module and published to event bus
         
         this.logger.debug('Connection event handlers setup complete');
     }
@@ -114,19 +125,14 @@ class ConnectionHandler {
      */
     async handleChatMessage(data) {
         try {
-            // If message processor is available, use it
-            if (this.messageProcessor) {
-                const result = await this.messageProcessor.processMessage(data);
-                this.logger.debug('Message processed by MessageProcessor', { result });
-            } else {
-                // Fallback: emit event for other modules to handle
-                this.eventBus.emit('chat:message', {
-                    username: data.username,
-                    message: data.msg,
-                    timestamp: data.time || Date.now(),
-                    meta: data.meta
-                });
-            }
+            // The data from core-connection is already in the correct format
+            // Just forward it for other modules - MessageProcessor should subscribe to socket events directly
+            // Data format: { room, username, message, time, meta }
+            this.logger.debug('Forwarding chat message', {
+                username: data.username,
+                message: data.message?.substring(0, 50),
+                room: data.room
+            });
         } catch (error) {
             this.logger.error('Error handling chat message', {
                 error: error.message,
@@ -327,6 +333,19 @@ class ConnectionHandler {
             this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
             this.pendingMentionTimeouts.clear();
             
+            // Clear all tracked timeouts and intervals
+            this.timeouts.forEach((description, timeoutId) => {
+                clearTimeout(timeoutId);
+                this.logger.debug(`Cleared timeout: ${description}`);
+            });
+            this.timeouts.clear();
+            
+            this.intervals.forEach((description, intervalId) => {
+                clearInterval(intervalId);
+                this.logger.debug(`Cleared interval: ${description}`);
+            });
+            this.intervals.clear();
+            
             // Clear pending tell checks
             this.pendingTellChecks.clear();
             
@@ -366,10 +385,14 @@ class ConnectionHandler {
                     timestamp: Date.now()
                 });
                 
-                // Schedule reconnect after the required delay
-                setTimeout(() => {
-                    this.handleReconnect();
+                // Schedule reconnect after the required delay - track timeout
+                const reconnectTimeout = setTimeout(() => {
+                    this.timeouts.delete(reconnectTimeout);
+                    if (!this.isShuttingDown) {
+                        this.handleReconnect();
+                    }
                 }, waitTime * 1000);
+                this.timeouts.set(reconnectTimeout, `reconnect-delay-${waitTime}s`);
                 return;
             }
             
@@ -386,6 +409,20 @@ class ConnectionHandler {
             // Clear all pending timeouts and stale data
             this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
             this.pendingMentionTimeouts.clear();
+            
+            // Clear all tracked timeouts and intervals
+            this.timeouts.forEach((description, timeoutId) => {
+                clearTimeout(timeoutId);
+                this.logger.debug(`Cleared timeout during reconnect: ${description}`);
+            });
+            this.timeouts.clear();
+            
+            this.intervals.forEach((description, intervalId) => {
+                clearInterval(intervalId);
+                this.logger.debug(`Cleared interval during reconnect: ${description}`);
+            });
+            this.intervals.clear();
+            
             this.pendingTellChecks.clear();
             this.messageHistory = [];
             this.processedMessages.clear();
@@ -475,8 +512,9 @@ class ConnectionHandler {
     /**
      * Add timeout to tracking set
      */
-    trackTimeout(timeoutId) {
+    trackTimeout(timeoutId, description = 'mention-timeout') {
         this.pendingMentionTimeouts.add(timeoutId);
+        this.timeouts.set(timeoutId, description);
     }
     
     /**
@@ -484,6 +522,34 @@ class ConnectionHandler {
      */
     untrackTimeout(timeoutId) {
         this.pendingMentionTimeouts.delete(timeoutId);
+        this.timeouts.delete(timeoutId);
+    }
+    
+    /**
+     * Create and track a timeout
+     */
+    createTimeout(callback, delay, description = 'generic-timeout') {
+        const timeoutId = setTimeout(() => {
+            this.timeouts.delete(timeoutId);
+            if (!this.isShuttingDown) {
+                callback();
+            }
+        }, delay);
+        this.timeouts.set(timeoutId, description);
+        return timeoutId;
+    }
+    
+    /**
+     * Create and track an interval
+     */
+    createInterval(callback, interval, description = 'generic-interval') {
+        const intervalId = setInterval(() => {
+            if (!this.isShuttingDown) {
+                callback();
+            }
+        }, interval);
+        this.intervals.set(intervalId, description);
+        return intervalId;
     }
     
     /**
@@ -501,14 +567,64 @@ class ConnectionHandler {
     }
     
     /**
+     * Check if we're exceeding connection rate limits
+     */
+    _checkConnectionRateLimit() {
+        const now = Date.now();
+        const oneHourAgo = now - 3600000; // 1 hour ago
+        
+        // Clean old entries
+        this.connectionHistory = this.connectionHistory.filter(entry => entry.timestamp > oneHourAgo);
+        
+        // Check if we're exceeding the hourly limit
+        return this.connectionHistory.length < this.maxConnectionsPerHour;
+    }
+    
+    /**
+     * Increase backoff delay with exponential backoff
+     */
+    _increaseBackoff() {
+        this.connectionBackoff.current = Math.min(
+            this.connectionBackoff.current * this.connectionBackoff.multiplier,
+            this.connectionBackoff.max
+        );
+        this.logger.info(`Connection backoff increased to ${this.connectionBackoff.current}ms`);
+    }
+    
+    /**
+     * Reset backoff delay on successful connection
+     */
+    _resetBackoff() {
+        this.connectionBackoff.current = this.connectionBackoff.base;
+        this.logger.info('Connection backoff reset');
+    }
+    
+    /**
      * Cleanup method for module shutdown
      */
     async cleanup() {
+        if (this.isShuttingDown) return; // Prevent duplicate cleanup
+        
         this.logger.info('ConnectionHandler cleanup initiated');
+        this.isShuttingDown = true;
         
         // Clear all timeouts
         this.pendingMentionTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingMentionTimeouts.clear();
+        
+        // Clear all tracked timeouts and intervals
+        this.timeouts.forEach((description, timeoutId) => {
+            clearTimeout(timeoutId);
+            this.logger.debug(`Cleanup cleared timeout: ${description}`);
+        });
+        this.timeouts.clear();
+        
+        this.intervals.forEach((description, intervalId) => {
+            clearInterval(intervalId);
+            this.logger.debug(`Cleanup cleared interval: ${description}`);
+        });
+        this.intervals.clear();
+        
         this.pendingTellChecks.clear();
         
         // Clear data structures
@@ -516,8 +632,46 @@ class ConnectionHandler {
         this.processedMessages.clear();
         this.recentMentions.clear();
         
+        // Clear connection tracking
+        this.connectionHistory = [];
+        this.currentAttempts = 0;
+        this.emergencyMode = false;
+        this._resetBackoff();
+        
         this.ready = false;
+        
+        // Remove process listeners
+        process.removeListener('SIGINT', this.boundCleanup);
+        process.removeListener('SIGTERM', this.boundCleanup);
+        
         this.logger.info('ConnectionHandler cleanup complete');
+    }
+    
+    /**
+     * Get current timer statistics for monitoring
+     */
+    getTimerStats() {
+        return {
+            pendingMentionTimeouts: this.pendingMentionTimeouts.size,
+            activeTimeouts: this.timeouts.size,
+            activeIntervals: this.intervals.size,
+            pendingTellChecks: this.pendingTellChecks.size,
+            messageHistorySize: this.messageHistory.length,
+            processedMessagesSize: this.processedMessages.size,
+            recentMentionsSize: this.recentMentions.size,
+            isConnected: this.isConnected,
+            isShuttingDown: this.isShuttingDown,
+            ready: this.ready,
+            // Connection storm prevention stats
+            reconnectAttempts: this.reconnectAttempts,
+            maxReconnectAttempts: this.maxReconnectAttempts,
+            currentAttempts: this.currentAttempts,
+            maxConcurrentAttempts: this.maxConcurrentAttempts,
+            connectionHistorySize: this.connectionHistory.length,
+            maxConnectionsPerHour: this.maxConnectionsPerHour,
+            currentBackoff: this.connectionBackoff.current,
+            emergencyMode: this.emergencyMode
+        };
     }
 }
 

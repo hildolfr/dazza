@@ -58,15 +58,8 @@ class MediaManagementService {
             // Update current media state
             this.currentMedia = data;
             
-            // Emit media change event for API WebSocket
-            if (this.apiServer && this.config.enableApiEvents) {
-                this.apiServer.emit('media:change', {
-                    title: data.title,
-                    id: data.id,
-                    type: data.type,
-                    duration: data.duration || data.seconds
-                });
-            }
+            // Media change events are already handled by ConnectionHandler
+            // Removing duplicate emission to prevent infinite recursion loop
             
             // Handle video payout manager integration
             if (this.videoPayoutManager) {

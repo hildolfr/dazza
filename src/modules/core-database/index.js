@@ -13,6 +13,9 @@ import UserService from './services/UserService.js';
 import EconomyService from './services/EconomyService.js';
 import MediaService from './services/MediaService.js';
 
+// Import legacy Database class for backward compatibility
+import Database from '../../services/database.js';
+
 class CoreDatabaseModule extends BaseModule {
     constructor(context) {
         super(context);
@@ -20,6 +23,7 @@ class CoreDatabaseModule extends BaseModule {
         this.mediaDb = null;
         this.services = {};
         this.transactionDepth = 0;
+        this.legacyDatabase = null; // For backward compatibility
     }
     
     async init() {
@@ -39,10 +43,16 @@ class CoreDatabaseModule extends BaseModule {
         // Initialize services
         await this.initializeServices();
         
-        // Register as global service
+        // Create legacy Database instance for backward compatibility
+        this.legacyDatabase = new Database(this.config.mainDatabase.path, 'dazza', {
+            logger: this.logger
+        });
+        await this.legacyDatabase.init();
+        
+        // Register the Database instance (not the module) for backward compatibility
         this.eventBus.emit('service:register', {
             name: 'database',
-            service: this
+            service: this.legacyDatabase  // Register Database class instance
         });
         
         this.logger.info('Database module initialized');
@@ -61,6 +71,11 @@ class CoreDatabaseModule extends BaseModule {
     
     async stop() {
         await super.stop();
+        
+        // Close legacy database
+        if (this.legacyDatabase) {
+            await this.legacyDatabase.close();
+        }
         
         // Close databases
         if (this.mainDb) {

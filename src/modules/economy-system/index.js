@@ -96,14 +96,19 @@ class EconomySystemModule extends BaseModule {
      * Handle chat message events for economy processing
      */
     async handleChatMessage(data) {
-        const { message, room } = data;
+        const { message, room, username } = data;
         
-        if (!message || !message.msg) {
+        if (!message || typeof message !== 'string') {
             return;
         }
         
         try {
-            await this.economySystemService.processMessage(message, room);
+            // Convert to expected format for economySystemService
+            const messageObj = {
+                msg: message,
+                username: username
+            };
+            await this.economySystemService.processMessage(messageObj, room);
             
         } catch (error) {
             this.logger.error('Error processing message for economy system', {

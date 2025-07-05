@@ -84,6 +84,11 @@ class BotMessageTrackingModule extends BaseModule {
             return;
         }
         
+        // Skip processing server messages (join/leave announcements)
+        if (data.username === '[server]') {
+            return;
+        }
+        
         try {
             // Process the message for tracking
             const result = this.messageTracker.processMessage(data);
@@ -91,14 +96,14 @@ class BotMessageTrackingModule extends BaseModule {
             // Emit events based on processing result
             if (result.shouldProcess) {
                 this.emit('message:tracked', {
-                    messageId: data.message.id,
-                    username: data.message.username,
+                    messageId: result.messageId || 'unknown',
+                    username: data.username,
                     reason: result.reason
                 });
             } else {
                 this.emit('message:duplicate', {
-                    messageId: data.message.id,
-                    username: data.message.username,
+                    messageId: result.messageId || 'unknown',
+                    username: data.username,
                     reason: result.reason
                 });
             }
@@ -106,8 +111,8 @@ class BotMessageTrackingModule extends BaseModule {
         } catch (error) {
             this.logger.error('Error processing message for tracking', {
                 error: error.message,
-                messageId: data.message.id,
-                username: data.message.username
+                messageId: 'unknown',
+                username: data.username || 'unknown'
             });
         }
     }

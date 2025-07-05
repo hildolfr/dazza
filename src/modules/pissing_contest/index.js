@@ -89,8 +89,9 @@ class PissingContestModule extends BaseModule {
         } catch (error) {
             this.logger.error('Error processing contest message', {
                 error: error.message,
-                messageId: data.message.id,
-                username: data.message.username
+                messageId: data.username + '_' + Date.now(),
+                username: data.username,
+                message: data.message?.substring(0, 50)
             });
         }
     }
