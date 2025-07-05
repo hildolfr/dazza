@@ -370,10 +370,10 @@ class UnifiedScheduler extends EventEmitter {
             timezone: this.config.timezone
         });
         
-        const next = interval.nextDates(1);
+        const next = interval.getNextRun();
         interval.stop();
         
-        return next[0]?.toDate().getTime() || null;
+        return next ? next.getTime() : null;
     }
     
     getTask(taskId) {
