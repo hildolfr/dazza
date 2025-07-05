@@ -7,13 +7,13 @@
   "dependencies": [],
   "config": {
     "mainDatabase": {
-      "path": "./cytube_stats.db",
+      "path": "./cytube_stats_modular.db",
       "options": {
         "verbose": false
       }
     },
     "mediaDatabase": {
-      "path": "./media_encountered.db",
+      "path": "./media_encountered_modular.db",
       "options": {
         "verbose": false
       }

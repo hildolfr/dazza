@@ -27,8 +27,15 @@ class RoomConnection extends EventEmitter {
         }
         
         try {
-            const socketUrl = `${this.server}/socketio/${this.room}`;
-            this.socket = io(socketUrl, this.socketOptions);
+            // Fetch socket configuration from CyTube
+            const socketUrl = await this.getSocketConfig();
+            this.logger.info(`Connecting to ${socketUrl}...`);
+            
+            this.socket = io(socketUrl, {
+                transports: ['websocket'],
+                reconnection: false,
+                path: '/socket.io/'
+            });
             
             this.setupSocketHandlers();
             
@@ -53,6 +60,9 @@ class RoomConnection extends EventEmitter {
             
             // Start heartbeat
             this.startHeartbeat();
+            
+            // Join the channel first
+            await this.joinChannel();
             
             // Attempt login if credentials provided
             if (this.username && this.password) {
@@ -115,6 +125,44 @@ class RoomConnection extends EventEmitter {
                 name: this.username,
                 pw: this.password
             });
+        });
+    }
+    
+    async joinChannel() {
+        if (!this.connected) {
+            throw new Error('Not connected to server');
+        }
+
+        this.logger.info(`Joining channel: ${this.room}`);
+        
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Channel join timeout'));
+            }, 10000);
+
+            const cleanup = () => {
+                clearTimeout(timeout);
+                this.socket.off('rank');
+                this.socket.off('needPassword');
+                this.socket.off('channelOpts');
+            };
+
+            // CyTube might send rank or channelOpts to indicate successful join
+            const handleJoinSuccess = () => {
+                cleanup();
+                this.logger.info(`Joined channel successfully`);
+                resolve();
+            };
+
+            this.socket.once('rank', handleJoinSuccess);
+            this.socket.once('channelOpts', handleJoinSuccess);
+            
+            this.socket.once('needPassword', () => {
+                cleanup();
+                reject(new Error('Channel requires password'));
+            });
+
+            this.socket.emit('joinChannel', { name: this.room });
         });
     }
     
@@ -296,6 +344,30 @@ class RoomConnection extends EventEmitter {
             name: username,
             reason
         });
+    }
+    
+    async getSocketConfig() {
+        try {
+            const response = await fetch(`${this.server}/socketconfig/${this.room}.json`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch socket config: ${response.status}`);
+            }
+            
+            const socketConfig = await response.json();
+            
+            // Find a secure server, or fall back to any available server
+            const server = socketConfig.servers.find(s => s.secure) || socketConfig.servers[0];
+            
+            if (!server) {
+                throw new Error('No available servers in socket config');
+            }
+            
+            this.logger.info(`Using socket server: ${server.url}`);
+            return server.url;
+        } catch (error) {
+            this.logger.error('Failed to fetch socket config:', error);
+            throw error;
+        }
     }
 }
 
