@@ -157,14 +157,8 @@ export class CyTubeBot extends EventEmitter {
             // Register database service for modules
             this.services.set('database', this.db);
             
-            // Load tell-system module
-            await this.loadTellSystemModule();
-            
-            // Load reminder-system module
-            await this.loadReminderSystemModule();
-            
-            // Load memory-management module
-            await this.loadMemoryManagementModule();
+            // Load all modules automatically
+            await this.loadAllModules();
             
             // Skip command handler for now due to CommonJS compatibility issue
             // const { default: CommandHandler } = await import('./command-handler.js');
@@ -2088,16 +2082,18 @@ export class CyTubeBot extends EventEmitter {
     }
     
     /**
-     * Load and initialize the memory-management module
+     * Load and initialize all modules automatically
      */
-    async loadMemoryManagementModule() {
+    async loadAllModules() {
         try {
+            this.logger.info('Starting automatic module discovery and loading...');
+            
             // Create proper context for ModuleLoader
             const loaderContext = {
                 eventBus: this.eventBus,
                 services: this.services,
                 logger: this.logger,
-                config: this.config, // Use full bot config
+                config: this.config,
                 moduleRegistry: null, // We don't have this in legacy bot
                 scheduler: null,
                 performanceMonitor: null,
@@ -2105,137 +2101,88 @@ export class CyTubeBot extends EventEmitter {
                 api: null
             };
             
+            // Create module loader and discover all modules
             const moduleLoader = new ModuleLoader(loaderContext);
-            const modulePath = path.join(__dirname, '../modules/memory-management');
+            const discoveredModules = await moduleLoader.discoverModules();
             
-            // Load module info first
-            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
-            if (!moduleInfo) {
-                throw new Error('Failed to load memory-management module info');
+            this.logger.info(`Discovered ${discoveredModules.length} modules`);
+            
+            let loadedCount = 0;
+            let failedCount = 0;
+            const loadedModules = [];
+            const failedModules = [];
+            
+            // Load each discovered module
+            for (const moduleInfo of discoveredModules) {
+                try {
+                    if (!moduleInfo.enabled) {
+                        this.logger.info(`Skipping disabled module: ${moduleInfo.name}`);
+                        continue;
+                    }
+                    
+                    this.logger.info(`Loading module: ${moduleInfo.name}`);
+                    
+                    // Load and initialize the module
+                    const moduleInstance = await moduleLoader.loadModule(moduleInfo);
+                    
+                    if (moduleInstance) {
+                        // Initialize and start the module
+                        await moduleInstance.init();
+                        await moduleInstance.start();
+                        
+                        loadedCount++;
+                        loadedModules.push(moduleInfo.name);
+                        
+                        // Store reference to module
+                        this.modules.set(moduleInfo.name, moduleInstance);
+                        
+                        // Special handling for specific modules
+                        if (moduleInfo.name === 'memory-management') {
+                            // Register bot data structures for monitoring
+                            const memoryService = this.services.get('memoryManagement');
+                            if (memoryService) {
+                                memoryService.registerDataStructures({
+                                    userlist: this.userlist,
+                                    processedMessages: this.processedMessages,
+                                    lastGreetings: this.lastGreetings,
+                                    recentMentions: this.recentMentions,
+                                    messageHistory: this.messageHistory,
+                                    pendingMentionTimeouts: this.pendingMentionTimeouts,
+                                    userDepartureTimes: this.userDepartureTimes,
+                                    recentBotMessages: this.recentBotMessages
+                                });
+                            }
+                        }
+                        
+                        this.logger.info(`Successfully loaded module: ${moduleInfo.name}`);
+                    }
+                } catch (error) {
+                    failedCount++;
+                    failedModules.push({ name: moduleInfo.name, error: error.message });
+                    this.logger.error(`Failed to load module ${moduleInfo.name}:`, error);
+                    // Don't fail bot startup if module fails to load
+                }
             }
             
-            // Load and initialize the module
-            const memoryModule = await moduleLoader.loadModule(moduleInfo);
+            // Report loading results
+            this.logger.info(`Module loading complete: ${loadedCount} loaded, ${failedCount} failed`);
             
-            // Initialize and start the module
-            await memoryModule.init();
-            await memoryModule.start();
-            
-            // Register bot data structures for monitoring
-            const memoryService = this.services.get('memoryManagement');
-            if (memoryService) {
-                memoryService.registerDataStructures({
-                    userlist: this.userlist,
-                    processedMessages: this.processedMessages,
-                    lastGreetings: this.lastGreetings,
-                    recentMentions: this.recentMentions,
-                    messageHistory: this.messageHistory,
-                    pendingMentionTimeouts: this.pendingMentionTimeouts,
-                    userDepartureTimes: this.userDepartureTimes,
-                    recentBotMessages: this.recentBotMessages
-                });
+            if (loadedModules.length > 0) {
+                this.logger.info(`Loaded modules: ${loadedModules.join(', ')}`);
             }
             
-            // Store reference to module
-            this.modules.set('memory-management', memoryModule);
-            
-            this.logger.info('Memory-management module loaded and started');
+            if (failedModules.length > 0) {
+                this.logger.warn(`Failed modules: ${failedModules.map(m => `${m.name} (${m.error})`).join(', ')}`);
+            }
             
         } catch (error) {
-            this.logger.error('Failed to load memory-management module', { error: error.message });
-            // Don't fail bot startup if module fails to load
+            this.logger.error('Failed to load modules:', error);
+            throw error;
         }
     }
+    
 
-    /**
-     * Load and initialize the reminder-system module  
-     */
-    async loadReminderSystemModule() {
-        try {
-            // Create proper context for ModuleLoader
-            const loaderContext = {
-                eventBus: this.eventBus,
-                services: this.services,
-                logger: this.logger,
-                config: this.config, // Use full bot config
-                moduleRegistry: null, // We don't have this in legacy bot
-                scheduler: null,
-                performanceMonitor: null,
-                roomConnections: null,
-                api: null
-            };
-            
-            const moduleLoader = new ModuleLoader(loaderContext);
-            const modulePath = path.join(__dirname, '../modules/reminder-system');
-            
-            // Load module info first
-            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
-            if (!moduleInfo) {
-                throw new Error('Failed to load reminder-system module info');
-            }
-            
-            // Load and initialize the module
-            const reminderModule = await moduleLoader.loadModule(moduleInfo);
-            
-            // Initialize and start the module
-            await reminderModule.init();
-            await reminderModule.start();
-            
-            // Store reference to module
-            this.modules.set('reminder-system', reminderModule);
-            
-            this.logger.info('Reminder-system module loaded and started');
-            
-        } catch (error) {
-            this.logger.error('Failed to load reminder-system module', { error: error.message });
-            // Don't fail bot startup if module fails to load
-        }
-    }
 
-    /**
-     * Load and initialize the tell-system module
-     */
-    async loadTellSystemModule() {
-        try {
-            // Create proper context for ModuleLoader
-            const loaderContext = {
-                eventBus: this.eventBus,
-                services: this.services,
-                logger: this.logger,
-                config: this.config, // Use full bot config
-                moduleRegistry: null, // We don't have this in legacy bot
-                scheduler: null,
-                performanceMonitor: null,
-                roomConnections: null,
-                api: null
-            };
-            
-            const moduleLoader = new ModuleLoader(loaderContext);
-            const modulePath = path.join(__dirname, '../modules/tell-system');
-            
-            // Load module info first
-            const moduleInfo = await moduleLoader.loadModuleInfo(modulePath);
-            if (!moduleInfo) {
-                throw new Error('Failed to load tell-system module info');
-            }
-            
-            // Load and initialize the module
-            const tellModule = await moduleLoader.loadModule(moduleInfo);
-            
-            // Initialize and start the module
-            await tellModule.init();
-            await tellModule.start();
-            
-            // Store reference to module
-            this.modules.set('tell-system', tellModule);
-            
-            this.logger.info('Tell-system module loaded and started');
-            
-        } catch (error) {
-            this.logger.error('Failed to load tell-system module', { error: error.message });
-            // Don't fail bot startup if module fails to load
-        }
-    }
     
     async shutdown() {
         this.logger.info('Shutting down bot...');
