@@ -95,20 +95,42 @@ class HeistService {
         }
 
         try {
+            // Handle different data structures that might be passed
+            let username, message, roomId;
+            
+            if (data.message && typeof data.message === 'object') {
+                // Structure: { message: { username, msg, ... }, roomId, ... }
+                username = data.message.username;
+                message = data.message.msg;
+                roomId = data.roomId || 'fatpizza';
+            } else {
+                // Structure: { username, message/msg, roomId, ... }
+                username = data.username;
+                message = data.message || data.msg;
+                roomId = data.roomId || 'fatpizza';
+            }
+            
+            // Validate we have required data
+            if (!username || !message) {
+                this.logger.warn('Invalid heist message data', {
+                    hasUsername: !!username,
+                    hasMessage: !!message,
+                    dataStructure: Object.keys(data)
+                });
+                return;
+            }
+            
             // Forward message to heist manager with correct parameters
             if (typeof this.heistManager.handleMessage === 'function') {
-                await this.heistManager.handleMessage(
-                    data.username, 
-                    data.message || data.msg, 
-                    data.roomId || 'fatpizza'
-                );
+                await this.heistManager.handleMessage(username, message, roomId);
             }
             
         } catch (error) {
             this.logger.error('Error handling heist message', {
                 error: error.message,
-                username: data.username,
-                message: data.message || data.msg
+                stack: error.stack,
+                dataStructure: Object.keys(data),
+                data: JSON.stringify(data).substring(0, 200)
             });
         }
     }

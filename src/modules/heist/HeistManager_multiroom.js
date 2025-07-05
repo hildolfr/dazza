@@ -126,6 +126,29 @@ export class HeistManager extends EventEmitter {
 
     // Modified to track messages per room
     async handleMessage(username, message, roomId) {
+        // Validate input parameters
+        if (typeof username !== 'string') {
+            this.logger.warn('handleMessage called with non-string username', {
+                username,
+                usernameType: typeof username,
+                message,
+                messageType: typeof message,
+                roomId,
+                roomIdType: typeof roomId
+            });
+            return;
+        }
+        
+        if (typeof message !== 'string') {
+            this.logger.warn('handleMessage called with non-string message', {
+                username,
+                message,
+                messageType: typeof message,
+                roomId
+            });
+            return;
+        }
+        
         // Track activity
         await this.trackActivity(username, roomId);
         
@@ -483,6 +506,16 @@ export class HeistManager extends EventEmitter {
 
     // Helper to check if user is a system user
     isSystemUser(username) {
+        // Handle non-string usernames gracefully
+        if (typeof username !== 'string') {
+            this.logger.warn('isSystemUser called with non-string username', {
+                username,
+                type: typeof username,
+                value: JSON.stringify(username)
+            });
+            return false;
+        }
+        
         const systemUsers = ['cytube', 'system', '[server]', '[anonymous]'];
         return systemUsers.includes(username.toLowerCase());
     }
