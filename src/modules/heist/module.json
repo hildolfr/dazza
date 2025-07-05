@@ -1,0 +1,19 @@
+{
+    "name": "heist",
+    "version": "1.0.0",
+    "description": "Interactive heist game system with Australian bogan personality",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database", "economy-system"],
+    "optional": ["user-management"],
+    "config": {
+        "heistInterval": 300000,
+        "crimeCheckInterval": 60000,
+        "maxParticipants": 10,
+        "enableAnnouncements": true
+    },
+    "events": {
+        "subscribes": ["chat.message", "user.join"],
+        "publishes": ["heist.started", "heist.completed", "heist.failed"]
+    }
+}

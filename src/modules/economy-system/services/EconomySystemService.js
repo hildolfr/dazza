@@ -1,12 +1,9 @@
-import { HeistManager } from '../../../modules/heist/index.js';
-import { VideoPayoutManager } from '../../../modules/video_payout/index.js';
-import { PissingContestManager } from '../../../modules/pissing_contest/index.js';
 import { CashMonitor } from '../../../utils/cashMonitor.js';
 
 /**
  * Economy System Service
  * Coordinates all economy-related managers and functionality
- * Extracted from bot.js economy management integration
+ * Updated to work with modular architecture - uses service registry instead of direct imports
  */
 class EconomySystemService {
     constructor(services, config, logger, bot) {
@@ -16,64 +13,56 @@ class EconomySystemService {
         this.bot = bot; // Bot reference needed for economy managers
         this.ready = false;
         
-        // Economy managers
+        // Economy services (accessed via service registry)
+        this.heistService = null;
+        this.videoPayoutService = null;
+        this.pissingContestService = null;
+        this.cashMonitor = null;
+        
+        // Legacy managers (for backward compatibility)
         this.heistManager = null;
         this.videoPayoutManager = null;
         this.pissingContestManager = null;
-        this.cashMonitor = null;
     }
 
     async initialize() {
         this.logger.info('EconomySystemService initializing...');
         
         try {
-            // Get database service
-            const db = this.services.get('database');
-            if (!db) {
-                throw new Error('Database service not available');
+            // Get services from the service registry instead of creating managers directly
+            this.logger.info('Waiting for economy services to register...');
+            
+            // Wait for services to be available (they should register during module startup)
+            await this.waitForServices();
+            
+            // Get economy services from registry
+            this.heistService = this.services.get('heist');
+            this.videoPayoutService = this.services.get('videoPayout');
+            this.pissingContestService = this.services.get('pissingContest');
+            
+            // Get legacy manager instances for backward compatibility
+            if (this.heistService && typeof this.heistService.getManager === 'function') {
+                this.heistManager = this.heistService.getManager();
+                this.logger.info('HeistManager accessible via service');
             }
             
-            // Initialize HeistManager
-            if (this.config.enableHeists) {
-                // Create bot context with services for modular compatibility
-                const botContext = {
-                    ...this.bot,
-                    _context: {
-                        services: this.services
-                    }
-                };
-                this.heistManager = new HeistManager(db, botContext);
-                this.setupHeistHandlers();
-                await this.heistManager.init();
-                this.logger.info('HeistManager initialized');
+            if (this.videoPayoutService && typeof this.videoPayoutService.getManager === 'function') {
+                this.videoPayoutManager = this.videoPayoutService.getManager();
+                this.logger.info('VideoPayoutManager accessible via service');
             }
             
-            // Initialize VideoPayoutManager
-            if (this.config.enableVideoPayouts) {
-                this.videoPayoutManager = new VideoPayoutManager(db, this.bot);
-                this.setupVideoPayoutHandlers();
-                await this.videoPayoutManager.init();
-                this.logger.info('VideoPayoutManager initialized');
-            }
-            
-            // Initialize PissingContestManager
-            if (this.config.enablePissingContests) {
-                // Create bot context with db for compatibility
-                const botContextWithDb = {
-                    ...this.bot,
-                    db: db,
-                    _context: {
-                        services: this.services
-                    }
-                };
-                this.pissingContestManager = new PissingContestManager(botContextWithDb);
-                this.logger.info('PissingContestManager initialized');
+            if (this.pissingContestService && typeof this.pissingContestService.getManager === 'function') {
+                this.pissingContestManager = this.pissingContestService.getManager();
+                this.logger.info('PissingContestManager accessible via service');
             }
             
             // Initialize CashMonitor
             if (this.config.enableCashMonitor) {
-                this.cashMonitor = new CashMonitor(db, this.logger, this.config.cashMonitorInterval);
-                this.logger.info('CashMonitor initialized');
+                const db = this.services.get('database');
+                if (db) {
+                    this.cashMonitor = new CashMonitor(db, this.logger, this.config.cashMonitorInterval);
+                    this.logger.info('CashMonitor initialized');
+                }
             }
             
             this.ready = true;
@@ -83,6 +72,40 @@ class EconomySystemService {
             this.logger.error('Failed to initialize EconomySystemService', { error: error.message });
             throw error;
         }
+    }
+
+    /**
+     * Wait for economy services to be registered
+     * @param {number} timeout - Maximum wait time in milliseconds
+     * @returns {Promise} Resolves when services are available
+     */
+    async waitForServices(timeout = 10000) {
+        const startTime = Date.now();
+        const pollInterval = 100; // Check every 100ms
+        
+        while (Date.now() - startTime < timeout) {
+            // Check if all required services are available
+            const hasHeist = this.services.has('heist');
+            const hasVideoPayout = this.services.has('videoPayout');
+            const hasPissingContest = this.services.has('pissingContest');
+            
+            if (hasHeist && hasVideoPayout && hasPissingContest) {
+                this.logger.info('All economy services are now available');
+                return;
+            }
+            
+            // Wait a bit before checking again
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+        
+        // Log what services are missing
+        const missing = [];
+        if (!this.services.has('heist')) missing.push('heist');
+        if (!this.services.has('videoPayout')) missing.push('videoPayout');
+        if (!this.services.has('pissingContest')) missing.push('pissingContest');
+        
+        this.logger.warn(`Some economy services are not available after ${timeout}ms: ${missing.join(', ')}`);
+        this.logger.warn('Continuing without missing services...');
     }
 
     /**
@@ -378,7 +401,7 @@ class EconomySystemService {
         const shutdownPromises = [];
 
         if (this.heistManager) {
-            shutdownPromises.push(this.heistManager.shutdown());
+            shutdownPromises.push(this.heistManager.stop());
         }
 
         if (this.videoPayoutManager) {

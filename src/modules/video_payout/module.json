@@ -1,0 +1,20 @@
+{
+    "name": "video_payout",
+    "version": "1.0.0",
+    "description": "Video watching reward and payout system with session tracking",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database", "economy-system", "media-management"],
+    "optional": ["user-management"],
+    "config": {
+        "luckyChance": 0.02,
+        "normalReward": 1,
+        "luckyReward": 3,
+        "sessionTimeout": 300000,
+        "reconciliationInterval": 10000
+    },
+    "events": {
+        "subscribes": ["media.change", "user.join", "user.leave"],
+        "publishes": ["video.session.started", "video.session.ended", "video.payout.awarded"]
+    }
+}

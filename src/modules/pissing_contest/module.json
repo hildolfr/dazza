@@ -1,0 +1,19 @@
+{
+    "name": "pissing_contest",
+    "version": "1.0.0",
+    "description": "Interactive pissing contest game system with Australian bogan personality",
+    "type": "feature",
+    "enabled": true,
+    "requires": ["core-database", "economy-system"],
+    "optional": ["user-management"],
+    "config": {
+        "contestTimeout": 30000,
+        "cooldownTime": 300000,
+        "enableAnalytics": true,
+        "enableCommentary": true
+    },
+    "events": {
+        "subscribes": ["chat.message", "user.join"],
+        "publishes": ["contest.started", "contest.completed", "contest.failed"]
+    }
+}
