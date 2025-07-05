@@ -40,6 +40,15 @@ async function main() {
         // Create room connections map
         const roomConnections = new Map();
         
+        // Create service registry
+        const services = new Map();
+        
+        // Set up service registration handler
+        eventBus.on('service:register', ({ name, service }) => {
+            services.set(name, service);
+            logger.info(`Service registered: ${name}`);
+        });
+        
         // Create context for modules
         const context = {
             eventBus,
@@ -48,7 +57,8 @@ async function main() {
             performanceMonitor,
             moduleRegistry,
             logger,
-            roomConnections
+            roomConnections,
+            services
         };
         
         // Initialize module loader

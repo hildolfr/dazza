@@ -182,18 +182,34 @@ class ModuleLoader extends EventEmitter {
             ...this.context.config.modules?.[moduleInfo.name]
         };
         
-        return {
+        // Create dynamic context with getter for database service
+        const context = {
             manifest: moduleInfo.manifest,
             userConfig: moduleConfig,
             eventBus: this.context.eventBus,
-            db: this.context.db,
             logger: this.context.logger,
             scheduler: this.context.scheduler,
             performanceMonitor: this.context.performanceMonitor,
             modules: this.context.moduleRegistry,
             roomConnections: this.context.roomConnections,
+            services: this.context.services,
             api: this.context.api
         };
+        
+        // Debug: Check if services are available
+        this.context.logger.info(`Creating context for ${moduleInfo.name}`, {
+            hasServices: !!this.context.services,
+            servicesSize: this.context.services?.size || 0
+        });
+        
+        // Add dynamic getter for database service
+        Object.defineProperty(context, 'db', {
+            get: () => this.context.services?.get('database'),
+            enumerable: true,
+            configurable: true
+        });
+        
+        return context;
     }
     
     async reloadModule(moduleName) {

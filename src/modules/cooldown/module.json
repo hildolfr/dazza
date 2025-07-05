@@ -1,0 +1,47 @@
+{
+  "name": "cooldown",
+  "version": "1.0.0",
+  "description": "Unified cooldown management system for commands",
+  "type": "core",
+  "author": "Dazza Bot",
+  "required": true,
+  "requires": ["core-database"],
+  "config": {
+    "thresholds": {
+      "memory": 600000,
+      "persistent": 600000
+    },
+    "cleanup": {
+      "memoryInterval": 300000,
+      "persistentInterval": 86400000,
+      "maxAge": 604800000
+    },
+    "storage": {
+      "memoryLimit": 10000,
+      "persistentBatchSize": 100
+    },
+    "messages": {
+      "useCustomMessages": true,
+      "placeholder": "{time}",
+      "defaultTemplate": "hold ya horses champion, {time} more seconds"
+    }
+  },
+  "subscribes": [
+    "bot.cleanup",
+    "module.shutdown"
+  ],
+  "emits": [
+    "cooldown.started",
+    "cooldown.expired",
+    "cooldown.checked",
+    "cooldown.reset"
+  ],
+  "provides": [
+    "cooldown.check",
+    "cooldown.set",
+    "cooldown.reset",
+    "cooldown.cleanup",
+    "cooldown.getRemaining",
+    "cooldown.getUserCooldowns"
+  ]
+}

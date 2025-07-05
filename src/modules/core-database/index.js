@@ -199,15 +199,42 @@ class CoreDatabaseModule extends BaseModule {
     // ===== Query Methods =====
     
     async run(query, params = []) {
-        return this.dbRun(query, params);
+        const startTime = process.hrtime.bigint();
+        try {
+            const result = await this.mainDb.run(query, params);
+            const duration = Number(process.hrtime.bigint() - startTime) / 1e6;
+            this.performanceMonitor.recordQuery(this.id, 'run', duration);
+            return result;
+        } catch (error) {
+            this._handleError(error, 'database', { query, params });
+            throw error;
+        }
     }
     
     async get(query, params = []) {
-        return this.dbGet(query, params);
+        const startTime = process.hrtime.bigint();
+        try {
+            const result = await this.mainDb.get(query, params);
+            const duration = Number(process.hrtime.bigint() - startTime) / 1e6;
+            this.performanceMonitor.recordQuery(this.id, 'get', duration);
+            return result;
+        } catch (error) {
+            this._handleError(error, 'database', { query, params });
+            throw error;
+        }
     }
     
     async all(query, params = []) {
-        return this.dbAll(query, params);
+        const startTime = process.hrtime.bigint();
+        try {
+            const result = await this.mainDb.all(query, params);
+            const duration = Number(process.hrtime.bigint() - startTime) / 1e6;
+            this.performanceMonitor.recordQuery(this.id, 'all', duration);
+            return result;
+        } catch (error) {
+            this._handleError(error, 'database', { query, params });
+            throw error;
+        }
     }
     
     async exec(sql) {

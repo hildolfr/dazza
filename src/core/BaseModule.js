@@ -16,10 +16,19 @@ class BaseModule extends EventEmitter {
         
         // Core services
         this.eventBus = context.eventBus;
-        this.db = context.db;
         this.logger = context.logger.child({ module: this.id });
         this.scheduler = context.scheduler;
         this.performanceMonitor = context.performanceMonitor;
+        
+        // Store context reference for dynamic service access
+        this._context = context;
+        
+        // Create dynamic getter for database service
+        Object.defineProperty(this, 'db', {
+            get: () => this._context.db,
+            enumerable: true,
+            configurable: true
+        });
         
         // Module registry for direct access
         this.modules = context.modules;

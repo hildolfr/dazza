@@ -1,0 +1,37 @@
+{
+  "name": "command-handler",
+  "version": "1.0.0",
+  "description": "Central command processing and routing system",
+  "type": "core",
+  "author": "Dazza Bot",
+  "required": true,
+  "dependencies": [],
+  "config": {
+    "commandPrefix": "!",
+    "rateLimitWindow": 2000,
+    "rateLimitMax": 3,
+    "defaultCooldown": 5000,
+    "maxArguments": 50,
+    "maxCommandLength": 100,
+    "categories": ["basic", "fun", "utility", "stats", "communication", "economy", "admin"]
+  },
+  "subscribes": [
+    "chat.message",
+    "chat.pm"
+  ],
+  "emits": [
+    "command.executed",
+    "command.failed",
+    "command.ratelimited",
+    "command.cooldown",
+    "command.permission_denied"
+  ],
+  "provides": [
+    "command.register",
+    "command.unregister",
+    "command.execute",
+    "command.get",
+    "command.getAll",
+    "command.getByCategory"
+  ]
+}

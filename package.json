@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A chatbot for CyTube chatroom at cytu.be/r/fatpizza",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "./start-bot.sh",
     "start:direct": "node index.js",

@@ -14,11 +14,11 @@ modules:
     enabled: true
   
   core-api:
-    enabled: true
+    enabled: false  # Temporarily disabled due to route parsing error
     port: 3001
   
   core-connection:
-    enabled: true
+    enabled: false  # Temporarily disabled for Phase 2 testing
   
   # Feature modules can be toggled
   command-handler:

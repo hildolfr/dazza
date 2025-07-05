@@ -1,0 +1,53 @@
+{
+  "name": "permissions",
+  "version": "1.0.0",
+  "description": "Role-based permission management system",
+  "type": "core",
+  "author": "Dazza Bot",
+  "required": true,
+  "requires": ["core-database"],
+  "config": {
+    "defaultAdmins": ["ilovechinks", "hildolfr", "Spazztik"],
+    "roles": {
+      "owner": {
+        "level": 100,
+        "permissions": ["*"]
+      },
+      "admin": {
+        "level": 80,
+        "permissions": ["admin.*", "command.*", "bot.*"]
+      },
+      "moderator": {
+        "level": 60,
+        "permissions": ["moderation.*", "command.basic.*"]
+      },
+      "user": {
+        "level": 20,
+        "permissions": ["command.basic.*"]
+      }
+    },
+    "auditEnabled": true,
+    "cacheTtl": 300000,
+    "defaultRole": "user"
+  },
+  "subscribes": [
+    "bot.init",
+    "user.join",
+    "user.leave"
+  ],
+  "emits": [
+    "permissions.granted",
+    "permissions.revoked",
+    "permissions.checked",
+    "permissions.failed"
+  ],
+  "provides": [
+    "permissions.check",
+    "permissions.grant",
+    "permissions.revoke",
+    "permissions.getUserRole",
+    "permissions.setUserRole",
+    "permissions.listUserPermissions",
+    "permissions.isAdmin"
+  ]
+}
