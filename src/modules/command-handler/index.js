@@ -3,12 +3,6 @@ import CommandLoader from './services/CommandLoader.js';
 import CommandRegistry from './services/CommandRegistry.js';
 import { Command } from './services/Command.js';
 
-// Legacy adapters for backward compatibility
-import LegacyDatabaseAdapter from './adapters/LegacyDatabaseAdapter.js';
-import LegacyHeistManagerAdapter from './adapters/LegacyHeistManagerAdapter.js';
-import LegacyPersonalityAdapter from './adapters/LegacyPersonalityAdapter.js';
-import LegacyVideoPayoutAdapter from './adapters/LegacyVideoPayoutAdapter.js';
-
 class CommandHandlerModule extends BaseModule {
     constructor(context) {
         super(context);
