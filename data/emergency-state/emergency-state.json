@@ -1,5 +1,5 @@
 {
-  "timestamp": 1751787952106,
+  "timestamp": 1751797551530,
   "shutdownReason": "uncaught_exception",
   "shutdownData": {
     "error": "write EPIPE"
@@ -16,6 +16,6 @@
     "failedShutdowns": 0,
     "recoveryAttempts": 0,
     "successfulRecoveries": 0,
-    "startTime": 1751787951516
+    "startTime": 1751797551064
   }
 }
