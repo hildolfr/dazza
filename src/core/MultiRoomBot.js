@@ -620,6 +620,7 @@ export default {
             roomContext.connected = true;
             roomContext.joinedChannel = true;
             roomContext.authenticated = true;
+            roomContext.connectionTime = Date.now(); // Track when we connected to ignore old messages
             
             this.logger.info(`Successfully joined room: ${roomId}`);
         } catch (error) {

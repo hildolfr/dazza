@@ -43,6 +43,7 @@ class RoomContext extends EventEmitter {
         this.connected = false;
         this.authenticated = false;
         this.joinedChannel = false;
+        this.connectionTime = null; // Track when we connected to ignore old messages
         
         // Stats
         this.messageCount = 0;

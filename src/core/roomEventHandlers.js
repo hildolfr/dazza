@@ -141,8 +141,15 @@ export const RoomEventHandlers = {
             return;
         }
         
-        // Check if message is too old
-        const messageAge = Date.now() - (data.time || Date.now());
+        // Check if message is from before we connected to this room
+        const messageTime = data.time || Date.now();
+        if (room.connectionTime && messageTime < room.connectionTime) {
+            this.logger.debug(`Ignoring message from before connection in room ${roomId} (${messageTime} < ${room.connectionTime})`);
+            return;
+        }
+        
+        // Check if message is too old (fallback for messages without timestamp)
+        const messageAge = Date.now() - messageTime;
         if (messageAge > 30000) { // 30 seconds
             this.logger.debug(`Ignoring stale message in room ${roomId} (${messageAge}ms old)`);
             return;
@@ -514,7 +521,7 @@ export const RoomEventHandlers = {
             return;
         }
         
-        // Check if message mentions the bot
+        // Check if message mentions the bot FIRST
         const lowerMsg = data.msg.toLowerCase();
         const botNameLower = this.username.toLowerCase();
         
@@ -522,17 +529,58 @@ export const RoomEventHandlers = {
             return;
         }
         
-        // Check cooldown
-        const now = Date.now();
-        if (now - room.lastMentionTime < room.mentionCooldown) {
-            return;
-        }
-        
-        // Track mention
-        room.recentMentions.set(data.username, now);
-        
-        // Respond with AI
+        // New stale message checking system
         try {
+            // Wait a small amount to ensure the message has been inserted into the database
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Get the most recent unresponded message from this user that matches the content
+            const recentMessage = await this.db.get(`
+                SELECT id, timestamp, hasResponded
+                FROM messages 
+                WHERE username = ? 
+                AND message = ? 
+                AND room_id = ?
+                AND timestamp >= ?
+                ORDER BY timestamp DESC 
+                LIMIT 1
+            `, [data.username, data.msg, roomId, Date.now() - 45000]);
+            
+            if (!recentMessage) {
+                this.logger.debug(`Message not found in database or too old`, {
+                    username: data.username,
+                    message: data.msg.substring(0, 50),
+                    roomId
+                });
+                return;
+            }
+            
+            if (recentMessage.hasResponded === 1) {
+                this.logger.debug(`Message already responded to`, {
+                    username: data.username,
+                    message: data.msg.substring(0, 50),
+                    messageId: recentMessage.id,
+                    roomId
+                });
+                return;
+            }
+            
+            // Check cooldown
+            const now = Date.now();
+            if (now - room.lastMentionTime < room.mentionCooldown) {
+                return;
+            }
+            
+            // Track mention
+            room.recentMentions.set(data.username, now);
+            
+            // Respond with AI
+            this.logger.debug(`Generating AI response for mention in room ${roomId}`, {
+                username: data.username,
+                message: data.msg.substring(0, 50),
+                messageId: recentMessage.id
+            });
+            
             const context = room.messageHistory.slice(-5).map(m => ({
                 username: m.username,
                 message: m.message
@@ -541,6 +589,9 @@ export const RoomEventHandlers = {
             const response = await this.ollama.generateResponse(data.msg, context, data.username);
             
             if (response) {
+                // Mark the message as responded to immediately
+                await this.db.markMessageAsResponded(recentMessage.id);
+                
                 // Send response with random delay
                 const delay = Math.floor(Math.random() * 2000) + 1000; // 1-3 seconds
                 
@@ -554,7 +605,7 @@ export const RoomEventHandlers = {
                 }, delay);
             }
         } catch (error) {
-            this.logger.error(`Error generating AI response in room ${roomId}:`, error);
+            this.logger.error(`Error in stale message checking for room ${roomId}:`, error);
         }
     },
     
