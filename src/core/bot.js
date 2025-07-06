@@ -8,7 +8,7 @@ import { MemoryMonitor } from '../utils/MemoryMonitor.js';
 import { RateLimiter } from '../utils/rateLimiter.js';
 import { formatDuration, formatTimestamp } from '../utils/formatting.js';
 import { truncateMessage, MAX_MESSAGE_LENGTH } from '../utils/messageValidator.js';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 import { OllamaService } from '../services/ollama.js';
 import Database from '../services/database.js';
 import { loadCommands } from '../commands/index.js';

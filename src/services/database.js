@@ -6,7 +6,7 @@ import { videoPayoutSchema } from '../modules/video_payout/schema_compat.js';
 import { extractImageUrls } from '../utils/imageDetector.js';
 import { cooldownSchema } from '../utils/cooldownSchema_compat.js';
 import MigrationRunner from '../migrations/runner.js';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 class Database {
     constructor(dbPath, botUsername = 'dazza', options = {}) {
@@ -67,10 +67,10 @@ class Database {
     }
 
     async createTables() {
-        this.logger.info('Starting createTables...');
+        this.logger.debug('Starting createTables...');
         
         // Create messages table
-        this.logger.info('Creating messages table...');
+        this.logger.debug('Creating messages table...');
         await this.run(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -224,30 +224,30 @@ class Database {
         await this.run('CREATE INDEX IF NOT EXISTS idx_private_messages_timestamp ON private_messages(timestamp)');
 
         // Initialize heist schema
-        this.logger.info('Initializing heist schema...');
+        this.logger.debug('Initializing heist schema...');
         try {
             await heistSchema.initialize(this);
-            this.logger.info('Heist schema initialized successfully');
+            this.logger.debug('Heist schema initialized successfully');
         } catch (error) {
             this.logger.error('Error initializing heist schema:', error.message);
             throw error;
         }
 
         // Initialize video payout schema
-        this.logger.info('Initializing video payout schema...');
+        this.logger.debug('Initializing video payout schema...');
         try {
             await videoPayoutSchema.initialize(this);
-            this.logger.info('Video payout schema initialized successfully');
+            this.logger.debug('Video payout schema initialized successfully');
         } catch (error) {
             this.logger.error('Error initializing video payout schema:', error.message);
             throw error;
         }
 
         // Initialize cooldown schema
-        this.logger.info('Initializing cooldown schema...');
+        this.logger.debug('Initializing cooldown schema...');
         try {
             await cooldownSchema.initialize(this);
-            this.logger.info('Cooldown schema initialized successfully');
+            this.logger.debug('Cooldown schema initialized successfully');
         } catch (error) {
             this.logger.error('Error initializing cooldown schema:', error.message);
             throw error;
@@ -256,7 +256,7 @@ class Database {
         // Add migration for tells table via_pm column
         try {
             await this.run('ALTER TABLE tells ADD COLUMN via_pm INTEGER DEFAULT 0');
-            this.logger.info('Added via_pm column to tells table');
+            this.logger.debug('Added via_pm column to tells table');
         } catch (error) {
             // Column might already exist, ignore error
             if (!error.message.includes('duplicate column name')) {
@@ -264,7 +264,7 @@ class Database {
             }
         }
 
-        this.logger.info('Database tables created successfully');
+        this.logger.debug('Database tables created successfully');
     }
 
     async runMigrations() {
@@ -279,11 +279,30 @@ class Database {
 
     async logMessage(username, message, roomId = 'fatpizza') {
         const timestamp = Date.now();
+        let result;
         
-        const result = await this.run(
-            'INSERT INTO messages (username, message, timestamp, room_id) VALUES (?, ?, ?, ?)',
-            [username, message, timestamp, roomId]
-        );
+        this.logger.debug(`[DATABASE] Attempting to log message: ${username} -> ${message.substring(0, 50)}...`);
+        
+        try {
+            result = await this.run(
+                'INSERT INTO messages (username, message, timestamp, room_id, hasResponded) VALUES (?, ?, ?, ?, ?)',
+                [username, message, timestamp, roomId, 0]
+            );
+            this.logger.debug(`[DATABASE] Message logged successfully with ID: ${result.lastID}`);
+        } catch (error) {
+            this.logger.error('Failed to insert message into database:', error);
+            // Fallback to original schema without hasResponded column
+            try {
+                result = await this.run(
+                    'INSERT INTO messages (username, message, timestamp, room_id) VALUES (?, ?, ?, ?)',
+                    [username, message, timestamp, roomId]
+                );
+                this.logger.debug(`[DATABASE] Fallback insert successful with ID: ${result.lastID}`);
+            } catch (fallbackError) {
+                this.logger.error('Fallback insert also failed:', fallbackError);
+                throw fallbackError;
+            }
+        }
 
         // Update user stats
         await this.updateUserStats(username, timestamp, roomId);
@@ -446,6 +465,36 @@ class Database {
         
         const message = await this.get(query, params);
         return message;
+    }
+
+    async markMessageAsResponded(messageId) {
+        await this.run(
+            'UPDATE messages SET hasResponded = 1 WHERE id = ?',
+            [messageId]
+        );
+    }
+
+    async getUnrespondedMessages(roomId = null, maxAgeMs = 45000) {
+        const cutoffTime = Date.now() - maxAgeMs;
+        
+        let query = `
+            SELECT id, username, message, timestamp, room_id
+            FROM messages 
+            WHERE hasResponded = 0 
+            AND timestamp >= ?
+            AND LOWER(username) NOT IN (?, '[server]')
+            AND username NOT LIKE '[%]'
+        `;
+        const params = [cutoffTime, this.botUsername];
+        
+        if (roomId) {
+            query += ' AND room_id = ?';
+            params.push(roomId);
+        }
+        
+        query += ' ORDER BY timestamp ASC';
+        
+        return await this.all(query, params);
     }
 
     async getBongCount(date, roomId = null) {
@@ -1147,7 +1196,7 @@ class Database {
             `, [url]);
             
             if (existingImage && !existingImage.is_active) {
-                this.logger.info(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
+                this.logger.debug(`Restoring previously pruned image: ${url} (was: ${existingImage.pruned_reason})`);
             }
             
             // Check if user is at the image limit
@@ -1175,7 +1224,7 @@ class Database {
                     )
                 `, [username, url, username, url, imagesToRemove]);
                 
-                this.logger.info(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
+                this.logger.debug(`Removed ${imagesToRemove} oldest images for ${username} to maintain ${IMAGE_LIMIT} image limit`);
             }
             
             await this.run(`

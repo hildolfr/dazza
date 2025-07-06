@@ -11,7 +11,7 @@ import { MemoryMonitor } from '../utils/MemoryMonitor.js';
 import { RateLimiter } from '../utils/rateLimiter.js';
 import { formatDuration, formatTimestamp } from '../utils/formatting.js';
 import { truncateMessage, MAX_MESSAGE_LENGTH } from '../utils/messageValidator.js';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 import { detectUrls, extractDomain } from '../utils/urlDetector.js';
 import { fetchUrlTitleAndComment } from '../services/urlTitleFetcher.js';
 import { OllamaService } from '../services/ollama.js';

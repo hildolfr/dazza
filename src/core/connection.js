@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import EventEmitter from 'events';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 export class CyTubeConnection extends EventEmitter {
     constructor(roomId, config) {

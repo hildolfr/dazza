@@ -13,7 +13,7 @@ const TIMEZONE_OFFSET = 18 * 60 * 60 * 1000;
 const SESSION_GAP = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 
 async function migrateHistoricalData() {
-    const dbPath = join(__dirname, '../../cytube_stats.db');
+    const dbPath = join(__dirname, '../../cytube_stats_modular.db');
     const db = new Database(dbPath, 'migration');
     
     try {

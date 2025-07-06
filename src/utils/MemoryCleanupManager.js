@@ -186,7 +186,7 @@ export class MemoryCleanupManager extends EventEmitter {
         const startTime = Date.now();
         const memoryBefore = process.memoryUsage();
         
-        this.logger.info(`Starting ${pressureLevel} cleanup strategy: ${strategy.description}`);
+        this.logger.debug(`Starting ${pressureLevel} cleanup strategy: ${strategy.description}`);
         
         const results = {
             strategy: pressureLevel,
@@ -236,7 +236,7 @@ export class MemoryCleanupManager extends EventEmitter {
             
             // Force garbage collection if available
             if (global.gc && (pressureLevel === 'aggressive' || pressureLevel === 'emergency')) {
-                this.logger.info('Forcing garbage collection');
+                this.logger.debug('Forcing garbage collection');
                 global.gc();
             }
             

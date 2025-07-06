@@ -1,9 +1,16 @@
 import { EventEmitter } from 'events';
 import StackMonitor from './StackMonitor.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 class EventBus extends EventEmitter {
     constructor(config = {}) {
         super();
+        
+        // Initialize logger first
+        this.logger = createLogger({
+            level: config.logLevel || 'info',
+            console: config.logToConsole !== false
+        });
         
         // Configuration
         this.config = {
@@ -188,7 +195,7 @@ class EventBus extends EventEmitter {
                 actionTaken: 'circuit_breaker_opened'
             });
         } catch (error) {
-            console.error('[EventBus] Failed to emit stack emergency:', error);
+            this.logger.error('[EventBus] Failed to emit stack emergency:', error);
         }
     }
     
@@ -206,7 +213,7 @@ class EventBus extends EventEmitter {
                 source: 'stack_monitor'
             });
         } catch (error) {
-            console.error('[EventBus] Failed to emit emergency shutdown:', error);
+            this.logger.error('[EventBus] Failed to emit emergency shutdown:', error);
         }
         
         // Begin graceful shutdown
@@ -290,7 +297,7 @@ class EventBus extends EventEmitter {
             this.debugLog('EventBus emergency shutdown completed');
             
         } catch (error) {
-            console.error('[EventBus] Error during emergency shutdown:', error);
+            this.logger.error('[EventBus] Error during emergency shutdown:', error);
         }
     }
     
@@ -498,8 +505,8 @@ class EventBus extends EventEmitter {
                         timestamp: Date.now()
                     });
                 } catch (e) {
-                    // Even emergency emission failed, log to console
-                    console.error('[EventBus] Emergency event emission failed:', e);
+                    // Even emergency emission failed, log to logger
+                    this.logger.error('[EventBus] Emergency event emission failed:', e);
                 }
             }, 0);
         }
@@ -516,7 +523,24 @@ class EventBus extends EventEmitter {
     
     debugLog(level, message) {
         if (this.config.debugMode) {
-            console.log(`[EventBus:${level}] ${message}`);
+            // Map level to logger method
+            switch (level?.toLowerCase()) {
+                case 'error':
+                case 'critical':
+                    this.logger.error(`[EventBus] ${message}`);
+                    break;
+                case 'warn':
+                case 'warning':
+                    this.logger.warn(`[EventBus] ${message}`);
+                    break;
+                case 'info':
+                    this.logger.info(`[EventBus] ${message}`);
+                    break;
+                case 'debug':
+                default:
+                    this.logger.debug(`[EventBus] ${message}`);
+                    break;
+            }
         }
     }
     
@@ -669,7 +693,7 @@ class EventBus extends EventEmitter {
             
             // Log if enabled
             if (this.config.logEvents) {
-                console.log(`[EventBus] ${event}:`, eventData);
+                this.logger.debug(`[EventBus] ${event}:`, eventData);
             }
             
             // Emit event using super to avoid recursion
@@ -805,8 +829,8 @@ class EventBus extends EventEmitter {
                 });
             }, 0);
         } catch (emitError) {
-            // Error emission failed, log to console as last resort
-            console.error(`[EventBus] Failed to emit error event for ${event}:`, emitError);
+            // Error emission failed, log to logger as last resort
+            this.logger.error(`[EventBus] Failed to emit error event for ${event}:`, emitError);
             this.triggerCircuitBreaker(emitError);
         }
     }
