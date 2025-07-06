@@ -33,6 +33,9 @@ class CharacterPersonalityModule extends BaseModule {
         // Initialize the character service
         await this.characterService.initialize();
         
+        // Subscribe to chat messages for mention detection
+        this.subscribe('chat:message', this.handleChatMessage.bind(this));
+        
         // Register service (using 'personality' name for legacy compatibility)
         this.eventBus.emit('service:register', { 
             name: 'personality', 
@@ -40,6 +43,37 @@ class CharacterPersonalityModule extends BaseModule {
         });
         
         this.logger.info('Character Personality module started');
+    }
+
+    /**
+     * Handle chat messages for mention detection
+     * @param {Object} data - Chat message data { room, username, message, time, meta }
+     */
+    async handleChatMessage(data) {
+        try {
+            this.logger.debug('[CHARACTER-PERSONALITY] Received chat message', {
+                username: data?.username,
+                message: data?.message?.substring(0, 50),
+                hasData: !!data,
+                dataKeys: data ? Object.keys(data) : []
+            });
+            
+            if (!data || !data.username || !data.message) {
+                this.logger.warn('[CHARACTER-PERSONALITY] Invalid chat message data', { data });
+                return;
+            }
+            
+            // Forward to character service for mention processing
+            await this.characterService.handleMentionCheck(data);
+            
+        } catch (error) {
+            this.logger.error('[CHARACTER-PERSONALITY] Error processing chat message', {
+                error: error.message,
+                stack: error.stack,
+                username: data?.username,
+                message: data?.message?.substring(0, 50)
+            });
+        }
     }
 
     async stop() {

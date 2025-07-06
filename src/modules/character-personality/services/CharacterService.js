@@ -30,11 +30,6 @@ class CharacterService {
     async initialize() {
         this.eventBus = this.services.get('eventBus');
         
-        // Subscribe to mention detection events
-        if (this.eventBus) {
-            this.eventBus.on('chat:message', this.handleMentionCheck.bind(this));
-        }
-        
         this.ready = true;
         this.logger.info('CharacterService initialized with Ollama integration');
     }
