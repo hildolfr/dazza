@@ -20,20 +20,8 @@ export default new Command({
             // Check whose balance to show
             const targetUser = args[0] || message.username;
             
-            // Debug: Log heist manager status
-            bot.logger.info('=== BALANCE COMMAND EXECUTION ===', {
-                hasHeistManager: !!bot.heistManager,
-                heistManagerType: typeof bot.heistManager,
-                targetUser: targetUser
-            });
-            
             // Get balance from HeistManager
             if (!bot.heistManager) {
-                bot.logger.info('HeistManager not available for balance command', {
-                    availableBotProps: Object.keys(bot),
-                    targetUser: targetUser
-                });
-                
                 const errorMsg = 'economy system not ready yet mate';
                 // Always send via PM
                 sendPM(bot, message.username, errorMsg, message.roomContext || message.roomId);

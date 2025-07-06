@@ -145,25 +145,10 @@ class CommandHandlerModule extends BaseModule {
     }
 
     async handlePrivateMessage(data) {
-        this.logger.info('=== PM HANDLER DEBUG ===', {
-            data: data,
-            hasMessage: !!data.message,
-            hasUsername: !!data.username,
-            dataKeys: Object.keys(data)
-        });
-        
         const { message, room, username } = data;
-        
-        this.logger.info('=== PM EXTRACTED DATA ===', {
-            message: message,
-            username: username,
-            room: room,
-            hasPrefix: message && message.startsWith(this.config.commandPrefix)
-        });
         
         // Check if message starts with command prefix
         if (!message || !message.startsWith(this.config.commandPrefix)) {
-            this.logger.info('PM rejected: no command prefix or no message');
             return;
         }
 
@@ -172,39 +157,26 @@ class CommandHandlerModule extends BaseModule {
         const commandName = parts[0].toLowerCase();
         const args = parts.slice(1);
 
-        this.logger.info('=== PM COMMAND PARSED ===', {
-            commandName: commandName,
-            args: args
-        });
-
         // Get command to check PM acceptance
         const command = this.commandRegistry.get(commandName);
         if (!command || !command.pmAccepted) {
-            this.logger.info('PM command rejected: command not found or PM not accepted', {
+            this.logger.debug('PM command rejected', {
+                commandName: commandName,
                 commandExists: !!command,
                 pmAccepted: command?.pmAccepted
             });
             return;
         }
 
-        this.logger.info('=== PM RATE LIMIT CHECK ===', {
-            username: username,
-            usernameType: typeof username
-        });
-
         // Check rate limiting
         if (!this.checkRateLimit(username)) {
-            this.logger.info('PM command rate limited');
+            this.logger.debug('PM command rate limited', { username: username, commandName: commandName });
             this.emit('command.ratelimited', { username: username, command: commandName });
             return;
         }
 
-        this.logger.info('=== EXECUTING PM COMMAND ===', {
-            commandName: commandName,
-            messageData: { message, username, room }
-        });
-
         // Execute command
+        this.logger.debug('Executing PM command', { commandName: commandName, username: username });
         await this.executeCommand(commandName, { message, username, room }, args, room, true);
     }
 
@@ -289,14 +261,13 @@ class CommandHandlerModule extends BaseModule {
         // This provides access to necessary bot functionality without tight coupling
         const connection = this._context.services.get('connection');
         
-        this.logger.info('=== CREATING BOT CONTEXT ===', {
-            hasLegacyDb: !!this.legacyDb,
-            hasLegacyHeistManager: !!this.legacyHeistManager,
-            hasLegacyPersonality: !!this.legacyPersonality,
-            hasLegacyVideoPayoutManager: !!this.legacyVideoPayoutManager,
-            heistManagerType: typeof this.legacyHeistManager,
-            heistManagerReady: this.legacyHeistManager?.isReady?.()
-        });
+        // Debug logging for bot context creation (can be removed in production)
+        if (this.logger.level === 'debug') {
+            this.logger.debug('Creating bot context', {
+                hasLegacyHeistManager: !!this.legacyHeistManager,
+                heistManagerReady: this.legacyHeistManager?.isReady?.()
+            });
+        }
         
         return {
             logger: this.logger,
