@@ -13,7 +13,7 @@ async function createLogger(config = {}) {
         file: {
             enabled: true,
             path: './logs',
-            maxSize: 10485760, // 10MB
+            maxSize: 204800, // 200KB
             maxFiles: 5
         }
     };

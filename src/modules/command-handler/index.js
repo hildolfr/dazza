@@ -214,6 +214,8 @@ class CommandHandlerModule extends BaseModule {
     createBotContext(room) {
         // Create a bot context that commands can use
         // This provides access to necessary bot functionality without tight coupling
+        const connection = this._context.services.get('connection');
+        
         return {
             logger: this.logger,
             db: this.legacyDb,
@@ -221,6 +223,7 @@ class CommandHandlerModule extends BaseModule {
             personality: this.legacyPersonality,
             videoPayoutManager: this.legacyVideoPayoutManager,
             room: room,
+            rooms: connection?.connections || new Map(), // For multi-room fallback
             cooldowns: this._context.services.get('cooldown') || { check: () => ({ allowed: true }) },
             isAdmin: (username) => {
                 // This will need to be provided by a permission module
@@ -228,8 +231,33 @@ class CommandHandlerModule extends BaseModule {
                 const permissions = this._context.services.get('permissions');
                 return permissions?.isAdmin?.(username) || false;
             },
-            sendMessage: (msg) => room.sendMessage(msg),
-            sendPM: (username, msg) => room.sendPM(username, msg)
+            sendMessage: (msg) => {
+                if (room && room.sendMessage) {
+                    return room.sendMessage(msg);
+                } else if (connection && connection.sendMessage) {
+                    return connection.sendMessage(msg);
+                } else {
+                    this.logger.error('No sendMessage method available');
+                }
+            },
+            sendPM: (username, msg) => {
+                if (room && room.sendPrivateMessage) {
+                    return room.sendPrivateMessage(username, msg);
+                } else if (connection && connection.sendPrivateMessage) {
+                    return connection.sendPrivateMessage(username, msg);
+                } else {
+                    this.logger.error('No sendPrivateMessage method available');
+                }
+            },
+            sendPrivateMessage: (username, msg) => {
+                if (room && room.sendPrivateMessage) {
+                    return room.sendPrivateMessage(username, msg);
+                } else if (connection && connection.sendPrivateMessage) {
+                    return connection.sendPrivateMessage(username, msg);
+                } else {
+                    this.logger.error('No sendPrivateMessage method available');
+                }
+            }
         };
     }
 

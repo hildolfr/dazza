@@ -34,14 +34,14 @@ core:
 # Database settings
 database:
   type: sqlite
-  path: ./cytube_stats.db
+  path: ./cytube_stats_modular.db
   options:
     verbose: false
     
 # Media database settings
 mediaDatabase:
   type: sqlite
-  path: ./media_encountered.db
+  path: ./media_encountered_modular.db
   options:
     verbose: false
 
@@ -209,7 +209,7 @@ memory:
 
 # Logging settings
 logging:
-  level: info
+  level: debug
   format: json
   console:
     enabled: true
@@ -217,5 +217,5 @@ logging:
   file:
     enabled: true
     path: ./logs
-    maxSize: 10485760 # 10MB
+    maxSize: 204800 # 200KB
     maxFiles: 5

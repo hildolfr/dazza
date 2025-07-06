@@ -21,7 +21,7 @@ function getCircularReplacer() {
 class Logger {
     constructor(options = {}) {
         this.logDir = options.logDir || path.join(__dirname, '../../logs');
-        this.maxFileSize = options.maxFileSize || 10 * 1024 * 1024; // 10MB
+        this.maxFileSize = options.maxFileSize || 200 * 1024; // 200KB
         this.maxFiles = options.maxFiles || 5;
         this.logToConsole = options.console !== false;
         this.logLevel = options.level || process.env.LOG_LEVEL || 'info';

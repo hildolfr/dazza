@@ -3,6 +3,26 @@
  * Handles finding the appropriate room context when not provided
  */
 export function sendPM(bot, toUser, message, roomContext) {
+    // Try the bot's direct sendPM method first (for new command system)
+    if (bot.sendPM) {
+        try {
+            bot.sendPM(toUser, message);
+            return;
+        } catch (error) {
+            bot.logger?.error(`Failed to send PM via bot.sendPM: ${error.message}`);
+        }
+    }
+    
+    // Try the bot's sendPrivateMessage method
+    if (bot.sendPrivateMessage) {
+        try {
+            bot.sendPrivateMessage(toUser, message);
+            return;
+        } catch (error) {
+            bot.logger?.error(`Failed to send PM via bot.sendPrivateMessage: ${error.message}`);
+        }
+    }
+    
     // For multi-room bot, we need to find a connected room
     if (bot.rooms && bot.rooms.size > 0) {
         let targetRoomId = null;
@@ -38,13 +58,17 @@ export function sendPM(bot, toUser, message, roomContext) {
         
         // Send PM if we found a connected room
         if (targetRoomId) {
-            bot.sendPrivateMessage(toUser, message, targetRoomId);
+            const room = bot.rooms.get(targetRoomId);
+            if (room && room.sendPrivateMessage) {
+                room.sendPrivateMessage(toUser, message);
+            } else {
+                bot.logger?.error(`Room ${targetRoomId} has no sendPrivateMessage method`);
+            }
         } else {
-            bot.logger.warn(`Cannot send PM to ${toUser} - no connected rooms available`);
+            bot.logger?.warn(`Cannot send PM to ${toUser} - no connected rooms available`);
         }
     } else {
-        // Single-room bot or fallback
-        bot.sendPrivateMessage(toUser, message);
+        bot.logger?.error(`No PM method available on bot and no rooms found`);
     }
 }
 
