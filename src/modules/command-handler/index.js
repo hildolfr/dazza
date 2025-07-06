@@ -56,15 +56,37 @@ class CommandHandlerModule extends BaseModule {
         this.initializeLegacyAdapters();
         
         // Initialize heist manager adapter if needed
+        this.logger.info('=== HEIST MANAGER ADAPTER DEBUG ===', {
+            needsAdapter: this.needsHeistManagerAdapter,
+            hasHeistService: !!this._context.services.get('heist'),
+            hasEconomyService: !!this._context.services.get('economySystem'),
+            servicesCount: this._context.services.size
+        });
+        
         if (this.needsHeistManagerAdapter) {
             try {
+                this.logger.info('Attempting to import LegacyHeistManagerAdapter...');
                 const { default: LegacyHeistManagerAdapter } = await import('./adapters/LegacyHeistManagerAdapter.js');
+                this.logger.info('LegacyHeistManagerAdapter imported successfully');
+                
                 this.legacyHeistManager = new LegacyHeistManagerAdapter(this._context.services);
                 this.legacyHeistManager.setLogger(this.logger);
+                
+                this.logger.info('=== HEIST MANAGER ADAPTER CREATED ===', {
+                    adapterExists: !!this.legacyHeistManager,
+                    adapterReady: this.legacyHeistManager?.isReady?.(),
+                    servicesPassedToAdapter: this._context.services.size
+                });
+                
                 this.logger.info('Legacy heist manager adapter initialized successfully');
             } catch (error) {
-                this.logger.error('Failed to initialize legacy heist manager adapter:', error);
+                this.logger.error('Failed to initialize legacy heist manager adapter:', {
+                    error: error.message,
+                    stack: error.stack
+                });
             }
+        } else {
+            this.logger.info('Heist manager adapter not needed or services not available');
         }
         
         // Provide command handling capabilities to other modules
@@ -120,10 +142,25 @@ class CommandHandlerModule extends BaseModule {
     }
 
     async handlePrivateMessage(data) {
+        this.logger.info('=== PM HANDLER DEBUG ===', {
+            data: data,
+            hasMessage: !!data.message,
+            hasUsername: !!data.username,
+            dataKeys: Object.keys(data)
+        });
+        
         const { message, room, username } = data;
+        
+        this.logger.info('=== PM EXTRACTED DATA ===', {
+            message: message,
+            username: username,
+            room: room,
+            hasPrefix: message && message.startsWith(this.config.commandPrefix)
+        });
         
         // Check if message starts with command prefix
         if (!message || !message.startsWith(this.config.commandPrefix)) {
+            this.logger.info('PM rejected: no command prefix or no message');
             return;
         }
 
@@ -132,17 +169,37 @@ class CommandHandlerModule extends BaseModule {
         const commandName = parts[0].toLowerCase();
         const args = parts.slice(1);
 
+        this.logger.info('=== PM COMMAND PARSED ===', {
+            commandName: commandName,
+            args: args
+        });
+
         // Get command to check PM acceptance
         const command = this.commandRegistry.get(commandName);
         if (!command || !command.pmAccepted) {
+            this.logger.info('PM command rejected: command not found or PM not accepted', {
+                commandExists: !!command,
+                pmAccepted: command?.pmAccepted
+            });
             return;
         }
 
+        this.logger.info('=== PM RATE LIMIT CHECK ===', {
+            username: username,
+            usernameType: typeof username
+        });
+
         // Check rate limiting
         if (!this.checkRateLimit(username)) {
+            this.logger.info('PM command rate limited');
             this.emit('command.ratelimited', { username: username, command: commandName });
             return;
         }
+
+        this.logger.info('=== EXECUTING PM COMMAND ===', {
+            commandName: commandName,
+            messageData: { message, username, room }
+        });
 
         // Execute command
         await this.executeCommand(commandName, { message, username, room }, args, room, true);
@@ -228,6 +285,15 @@ class CommandHandlerModule extends BaseModule {
         // Create a bot context that commands can use
         // This provides access to necessary bot functionality without tight coupling
         const connection = this._context.services.get('connection');
+        
+        this.logger.info('=== CREATING BOT CONTEXT ===', {
+            hasLegacyDb: !!this.legacyDb,
+            hasLegacyHeistManager: !!this.legacyHeistManager,
+            hasLegacyPersonality: !!this.legacyPersonality,
+            hasLegacyVideoPayoutManager: !!this.legacyVideoPayoutManager,
+            heistManagerType: typeof this.legacyHeistManager,
+            heistManagerReady: this.legacyHeistManager?.isReady?.()
+        });
         
         return {
             logger: this.logger,
