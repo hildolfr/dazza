@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import Database from '../services/database.js';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 import { WordCountAnalyzer } from './jobs/WordCountAnalyzer.js';
 import { DailyActivityTracker } from './jobs/DailyActivityTracker.js';
 import { ChatStreakCalculator } from './jobs/ChatStreakCalculator.js';

@@ -45,7 +45,7 @@ export default {
         channel: process.env.CHANNEL_NAME || 'fatpizza',
     },
     database: {
-        path: path.join(rootDir, 'cytube_stats.db'),
+        path: path.join(rootDir, 'cytube_stats_modular.db'),
     },
     cooldowns: {
         default: 5000,

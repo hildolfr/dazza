@@ -34,25 +34,12 @@ class CooldownModule extends BaseModule {
         // Debug: Check if database service is available
         this.logger.info('Checking database service availability...', {
             hasDb: !!this.db,
-            dbType: typeof this.db
+            dbType: typeof this.db,
+            contextDb: !!this._context.db
         });
         
-        // Wait for database service to be available if needed
-        if (!this.db) {
-            this.logger.info('Database service not available, waiting...');
-            // Wait for database service
-            await new Promise(resolve => {
-                const checkService = () => {
-                    if (this.db) {
-                        this.logger.info('Database service is now available');
-                        resolve();
-                    } else {
-                        setTimeout(checkService, 100);
-                    }
-                };
-                checkService();
-            });
-        }
+        // Wait for database service to be available - this is critical for cooldowns
+        await this.waitForDatabaseService();
         
         // Initialize cooldown manager
         this.cooldownManager = new CooldownManager(
@@ -136,8 +123,18 @@ class CooldownModule extends BaseModule {
             
             return result;
         } catch (error) {
-            this.logger.error('Error checking cooldown:', error);
-            return { allowed: true };
+            this.logger.error('Critical error in cooldown check - cooldowns are non-functional:', {
+                error: error.message,
+                stack: error.stack,
+                commandName: commandName,
+                username: username,
+                duration: duration,
+                options: options
+            });
+            
+            // Do NOT fall back to allowing command - this would break cooldown integrity
+            // Instead, indicate cooldown system is broken
+            throw new Error(`Cooldown system failure: ${error.message}`);
         }
     }
 
@@ -397,6 +394,58 @@ class CooldownModule extends BaseModule {
             this.logger.error('Error migrating from legacy cooldowns:', error);
             return 0;
         }
+    }
+
+    /**
+     * Wait for database service to become available with exponential backoff
+     */
+    async waitForDatabaseService() {
+        const startTime = Date.now();
+        let attempt = 0;
+        const maxAttempts = 60; // Maximum attempts (up to ~10 minutes with backoff)
+        let delay = 1000; // Start with 1 second delay
+        const maxDelay = 30000; // Maximum 30 second delay
+        
+        while (attempt < maxAttempts) {
+            attempt++;
+            
+            // Check if database is available
+            if (this.db && typeof this.db.run === 'function') {
+                this.logger.info('Database service is available', {
+                    attempt: attempt,
+                    totalWaitTime: `${((Date.now() - startTime) / 1000).toFixed(1)}s`
+                });
+                return;
+            }
+            
+            // Log progress every 5 attempts
+            if (attempt % 5 === 0) {
+                this.logger.info(`Waiting for database service... attempt ${attempt}/${maxAttempts}`, {
+                    nextRetryIn: `${delay}ms`,
+                    hasDb: !!this.db,
+                    dbType: typeof this.db,
+                    contextDb: !!this._context.db
+                });
+            }
+            
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            // Exponential backoff with jitter
+            delay = Math.min(maxDelay, delay * 1.5 + Math.random() * 1000);
+        }
+        
+        // If we get here, we've exhausted all attempts
+        const error = new Error(`Database service not available after ${maxAttempts} attempts over ${((Date.now() - startTime) / 1000).toFixed(1)} seconds. Cooldown module cannot function without persistent storage.`);
+        this.logger.error('Critical error: Database service unavailable', {
+            attempts: maxAttempts,
+            totalWaitTime: `${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+            hasDb: !!this.db,
+            dbType: typeof this.db,
+            contextDb: !!this._context.db,
+            error: error.message
+        });
+        throw error;
     }
 }
 

@@ -2,7 +2,7 @@
  * Compatibility schema for existing cooldowns table
  */
 
-import { createLogger } from './logger.js';
+import { createLogger } from './LoggerCompatibilityLayer.js';
 
 const logger = createLogger();
 

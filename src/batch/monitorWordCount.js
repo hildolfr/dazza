@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import Database from 'better-sqlite3';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 function formatDuration(ms) {
     const seconds = Math.floor(ms / 1000);
@@ -22,7 +22,7 @@ function formatDuration(ms) {
 
 async function monitor() {
     const logger = createLogger();
-    const db = new Database('cytube_stats.db');
+    const db = new Database('cytube_stats_modular.db');
     
     try {
         console.clear();

@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 const logger = createLogger('OllamaService');
 

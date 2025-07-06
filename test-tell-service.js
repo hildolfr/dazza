@@ -13,7 +13,7 @@ const config = {
         baseURL: 'offline' // Prevent connection
     },
     database: {
-        path: './cytube_stats.db'
+        path: './cytube_stats_modular.db'
     },
     bot: {
         username: 'dazza'

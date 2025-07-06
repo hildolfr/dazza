@@ -86,7 +86,11 @@ class CooldownManager {
             );
             this.memoryStore.init();
 
-            // Initialize persistent store
+            // Initialize persistent store - database is required for cooldowns
+            if (!this.db) {
+                throw new Error('Database is required for cooldown persistence - cannot initialize without database service');
+            }
+            
             this.persistentStore = new PersistentStore(
                 this.db, 
                 this.logger, 

@@ -105,7 +105,7 @@ class MessageProcessor {
             }
             
             // Log the message
-            this.logger.info(`[${messageData.username}]: ${messageData.msg}`);
+            this.logger.debug(`[${messageData.username}]: ${messageData.msg}`);
             
             // Add to message history
             this.addToMessageHistory(messageData.username, messageData.msg, messageData.time);
@@ -354,7 +354,7 @@ class MessageProcessor {
     handleImageRestorations(logResult) {
         if (logResult.restoredImages && logResult.restoredImages.length > 0) {
             for (const restored of logResult.restoredImages) {
-                this.logger.info(`Restored previously dead image: ${restored.url}`);
+                this.logger.debug(`Restored previously dead image: ${restored.url}`);
             }
         }
         
@@ -571,7 +571,7 @@ class MessageProcessor {
      * Handle coin flip responses
      */
     async handleCoinFlipResponse(messageData, response, botContext) {
-        this.logger.info('Checking for coin flip response', {
+        this.logger.debug('Checking for coin flip response', {
             username: messageData.username,
             message: response,
             hasDb: !!this.database
@@ -583,7 +583,7 @@ class MessageProcessor {
         );
         
         if (pendingChallenge && botContext.commands) {
-            this.logger.info('Found pending challenge, processing response');
+            this.logger.debug('Found pending challenge, processing response');
             
             const coinFlipCommand = botContext.commands.commands.get('coin_flip') ||
                                   botContext.commands.commands.get('coinflip') ||

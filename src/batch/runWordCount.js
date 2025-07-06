@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import Database from 'better-sqlite3';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 import { WordCountAnalyzer } from './jobs/WordCountAnalyzer.js';
 
 async function main() {
     const logger = createLogger();
-    const db = new Database('cytube_stats.db');
+    const db = new Database('cytube_stats_modular.db');
     
     // Enable WAL mode for better concurrency
     db.pragma('journal_mode = WAL');

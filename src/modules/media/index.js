@@ -17,7 +17,7 @@ class MediaModule extends BaseModule {
         // Default configuration for media tracking
         this.config = {
             trackMedia: true,               // Enable media tracking
-            databasePath: 'media_encountered.db',  // Database path
+            databasePath: 'media_encountered_modular.db',  // Database path
             cleanupInterval: 86400000,      // 24 hours cleanup interval
             roomId: 'fatpizza',            // Default room ID
             ...context.userConfig          // Allow override from config

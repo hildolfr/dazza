@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
  */
 
 async function normalizeUsernames() {
-    const db = new Database(path.join(__dirname, '../../cytube_stats.db'));
+    const db = new Database(path.join(__dirname, '../../cytube_stats_modular.db'));
     
     try {
         await db.init();

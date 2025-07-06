@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 import EventEmitter from 'events';
 import { normalizeUsernameForDb } from '../../utils/usernameNormalizer.js';
 

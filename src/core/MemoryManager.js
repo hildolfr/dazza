@@ -189,7 +189,7 @@ export class MemoryManager extends EventEmitter {
                 this.cleanupManager.registerComponent(name, component);
             }
             
-            this.logger.info(`Registered ${this.componentRegistry.size} components for memory monitoring`);
+            this.logger.debug(`Registered ${this.componentRegistry.size} components for memory monitoring`);
             
         } catch (error) {
             this.logger.error('Error registering core components', { error: error.message });
@@ -240,7 +240,7 @@ export class MemoryManager extends EventEmitter {
             this.pressureMonitor.start();
             this.isMonitoring = true;
             
-            this.logger.info('Memory monitoring started', {
+            this.logger.debug('Memory monitoring started', {
                 interval: this.memoryConfig.monitoring.checkInterval,
                 thresholds: this.memoryConfig.thresholds
             });
@@ -265,7 +265,7 @@ export class MemoryManager extends EventEmitter {
             this.pressureMonitor.stop();
             this.isMonitoring = false;
             
-            this.logger.info('Memory monitoring stopped');
+            this.logger.debug('Memory monitoring stopped');
             this.emit('monitoring:stopped');
             
         } catch (error) {
@@ -393,7 +393,7 @@ export class MemoryManager extends EventEmitter {
                 return;
             }
             
-            this.logger.info(`Executing ${level} cleanup strategy`);
+            this.logger.debug(`Executing ${level} cleanup strategy`);
             
             const result = await this.cleanupManager.executeCleanup(level, memoryData);
             

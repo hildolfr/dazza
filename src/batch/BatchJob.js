@@ -14,10 +14,10 @@ export class BatchJob {
         let recordsProcessed = 0;
         
         try {
-            this.logger.info(`[${this.name}] Starting batch job`);
+            this.logger.debug(`[${this.name}] Starting batch job`);
             recordsProcessed = await this.execute();
             const duration = Date.now() - startTime;
-            this.logger.info(`[${this.name}] Completed: ${recordsProcessed} records in ${duration}ms`);
+            this.logger.debug(`[${this.name}] Completed: ${recordsProcessed} records in ${duration}ms`);
             
             return {
                 success: true,

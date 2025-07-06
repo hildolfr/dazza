@@ -25,7 +25,7 @@ function isSystemUser(username) {
 }
 
 async function main() {
-    const dbPath = resolve(__dirname, '../../cytube_stats.db');
+    const dbPath = resolve(__dirname, '../../cytube_stats_modular.db');
     const db = new Database(dbPath);
     
     try {

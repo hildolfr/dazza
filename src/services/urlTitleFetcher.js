@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/LoggerCompatibilityLayer.js';
 
 const logger = createLogger('URLTitleFetcher');
 

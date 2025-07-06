@@ -2,7 +2,7 @@
  * Compatibility schema for existing video payout tables
  */
 
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 const logger = createLogger('VideoPayoutSchemaCompat');
 
 export const videoPayoutSchema = {

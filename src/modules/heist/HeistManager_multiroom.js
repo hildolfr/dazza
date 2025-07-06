@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 import EventEmitter from 'events';
 import { contentLoader } from './contentLoader.js';
 import { normalizeUsernameForDb, getCanonicalUsername } from '../../utils/usernameNormalizer.js';

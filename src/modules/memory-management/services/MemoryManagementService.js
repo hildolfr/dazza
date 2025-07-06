@@ -70,7 +70,7 @@ class MemoryManagementService extends EventEmitter {
             
             // Start legacy memory monitoring for backward compatibility
             this.memoryMonitor.start();
-            this.logger.info('Legacy memory monitor started for backward compatibility');
+            this.logger.debug('Legacy memory monitor started for backward compatibility');
             
             // Start periodic cleanup tasks
             this.startCleanupTasks();
@@ -104,7 +104,7 @@ class MemoryManagementService extends EventEmitter {
             
             // Force GC in critical situations
             if (global.gc) {
-                this.logger.info('Forcing garbage collection due to critical memory');
+                this.logger.debug('Forcing garbage collection due to critical memory');
                 this.memoryMonitor.forceGC();
             }
             
@@ -120,7 +120,7 @@ class MemoryManagementService extends EventEmitter {
         
         // Log when GC is forced
         this.memoryMonitor.on('gc-forced', (data) => {
-            this.logger.info('Garbage collection forced', data);
+            this.logger.debug('Garbage collection forced', data);
             this.emit('memory:gc-forced', data);
         });
     }
@@ -153,7 +153,7 @@ class MemoryManagementService extends EventEmitter {
         
         // Handle cleanup events
         this.coreMemoryManager.on('memory:cleanup-completed', (data) => {
-            this.logger.info('Memory cleanup completed (enhanced)', data);
+            this.logger.debug('Memory cleanup completed (enhanced)', data);
             this.emit('memory:cleanup-completed', data);
         });
         
@@ -174,7 +174,7 @@ class MemoryManagementService extends EventEmitter {
         });
         
         this.coreMemoryManager.on('memory:components-restarted', (data) => {
-            this.logger.info('Components restarted after emergency (enhanced)', data);
+            this.logger.debug('Components restarted after emergency (enhanced)', data);
             this.emit('memory:components-restarted', data);
         });
     }

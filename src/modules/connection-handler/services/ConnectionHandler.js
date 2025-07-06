@@ -158,18 +158,23 @@ class ConnectionHandler {
      */
     async handlePrivateMessage(data) {
         try {
-            this.logger.info(`PM from ${data.username}: ${data.msg}`);
+            // Handle both old and new data structure for compatibility
+            const username = data.username || data.from;
+            const message = data.msg || data.message;
+            
+            this.logger.info(`PM from ${username}: ${message}`);
             
             this.eventBus.emit('chat:pm', {
-                username: data.username,
-                message: data.msg,
+                username: username,
+                message: message,
+                room: data.room,
                 timestamp: Date.now(),
                 to: data.to
             });
         } catch (error) {
             this.logger.error('Error handling private message', {
                 error: error.message,
-                username: data.username
+                username: data.username || data.from
             });
         }
     }

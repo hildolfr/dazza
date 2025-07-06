@@ -1,6 +1,6 @@
 {
-  "timestamp": 1751804274468,
-  "shutdownReason": "SIGINT",
+  "timestamp": 1751816502967,
+  "shutdownReason": "SIGTERM",
   "shutdownData": {},
   "components": [
     "EventBus"
@@ -14,6 +14,6 @@
     "failedShutdowns": 0,
     "recoveryAttempts": 0,
     "successfulRecoveries": 0,
-    "startTime": 1751804264527
+    "startTime": 1751816500032
   }
 }

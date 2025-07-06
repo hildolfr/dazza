@@ -2,7 +2,7 @@ import Database from '../services/database.js';
 import { normalizeUsernameForDb } from '../utils/usernameNormalizer.js';
 
 async function mergeVideoWatchers() {
-    const db = new Database('./cytube_stats.db');
+    const db = new Database('./cytube_stats_modular.db');
     await db.init();
     
     try {

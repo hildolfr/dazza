@@ -8,7 +8,7 @@
     "optional": [],
     "config": {
         "trackMedia": true,
-        "databasePath": "media_encountered.db",
+        "databasePath": "media_encountered_modular.db",
         "cleanupInterval": 86400000
     },
     "events": {

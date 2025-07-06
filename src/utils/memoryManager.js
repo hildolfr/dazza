@@ -1,4 +1,4 @@
-import { getLogger } from './logger.js';
+import { getLogger } from './LoggerCompatibilityLayer.js';
 
 export class MemoryManager {
     constructor(maxAge = 24 * 60 * 60 * 1000) { // 24 hours default

@@ -1,5 +1,5 @@
 import { Command } from '../base.js';
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 import { sendPM } from '../../utils/pmHelper.js';
 
 const logger = createLogger('SummaryCommand');

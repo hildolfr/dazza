@@ -69,7 +69,7 @@ class BatchScheduler extends EventEmitter {
         };
 
         this.jobs.set(name, job);
-        this.logger.info(`Registered batch job: ${name} (runs every ${intervalHours} hours)`);
+        this.logger.debug(`Registered batch job: ${name} (runs every ${intervalHours} hours)`);
     }
 
     async start() {
@@ -86,14 +86,14 @@ class BatchScheduler extends EventEmitter {
         // Clear all intervals
         for (const [name, intervalId] of this.intervals) {
             clearInterval(intervalId);
-            this.logger.info(`Stopped job: ${name}`);
+            this.logger.debug(`Stopped job: ${name}`);
         }
         this.intervals.clear();
         
         // Clear all timeouts
         for (const [name, timeoutId] of this.timeouts) {
             clearTimeout(timeoutId);
-            this.logger.info(`Cleared timeout for job: ${name}`);
+            this.logger.debug(`Cleared timeout for job: ${name}`);
         }
         this.timeouts.clear();
         
@@ -145,7 +145,7 @@ class BatchScheduler extends EventEmitter {
                 }
             }, delay);
             this.timeouts.set(name, timeoutId);
-            this.logger.info(`Job ${name} scheduled to run in ${Math.round(delay / 1000 / 60)} minutes`);
+            this.logger.debug(`Job ${name} scheduled to run in ${Math.round(delay / 1000 / 60)} minutes`);
         } else {
             // Job should run now
             nextRun = now + job.intervalMs;
@@ -171,7 +171,7 @@ class BatchScheduler extends EventEmitter {
         job.isRunning = true;
         const startTime = Date.now();
         
-        this.logger.info(`Starting batch job: ${name}`);
+        this.logger.debug(`Starting batch job: ${name}`);
         this.emit('job:start', { name, startTime });
 
         try {
@@ -209,7 +209,7 @@ class BatchScheduler extends EventEmitter {
                 [startTime, nextRun, 'idle', name]
             );
 
-            this.logger.info(`Completed batch job: ${name} (${duration}ms, ${result.recordsProcessed || 0} records)`);
+            this.logger.debug(`Completed batch job: ${name} (${duration}ms, ${result.recordsProcessed || 0} records)`);
             this.emit('job:complete', { name, duration, result });
 
         } catch (error) {
@@ -290,7 +290,7 @@ class BatchScheduler extends EventEmitter {
         try {
             const data = await fs.readFile(this.stateFile, 'utf8');
             const state = JSON.parse(data);
-            this.logger.info(`Loaded batch scheduler state from ${state.savedAt}`);
+            this.logger.debug(`Loaded batch scheduler state from ${state.savedAt}`);
             return state;
         } catch (error) {
             // State file doesn't exist yet

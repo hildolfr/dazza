@@ -22,7 +22,7 @@ const testConfig = {
         }
     },
     database: {
-        path: './cytube_stats.db'
+        path: './cytube_stats_modular.db'
     },
     logging: {
         level: 'debug',

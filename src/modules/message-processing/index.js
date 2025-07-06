@@ -57,11 +57,12 @@ class MessageProcessingModule extends BaseModule {
      */
     async handleChatMessage(data) {
         try {
-            this.logger.debug('[MESSAGE-PROCESSING] Received chat message', {
+            this.logger.info('[MESSAGE-PROCESSING] *** CHAT MESSAGE RECEIVED ***', {
                 username: data?.username,
                 message: data?.message?.substring(0, 50),
                 hasData: !!data,
-                dataKeys: data ? Object.keys(data) : []
+                dataKeys: data ? Object.keys(data) : [],
+                fullData: data
             });
             
             if (!data || !data.username || !data.message) {
@@ -111,24 +112,34 @@ class MessageProcessingModule extends BaseModule {
             }
             
             
-            // Create minimal botContext to satisfy MessageProcessor requirements
+            // Create botContext to satisfy MessageProcessor requirements
+            // Include userManagement service to provide userlist access
+            const userManagementService = this._context.services.get('userManagement');
             const botContext = {
                 username: this.config?.bot?.username || 'dazza',
                 db: database,
-                logger: this.logger
+                logger: this.logger,
+                // Add userlist access for normalizeUsernameForDb function
+                get userlist() {
+                    if (userManagementService) {
+                        return userManagementService.getUserlist();
+                    }
+                    return new Map(); // Return empty Map if service not available
+                }
             };
             
-            this.logger.debug('[MESSAGE-PROCESSING] About to call messageProcessor.processMessage', {
+            this.logger.info('[MESSAGE-PROCESSING] About to call messageProcessor.processMessage', {
                 messageData,
                 botContextKeys: Object.keys(botContext),
                 hasProcessorReady: this.messageProcessor?.ready
             });
             
             const result = await this.messageProcessor.processMessage(messageData, botContext);
-            this.logger.debug('[MESSAGE-PROCESSING] Message processed successfully', { 
+            this.logger.info('[MESSAGE-PROCESSING] Message processed successfully', { 
                 username: data.username,
                 processed: result.processed,
-                reason: result.reason 
+                reason: result.reason,
+                result
             });
             
         } catch (error) {

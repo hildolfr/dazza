@@ -3,7 +3,7 @@
  * This schema is designed to work with the existing table structures
  */
 
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 const logger = createLogger('HeistSchemaCompat');
 
 export const heistSchema = {

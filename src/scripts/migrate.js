@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, '../../cytube_stats.db');
+const DB_PATH = path.join(__dirname, '../../cytube_stats_modular.db');
 
 async function main() {
     const command = process.argv[2] || 'up';

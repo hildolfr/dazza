@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { glob } from 'glob';
 
 async function importHistoricalFishing() {
-    const db = new Database('./cytube_stats.db');
+    const db = new Database('./cytube_stats_modular.db');
     await db.init();
     
     try {

@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 
 export default class MediaTracker {
     constructor() {
@@ -21,7 +21,7 @@ export default class MediaTracker {
             this.roomId = config.roomId;
             
             // Initialize database
-            const dbPath = path.join(process.cwd(), 'media_encountered.db');
+            const dbPath = path.join(process.cwd(), 'media_encountered_modular.db');
             this.db = new sqlite3.Database(dbPath);
             
             // Promisify database methods

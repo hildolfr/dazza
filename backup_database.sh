@@ -2,9 +2,9 @@
 
 # Database backup script for multi-room migration
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-DB_FILE="cytube_stats.db"
+DB_FILE="cytube_stats_modular.db"
 BACKUP_DIR="backups"
-BACKUP_FILE="${BACKUP_DIR}/cytube_stats_${TIMESTAMP}.db"
+BACKUP_FILE="${BACKUP_DIR}/cytube_stats_modular_${TIMESTAMP}.db"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"

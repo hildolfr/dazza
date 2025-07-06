@@ -91,8 +91,21 @@ class CommandRegistry {
         }
 
         // Check cooldown
-        const cooldownKey = `${command.name}:${message.username}`;
-        const cooldownCheck = bot.cooldowns.check(cooldownKey, command.cooldown);
+        let cooldownCheck;
+        try {
+            cooldownCheck = await bot.cooldowns.check(command.name, message.username, command.cooldown);
+        } catch (error) {
+            bot.logger.error('Cooldown system failure - blocking all commands until resolved', {
+                error: error.message,
+                command: command.name,
+                username: message.username
+            });
+            
+            return {
+                success: false,
+                error: 'fuck me dead the cooldown system carked it - commands are blocked until fixed'
+            };
+        }
         
         if (!cooldownCheck.allowed) {
             // Use custom cooldown message if provided, otherwise use default

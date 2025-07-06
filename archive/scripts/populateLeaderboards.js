@@ -1,7 +1,7 @@
 import Database from '../services/database.js';
 
 async function populateLeaderboards() {
-    const db = new Database('./cytube_stats.db');
+    const db = new Database('./cytube_stats_modular.db');
     await db.init();
     
     try {

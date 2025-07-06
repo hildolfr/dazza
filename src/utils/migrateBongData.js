@@ -1,7 +1,7 @@
 import Database from '../services/database.js';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { createLogger } from './logger.js';
+import { createLogger } from './LoggerCompatibilityLayer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

@@ -25,7 +25,7 @@ class MediaService {
             const trackerConfig = {
                 roomId: this.config.roomId || 'fatpizza',
                 trackMedia: this.config.trackMedia !== false,
-                databasePath: this.config.databasePath || 'media_encountered.db',
+                databasePath: this.config.databasePath || 'media_encountered_modular.db',
                 ...this.config
             };
 

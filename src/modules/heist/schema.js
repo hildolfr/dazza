@@ -3,7 +3,7 @@
  * This is imported by database.js to initialize tables
  */
 
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/LoggerCompatibilityLayer.js';
 const logger = createLogger('HeistSchema');
 
 export const heistSchema = {
