@@ -74,27 +74,41 @@ export class ImageHealthChecker {
 
     isConnected() {
         // Check if the bot is connected to any room
-        // Handle both single-room bot (with connection) and multi-room bot (with connections)
+        // In modular architecture, check through services registry
         
-        // Multi-room bot
-        if (this.bot.connections && this.bot.connections.size > 0) {
-            // Check if at least one connection is active
-            for (const [roomId, connection] of this.bot.connections) {
-                if (connection && connection.isConnected()) {
-                    return true;
+        try {
+            // Try to get connection service from modular architecture
+            if (this.bot.services && typeof this.bot.services.get === 'function') {
+                const connectionService = this.bot.services.get('connection');
+                if (connectionService && typeof connectionService.isConnected === 'function') {
+                    return connectionService.isConnected();
                 }
             }
-            this.bot.logger.warn('[ImageHealthChecker] Bot is not connected to any rooms, skipping health check');
+            
+            // Fallback: Multi-room bot legacy check
+            if (this.bot.connections && this.bot.connections.size > 0) {
+                // Check if at least one connection is active
+                for (const [roomId, connection] of this.bot.connections) {
+                    if (connection && connection.isConnected()) {
+                        return true;
+                    }
+                }
+                this.bot.logger.warn('[ImageHealthChecker] Bot is not connected to any rooms, skipping health check');
+                return false;
+            }
+            
+            // Fallback: Single-room bot (backward compatibility)
+            if (this.bot.connection && this.bot.connection.isConnected()) {
+                return true;
+            }
+            
+            this.bot.logger.warn('[ImageHealthChecker] Bot is not connected, skipping health check');
+            return false;
+            
+        } catch (error) {
+            this.bot.logger.warn(`[ImageHealthChecker] Error checking connection status: ${error.message}`);
             return false;
         }
-        
-        // Single-room bot (backward compatibility)
-        if (this.bot.connection && this.bot.connection.isConnected()) {
-            return true;
-        }
-        
-        this.bot.logger.warn('[ImageHealthChecker] Bot is not connected, skipping health check');
-        return false;
     }
 
     async runHealthCheck() {

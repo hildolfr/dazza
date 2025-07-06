@@ -18,8 +18,16 @@ class ImageHealthService {
      */
     async initialize() {
         try {
-            // Create ImageHealthChecker instance with bot context
+            // Create ImageHealthChecker instance with enhanced context including services
             const botContext = this.context.bot || this.context;
+            // Add services registry to the bot context for modular architecture compatibility
+            if (!botContext.services && this.context.services) {
+                botContext.services = this.context.services;
+            }
+            // Ensure database access is available
+            if (!botContext.db && this.context.db) {
+                botContext.db = this.context.db;
+            }
             this.healthChecker = new ImageHealthChecker(botContext);
 
             // Override configuration if provided
