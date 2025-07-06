@@ -23,11 +23,40 @@ class CoreConnectionModule extends BaseModule {
         // Register connection service early for other modules
         // Provide the primary connection (first room) as the main connection service
         const primaryConnection = this.connections.values().next().value;
+        this.logger.info('Attempting to register connection service', {
+            hasConnections: this.connections.size > 0,
+            connectionKeys: Array.from(this.connections.keys()),
+            primaryConnection: !!primaryConnection
+        });
+        
         if (primaryConnection) {
-            this.eventBus.emit('service:register', {
+            this.logger.info('About to emit service:register event', {
+                eventBusExists: !!this.eventBus,
+                eventBusListenerCount: this.eventBus.listenerCount('service:register')
+            });
+            const serviceData = {
                 name: 'connection',
                 service: primaryConnection
+            };
+            this.logger.info('Emitting service:register event with data:', {
+                name: serviceData.name,
+                serviceType: typeof serviceData.service,
+                hasService: !!serviceData.service
             });
+            
+            try {
+                const result = this.eventBus.emit('service:register', serviceData);
+                this.logger.info('EventBus emit result:', { result, eventBusHasListeners: this.eventBus.listenerCount('service:register') > 0 });
+            } catch (error) {
+                this.logger.error('Error emitting service:register event:', error);
+            }
+            
+            this.logger.info('Connection service registered successfully');
+            
+            // Test emit to see if eventBus works
+            this.eventBus.emit('test:event', { test: 'data' });
+        } else {
+            this.logger.warn('No primary connection available to register as service');
         }
         
         // Listen for connection requests

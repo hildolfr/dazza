@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { MemoryManager } from '../../../utils/memoryManager.js';
 import { MemoryMonitor } from '../../../utils/MemoryMonitor.js';
+import { MemoryManager as CoreMemoryManager } from '../../../core/MemoryManager.js';
 
 /**
  * Memory Management Service
@@ -18,6 +19,7 @@ class MemoryManagementService extends EventEmitter {
         // Memory management components
         this.memoryManager = null;
         this.memoryMonitor = null;
+        this.coreMemoryManager = null;
         
         // Bot message tracking
         this.recentBotMessages = new Map();
@@ -36,32 +38,45 @@ class MemoryManagementService extends EventEmitter {
      */
     async initialize() {
         try {
-            // Initialize memory manager
+            // Initialize legacy memory manager
             this.memoryManager = new MemoryManager();
             
-            // Initialize memory monitor with configuration
+            // Initialize core memory manager with enhanced features
+            this.coreMemoryManager = new CoreMemoryManager(
+                this.services,
+                this.config,
+                this.logger
+            );
+            
+            // Initialize the core memory manager
+            await this.coreMemoryManager.initialize();
+            
+            // Initialize legacy memory monitor for backward compatibility
             this.memoryMonitor = new MemoryMonitor({
-                warningThreshold: this.config.memory?.warningThreshold || 0.85,
-                criticalThreshold: this.config.memory?.criticalThreshold || 0.95,
-                checkInterval: this.config.memory?.checkInterval || 60000,
-                historySize: this.config.memory?.historySize || 60,
-                warningCooldown: this.config.memory?.warningCooldown || 300000,
-                leakDetectionWindow: this.config.memory?.leakDetectionWindow || 10,
-                leakGrowthThreshold: this.config.memory?.leakGrowthThreshold || 0.05
+                warningThreshold: this.config.memory?.thresholds?.warning || 0.85,
+                criticalThreshold: this.config.memory?.thresholds?.critical || 0.95,
+                checkInterval: this.config.memory?.monitoring?.checkInterval || 60000,
+                historySize: this.config.memory?.monitoring?.historySize || 60,
+                warningCooldown: this.config.memory?.alerts?.cooldown || 300000,
+                leakDetectionWindow: this.config.memory?.monitoring?.leakDetectionWindow || 10,
+                leakGrowthThreshold: this.config.memory?.monitoring?.leakGrowthThreshold || 0.05
             });
             
-            // Setup memory monitor event handlers
+            // Setup memory monitor event handlers (legacy)
             this.setupMemoryMonitorHandlers();
             
-            // Start memory monitoring
+            // Setup core memory manager event handlers
+            this.setupCoreMemoryHandlers();
+            
+            // Start legacy memory monitoring for backward compatibility
             this.memoryMonitor.start();
-            this.logger.info('Memory monitor started');
+            this.logger.info('Legacy memory monitor started for backward compatibility');
             
             // Start periodic cleanup tasks
             this.startCleanupTasks();
             
             this.ready = true;
-            this.logger.info('Memory Management Service initialized successfully');
+            this.logger.info('Memory Management Service initialized successfully with enhanced pressure monitoring');
             
         } catch (error) {
             this.logger.error('Failed to initialize Memory Management Service', {
@@ -109,6 +124,60 @@ class MemoryManagementService extends EventEmitter {
             this.emit('memory:gc-forced', data);
         });
     }
+    
+    /**
+     * Setup core memory manager event handlers
+     */
+    setupCoreMemoryHandlers() {
+        // Handle memory pressure events
+        this.coreMemoryManager.on('memory:pressure:warning', (data) => {
+            this.logger.warn('Memory pressure warning (enhanced)', data);
+            this.emit('memory:pressure:warning', data);
+        });
+        
+        this.coreMemoryManager.on('memory:pressure:critical', (data) => {
+            this.logger.error('Memory pressure critical (enhanced)', data);
+            this.emit('memory:pressure:critical', data);
+        });
+        
+        this.coreMemoryManager.on('memory:pressure:emergency', (data) => {
+            this.logger.error('Memory pressure emergency (enhanced)', data);
+            this.emit('memory:pressure:emergency', data);
+        });
+        
+        // Handle memory leak detection
+        this.coreMemoryManager.on('memory:leak-detected', (data) => {
+            this.logger.error('Memory leak detected (enhanced)', data);
+            this.emit('memory:leak-detected', data);
+        });
+        
+        // Handle cleanup events
+        this.coreMemoryManager.on('memory:cleanup-completed', (data) => {
+            this.logger.info('Memory cleanup completed (enhanced)', data);
+            this.emit('memory:cleanup-completed', data);
+        });
+        
+        this.coreMemoryManager.on('memory:cleanup-failed', (data) => {
+            this.logger.error('Memory cleanup failed (enhanced)', data);
+            this.emit('memory:cleanup-failed', data);
+        });
+        
+        // Handle emergency events
+        this.coreMemoryManager.on('memory:emergency-shutdown-considered', (data) => {
+            this.logger.error('Emergency shutdown considered (enhanced)', data);
+            this.emit('memory:emergency-shutdown-considered', data);
+        });
+        
+        this.coreMemoryManager.on('memory:emergency-shutdown-executed', (data) => {
+            this.logger.error('Emergency shutdown executed (enhanced)', data);
+            this.emit('memory:emergency-shutdown-executed', data);
+        });
+        
+        this.coreMemoryManager.on('memory:components-restarted', (data) => {
+            this.logger.info('Components restarted after emergency (enhanced)', data);
+            this.emit('memory:components-restarted', data);
+        });
+    }
 
     /**
      * Start periodic cleanup tasks
@@ -139,7 +208,13 @@ class MemoryManagementService extends EventEmitter {
         }
         
         this.dataStructures.set(name, sizeGetter);
+        
+        // Register with both legacy and enhanced systems
         this.memoryMonitor.trackDataStructure(name, sizeGetter);
+        
+        if (this.coreMemoryManager) {
+            this.coreMemoryManager.registerComponent(name, sizeGetter);
+        }
         
         this.logger.debug(`Registered data structure for monitoring: ${name}`);
     }
@@ -151,8 +226,13 @@ class MemoryManagementService extends EventEmitter {
     unregisterDataStructure(name) {
         this.dataStructures.delete(name);
         
+        // Unregister from both systems
         if (this.memoryMonitor) {
             this.memoryMonitor.untrackDataStructure(name);
+        }
+        
+        if (this.coreMemoryManager) {
+            this.coreMemoryManager.unregisterComponent(name);
         }
         
         this.logger.debug(`Unregistered data structure: ${name}`);
@@ -424,20 +504,18 @@ class MemoryManagementService extends EventEmitter {
      * @returns {Object} Memory statistics
      */
     getMemoryStats() {
-        if (!this.memoryMonitor) {
-            return {
-                error: 'Memory monitor not initialized',
-                ready: false
-            };
-        }
+        const legacyStats = this.memoryMonitor ? this.memoryMonitor.getStats() : null;
+        const enhancedStats = this.coreMemoryManager ? this.coreMemoryManager.getMemoryStats() : null;
         
         return {
-            ...this.memoryMonitor.getStats(),
+            legacy: legacyStats,
+            enhanced: enhancedStats,
             botMessageTracking: {
                 trackedMessages: this.recentBotMessages.size,
                 cacheDuration: this.MESSAGE_CACHE_DURATION
             },
-            ready: this.ready
+            ready: this.ready,
+            hasEnhancedMonitoring: !!this.coreMemoryManager
         };
     }
 
@@ -446,11 +524,13 @@ class MemoryManagementService extends EventEmitter {
      * @returns {Array} Memory history data
      */
     getMemoryHistory() {
-        if (!this.memoryMonitor) {
-            return [];
-        }
+        const legacyHistory = this.memoryMonitor ? this.memoryMonitor.getHistory() : [];
+        const enhancedHistory = this.coreMemoryManager ? this.coreMemoryManager.getMemoryHistory() : [];
         
-        return this.memoryMonitor.getHistory();
+        return {
+            legacy: legacyHistory,
+            enhanced: enhancedHistory
+        };
     }
 
     /**
@@ -458,20 +538,35 @@ class MemoryManagementService extends EventEmitter {
      * @returns {boolean} True if GC was forced, false if not available
      */
     forceGC() {
-        if (!this.memoryMonitor) {
-            return false;
+        let result = { success: false, reason: 'no_gc_available' };
+        
+        // Try enhanced system first
+        if (this.coreMemoryManager) {
+            result = this.coreMemoryManager.forceGC();
+        }
+        // Fallback to legacy system
+        else if (this.memoryMonitor) {
+            const success = this.memoryMonitor.forceGC();
+            result = { success };
         }
         
-        return this.memoryMonitor.forceGC();
+        return result;
     }
 
     /**
      * Force emergency cleanup
      */
-    async forceCleanup() {
-        this.logger.info('Performing emergency memory cleanup');
+    async forceCleanup(level = 'moderate') {
+        this.logger.info(`Performing ${level} memory cleanup`);
         
-        // Clear all non-essential caches
+        // Use enhanced cleanup if available
+        if (this.coreMemoryManager) {
+            const result = await this.coreMemoryManager.forceCleanup(level);
+            this.logger.info('Enhanced cleanup completed', result);
+            return result;
+        }
+        
+        // Fallback to legacy cleanup
         this.clearNonEssentialCaches();
         
         // Force GC if available
@@ -480,7 +575,8 @@ class MemoryManagementService extends EventEmitter {
             this.forceGC();
         }
         
-        this.logger.info('Emergency cleanup completed');
+        this.logger.info('Legacy cleanup completed');
+        return { success: true, type: 'legacy_cleanup' };
     }
 
     /**
@@ -496,11 +592,18 @@ class MemoryManagementService extends EventEmitter {
      * @returns {Object} Service status
      */
     getStatus() {
+        const legacyStatus = {
+            running: !!this.memoryMonitor?.monitorInterval,
+            samples: this.memoryMonitor?.history?.length || 0
+        };
+        
+        const enhancedStatus = this.coreMemoryManager ? this.coreMemoryManager.getMemoryStats() : null;
+        
         return {
             ready: this.ready,
             memoryMonitor: {
-                running: !!this.memoryMonitor?.monitorInterval,
-                samples: this.memoryMonitor?.history?.length || 0
+                legacy: legacyStatus,
+                enhanced: enhancedStatus
             },
             botMessageTracking: {
                 trackedMessages: this.recentBotMessages.size,
@@ -513,7 +616,8 @@ class MemoryManagementService extends EventEmitter {
             cleanup: {
                 botMessageCleanup: !!this.botMessageCleanupInterval,
                 cacheCleanup: !!this.cacheCleanupInterval
-            }
+            },
+            hasEnhancedMonitoring: !!this.coreMemoryManager
         };
     }
 
@@ -534,7 +638,12 @@ class MemoryManagementService extends EventEmitter {
             this.cacheCleanupInterval = null;
         }
         
-        // Stop memory monitor
+        // Stop enhanced memory manager
+        if (this.coreMemoryManager) {
+            await this.coreMemoryManager.shutdown();
+        }
+        
+        // Stop legacy memory monitor
         if (this.memoryMonitor) {
             this.memoryMonitor.stop();
         }

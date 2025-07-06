@@ -13,6 +13,9 @@ import ConfigManager from './src/core/ConfigManager.js';
 import createLogger from './src/utils/createLogger.js';
 
 async function main() {
+    // Increase max listeners to accommodate all cleanup handlers
+    process.setMaxListeners(50);
+    
     console.log('Starting CyTube Bot - Modular Architecture');
     console.log('==========================================');
     
@@ -44,9 +47,24 @@ async function main() {
         const services = new Map();
         
         // Set up service registration handler
-        eventBus.on('service:register', ({ name, service }) => {
-            services.set(name, service);
-            logger.info(`Service registered: ${name}`);
+        eventBus.on('service:register', (data) => {
+            try {
+                const { name, service } = data;
+                logger.info(`Received service registration request for: ${name}`);
+                services.set(name, service);
+                logger.info(`Service registered: ${name}`, {
+                    serviceName: name,
+                    serviceType: typeof service,
+                    allServices: Array.from(services.keys())
+                });
+            } catch (error) {
+                logger.error(`Error in service registration handler for ${data?.name || 'unknown'}:`, error);
+            }
+        });
+        
+        // Test event listener
+        eventBus.on('test:event', (data) => {
+            logger.info('Received test event:', data);
         });
         
         // Create context for modules

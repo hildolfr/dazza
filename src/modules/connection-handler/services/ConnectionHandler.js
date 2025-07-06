@@ -52,7 +52,18 @@ class ConnectionHandler {
     async initialize() {
         // Get required services
         this.database = this.services.get('database');
-        this.connection = this.services.get('connection');
+        
+        // Wait for connection service to be available (it may be registered later during startup)
+        let retries = 0;
+        const maxRetries = 10;
+        while (!this.connection && retries < maxRetries) {
+            this.connection = this.services.get('connection');
+            if (!this.connection) {
+                this.logger.info(`Waiting for connection service... (attempt ${retries + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+                retries++;
+            }
+        }
         
         // Optional services - will be looked up when needed
         // this.messageProcessor = this.services.get('messageProcessor');

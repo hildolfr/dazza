@@ -134,6 +134,72 @@ modules:
     trackQueue: true
     trackPlays: true
 
+# Memory management settings
+memory:
+  # Monitoring configuration
+  monitoring:
+    enabled: true
+    checkInterval: 30000 # 30 seconds
+    historySize: 100 # Keep 100 samples
+    pressureWindow: 10 # 10 samples for pressure calculation
+    leakDetectionWindow: 15 # 15 samples for leak detection
+    leakGrowthThreshold: 0.03 # 3% growth per sample
+    gcEfficiencyThreshold: 0.10 # 10% minimum GC efficiency
+    
+  # Memory thresholds (percentage of heap limit)
+  thresholds:
+    warning: 0.80 # 80% - warning level
+    critical: 0.90 # 90% - critical level
+    emergency: 0.95 # 95% - emergency level
+    rss: 1073741824 # 1GB RSS threshold
+    external: 536870912 # 512MB external threshold
+    
+  # Cleanup configuration
+  cleanup:
+    enabled: true
+    autoCleanup: true
+    emergencyShutdown: true
+    
+    # Component cleanup limits
+    messageProcessing:
+      maxProcessedMessages: 50
+      maxMessageHistory: 500
+      maxRecentMentions: 50
+      maxPendingTimeouts: 25
+      
+    eventSystem:
+      maxEventHistory: 100
+      maxSubscriberHistory: 50
+      maxErrorHistory: 25
+      
+    imageHealthChecker:
+      maxBatchSize: 5
+      maxFailureHistory: 50
+      maxRecheckHistory: 25
+      
+    connectionTracking:
+      maxReconnectHistory: 10
+      maxConnectionState: 5
+      maxUserDepartures: 100
+      
+    database:
+      maxCacheSize: 100
+      maxQueryHistory: 50
+      maxConnectionPool: 3
+      
+  # Alert configuration
+  alerts:
+    enabled: true
+    cooldown: 300000 # 5 minutes between alerts
+    emergencyCooldown: 60000 # 1 minute between emergency alerts
+    
+  # Emergency shutdown protection
+  shutdownProtection:
+    enabled: true
+    threshold: 0.98 # 98% - absolute emergency threshold
+    maxAttempts: 3
+    cooldown: 300000 # 5 minutes between attempts
+
 # Logging settings
 logging:
   level: info

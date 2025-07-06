@@ -1,0 +1,63 @@
+{
+  "id": "health-monitoring",
+  "name": "Health Monitoring System",
+  "version": "1.0.0",
+  "description": "Comprehensive system health monitoring with predictive analytics and early warning systems",
+  "main": "index.js",
+  "type": "core",
+  "priority": "critical",
+  "dependencies": [],
+  "provides": [
+    "health-monitoring",
+    "health-dashboard", 
+    "health-alerts",
+    "health-predictions",
+    "health-trends"
+  ],
+  "config": {
+    "checkInterval": 30000,
+    "reportInterval": 300000,
+    "aggregationInterval": 60000,
+    "thresholds": {
+      "healthy": 0.95,
+      "warning": 0.85,
+      "degraded": 0.70,
+      "critical": 0.50,
+      "failed": 0.25
+    },
+    "alerts": {
+      "enabled": true,
+      "channels": ["log", "event"],
+      "cooldown": 300000,
+      "escalation": true
+    },
+    "prediction": {
+      "enabled": true,
+      "lookbackWindow": 3600000,
+      "trendThreshold": 0.1
+    }
+  },
+  "permissions": {
+    "system": ["read", "monitor"],
+    "components": ["read", "monitor"],
+    "protection": ["read", "monitor"],
+    "api": ["expose"]
+  },
+  "events": {
+    "emits": [
+      "health:system:changed",
+      "health:component:critical",
+      "health:alert:triggered",
+      "health:prediction:concern",
+      "health:emergency:activated"
+    ],
+    "listens": [
+      "module:started",
+      "module:stopped", 
+      "module:error",
+      "system:memory:warning",
+      "system:stack:critical",
+      "eventbus:recursion:detected"
+    ]
+  }
+}

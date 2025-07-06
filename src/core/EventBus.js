@@ -70,6 +70,9 @@ class EventBus extends EventEmitter {
             lastCleanup: Date.now()
         };
         
+        // Error context tracking
+        this.errorContext = new Map();
+        
         // Initialize stack monitoring
         this.stackMonitor = new StackMonitor({
             ...config.stackMonitor,
@@ -399,6 +402,12 @@ class EventBus extends EventEmitter {
             username: data?.username,
             message: data?.message?.substring(0, 100) // Truncate long messages
         };
+        
+        // For service registration events, include the service name to avoid false duplicates
+        if (event === 'service:register' && data?.name) {
+            criticalData.serviceName = data.name;
+        }
+        
         return JSON.stringify(criticalData);
     }
     
