@@ -15,6 +15,7 @@ class CommandHandlerModule extends BaseModule {
         this.legacyHeistManager = null;
         this.legacyPersonality = null;
         this.legacyVideoPayoutManager = null;
+        this.needsHeistManagerAdapter = false;
         
         this.config = {
             commandPrefix: '!',
@@ -53,6 +54,18 @@ class CommandHandlerModule extends BaseModule {
         
         // Initialize legacy adapters now that services are available
         this.initializeLegacyAdapters();
+        
+        // Initialize heist manager adapter if needed
+        if (this.needsHeistManagerAdapter) {
+            try {
+                const { default: LegacyHeistManagerAdapter } = await import('./adapters/LegacyHeistManagerAdapter.js');
+                this.legacyHeistManager = new LegacyHeistManagerAdapter(this._context.services);
+                this.legacyHeistManager.setLogger(this.logger);
+                this.logger.info('Legacy heist manager adapter initialized successfully');
+            } catch (error) {
+                this.logger.error('Failed to initialize legacy heist manager adapter:', error);
+            }
+        }
         
         // Provide command handling capabilities to other modules
         this.eventBus.on('command.register', this.registerCommand.bind(this));
@@ -337,15 +350,33 @@ class CommandHandlerModule extends BaseModule {
     // ===== Legacy Adapter Initialization =====
     
     initializeLegacyAdapters() {
-        // Legacy adapters are deprecated and no longer needed
-        // The modular system provides command execution without these adapters
-        this.logger.info('Skipping legacy adapter initialization - using modern modular command system');
+        // Initialize legacy adapters to maintain compatibility with existing commands
+        // These adapters bridge the gap between old command interfaces and new modular services
+        this.logger.info('Initializing legacy adapters for command compatibility');
         
-        // Set adapters to null to maintain compatibility
-        this.legacyDb = null;
-        this.legacyHeistManager = null;
-        this.legacyPersonality = null;
-        this.legacyVideoPayoutManager = null;
+        // Initialize database adapter
+        this.legacyDb = this._context.services.get('database');
+        
+        // Initialize heist manager adapter
+        const heistService = this._context.services.get('heist');
+        const economyService = this._context.services.get('economySystem');
+        
+        if (heistService || economyService) {
+            // Create legacy heist manager adapter synchronously
+            try {
+                // Use dynamic import but await it in start() method instead
+                this.needsHeistManagerAdapter = true;
+                this.logger.info('Heist manager adapter will be initialized after module start');
+            } catch (error) {
+                this.logger.error('Failed to prepare legacy heist manager adapter:', error);
+            }
+        }
+        
+        // Initialize personality adapter
+        this.legacyPersonality = this._context.services.get('personality');
+        
+        // Initialize video payout manager adapter
+        this.legacyVideoPayoutManager = this._context.services.get('video-payout');
     }
     
     // ===== Service Refresh =====
