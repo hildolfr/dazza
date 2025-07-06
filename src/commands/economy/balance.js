@@ -17,25 +17,22 @@ export default new Command({
 
     async handler(bot, message, args) {
         try {
-            console.log('=== BALANCE COMMAND DEBUG ===');
-            console.log('Bot object keys:', Object.keys(bot));
-            console.log('Has heistManager:', !!bot.heistManager);
-            console.log('HeistManager type:', typeof bot.heistManager);
-            console.log('HeistManager value:', bot.heistManager);
-            console.log('Message object:', message);
-            console.log('Args:', args);
-            
             // Check whose balance to show
             const targetUser = args[0] || message.username;
             
+            // Debug: Log heist manager status
+            bot.logger.info('=== BALANCE COMMAND EXECUTION ===', {
+                hasHeistManager: !!bot.heistManager,
+                heistManagerType: typeof bot.heistManager,
+                targetUser: targetUser
+            });
+            
             // Get balance from HeistManager
             if (!bot.heistManager) {
-                console.log('=== HEIST MANAGER NULL - DEBUGGING ===');
-                console.log('Available bot properties:', Object.keys(bot));
-                console.log('Bot.db:', !!bot.db);
-                console.log('Bot.logger:', !!bot.logger);
-                console.log('Bot.personality:', !!bot.personality);
-                console.log('Bot.videoPayoutManager:', !!bot.videoPayoutManager);
+                bot.logger.info('HeistManager not available for balance command', {
+                    availableBotProps: Object.keys(bot),
+                    targetUser: targetUser
+                });
                 
                 const errorMsg = 'economy system not ready yet mate';
                 // Always send via PM

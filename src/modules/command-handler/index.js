@@ -94,6 +94,9 @@ class CommandHandlerModule extends BaseModule {
         this.eventBus.on('command.unregister', this.unregisterCommand.bind(this));
         this.eventBus.on('command.reload', this.reloadCommand.bind(this));
         
+        // Listen for service registrations to reinitialize adapters when economy services become available
+        this.eventBus.on('service:register', this.handleServiceRegistration.bind(this));
+        
         this.logger.info('Command handler module started');
     }
 
@@ -443,6 +446,39 @@ class CommandHandlerModule extends BaseModule {
         
         // Initialize video payout manager adapter
         this.legacyVideoPayoutManager = this._context.services.get('video-payout');
+    }
+    
+    // ===== Service Registration Handler =====
+    
+    async handleServiceRegistration(data) {
+        const { name: serviceName } = data;
+        
+        this.logger.info('=== SERVICE REGISTRATION DETECTED ===', {
+            serviceName: serviceName,
+            hasHeistManager: !!this.legacyHeistManager
+        });
+        
+        // Check if this is a heist or economy service and we don't have a heist manager yet
+        if ((serviceName === 'heist' || serviceName === 'economySystem') && !this.legacyHeistManager) {
+            this.logger.info('Economy service registered, attempting to initialize heist manager adapter...');
+            
+            try {
+                const { default: LegacyHeistManagerAdapter } = await import('./adapters/LegacyHeistManagerAdapter.js');
+                this.legacyHeistManager = new LegacyHeistManagerAdapter(this._context.services);
+                this.legacyHeistManager.setLogger(this.logger);
+                
+                this.logger.info('=== HEIST MANAGER ADAPTER LATE INIT SUCCESS ===', {
+                    adapterExists: !!this.legacyHeistManager,
+                    adapterReady: this.legacyHeistManager?.isReady?.(),
+                    serviceName: serviceName
+                });
+            } catch (error) {
+                this.logger.error('Failed to late-initialize heist manager adapter:', {
+                    error: error.message,
+                    serviceName: serviceName
+                });
+            }
+        }
     }
     
     // ===== Service Refresh =====
