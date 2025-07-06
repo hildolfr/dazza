@@ -438,12 +438,23 @@ class CharacterService {
                 const connectionService = this.services.get('connection');
                 if (connectionService && connectionService.sendMessage) {
                     const roomId = messageData.room || 'fatpizza'; // Use provided room or default
-                    await connectionService.sendMessage(roomId, response);
-                    this.logger.info('Ollama response sent', {
-                        username: messageData.username,
-                        room: roomId,
-                        responseLength: response.length
-                    });
+                    
+                    // Handle both single string and array of strings
+                    const messages = Array.isArray(response) ? response : [response];
+                    
+                    for (const message of messages) {
+                        await connectionService.sendMessage(roomId, message);
+                        this.logger.info('Ollama response sent', {
+                            username: messageData.username,
+                            room: roomId,
+                            responseLength: message.length
+                        });
+                        
+                        // Add small delay between messages to prevent spam
+                        if (messages.length > 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
                 } else {
                     this.logger.warn('Connection service not available, cannot send Ollama response');
                 }
@@ -457,7 +468,10 @@ class CharacterService {
             if (connectionService && connectionService.sendMessage) {
                 const roomId = messageData.room || 'fatpizza'; // Use provided room or default
                 await connectionService.sendMessage(roomId, fallbackResponse);
-                this.logger.info('Sent fallback response due to Ollama error', { room: roomId });
+                this.logger.info('Sent fallback response due to Ollama error', { 
+                    room: roomId,
+                    responseLength: fallbackResponse.length
+                });
             }
         }
     }
