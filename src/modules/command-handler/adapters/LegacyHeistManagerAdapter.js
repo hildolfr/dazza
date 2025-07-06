@@ -8,6 +8,7 @@ class LegacyHeistManagerAdapter {
         this.services = services;
         this.heistService = services.get('heist');
         this.databaseService = services.get('database');
+        this.economySystemService = services.get('economySystem');
         this.logger = null;
     }
     
@@ -18,42 +19,61 @@ class LegacyHeistManagerAdapter {
     // ===== User Balance Methods =====
     
     async getUserBalance(username) {
-        if (!this.heistService && !this.databaseService) {
-            throw new Error('Heist or database service not available');
+        if (!this.heistService && !this.economySystemService) {
+            throw new Error('Heist or economy system service not available');
         }
         
-        // Try heist service first, fall back to database service
+        // Try heist service first, fall back to economy system service
         if (this.heistService) {
             return await this.heistService.getUserBalance(username);
+        } else if (this.economySystemService) {
+            // Use the economy system service's heist manager
+            const heistManager = this.economySystemService.getHeistManager();
+            if (heistManager) {
+                return await heistManager.getUserBalance(username);
+            } else {
+                throw new Error('HeistManager not available from economy system');
+            }
         } else {
-            const economyService = this.databaseService.getEconomyService();
-            return await economyService.getUserBalance(username);
+            throw new Error('No economy services available');
         }
     }
     
     async updateUserBalance(username, amount) {
-        if (!this.heistService && !this.databaseService) {
-            throw new Error('Heist or database service not available');
+        if (!this.heistService && !this.economySystemService) {
+            throw new Error('Heist or economy system service not available');
         }
         
         if (this.heistService) {
             return await this.heistService.updateUserBalance(username, amount);
+        } else if (this.economySystemService) {
+            const heistManager = this.economySystemService.getHeistManager();
+            if (heistManager) {
+                return await heistManager.updateUserBalance(username, amount);
+            } else {
+                throw new Error('HeistManager not available from economy system');
+            }
         } else {
-            const economyService = this.databaseService.getEconomyService();
-            return await economyService.updateUserBalance(username, amount);
+            throw new Error('No economy services available');
         }
     }
     
     async transferBalance(fromUser, toUser, amount) {
-        if (!this.heistService && !this.databaseService) {
-            throw new Error('Heist or database service not available');
+        if (!this.heistService && !this.economySystemService) {
+            throw new Error('Heist or economy system service not available');
         }
         
         if (this.heistService) {
             return await this.heistService.transferBalance(fromUser, toUser, amount);
+        } else if (this.economySystemService) {
+            const heistManager = this.economySystemService.getHeistManager();
+            if (heistManager) {
+                return await heistManager.transferBalance(fromUser, toUser, amount);
+            } else {
+                throw new Error('HeistManager not available from economy system');
+            }
         } else {
-            const economyService = this.databaseService.getEconomyService();
-            return await economyService.transferBalance(fromUser, toUser, amount);
+            throw new Error('No economy services available');
         }
     }
     
@@ -102,35 +122,47 @@ class LegacyHeistManagerAdapter {
     // ===== Trust System Methods =====
     
     async getUserTrust(username) {
-        if (!this.heistService && !this.databaseService) {
-            throw new Error('Heist or database service not available');
+        if (!this.heistService && !this.economySystemService) {
+            throw new Error('Heist or economy system service not available');
         }
         
         if (this.heistService) {
             return await this.heistService.getUserTrust(username);
+        } else if (this.economySystemService) {
+            const heistManager = this.economySystemService.getHeistManager();
+            if (heistManager) {
+                return await heistManager.getUserTrust(username);
+            } else {
+                throw new Error('HeistManager not available from economy system');
+            }
         } else {
-            const economyService = this.databaseService.getEconomyService();
-            return await economyService.getUserTrust(username);
+            throw new Error('No economy services available');
         }
     }
     
     async updateUserTrust(username, amount) {
-        if (!this.heistService && !this.databaseService) {
-            throw new Error('Heist or database service not available');
+        if (!this.heistService && !this.economySystemService) {
+            throw new Error('Heist or economy system service not available');
         }
         
         if (this.heistService) {
             return await this.heistService.updateUserTrust(username, amount);
+        } else if (this.economySystemService) {
+            const heistManager = this.economySystemService.getHeistManager();
+            if (heistManager) {
+                return await heistManager.updateUserTrust(username, amount);
+            } else {
+                throw new Error('HeistManager not available from economy system');
+            }
         } else {
-            const economyService = this.databaseService.getEconomyService();
-            return await economyService.updateUserTrust(username, amount);
+            throw new Error('No economy services available');
         }
     }
     
     // ===== Utility Methods =====
     
     isReady() {
-        return !!(this.heistService || this.databaseService);
+        return !!(this.heistService || this.economySystemService);
     }
     
     // ===== Fallback Methods =====
