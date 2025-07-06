@@ -204,7 +204,7 @@ class CoreConnectionModule extends BaseModule {
         connection.on('pm', (data) => {
             this.publish('chat:pm', {
                 room,
-                from: data.username,
+                username: data.username,
                 message: data.msg,
                 time: data.time,
                 to: data.to
