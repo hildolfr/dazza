@@ -411,6 +411,90 @@ class CharacterService {
             
             // Check if this message mentions Dazza
             if (this.hasMention(data.message)) {
+                // Check database for hasResponded flag to prevent duplicate responses
+                const databaseService = this.services.get('database');
+                if (databaseService) {
+                    try {
+                        // Wait a small amount to ensure the message has been inserted into the database
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // Get the most recent unresponded message from this user that matches the content
+                        const recentMessage = await databaseService.get(`
+                            SELECT id, timestamp, hasResponded
+                            FROM messages 
+                            WHERE username = ? 
+                            AND message = ? 
+                            AND room_id = ?
+                            AND timestamp >= ?
+                            ORDER BY timestamp DESC 
+                            LIMIT 1
+                        `, [data.username, data.message, data.roomId || 'fatpizza', Date.now() - 45000]);
+                        
+                        if (!recentMessage) {
+                            this.logger.debug('Message not found in database or too old, skipping response', {
+                                username: data.username,
+                                message: data.message.substring(0, 50),
+                                roomId: data.roomId
+                            });
+                            return;
+                        }
+                        
+                        if (recentMessage.hasResponded === 1) {
+                            this.logger.debug('Message already responded to, skipping duplicate response', {
+                                username: data.username,
+                                message: data.message.substring(0, 50),
+                                messageId: recentMessage.id,
+                                roomId: data.roomId
+                            });
+                            return;
+                        }
+                        
+                        // Mark the message as responded to immediately to prevent race conditions
+                        await databaseService.markMessageAsResponded(recentMessage.id);
+                        this.logger.debug('Marked message as responded', { messageId: recentMessage.id });
+                        
+                    } catch (error) {
+                        this.logger.error('Error checking hasResponded flag:', error);
+                        // Continue with grace period check as fallback
+                    }
+                }
+                
+                // Staleness check: Don't respond during initial connection grace period
+                const connectionGracePeriod = 10000; // 10 seconds after room creation
+                const connectionService = this.services.get('connection');
+                
+                if (connectionService && connectionService.getRoomContext) {
+                    const roomContext = connectionService.getRoomContext(data.roomId || 'fatpizza');
+                    if (roomContext) {
+                        const timeSinceRoomStart = Date.now() - roomContext.startTime;
+                        
+                        this.logger.debug('🔍 STALENESS CHECK: Checking connection grace period', {
+                            timeSinceRoomStart,
+                            gracePeriod: connectionGracePeriod,
+                            roomStartTime: roomContext.startTime
+                        });
+                        
+                        if (timeSinceRoomStart < connectionGracePeriod) {
+                            this.logger.info('🚫 STALENESS PREVENTION: Ignoring mention during connection grace period', {
+                                timeSinceRoomStart,
+                                gracePeriod: connectionGracePeriod,
+                                username: data.username,
+                                message: data.message.substring(0, 50)
+                            });
+                            return;
+                        }
+                    } else {
+                        this.logger.debug('⚠️ STALENESS CHECK: Room context not found, proceeding without grace period check', {
+                            roomId: data.roomId
+                        });
+                    }
+                } else {
+                    this.logger.debug('⚠️ STALENESS CHECK: Connection service not available, proceeding without grace period check', {
+                        hasConnectionService: !!connectionService,
+                        hasGetRoomContext: !!(connectionService && connectionService.getRoomContext)
+                    });
+                }
+                
                 this.logger.info('Dazza mention detected, generating Ollama response', {
                     username: data.username,
                     message: data.message.substring(0, 50)
