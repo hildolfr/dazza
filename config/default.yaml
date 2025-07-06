@@ -63,6 +63,13 @@ connection:
   secure: true
   reconnectDelay: 5000
   maxReconnectAttempts: 10
+
+# Room configurations
+rooms:
+  - room: fatpizza
+    server: https://cytu.be
+    username: dazza
+    password: sammy2
   
 # Module settings
 modules:

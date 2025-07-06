@@ -267,6 +267,14 @@ class RoomConnection extends EventEmitter {
             throw new Error('Not connected');
         }
         
+        // Debug logging to track what's actually being sent
+        this.logger.debug('[RoomConnection] Sending message', {
+            messageType: typeof message,
+            messageLength: message?.length,
+            messageContent: message?.substring(0, 50),
+            room: this.roomId
+        });
+        
         this.socket.emit('chatMsg', {
             msg: message,
             meta: {}

@@ -11,6 +11,13 @@ class CharacterService {
         this.config = config;
         this.logger = logger;
         
+        // Debug service registry
+        this.logger.debug('CharacterService constructor', {
+            hasServices: !!services,
+            servicesType: typeof services,
+            servicesKeys: services ? (typeof services.keys === 'function' ? Array.from(services.keys()) : Object.keys(services)) : []
+        });
+        
         // Personality configuration
         this.enablePersonality = config.enablePersonality !== false;
         this.enableMentionDetection = config.enableMentionDetection !== false;
@@ -435,28 +442,50 @@ class CharacterService {
             
             if (response) {
                 // Get connection service to send the response
+                // Note: Connection service might not be available at startup, so we check each time
                 const connectionService = this.services.get('connection');
-                if (connectionService && connectionService.sendMessage) {
-                    const roomId = messageData.room || 'fatpizza'; // Use provided room or default
+                
+                if (!connectionService) {
+                    this.logger.warn('Connection service not available, cannot send Ollama response', {
+                        availableServices: this.services ? Array.from(this.services.keys()) : []
+                    });
+                    return;
+                }
+                
+                if (!connectionService.sendMessage) {
+                    this.logger.warn('Connection service found but sendMessage method not available', {
+                        serviceType: typeof connectionService,
+                        serviceMethods: Object.getOwnPropertyNames(connectionService)
+                    });
+                    return;
+                }
+                
+                this.logger.debug('CharacterService successfully found connection service');
+                
+                // Connection service is available and has sendMessage method
+                const roomId = messageData.room || 'fatpizza'; // Use provided room or default
+                
+                // Handle both single string and array of strings
+                const messages = Array.isArray(response) ? response : [response];
+                
+                for (const message of messages) {
+                    this.logger.debug('CharacterService calling sendMessage', {
+                        roomId,
+                        messageType: typeof message,
+                        messageLength: message?.length,
+                        messageContent: message?.substring(0, 50)
+                    });
+                    await connectionService.sendMessage(message);
+                    this.logger.info('Ollama response sent', {
+                        username: messageData.username,
+                        room: roomId,
+                        responseLength: message.length
+                    });
                     
-                    // Handle both single string and array of strings
-                    const messages = Array.isArray(response) ? response : [response];
-                    
-                    for (const message of messages) {
-                        await connectionService.sendMessage(roomId, message);
-                        this.logger.info('Ollama response sent', {
-                            username: messageData.username,
-                            room: roomId,
-                            responseLength: message.length
-                        });
-                        
-                        // Add small delay between messages to prevent spam
-                        if (messages.length > 1) {
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        }
+                    // Add small delay between messages to prevent spam
+                    if (messages.length > 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                     }
-                } else {
-                    this.logger.warn('Connection service not available, cannot send Ollama response');
                 }
             }
         } catch (error) {
@@ -467,7 +496,7 @@ class CharacterService {
             const connectionService = this.services.get('connection');
             if (connectionService && connectionService.sendMessage) {
                 const roomId = messageData.room || 'fatpizza'; // Use provided room or default
-                await connectionService.sendMessage(roomId, fallbackResponse);
+                await connectionService.sendMessage(fallbackResponse);
                 this.logger.info('Sent fallback response due to Ollama error', { 
                     room: roomId,
                     responseLength: fallbackResponse.length

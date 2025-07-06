@@ -260,7 +260,7 @@ class MessageProcessor {
         
         const messageUsername = messageData.username.toLowerCase();
         const botUsername = this.config?.bot?.username?.toLowerCase() || 'dazza';
-        const storedUsername = botContext.username?.toLowerCase();
+        const storedUsername = botContext?.username?.toLowerCase();
         
         if (messageUsername === botUsername || messageUsername === storedUsername) {
             // Log if bot messages contain HTML
@@ -272,8 +272,8 @@ class MessageProcessor {
             
             this.logger.debug('Ignoring bot\'s own message', {
                 messageUsername: messageData.username,
-                botUsername: this.config.bot.username,
-                storedUsername: botContext.username,
+                botUsername: this.config?.bot?.username,
+                storedUsername: botContext?.username,
                 message: messageData.msg.substring(0, 50)
             });
             
@@ -502,8 +502,8 @@ class MessageProcessor {
      */
     async handleMentionDetection(messageData, botContext) {
         const senderLower = messageData.username.toLowerCase();
-        if (senderLower === this.config.bot.username.toLowerCase() ||
-            senderLower === botContext.username?.toLowerCase() ||
+        if (senderLower === this.config?.bot?.username?.toLowerCase() ||
+            senderLower === botContext?.username?.toLowerCase() ||
             senderLower === '[server]') {
             
             this.logger.debug('Ignoring mention from bot/server', {
