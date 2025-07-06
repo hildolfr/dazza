@@ -134,6 +134,12 @@ class CommandHandlerModule extends BaseModule {
             return;
         }
 
+        // Check for stale messages using room connection time
+        if (this.isStaleMessage(room)) {
+            this.logger.debug('Skipping stale command message', { username, commandName });
+            return;
+        }
+
         // Check rate limiting
         if (!this.checkRateLimit(username)) {
             this.emit('command.ratelimited', { username: username, command: commandName });
@@ -141,7 +147,10 @@ class CommandHandlerModule extends BaseModule {
         }
 
         // Execute command
-        await this.executeCommand(commandName, { message, username, room }, args, room);
+        const messageData = { message, username, room };
+        messageData.roomId = room;
+        messageData.roomContext = room;
+        await this.executeCommand(commandName, messageData, args, room);
     }
 
     async handlePrivateMessage(data) {
@@ -177,7 +186,10 @@ class CommandHandlerModule extends BaseModule {
 
         // Execute command
         this.logger.debug('Executing PM command', { commandName: commandName, username: username });
-        await this.executeCommand(commandName, { message, username, room }, args, room, true);
+        const messageData = { message, username, room };
+        messageData.roomId = room;
+        messageData.roomContext = room;
+        await this.executeCommand(commandName, messageData, args, room, true);
     }
 
     async executeCommand(commandName, messageData, args, room, isPrivate = false) {
@@ -195,6 +207,11 @@ class CommandHandlerModule extends BaseModule {
         try {
             // Create bot context for command execution
             const botContext = this.createBotContext(room);
+            
+            // Set isPM property for private message commands
+            if (isPrivate) {
+                messageData.isPM = true;
+            }
             
             // Execute command
             const result = await this.commandRegistry.execute(commandName, botContext, messageData, args);
@@ -241,15 +258,31 @@ class CommandHandlerModule extends BaseModule {
 
     async sendResponse(response, message, room, isPrivate, command) {
         try {
+            // Get the connection service
+            const connectionService = this._context.services.get('connection');
+            if (!connectionService) {
+                this.logger.error('Connection service not available for sending response');
+                return;
+            }
+
             // Determine where to send the response
             const sendToPM = isPrivate || (command && command.pmResponses);
             
             if (sendToPM) {
-                // Send private message
-                await room.sendPM(messageData.username, response);
+                // Send private message to the correct room
+                this.logger.debug('Sending PM response to room', { 
+                    room, 
+                    username: message.username, 
+                    responseLength: response.length 
+                });
+                await connectionService.sendPrivateMessage(room, message.username, response);
             } else {
-                // Send to chat
-                await room.sendMessage(response);
+                // Send to chat in the correct room
+                this.logger.debug('Sending chat response to room', { 
+                    room, 
+                    responseLength: response.length 
+                });
+                await connectionService.sendMessage(room, response);
             }
         } catch (error) {
             this.logger.error('Failed to send command response:', error);
@@ -277,6 +310,7 @@ class CommandHandlerModule extends BaseModule {
             videoPayoutManager: this.legacyVideoPayoutManager,
             room: room,
             rooms: connection?.connections || new Map(), // For multi-room fallback
+            services: this._context.services, // Add services access for pmHelper
             cooldowns: this._context.services.get('cooldown') || { check: () => ({ allowed: true }) },
             isAdmin: (username) => {
                 // This will need to be provided by a permission module
@@ -285,30 +319,27 @@ class CommandHandlerModule extends BaseModule {
                 return permissions?.isAdmin?.(username) || false;
             },
             sendMessage: (msg) => {
-                if (room && room.sendMessage) {
-                    return room.sendMessage(msg);
-                } else if (connection && connection.sendMessage) {
-                    return connection.sendMessage(msg);
+                // Always use the room context to ensure message goes to correct room
+                if (connection && connection.sendMessage) {
+                    return connection.sendMessage(room, msg);
                 } else {
-                    this.logger.error('No sendMessage method available');
+                    this.logger.error('No sendMessage method available in connection service');
                 }
             },
             sendPM: (username, msg) => {
-                if (room && room.sendPrivateMessage) {
-                    return room.sendPrivateMessage(username, msg);
-                } else if (connection && connection.sendPrivateMessage) {
-                    return connection.sendPrivateMessage(username, msg);
+                // Always use the room context to ensure PM goes to correct room
+                if (connection && connection.sendPrivateMessage) {
+                    return connection.sendPrivateMessage(room, username, msg);
                 } else {
-                    this.logger.error('No sendPrivateMessage method available');
+                    this.logger.error('No sendPrivateMessage method available in connection service');
                 }
             },
             sendPrivateMessage: (username, msg) => {
-                if (room && room.sendPrivateMessage) {
-                    return room.sendPrivateMessage(username, msg);
-                } else if (connection && connection.sendPrivateMessage) {
-                    return connection.sendPrivateMessage(username, msg);
+                // Always use the room context to ensure PM goes to correct room
+                if (connection && connection.sendPrivateMessage) {
+                    return connection.sendPrivateMessage(room, username, msg);
                 } else {
-                    this.logger.error('No sendPrivateMessage method available');
+                    this.logger.error('No sendPrivateMessage method available in connection service');
                 }
             }
         };
@@ -344,6 +375,62 @@ class CommandHandlerModule extends BaseModule {
         
         return true;
     }
+
+    isStaleMessage(room) {
+        try {
+            // Use the same grace period logic as the character service
+            const connectionGracePeriod = 10000; // 10 seconds
+            
+            // Get room context from connection service
+            const connectionService = this._context.services.get('connection');
+            if (!connectionService) {
+                return false;
+            }
+            
+            // Try to get room context
+            let roomContext = null;
+            if (connectionService.getRoomContext) {
+                roomContext = connectionService.getRoomContext(room.id || room);
+            }
+            
+            // If no room context, check if the room object itself has timing info
+            if (!roomContext && room.startTime) {
+                roomContext = room;
+            }
+            
+            if (roomContext && roomContext.startTime) {
+                const timeSinceRoomStart = Date.now() - roomContext.startTime;
+                if (timeSinceRoomStart < connectionGracePeriod) {
+                    this.logger.debug('Within connection grace period, treating as stale', {
+                        timeSinceRoomStart,
+                        connectionGracePeriod,
+                        roomStartTime: roomContext.startTime
+                    });
+                    return true;
+                }
+            }
+            
+            // Additional check for connectionTime if available
+            if (roomContext && roomContext.connectionTime) {
+                const timeSinceConnection = Date.now() - roomContext.connectionTime;
+                if (timeSinceConnection < connectionGracePeriod) {
+                    this.logger.debug('Within connection grace period (connectionTime), treating as stale', {
+                        timeSinceConnection,
+                        connectionGracePeriod,
+                        connectionTime: roomContext.connectionTime
+                    });
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            this.logger.error('Error checking for stale message:', error);
+            // If there's an error, assume the message is not stale to avoid blocking commands
+            return false;
+        }
+    }
+
 
     // Public API methods
     registerCommand(command) {

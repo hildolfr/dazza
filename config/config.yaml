@@ -6,6 +6,10 @@ rooms:
     server: https://cytu.be
     username: ${BOT_USERNAME}
     password: ${BOT_PASSWORD}
+  - room: RIFFTRAX_MST3K
+    server: https://cytu.be
+    username: ${BOT_USERNAME}
+    password: ${BOT_PASSWORD}
 
 # Module overrides
 modules:
@@ -15,7 +19,7 @@ modules:
   
   core-api:
     enabled: true  # Re-enabled for modular architecture
-    port: 3001
+    port: 3002
   
   core-connection:
     enabled: true  # Re-enabled for modular architecture
